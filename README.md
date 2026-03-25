@@ -1,66 +1,176 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
 </p>
 
-## About Laravel
+<h1 align="center">🛍️ KampusMarket</h1>
+<p align="center">
+  <strong>Platform Marketplace Hyperlocal untuk Mahasiswa Universitas Brawijaya</strong>
+  <br />
+  Jual beli barang bekas dan jasa antar mahasiswa dengan mudah, aman, dan terpercaya.
+  <br />
+  <a href="https://github.com/username/ubazaar"><strong>Explore the Docs »</strong></a>
+  <br />
+  <br />
+  <a href="#">View Demo</a>
+  ·
+  <a href="#">Report Bug</a>
+  ·
+  <a href="#">Request Feature</a>
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<br />
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>📑 Table of Contents</summary>
+  <ol>
+    <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#sparkles-key-features">Key Features</a></li>
+    <li><a href="#hammer_and_pick-built-with">Built With</a></li>
+    <li><a href="#card_file_box-database-schema">Database Schema</a></li>
+    <li><a href="#rocket-getting-started">Getting Started</a></li>
+    <li><a href="#license">License</a></li>
+  </ol>
+</details>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 About The Project
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**UBazaar** adalah platform marketplace berbasis web yang dirancang khusus untuk ekosistem Universitas Brawijaya. Berbeda dengan marketplace umum, UBazaar mengedepankan konsep **Hyperlocal** dan **Trust**, di mana setiap user terverifikasi melalui fakultas mereka.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Proyek ini bertujuan untuk memfasilitasi:
+*   **Jual Beli Barang Bekas:** Buku, elektronik, perlengkapan kos.
+*   **Layanan Jasa:** Fotografi, desain, les privat, hingga teknisi.
+*   **Transaksi Aman:** Sistem escrow dan verifikasi identitas kampus.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ✨ Key Features
 
-### Premium Partners
+| Feature | Description |
+| :--- | :--- |
+| 🎓 **Faculty Verification** | User wajib memilih fakultas (semi-permanen) untuk menjaga akuntabilitas. |
+| 🤝 **In-Chat Negotiation** | Sistem tawar-menawar harga langsung di dalam chat tanpa tabel terpisah. |
+| 💰 **Smart Admin Fee** | Biaya admin 5% dipotong dari **penjual** (seller), pembeli tidak dikenakan biaya tambahan. |
+| 🛵 **Multi-Shipping** | Mendukung COD, Pickup, dan Delivery Manual dengan input ongkir oleh seller. |
+| 📅 **Service Booking** | Fitur booking khusus untuk transaksi jasa dengan estimasi durasi. |
+| 🔒 **Secure Wallet** | Sistem dompet digital dengan fitur withdrawal ke Bank & E-Wallet. |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🛠️ Built With
 
-## Code of Conduct
+Proyek ini dibangun menggunakan teknologi modern dan stack populer:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+*   [![React][React.js]][React-url]
+*   [![Vite][Vite.js]][Vite-url]
+*   [![Tailwind CSS][Tailwind.com]][Tailwind-url]
+*   [![TypeScript][TypeScript.org]][TypeScript-url]
+*   [![Laravel][Laravel.com]][Laravel-url] (Backend API - Soon)
+*   [![Prisma][Prisma.io]][Prisma-url] (ORM)
 
-## Security Vulnerabilities
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 🗄️ Database Schema
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Kami menggunakan **Prisma ORM** dengan database **MySQL**. Schema dirancang untuk mendukung fleksibilitas barang & jasa dalam satu entitas.
+
+### Entity Relationship Diagram (ERD)
+*(Kamu bisa embed gambar ERD dari mermaid atau screenshots di sini)*
+
+### Highlight Models:
+*   **User:** Menggunakan `googleId` untuk social login & `faculty` untuk verifikasi.
+*   **Product:** Unified model untuk `Barang` dan `Jasa` (menggunakan field `type` & `priceMin/Max`).
+*   **Order:** Mendukung snapshot produk dan `netIncome` calculation untuk seller.
+*   **Message:** Mendukung tipe `offer` untuk sistem negosiasi.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## 🏁 Getting Started
+
+Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan lokal kamu.
+
+### Prerequisites
+Pastikan kamu sudah menginstall Node.js dan Bun/npm.
+*   Node.js >= 18.x
+*   MySQL / SQLite (untuk development)
+
+### Installation
+
+1.  **Clone the repo**
+    ```sh
+    git clone https://github.com/username/ubazaar.git
+    cd ubazaar
+    ```
+
+2.  **Install Dependencies**
+    ```sh
+    npm install
+    # or
+    bun install
+    ```
+
+3.  **Setup Environment Variables**
+    Buat file `.env` di root project:
+    ```env
+    DATABASE_URL="mysql://user:password@localhost:3306/ubazaar"
+    ```
+
+4.  **Generate Prisma Client & Sync Database**
+    ```sh
+    npx prisma generate
+    npx prisma db push
+    ```
+
+5.  **Run the Development Server**
+    ```sh
+    npm run dev
+    ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## 🤝 Contributing
+
+Kontribusi sangat diterima! Jika kamu ingin berkontribusi, silakan fork repo ini dan buat pull request.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE.txt` for more information.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://reactjs.org/
+[Vite.js]: https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white
+[Vite-url]: https://vitejs.dev/
+[Tailwind.com]: https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white
+[Tailwind-url]: https://tailwindcss.com/
+[TypeScript.org]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
+[Laravel-url]: https://laravel.com/
+[Prisma.io]: https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white
+[Prisma-url]: https://www.prisma.io/
+```
