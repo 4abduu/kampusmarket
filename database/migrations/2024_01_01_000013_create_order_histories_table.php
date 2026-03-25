@@ -12,14 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('order_histories', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('order_id')->index();
-            $table->unsignedBigInteger('actor_id')->nullable()->index('order_histories_actor_id_foreign');
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
+
             $table->string('status');
             $table->text('notes')->nullable();
+
             $table->timestamps();
 
+            $table->index('order_id');
             $table->index(['order_id', 'created_at']);
         });
     }

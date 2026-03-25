@@ -12,18 +12,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('user_id')->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+
+            // Content
             $table->enum('type', ['order', 'chat', 'payment', 'system', 'withdrawal', 'review']);
             $table->string('title');
             $table->text('message');
             $table->string('link')->nullable();
+
+            // Additional data (JSON for flexibility - not strictly 1NF but practical for notifications)
             $table->json('data')->nullable();
-            $table->boolean('is_read')->default(false)->index();
+
+            // Status
+            $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
+
             $table->timestamps();
 
+            $table->index('user_id');
+            $table->index('is_read');
             $table->index(['user_id', 'created_at']);
         });
     }

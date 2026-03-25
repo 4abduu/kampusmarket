@@ -8,52 +8,84 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Perubahan dari Prisma:
+     * - images: JSON String → DIHAPUS (pindah ke tabel product_images untuk 1NF)
+     * - Semua status/type menggunakan ENUM (3NF)
+     * - Harga menggunakan BIGINT (untuk MySQL)
      */
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('seller_id')->index();
-            $table->unsignedBigInteger('category_id')->nullable()->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            // Relations
+            $table->foreignId('seller_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
+
+            // Info
             $table->string('title');
-            $table->string('slug')->index();
+            $table->string('slug')->unique();
             $table->text('description');
+
+            // Pricing (BIGINT untuk cent - Rupiah * 100)
             $table->unsignedBigInteger('price')->default(0);
             $table->unsignedBigInteger('original_price')->nullable();
             $table->unsignedBigInteger('price_min')->nullable();
             $table->unsignedBigInteger('price_max')->nullable();
             $table->enum('price_type', ['fixed', 'range', 'starting'])->default('fixed');
+
+            // Product Type
             $table->enum('type', ['barang', 'jasa'])->default('barang');
+
+            // Barang specific
             $table->enum('condition', ['baru', 'bekas'])->nullable();
             $table->integer('stock')->default(1);
-            $table->unsignedInteger('weight')->nullable();
+            $table->unsignedInteger('weight')->nullable(); // gram
+
+            // Jasa specific
             $table->unsignedInteger('duration_min')->nullable();
             $table->unsignedInteger('duration_max')->nullable();
             $table->enum('duration_unit', ['jam', 'hari', 'minggu', 'bulan'])->nullable();
             $table->boolean('duration_is_plus')->default(false);
             $table->enum('availability_status', ['available', 'busy', 'full'])->nullable();
+
+            // Service modes (for Jasa)
             $table->boolean('is_online')->default(false);
             $table->boolean('is_onsite')->default(false);
             $table->boolean('is_home_service')->default(false);
+
+            // Shipping (for Barang)
             $table->boolean('can_nego')->default(true);
             $table->boolean('is_cod')->default(false);
             $table->boolean('is_pickup')->default(true);
             $table->boolean('is_delivery')->default(false);
             $table->unsignedBigInteger('delivery_fee_min')->nullable();
             $table->unsignedBigInteger('delivery_fee_max')->nullable();
+
             $table->string('location');
+
+            // Stats
             $table->unsignedInteger('views')->default(0);
-            $table->decimal('rating', 3)->default(0);
+            $table->decimal('rating', 3, 2)->default(0);
             $table->unsignedInteger('review_count')->default(0);
             $table->unsignedInteger('sold_count')->default(0);
-            $table->enum('status', ['draft', 'active', 'sold_out', 'archived'])->default('active')->index();
-            $table->timestamp('created_at')->nullable()->index();
-            $table->timestamp('updated_at')->nullable();
+
+            // Status
+            $table->enum('status', ['draft', 'active', 'sold_out', 'archived'])->default('active');
+
+            // Timestamps
+            $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['slug']);
+            // Indexes
+            $table->index('seller_id');
+            $table->index('category_id');
+            $table->index('slug');
+            $table->index('status');
             $table->index(['type', 'status']);
+            $table->index('created_at');
         });
     }
 

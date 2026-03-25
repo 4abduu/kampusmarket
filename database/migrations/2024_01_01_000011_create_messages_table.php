@@ -12,19 +12,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('chat_id')->index();
-            $table->unsignedBigInteger('sender_id')->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('chat_id')->constrained('chats')->cascadeOnDelete();
+            $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
+
+            // Content
             $table->text('content');
             $table->enum('type', ['text', 'offer', 'image', 'file', 'system'])->default('text');
-            $table->unsignedBigInteger('offer_price')->nullable();
+
+            // Offer fields (jika type = 'offer')
+            $table->unsignedBigInteger('offer_price')->nullable(); // dalam cent
             $table->enum('offer_status', ['pending', 'accepted', 'rejected'])->nullable();
+
+            // File/Image
             $table->string('file_url')->nullable();
+
+            // Read status
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
+
             $table->timestamps();
 
+            $table->index('chat_id');
+            $table->index('sender_id');
             $table->index(['chat_id', 'created_at']);
         });
     }

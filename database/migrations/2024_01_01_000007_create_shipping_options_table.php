@@ -12,14 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('shipping_options', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('product_id')->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+
             $table->enum('type', ['gratis', 'pickup', 'delivery'])->default('pickup');
-            $table->string('label');
-            $table->unsignedBigInteger('price')->default(0);
-            $table->unsignedBigInteger('price_max')->nullable();
+            $table->string('label'); // 'Ketemuan Kampus', 'Antar ke Alamat', etc.
+            $table->unsignedBigInteger('price')->default(0); // dalam cent
+            $table->unsignedBigInteger('price_max')->nullable(); // untuk range harga
+
             $table->timestamps();
+
+            $table->index('product_id');
         });
     }
 

@@ -12,15 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('password_reset_otps', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->string('email')->index();
-            $table->string('otp', 6);
-            $table->timestamp('expires_at')->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->string('email');
+            $table->string('otp', 6); // 6 digit code
+            $table->timestamp('expires_at');
             $table->boolean('is_used')->default(false);
+
             $table->timestamps();
 
+            $table->index('email');
             $table->index(['email', 'otp']);
+            $table->index('expires_at');
         });
     }
 

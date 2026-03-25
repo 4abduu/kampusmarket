@@ -12,19 +12,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wallet_transactions', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->enum('type', ['top_up', 'withdrawal', 'payment', 'refund', 'income', 'admin_fee'])->index();
-            $table->unsignedBigInteger('amount');
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+
+            $table->enum('type', ['top_up', 'withdrawal', 'payment', 'refund', 'income', 'admin_fee']);
+
+            $table->unsignedBigInteger('amount'); // dalam cent
             $table->unsignedBigInteger('balance_before')->default(0);
             $table->unsignedBigInteger('balance_after')->default(0);
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('related_order_id')->nullable()->index();
-            $table->unsignedBigInteger('related_withdrawal_id')->nullable()->index();
+
+            // Reference to related entities
+            $table->foreignId('related_order_id')->nullable()->constrained('orders')->nullOnDelete();
+            $table->foreignId('related_withdrawal_id')->nullable()->constrained('withdrawals')->nullOnDelete();
+
             $table->enum('status', ['pending', 'completed', 'failed', 'cancelled'])->default('completed');
+
             $table->timestamps();
 
+            $table->index('user_id');
+            $table->index('type');
+            $table->index('related_order_id');
+            $table->index('related_withdrawal_id');
             $table->index(['user_id', 'created_at']);
         });
     }

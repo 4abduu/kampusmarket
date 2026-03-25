@@ -12,15 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('carts', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->unsignedBigInteger('product_id')->index('carts_product_id_foreign');
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+
             $table->unsignedInteger('quantity')->default(1);
             $table->text('notes')->nullable();
+
             $table->timestamps();
 
+            // Satu user hanya bisa punya satu entry per produk
             $table->unique(['user_id', 'product_id']);
+            $table->index('user_id');
         });
     }
 

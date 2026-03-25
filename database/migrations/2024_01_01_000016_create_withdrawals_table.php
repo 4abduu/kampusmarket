@@ -12,23 +12,45 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('withdrawals', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->string('withdrawal_number')->index();
-            $table->unsignedBigInteger('user_id')->index();
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->string('withdrawal_number')->unique(); // Format: WD-YYYYMMDD-XXXX
+
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+
+            // Amount (BIGINT untuk cent)
             $table->unsignedBigInteger('amount')->default(0);
             $table->unsignedBigInteger('total_deduction')->default(0);
+
+            // Account Info
             $table->enum('account_type', ['bank', 'e_wallet'])->default('bank');
-            $table->string('bank_name');
+            $table->string('bank_name'); // BCA, OVO, DANA, etc.
             $table->string('account_number');
             $table->string('account_name');
-            $table->enum('status', ['pending', 'approved', 'processing', 'completed', 'failed', 'cancelled', 'rejected'])->default('pending')->index();
+
+            // Status
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'processing',
+                'completed',
+                'failed',
+                'cancelled',
+                'rejected'
+            ])->default('pending');
+
             $table->text('rejection_reason')->nullable();
             $table->text('failure_reason')->nullable();
+
+            // Timestamps
             $table->timestamps();
             $table->timestamp('processed_at')->nullable();
 
-            $table->unique(['withdrawal_number']);
+            // Indexes
+            $table->index('user_id');
+            $table->index('status');
+            $table->index('withdrawal_number');
         });
     }
 

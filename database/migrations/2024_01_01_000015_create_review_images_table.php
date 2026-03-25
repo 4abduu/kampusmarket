@@ -8,16 +8,25 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * NORMALISASI 1NF:
+     * Sebelumnya: images disimpan sebagai JSON string di tabel reviews
+     * Sekarang: Setiap image menjadi satu row di tabel ini
      */
     public function up(): void
     {
         Schema::create('review_images', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('review_id')->index();
+            $table->id();
+
+            $table->foreignId('review_id')->constrained('reviews')->cascadeOnDelete();
+
             $table->string('url');
             $table->string('alt')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
+
             $table->timestamps();
+
+            $table->index('review_id');
         });
     }
 

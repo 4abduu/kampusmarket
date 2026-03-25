@@ -12,17 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('addresses', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->char('uuid', 36)->unique();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->string('label');
+            $table->id();
+            $table->uuid('uuid')->unique();
+
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+
+            $table->string('label'); // 'Rumah', 'Kos', 'Kampus'
             $table->string('recipient');
             $table->string('phone')->nullable();
             $table->text('address');
             $table->text('notes')->nullable();
             $table->boolean('is_primary')->default(false);
+
             $table->timestamps();
 
+            $table->index('user_id');
             $table->index(['user_id', 'is_primary']);
         });
     }
