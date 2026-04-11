@@ -57,6 +57,7 @@ class OrderResource extends JsonResource
             // Shipping
             'shippingMethod' => $this->shipping_method,
             'shippingType' => $this->shipping_type->value ?? $this->shipping_type,
+            'selectedShippingOptionId' => $this->selectedShippingOption?->uuid,
             'shippingAddress' => $this->shipping_address,
             'shippingNotes' => $this->shipping_notes,
             'selectedAddressId' => $this->selectedAddress?->uuid,

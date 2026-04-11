@@ -77,7 +77,7 @@ export const resolveCheckoutProduct = (productId?: string): CheckoutResolvedProd
     product,
     isService,
     isVariablePricing,
-    defaultShippingMethod: isService ? "pickup" : "cod",
+    defaultShippingMethod: isService ? "onsite" : "cod",
   };
 };
 
@@ -101,19 +101,19 @@ export const getShippingOptions = (isService: boolean): CheckoutShippingOption[]
   if (isService) {
     return [
       {
-        id: "pickup",
-        label: "Datang ke Lokasi",
-        description: "Pergi ke lokasi penyedia jasa",
+        id: "onsite",
+        label: "Ke Lokasi Penyedia Jasa",
+        description: "Kamu datang ke lokasi penyedia jasa",
         icon: Home,
         info: {
-          title: "Layanan di Lokasi Penyedia",
+          title: "Layanan di Lokasi Penyedia Jasa",
           description: "Kamu akan datang ke lokasi penyedia jasa sesuai jadwal yang disepakati. Pembayaran bisa di tempat atau transfer.",
           color: "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800",
         },
       },
       {
-        id: "cod",
-        label: "Jasa Datang ke Lokasi",
+        id: "home_service",
+        label: "Home Service",
         description: "Penyedia jasa datang ke lokasimu",
         icon: Wallet,
         info: {
@@ -124,12 +124,12 @@ export const getShippingOptions = (isService: boolean): CheckoutShippingOption[]
       },
       {
         id: "online",
-        label: "Online/Remote",
+        label: "Online",
         description: "Layanan dilakukan secara online",
         icon: Monitor,
         info: {
           title: "Layanan Online",
-          description: "Layanan dilakukan secara online/remote. Pembayaran via transfer sebelum atau sesudah layanan.",
+          description: "Layanan dilakukan secara online. Pembayaran via transfer sebelum atau sesudah layanan.",
           color: "bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-900/20 dark:border-purple-800",
         },
       },

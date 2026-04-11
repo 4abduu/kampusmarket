@@ -51,18 +51,10 @@ return new class extends Migration
             $table->boolean('duration_is_plus')->default(false);
             $table->enum('availability_status', ['available', 'busy', 'full'])->nullable();
 
-            // Service modes (for Jasa)
-            $table->boolean('is_online')->default(false);
-            $table->boolean('is_onsite')->default(false);
-            $table->boolean('is_home_service')->default(false);
-
-            // Shipping (for Barang)
+            // Negotiation
             $table->boolean('can_nego')->default(true);
-            $table->boolean('is_cod')->default(false);
-            $table->boolean('is_pickup')->default(true);
-            $table->boolean('is_delivery')->default(false);
-            $table->unsignedBigInteger('delivery_fee_min')->nullable();
-            $table->unsignedBigInteger('delivery_fee_max')->nullable();
+
+            // Opsi pengiriman/pelayanan disimpan di tabel shipping_options
 
             $table->string('location');
 

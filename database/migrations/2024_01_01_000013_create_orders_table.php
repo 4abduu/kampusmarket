@@ -43,7 +43,8 @@ return new class extends Migration
             $table->unsignedBigInteger('net_income')->default(0);
 
             // Shipping
-            $table->enum('shipping_type', ['cod', 'pickup', 'delivery', 'online', 'onsite', 'home_service']);
+            $table->foreignId('selected_shipping_option_id')->nullable()->constrained('shipping_options')->nullOnDelete();
+            $table->enum('shipping_type', ['gratis', 'cod', 'pickup', 'delivery', 'online', 'onsite', 'home_service']);
             $table->string('shipping_method')->nullable();
             $table->text('shipping_address')->nullable();
             $table->text('shipping_notes')->nullable();
@@ -109,6 +110,7 @@ return new class extends Migration
             $table->index('order_number');
             $table->index('buyer_id');
             $table->index('seller_id');
+            $table->index('selected_shipping_option_id');
             $table->index('status');
             $table->index('cancellation_status');
             $table->index('payment_status');

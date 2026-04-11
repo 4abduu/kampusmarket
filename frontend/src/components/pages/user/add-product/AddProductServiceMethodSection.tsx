@@ -43,7 +43,7 @@ export default function AddProductServiceMethodSection({
                 <DollarSign className="h-5 w-5" />
               </div>
               <div>
-                <Label className="font-medium cursor-pointer">Online / Remote</Label>
+                <Label className="font-medium cursor-pointer">Online</Label>
                 <p className="text-sm text-muted-foreground">Layanan via Zoom, Meet, atau platform online lain</p>
               </div>
             </div>
@@ -69,8 +69,8 @@ export default function AddProductServiceMethodSection({
                 <Home className="h-5 w-5" />
               </div>
               <div>
-                <Label className="font-medium cursor-pointer">Customer Datang ke Lokasi</Label>
-                <p className="text-sm text-muted-foreground">Customer datang ke tempat usaha Anda</p>
+                <Label className="font-medium cursor-pointer">Ke Lokasi Penyedia Jasa</Label>
+                <p className="text-sm text-muted-foreground">Pelanggan datang ke lokasi Anda</p>
               </div>
             </div>
             <Switch
@@ -95,7 +95,7 @@ export default function AddProductServiceMethodSection({
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <Label className="font-medium cursor-pointer">Anda Datang ke Customer</Label>
+                <Label className="font-medium cursor-pointer">Home Service</Label>
                 <p className="text-sm text-muted-foreground">Anda mendatangi lokasi customer</p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function AddProductServiceMethodSection({
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
           />
-          <p className="text-xs text-muted-foreground">Lokasi untuk metode customer datang ke lokasi</p>
+          <p className="text-xs text-muted-foreground">Lokasi untuk metode ke lokasi penyedia jasa</p>
         </div>
 
         {!shippingOptions.isOnsite && !shippingOptions.isHomeService && !shippingOptions.isOnline && (

@@ -29,6 +29,18 @@ class ProductResource extends JsonResource
         $originalPriceInRupiah = $this->original_price ? (int) ($this->original_price / 100) : null;
         $priceMinInRupiah = $this->price_min ? (int) ($this->price_min / 100) : null;
         $priceMaxInRupiah = $this->price_max ? (int) ($this->price_max / 100) : null;
+        $shippingOptions = $this->relationLoaded('shippingOptions') ? $this->shippingOptions : collect();
+
+        $isOnline = $shippingOptions->contains(fn ($opt) => ($opt->type->value ?? $opt->type) === 'online');
+        $isOnsite = $shippingOptions->contains(fn ($opt) => ($opt->type->value ?? $opt->type) === 'onsite');
+        $isHomeService = $shippingOptions->contains(fn ($opt) => ($opt->type->value ?? $opt->type) === 'home_service');
+
+        $isCod = $shippingOptions->contains(fn ($opt) => ($opt->type->value ?? $opt->type) === 'cod');
+        $isPickup = $shippingOptions->contains(fn ($opt) => in_array(($opt->type->value ?? $opt->type), ['pickup', 'gratis'], true));
+        $deliveryOption = $shippingOptions->first(fn ($opt) => ($opt->type->value ?? $opt->type) === 'delivery');
+        $isDelivery = !is_null($deliveryOption);
+        $deliveryFeeMin = $deliveryOption?->price ? (int) ($deliveryOption->price / 100) : null;
+        $deliveryFeeMax = $deliveryOption?->price_max ? (int) ($deliveryOption->price_max / 100) : null;
 
         return [
             // Primary identifier
@@ -74,17 +86,17 @@ class ProductResource extends JsonResource
             'availabilityStatus' => $this->availability_status?->value,
             
             // Service modes (for jasa)
-            'isOnline' => $this->is_online,
-            'isOnsite' => $this->is_onsite,
-            'isHomeService' => $this->is_home_service,
+            'isOnline' => $isOnline,
+            'isOnsite' => $isOnsite,
+            'isHomeService' => $isHomeService,
             
             // Shipping (for barang)
             'canNego' => $this->can_nego,
-            'isCod' => $this->is_cod,
-            'isPickup' => $this->is_pickup,
-            'isDelivery' => $this->is_delivery,
-            'deliveryFeeMin' => $this->delivery_fee_min ? (int) ($this->delivery_fee_min / 100) : null,
-            'deliveryFeeMax' => $this->delivery_fee_max ? (int) ($this->delivery_fee_max / 100) : null,
+            'isCod' => $isCod,
+            'isPickup' => $isPickup,
+            'isDelivery' => $isDelivery,
+            'deliveryFeeMin' => $deliveryFeeMin,
+            'deliveryFeeMax' => $deliveryFeeMax,
             
             // Shipping Options (1NF - dari tabel terpisah ke array)
             'shippingOptions' => ShippingOptionResource::collection(

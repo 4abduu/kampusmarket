@@ -31,6 +31,7 @@ class Order extends Model
         'admin_fee_deducted',
         'total_price',
         'net_income',
+        'selected_shipping_option_id',
         'shipping_type',
         'shipping_method',
         'shipping_address',
@@ -107,6 +108,14 @@ class Order extends Model
     public function selectedAddress()
     {
         return $this->belongsTo(Address::class, 'selected_address_id');
+    }
+
+    /**
+     * Get the selected shipping option.
+     */
+    public function selectedShippingOption()
+    {
+        return $this->belongsTo(ShippingOption::class, 'selected_shipping_option_id');
     }
 
     /**

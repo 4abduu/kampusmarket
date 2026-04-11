@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\ShippingType;
-use App\Enums\ProductType;
 
 class StoreOrderRequest extends FormRequest
 {
@@ -32,7 +30,8 @@ class StoreOrderRequest extends FormRequest
             'negoPrice' => ['nullable', 'integer', 'min:0'],
 
             // Shipping
-            'shippingType' => ['required', 'in:cod,pickup,delivery,online,onsite,home_service'],
+            'shippingType' => ['required', 'in:gratis,cod,pickup,delivery,online,onsite,home_service'],
+            'selectedShippingOptionId' => ['required', 'exists:shipping_options,uuid'],
             'selectedAddressId' => ['required_if:shippingType,delivery', 'exists:addresses,uuid'],
             'shippingNotes' => ['nullable', 'string', 'max:500'],
 
@@ -65,6 +64,8 @@ class StoreOrderRequest extends FormRequest
             'quantity.min' => 'Jumlah minimal 1',
             'shippingType.required' => 'Metode pengiriman wajib dipilih',
             'shippingType.in' => 'Metode pengiriman tidak valid',
+            'selectedShippingOptionId.required' => 'Opsi pengiriman wajib dipilih',
+            'selectedShippingOptionId.exists' => 'Opsi pengiriman tidak ditemukan',
             'selectedAddressId.required_if' => 'Alamat pengiriman wajib dipilih',
             'selectedAddressId.exists' => 'Alamat tidak ditemukan',
             'paymentMethod.required' => 'Metode pembayaran wajib dipilih',
@@ -104,6 +105,12 @@ class StoreOrderRequest extends FormRequest
         if ($this->has('selectedAddressId')) {
             $this->merge([
                 'selected_address_id' => $this->selectedAddressId,
+            ]);
+        }
+
+        if ($this->has('selectedShippingOptionId')) {
+            $this->merge([
+                'selected_shipping_option_id' => $this->selectedShippingOptionId,
             ]);
         }
     }

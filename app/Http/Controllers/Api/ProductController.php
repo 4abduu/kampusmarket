@@ -137,15 +137,7 @@ class ProductController extends Controller
             'duration_unit' => $request->durationUnit,
             'duration_is_plus' => $request->durationIsPlus ?? false,
             'availability_status' => $request->availabilityStatus,
-            'is_online' => $request->isOnline ?? false,
-            'is_onsite' => $request->isOnsite ?? false,
-            'is_home_service' => $request->isHomeService ?? false,
             'can_nego' => $request->canNego ?? true,
-            'is_cod' => $request->isCod ?? false,
-            'is_pickup' => $request->isPickup ?? true,
-            'is_delivery' => $request->isDelivery ?? false,
-            'delivery_fee_min' => $request->deliveryFeeMin ? CurrencyHelper::toCent($request->deliveryFeeMin) : null,
-            'delivery_fee_max' => $request->deliveryFeeMax ? CurrencyHelper::toCent($request->deliveryFeeMax) : null,
             'location' => $request->location,
             'status' => $request->status ?? 'active',
         ]);
@@ -162,18 +154,49 @@ class ProductController extends Controller
             }
         }
 
-        // Save shipping options
-        if ($request->has('shippingOptions')) {
-            foreach ($request->shippingOptions as $option) {
-                ShippingOption::create([
-                    'uuid' => NumberGenerator::uuid(),
-                    'product_id' => $product->id,
-                    'type' => $option['type'],
-                    'label' => $option['label'],
-                    'price' => CurrencyHelper::toCent($option['price']),
-                    'price_max' => isset($option['priceMax']) ? CurrencyHelper::toCent($option['priceMax']) : null,
-                ]);
+        // Save shipping/service options (source-of-truth in shipping_options).
+        $options = $request->input('shippingOptions', []);
+
+        if (empty($options)) {
+            if ($request->type === 'barang') {
+                if ($request->isCod) {
+                    $options[] = ['type' => 'cod', 'label' => 'COD / Ketemuan', 'price' => 0];
+                }
+                if ($request->isPickup) {
+                    $options[] = ['type' => 'pickup', 'label' => 'Ambil Sendiri', 'price' => 0];
+                }
+                if ($request->isDelivery) {
+                    $options[] = [
+                        'type' => 'delivery',
+                        'label' => 'Antar Manual',
+                        'price' => $request->deliveryFeeMin ?? 0,
+                        'priceMax' => $request->deliveryFeeMax,
+                    ];
+                }
             }
+
+            if ($request->type === 'jasa') {
+                if ($request->isOnline) {
+                    $options[] = ['type' => 'online', 'label' => 'Online', 'price' => 0];
+                }
+                if ($request->isOnsite) {
+                    $options[] = ['type' => 'onsite', 'label' => 'Ke Lokasi Penyedia Jasa', 'price' => 0];
+                }
+                if ($request->isHomeService) {
+                    $options[] = ['type' => 'home_service', 'label' => 'Home Service', 'price' => 0];
+                }
+            }
+        }
+
+        foreach ($options as $option) {
+            ShippingOption::create([
+                'uuid' => NumberGenerator::uuid(),
+                'product_id' => $product->id,
+                'type' => $option['type'],
+                'label' => $option['label'] ?? $option['type'],
+                'price' => CurrencyHelper::toCent((int) ($option['price'] ?? 0)),
+                'price_max' => isset($option['priceMax']) ? CurrencyHelper::toCent((int) $option['priceMax']) : null,
+            ]);
         }
 
         return response()->json([
@@ -217,7 +240,69 @@ class ProductController extends Controller
             ], 403);
         }
 
-        $product->update($request->validated());
+        $updateData = [];
+
+        if ($request->has('title')) {
+            $updateData['title'] = $request->title;
+        }
+        if ($request->has('description')) {
+            $updateData['description'] = $request->description;
+        }
+        if ($request->has('categoryId')) {
+            $updateData['category_id'] = $request->categoryId;
+        }
+        if ($request->has('price')) {
+            $updateData['price'] = $request->price;
+        }
+        if ($request->has('originalPrice')) {
+            $updateData['original_price'] = $request->originalPrice ? CurrencyHelper::toCent($request->originalPrice) : null;
+        }
+        if ($request->has('priceMin')) {
+            $updateData['price_min'] = $request->priceMin ? CurrencyHelper::toCent($request->priceMin) : null;
+        }
+        if ($request->has('priceMax')) {
+            $updateData['price_max'] = $request->priceMax ? CurrencyHelper::toCent($request->priceMax) : null;
+        }
+        if ($request->has('priceType')) {
+            $updateData['price_type'] = $request->priceType;
+        }
+        if ($request->has('condition')) {
+            $updateData['condition'] = $request->condition;
+        }
+        if ($request->has('stock')) {
+            $updateData['stock'] = $request->stock;
+        }
+        if ($request->has('weight')) {
+            $updateData['weight'] = $request->weight;
+        }
+        if ($request->has('durationMin')) {
+            $updateData['duration_min'] = $request->durationMin;
+        }
+        if ($request->has('durationMax')) {
+            $updateData['duration_max'] = $request->durationMax;
+        }
+        if ($request->has('durationUnit')) {
+            $updateData['duration_unit'] = $request->durationUnit;
+        }
+        if ($request->has('durationIsPlus')) {
+            $updateData['duration_is_plus'] = $request->durationIsPlus;
+        }
+        if ($request->has('availabilityStatus')) {
+            $updateData['availability_status'] = $request->availabilityStatus;
+        }
+        if ($request->has('canNego')) {
+            $updateData['can_nego'] = $request->canNego;
+        }
+        if ($request->has('location')) {
+            $updateData['location'] = $request->location;
+        }
+        if ($request->has('status')) {
+            $updateData['status'] = $request->status;
+        }
+
+        if (!empty($updateData)) {
+            $product->update($updateData);
+        }
 
         // Update images if provided
         if ($request->has('images')) {
@@ -228,6 +313,21 @@ class ProductController extends Controller
                     'url' => $imageUrl,
                     'sort_order' => $index,
                     'is_primary' => $index === 0,
+                ]);
+            }
+        }
+
+        if ($request->has('shippingOptions')) {
+            $product->shippingOptions()->delete();
+
+            foreach ($request->shippingOptions as $option) {
+                ShippingOption::create([
+                    'uuid' => NumberGenerator::uuid(),
+                    'product_id' => $product->id,
+                    'type' => $option['type'],
+                    'label' => $option['label'] ?? $option['type'],
+                    'price' => CurrencyHelper::toCent((int) ($option['price'] ?? 0)),
+                    'price_max' => isset($option['priceMax']) ? CurrencyHelper::toCent((int) $option['priceMax']) : null,
                 ]);
             }
         }

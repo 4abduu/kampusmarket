@@ -7,13 +7,9 @@ use App\Models\Order;
 use App\Models\OrderHistory;
 use App\Models\Product;
 use App\Models\Address;
-use App\Models\User;
 use App\Models\WalletTransaction;
-use App\Models\Chat;
-use App\Models\Message;
 use App\Http\Resources\OrderResource;
 use App\Http\Requests\StoreOrderRequest;
-use App\Http\Requests\UpdateOrderRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\CurrencyHelper;
@@ -31,7 +27,7 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $query = Order::with(['product.images', 'buyer', 'seller'])
+        $query = Order::with(['product.images', 'buyer', 'seller', 'selectedShippingOption'])
             ->where('buyer_id', $user->id)
             ->orWhere('seller_id', $user->id);
 
@@ -96,7 +92,27 @@ class OrderController extends Controller
         $basePrice = $product->price;
         $negoPrice = $request->nego_price ?? null;
         $finalPrice = $negoPrice ?? $basePrice;
-        $shippingFee = 0;
+
+        $selectedShippingOption = $product->shippingOptions()
+            ->where('uuid', $request->selected_shipping_option_id)
+            ->first();
+
+        if (!$selectedShippingOption) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Opsi pengiriman tidak valid untuk produk ini',
+            ], 400);
+        }
+
+        $selectedShippingType = $selectedShippingOption->type->value ?? $selectedShippingOption->type;
+        if ($selectedShippingType !== $request->shippingType) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tipe pengiriman tidak sesuai dengan opsi yang dipilih',
+            ], 400);
+        }
+
+        $shippingFee = (int) ($selectedShippingOption->price ?? 0);
 
         // Determine initial status based on product type
         $initialStatus = OrderStatus::PENDING;
@@ -104,7 +120,7 @@ class OrderController extends Controller
         if ($product->type->value === 'jasa' && $product->price_type->value !== 'fixed') {
             // Variable pricing for jasa - need seller to set price
             $initialStatus = OrderStatus::WAITING_PRICE;
-        } elseif ($request->shippingType === 'delivery' && $product->type->value === 'barang') {
+        } elseif ($selectedShippingType === ShippingType::DELIVERY->value && $product->type->value === 'barang' && $shippingFee === 0) {
             // Need seller to set shipping fee
             $initialStatus = OrderStatus::WAITING_SHIPPING_FEE;
         }
@@ -143,7 +159,9 @@ class OrderController extends Controller
             'admin_fee_deducted' => $adminFeeDeducted,
             'total_price' => $totalPrice,
             'net_income' => $netIncome,
-            'shipping_type' => $request->shippingType,
+            'selected_shipping_option_id' => $selectedShippingOption->id,
+            'shipping_type' => $selectedShippingType,
+            'shipping_method' => $selectedShippingOption->label,
             'shipping_address' => $shippingAddress,
             'shipping_notes' => $request->shippingNotes,
             'selected_address_id' => $selectedAddress?->id,
@@ -171,7 +189,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pesanan berhasil dibuat',
-            'data' => new OrderResource($order->load(['product.images', 'buyer', 'seller'])),
+            'data' => new OrderResource($order->load(['product.images', 'buyer', 'seller', 'selectedShippingOption'])),
         ], 201);
     }
 
@@ -180,7 +198,7 @@ class OrderController extends Controller
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $order = Order::with(['product.images', 'buyer', 'seller', 'history.actor', 'selectedAddress'])
+        $order = Order::with(['product.images', 'buyer', 'seller', 'history.actor', 'selectedAddress', 'selectedShippingOption'])
             ->where('uuid', $id)
             ->firstOrFail();
 
@@ -204,7 +222,7 @@ class OrderController extends Controller
      */
     public function buyerOrders(Request $request): JsonResponse
     {
-        $query = Order::with(['product.images', 'seller'])
+        $query = Order::with(['product.images', 'seller', 'selectedShippingOption'])
             ->where('buyer_id', $request->user()->id);
 
         if ($request->has('status')) {
@@ -230,7 +248,7 @@ class OrderController extends Controller
      */
     public function sellerOrders(Request $request): JsonResponse
     {
-        $query = Order::with(['product.images', 'buyer'])
+        $query = Order::with(['product.images', 'buyer', 'selectedShippingOption'])
             ->where('seller_id', $request->user()->id);
 
         if ($request->has('status')) {
@@ -394,7 +412,7 @@ class OrderController extends Controller
                 'total_price' => $newFinalPrice + $order->shipping_fee,
                 'net_income' => $newNetIncome,
                 'admin_fee_deducted' => $newAdminFee,
-                'status' => $order->shipping_type === ShippingType::DELIVERY->value 
+                'status' => $order->shipping_type === ShippingType::DELIVERY
                     ? OrderStatus::WAITING_SHIPPING_FEE 
                     : OrderStatus::WAITING_PAYMENT,
             ]);
@@ -484,10 +502,9 @@ class OrderController extends Controller
 
         // Update order status
         $newStatus = match ($order->shipping_type) {
-            ShippingType::COD->value => OrderStatus::PROCESSING,
-            ShippingType::PICKUP->value => OrderStatus::READY_PICKUP,
-            ShippingType::DELIVERY->value => OrderStatus::IN_DELIVERY,
-            ShippingType::ONLINE->value => OrderStatus::PROCESSING,
+            ShippingType::GRATIS, ShippingType::PICKUP => OrderStatus::READY_PICKUP,
+            ShippingType::COD, ShippingType::ONLINE, ShippingType::ONSITE, ShippingType::HOME_SERVICE => OrderStatus::PROCESSING,
+            ShippingType::DELIVERY => OrderStatus::IN_DELIVERY,
             default => OrderStatus::PROCESSING,
         };
 

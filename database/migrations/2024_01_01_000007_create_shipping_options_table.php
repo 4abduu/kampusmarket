@@ -17,14 +17,15 @@ return new class extends Migration
 
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
 
-            $table->enum('type', ['gratis', 'pickup', 'delivery'])->default('pickup');
-            $table->string('label'); // 'Ketemuan Kampus', 'Antar ke Alamat', etc.
+            $table->enum('type', ['gratis', 'cod', 'pickup', 'delivery', 'online', 'onsite', 'home_service'])->default('pickup');
+            $table->string('label'); // Label tampilan metode pemenuhan/pelayanan.
             $table->unsignedBigInteger('price')->default(0); // dalam cent
             $table->unsignedBigInteger('price_max')->nullable(); // untuk range harga
 
             $table->timestamps();
 
             $table->index('product_id');
+            $table->unique(['product_id', 'type']);
         });
     }
 

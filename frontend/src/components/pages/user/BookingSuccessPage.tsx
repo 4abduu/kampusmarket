@@ -58,7 +58,7 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
       deadline: "Senin, 20 Januari 2025",
       time: "14:00 - 18:00 WIB",
     },
-    serviceMethod: "cod", // pickup, cod, online
+    serviceMethod: "home_service", // onsite, home_service, online
     location: "Kampus Universitas Indonesia, Depok",
     notes: "Foto wisuda dengan 2 orang, perlu 10 foto edit + 5 foto cetak. Lokasi di sekitar gedung rektorat.",
     requirements: "Untuk foto wisuda dengan 2 orang, perlu 10 foto edit + 5 foto cetak. Waktu pengambilan sore hari.",
@@ -77,12 +77,12 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
   const getServiceMethodLabel = (method: string) => {
     switch (method) {
-      case "pickup":
-        return { label: "Datang ke Lokasi", icon: Home, color: "bg-blue-100 text-blue-700" };
-      case "cod":
-        return { label: "Jasa Datang ke Lokasi", icon: MapPin, color: "bg-amber-100 text-amber-700" };
+      case "onsite":
+        return { label: "Ke Lokasi Penyedia Jasa", icon: Home, color: "bg-blue-100 text-blue-700" };
+      case "home_service":
+        return { label: "Home Service", icon: MapPin, color: "bg-amber-100 text-amber-700" };
       case "online":
-        return { label: "Online/Remote", icon: Monitor, color: "bg-purple-100 text-purple-700" };
+        return { label: "Online", icon: Monitor, color: "bg-purple-100 text-purple-700" };
       default:
         return { label: "Sesuai Kesepakatan", icon: Calendar, color: "bg-slate-100 text-slate-700" };
     }
@@ -102,13 +102,13 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
     }
 
     switch (bookingData.serviceMethod) {
-      case "pickup":
+      case "onsite":
         baseSteps.push(
           { icon: Home, text: "Datang ke lokasi penyedia jasa sesuai jadwal" },
           { icon: Wallet, text: "Bayar di tempat atau transfer" }
         );
         break;
-      case "cod":
+      case "home_service":
         baseSteps.push(
           { icon: MapPin, text: "Koordinasikan lokasi dan waktu dengan penyedia" },
           { icon: Wallet, text: "Bayar di tempat saat layanan selesai" }
@@ -116,7 +116,7 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
         break;
       case "online":
         baseSteps.push(
-          { icon: Monitor, text: "Layanan akan dilakukan secara online/remote" },
+          { icon: Monitor, text: "Layanan akan dilakukan secara online" },
           { icon: Wallet, text: "Bayar via transfer sebelum/sesudah layanan" }
         );
         break;

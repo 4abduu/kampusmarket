@@ -59,6 +59,10 @@ class UpdateProductRequest extends FormRequest
             $rules['deliveryFeeMin'] = ['nullable', 'integer', 'min:0'];
             $rules['deliveryFeeMax'] = ['nullable', 'integer', 'min:0'];
             $rules['shippingOptions'] = ['nullable', 'array'];
+            $rules['shippingOptions.*.type'] = ['required_with:shippingOptions', 'in:gratis,cod,pickup,delivery'];
+            $rules['shippingOptions.*.label'] = ['required_with:shippingOptions', 'string', 'max:100'];
+            $rules['shippingOptions.*.price'] = ['required_with:shippingOptions', 'integer', 'min:0'];
+            $rules['shippingOptions.*.priceMax'] = ['nullable', 'integer', 'min:0'];
         }
 
         // Jasa specific rules
@@ -71,6 +75,11 @@ class UpdateProductRequest extends FormRequest
             $rules['isOnline'] = ['sometimes', 'boolean'];
             $rules['isOnsite'] = ['sometimes', 'boolean'];
             $rules['isHomeService'] = ['sometimes', 'boolean'];
+            $rules['shippingOptions'] = ['nullable', 'array'];
+            $rules['shippingOptions.*.type'] = ['required_with:shippingOptions', 'in:online,onsite,home_service'];
+            $rules['shippingOptions.*.label'] = ['required_with:shippingOptions', 'string', 'max:100'];
+            $rules['shippingOptions.*.price'] = ['required_with:shippingOptions', 'integer', 'min:0'];
+            $rules['shippingOptions.*.priceMax'] = ['nullable', 'integer', 'min:0'];
         }
 
         return $rules;
@@ -98,6 +107,40 @@ class UpdateProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $snakeToCamel = [
+            'category_id' => 'categoryId',
+            'price_type' => 'priceType',
+            'original_price' => 'originalPrice',
+            'price_min' => 'priceMin',
+            'price_max' => 'priceMax',
+            'can_nego' => 'canNego',
+            'is_cod' => 'isCod',
+            'is_pickup' => 'isPickup',
+            'is_delivery' => 'isDelivery',
+            'delivery_fee_min' => 'deliveryFeeMin',
+            'delivery_fee_max' => 'deliveryFeeMax',
+            'duration_min' => 'durationMin',
+            'duration_max' => 'durationMax',
+            'duration_unit' => 'durationUnit',
+            'duration_is_plus' => 'durationIsPlus',
+            'availability_status' => 'availabilityStatus',
+            'is_online' => 'isOnline',
+            'is_onsite' => 'isOnsite',
+            'is_home_service' => 'isHomeService',
+            'shipping_options' => 'shippingOptions',
+        ];
+
+        $normalized = [];
+        foreach ($snakeToCamel as $snake => $camel) {
+            if ($this->has($snake) && !$this->has($camel)) {
+                $normalized[$camel] = $this->input($snake);
+            }
+        }
+
+        if (!empty($normalized)) {
+            $this->merge($normalized);
+        }
+
         // Convert price from Rupiah to cent
         if ($this->has('price')) {
             $this->merge([

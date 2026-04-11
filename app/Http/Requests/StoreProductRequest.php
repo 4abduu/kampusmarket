@@ -3,12 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\ProductType;
-use App\Enums\ProductStatus;
-use App\Enums\ProductCondition;
-use App\Enums\PriceType;
-use App\Enums\DurationUnit;
-use App\Enums\AvailabilityStatus;
 
 class StoreProductRequest extends FormRequest
 {
@@ -68,7 +62,7 @@ class StoreProductRequest extends FormRequest
             $rules['deliveryFeeMin'] = ['nullable', 'integer', 'min:0'];
             $rules['deliveryFeeMax'] = ['nullable', 'integer', 'min:0'];
             $rules['shippingOptions'] = ['nullable', 'array'];
-            $rules['shippingOptions.*.type'] = ['required', 'in:gratis,pickup,delivery'];
+            $rules['shippingOptions.*.type'] = ['required', 'in:gratis,cod,pickup,delivery'];
             $rules['shippingOptions.*.label'] = ['required', 'string', 'max:100'];
             $rules['shippingOptions.*.price'] = ['required', 'integer', 'min:0'];
             $rules['shippingOptions.*.priceMax'] = ['nullable', 'integer', 'min:0'];
@@ -86,6 +80,11 @@ class StoreProductRequest extends FormRequest
             $rules['isOnline'] = ['boolean'];
             $rules['isOnsite'] = ['boolean'];
             $rules['isHomeService'] = ['boolean'];
+            $rules['shippingOptions'] = ['nullable', 'array'];
+            $rules['shippingOptions.*.type'] = ['required', 'in:online,onsite,home_service'];
+            $rules['shippingOptions.*.label'] = ['required', 'string', 'max:100'];
+            $rules['shippingOptions.*.price'] = ['required', 'integer', 'min:0'];
+            $rules['shippingOptions.*.priceMax'] = ['nullable', 'integer', 'min:0'];
         }
 
         return $rules;
@@ -124,6 +123,40 @@ class StoreProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $snakeToCamel = [
+            'category_id' => 'categoryId',
+            'price_type' => 'priceType',
+            'original_price' => 'originalPrice',
+            'price_min' => 'priceMin',
+            'price_max' => 'priceMax',
+            'can_nego' => 'canNego',
+            'is_cod' => 'isCod',
+            'is_pickup' => 'isPickup',
+            'is_delivery' => 'isDelivery',
+            'delivery_fee_min' => 'deliveryFeeMin',
+            'delivery_fee_max' => 'deliveryFeeMax',
+            'duration_min' => 'durationMin',
+            'duration_max' => 'durationMax',
+            'duration_unit' => 'durationUnit',
+            'duration_is_plus' => 'durationIsPlus',
+            'availability_status' => 'availabilityStatus',
+            'is_online' => 'isOnline',
+            'is_onsite' => 'isOnsite',
+            'is_home_service' => 'isHomeService',
+            'shipping_options' => 'shippingOptions',
+        ];
+
+        $normalized = [];
+        foreach ($snakeToCamel as $snake => $camel) {
+            if ($this->has($snake) && !$this->has($camel)) {
+                $normalized[$camel] = $this->input($snake);
+            }
+        }
+
+        if (!empty($normalized)) {
+            $this->merge($normalized);
+        }
+
         // Convert price from Rupiah to cent
         if ($this->has('price')) {
             $this->merge([

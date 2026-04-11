@@ -102,7 +102,7 @@ export interface Product {
 }
 
 export interface ShippingOption {
-  type: "gratis" | "pickup" | "delivery";
+  type: "gratis" | "cod" | "pickup" | "delivery" | "online" | "onsite" | "home_service";
   label: string;
   price: number;
   priceMax?: number;
@@ -2830,8 +2830,8 @@ export const mockOrders: Order[] = [
     shippingFee: 0,
     totalPrice: 0,
     netIncome: 0,
-    shippingMethod: "Lokasi Wisata",
-    shippingType: "pickup",
+    shippingMethod: "Ke Lokasi Penyedia Jasa",
+    shippingType: "onsite",
     paymentMethod: "transfer",
     paymentStatus: "pending",
     serviceDate: "2024-11-28",
@@ -2862,8 +2862,8 @@ export const mockOrders: Order[] = [
     shippingFee: 0,
     totalPrice: 75000,
     netIncome: calculateNetIncome(75000),
-    shippingMethod: "Online/Remote",
-    shippingType: "pickup",
+    shippingMethod: "Online",
+    shippingType: "online",
     paymentMethod: "transfer",
     paymentStatus: "pending",
     serviceDate: "2024-11-25",
@@ -2897,8 +2897,8 @@ export const mockOrders: Order[] = [
     shippingFee: 0,
     totalPrice: 250000,
     netIncome: calculateNetIncome(250000),
-    shippingMethod: "Online/Remote",
-    shippingType: "pickup",
+    shippingMethod: "Online",
+    shippingType: "online",
     paymentMethod: "transfer",
     paymentStatus: "paid",
     serviceDate: "2024-11-22",
@@ -2932,8 +2932,8 @@ export const mockOrders: Order[] = [
     shippingFee: 0,
     totalPrice: 120000,
     netIncome: calculateNetIncome(120000),
-    shippingMethod: "Jasa Datang ke Lokasi",
-    shippingType: "cod",
+    shippingMethod: "Home Service",
+    shippingType: "home_service",
     paymentMethod: "cod",
     paymentStatus: "paid",
     serviceDate: "2024-11-16",
