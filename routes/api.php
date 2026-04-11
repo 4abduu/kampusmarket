@@ -70,6 +70,7 @@ Route::get('/users/{id}/reviews', [UserController::class, 'reviews']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'googleLogin']);
+Route::post('/auth/google/complete-faculty', [AuthController::class, 'completeGoogleFaculty'])->middleware('auth:sanctum');
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
@@ -123,7 +124,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/cart', [ProductController::class, 'clearCart']);
 
     Route::get('/favorites', [ProductController::class, 'getFavorites']);
-    Route::post('/favorites/{productId}', [ProductController::class, 'toggleFavorite']);
+    Route::post('/favorites/{productId}', [ProductController::class, 'addFavorite']);
+    Route::delete('/favorites/{productId}', [ProductController::class, 'removeFavorite']);
     Route::get('/favorites/check/{productId}', [ProductController::class, 'checkFavorite']);
 
     // ----------------------------------------
@@ -150,6 +152,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/chats/unread-count', [ChatController::class, 'unreadCount']);
     Route::get('/chats/{id}', [ChatController::class, 'show']);
     Route::get('/chats/{id}/messages', [ChatController::class, 'messages']);
+    Route::get('/chats/{chatId}/messages/{messageId}/attachments', [ChatController::class, 'attachments']);
     Route::post('/chats/{id}/messages', [ChatController::class, 'sendMessage']);
     Route::post('/chats/{id}/read', [ChatController::class, 'markAsRead']);
     Route::post('/chats/{chatId}/messages/{messageId}/accept-offer', [ChatController::class, 'acceptOffer']);
@@ -212,6 +215,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     // Dashboard
     Route::get('/stats', [UserController::class, 'adminStats']);
 
+    // Faculties Management
+    Route::get('/faculties', [FacultyController::class, 'adminIndex']);
+    Route::post('/faculties', [FacultyController::class, 'store']);
+    Route::put('/faculties/{code}', [FacultyController::class, 'update']);
+    Route::put('/faculties/{code}/status', [FacultyController::class, 'updateStatus']);
+    Route::delete('/faculties/{code}', [FacultyController::class, 'destroy']);
+
     // User Management
     Route::get('/users', [UserController::class, 'index']);
     Route::put('/users/{id}/ban', [UserController::class, 'ban']);
@@ -233,6 +243,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     // Withdrawals Management
     Route::get('/withdrawals', [WalletController::class, 'adminWithdrawals']);
     Route::put('/withdrawals/{id}/approve', [WalletController::class, 'approveWithdrawal']);
+    Route::put('/withdrawals/{id}/process', [WalletController::class, 'processWithdrawal']);
     Route::put('/withdrawals/{id}/reject', [WalletController::class, 'rejectWithdrawal']);
+    Route::put('/withdrawals/{id}/fail', [WalletController::class, 'failWithdrawal']);
     Route::put('/withdrawals/{id}/complete', [WalletController::class, 'completeWithdrawal']);
 });

@@ -1,0 +1,126 @@
+import { lazy, Suspense } from "react";
+import { Route, Routes } from "react-router-dom";
+
+import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
+
+const LandingPage = lazy(() => import("@/components/pages/guest/LandingPage"));
+const LoginPage = lazy(() => import("@/components/pages/guest/LoginPage"));
+const RegisterPage = lazy(() => import("@/components/pages/guest/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("@/components/pages/guest/ForgotPasswordPage"));
+const FacultySelectionPage = lazy(() => import("@/components/pages/guest/FacultySelectionPage"));
+const CatalogPage = lazy(() => import("@/components/pages/guest/CatalogPage"));
+const ServicesPage = lazy(() => import("@/components/pages/guest/ServicesPage"));
+const ServiceDetailPage = lazy(() => import("@/components/pages/guest/ServiceDetailPage"));
+const ProductDetailPage = lazy(() => import("@/components/pages/guest/ProductDetailPage"));
+const CheckoutPage = lazy(() => import("@/components/pages/user/CheckoutPage"));
+const UserDashboardPage = lazy(() => import("@/components/pages/user/UserDashboardPage"));
+const ChatPage = lazy(() => import("@/components/pages/user/ChatPage"));
+const AdminDashboardPage = lazy(() => import("@/components/pages/admin/AdminDashboardPage"));
+const AddProductPage = lazy(() => import("@/components/pages/user/AddProductPage"));
+const CartPage = lazy(() => import("@/components/pages/user/CartPage"));
+const OrdersListPage = lazy(() => import("@/components/pages/user/OrdersListPage"));
+const OrderDetailPage = lazy(() => import("@/components/pages/user/OrderDetailPage"));
+const RatingPage = lazy(() => import("@/components/pages/user/RatingPage"));
+const UserNotificationsPage = lazy(() => import("@/components/pages/user/UserNotificationsPage"));
+const AdminNotificationsPage = lazy(() => import("@/components/pages/admin/AdminNotificationsPage"));
+const CheckoutSuccessPage = lazy(() => import("@/components/pages/user/CheckoutSuccessPage"));
+const EmailVerificationPage = lazy(() => import("@/components/pages/guest/EmailVerificationPage"));
+const SearchResultsPage = lazy(() => import("@/components/pages/guest/SearchResultsPage"));
+const ProfilePage = lazy(() => import("@/components/pages/user/ProfilePage"));
+const FavoritesPage = lazy(() => import("@/components/pages/user/FavoritesPage"));
+
+type AppRoutesProps = {
+  onNavigate: NavigateHandler;
+  onLogin: (role?: "user" | "admin", customerOnly?: boolean) => void;
+  onStartSelling: () => void;
+  onGooglePendingSelection: (session: GoogleAuthSession) => void;
+  onSellerProductCountChange: (count: number) => void;
+  isLoggedIn: boolean;
+  isCustomerOnly: boolean;
+  registeredEmail: string | null;
+  currentId: string | null;
+  googleUserData: { userName?: string; userEmail?: string } | null;
+  googleAuthSession: GoogleAuthSession | null;
+  currentSuccessType: "product" | "service" | null;
+};
+
+export default function AppRoutes({
+  onNavigate,
+  onLogin,
+  onStartSelling,
+  onGooglePendingSelection,
+  onSellerProductCountChange,
+  isLoggedIn,
+  isCustomerOnly,
+  registeredEmail,
+  currentId,
+  googleUserData,
+  googleAuthSession,
+  currentSuccessType,
+}: AppRoutesProps) {
+  return (
+    <Suspense
+      fallback={(
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+        </div>
+      )}
+    >
+      <Routes>
+        <Route
+          path="/login"
+          element={(
+            <LoginPage
+              onNavigate={onNavigate}
+              onLogin={onLogin}
+              onGooglePendingSelection={onGooglePendingSelection}
+            />
+          )}
+        />
+        <Route path="/register" element={<RegisterPage onNavigate={onNavigate} onLogin={onLogin} />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={onNavigate} />} />
+        <Route
+          path="/faculty-selection"
+          element={(
+            <FacultySelectionPage
+              onLogin={onLogin}
+              userName={googleUserData?.userName}
+              userEmail={googleUserData?.userEmail}
+              authToken={googleAuthSession?.token}
+            />
+          )}
+        />
+        <Route path="/email-verification" element={<EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />} />
+
+        <Route path="/" element={<LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />} />
+        <Route path="/catalog" element={<CatalogPage onNavigate={onNavigate} />} />
+        <Route path="/services" element={<ServicesPage onNavigate={onNavigate} />} />
+        <Route path="/product/:id" element={<ProductDetailPage onNavigate={onNavigate} productId={currentId || "p1"} isLoggedIn={isLoggedIn} onLogin={onLogin} />} />
+        <Route path="/service/:id" element={<ServiceDetailPage onNavigate={onNavigate} serviceId={currentId || "s1"} />} />
+
+        <Route path="/checkout" element={<CheckoutPage onNavigate={onNavigate} />} />
+        <Route path="/cart" element={<CartPage onNavigate={onNavigate} />} />
+        <Route path="/checkout-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType={currentSuccessType || "product"} />} />
+        <Route path="/payment-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="product" />} />
+        <Route path="/booking-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="service" />} />
+
+        <Route path="/dashboard" element={<UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} />} />
+        <Route path="/my-products" element={<UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} />} />
+        <Route path="/wallet" element={<UserDashboardPage onNavigate={onNavigate} currentPage="wallet" onSellerProductCountChange={onSellerProductCountChange} />} />
+        <Route path="/settings" element={<UserDashboardPage onNavigate={onNavigate} currentPage="settings" onSellerProductCountChange={onSellerProductCountChange} />} />
+        <Route path="/orders" element={<OrdersListPage onNavigate={onNavigate} />} />
+        <Route path="/favorites" element={<FavoritesPage onNavigate={onNavigate} />} />
+        <Route path="/order-detail/:id" element={<OrderDetailPage onNavigate={onNavigate} orderId={currentId || undefined} />} />
+        <Route path="/rating" element={<RatingPage onNavigate={onNavigate} />} />
+        <Route path="/chat" element={<ChatPage onNavigate={onNavigate} />} />
+        <Route path="/notifications" element={<UserNotificationsPage onNavigate={onNavigate} />} />
+        <Route path="/profile/:id?" element={<ProfilePage onNavigate={onNavigate} userId={currentId || undefined} />} />
+        <Route path="/add-product" element={<AddProductPage onNavigate={onNavigate} />} />
+
+        <Route path="/search" element={<SearchResultsPage onNavigate={onNavigate} />} />
+        <Route path="/admin" element={<AdminDashboardPage onNavigate={onNavigate} />} />
+        <Route path="/admin-notifications" element={<AdminNotificationsPage onNavigate={onNavigate} />} />
+      </Routes>
+    </Suspense>
+  );
+}

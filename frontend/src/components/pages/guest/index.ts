@@ -1,0 +1,11 @@
+export { default as LandingPage } from "@/components/pages/guest/LandingPage";
+export { default as CatalogPage } from "@/components/pages/guest/CatalogPage";
+export { default as ServicesPage } from "@/components/pages/guest/ServicesPage";
+export { default as ServiceDetailPage } from "@/components/pages/guest/ServiceDetailPage";
+export { default as ProductDetailPage } from "@/components/pages/guest/ProductDetailPage";
+export { default as SearchResultsPage } from "@/components/pages/guest/SearchResultsPage";
+export { default as LoginPage } from "@/components/pages/guest/LoginPage";
+export { default as RegisterPage } from "@/components/pages/guest/RegisterPage";
+export { default as ForgotPasswordPage } from "@/components/pages/guest/ForgotPasswordPage";
+export { default as FacultySelectionPage } from "@/components/pages/guest/FacultySelectionPage";
+export { default as EmailVerificationPage } from "@/components/pages/guest/EmailVerificationPage";

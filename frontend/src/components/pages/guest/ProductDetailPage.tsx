@@ -1,0 +1,134 @@
+"use client";
+
+import { useState } from "react";
+import { mockProducts } from "@/lib/mock-data";
+import ProductDetailGallery from "@/components/pages/guest/product-detail/ProductDetailGallery";
+import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
+import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
+import ProductDetailSidebar from "@/components/pages/guest/product-detail/ProductDetailSidebar";
+import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/ProductDetailTabsPanel";
+
+interface ProductDetailPageProps {
+  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
+  productId: string;
+  isLoggedIn: boolean;
+  onLogin: (role?: "user" | "admin") => void;
+}
+
+const REPORT_REASONS = [
+  { id: "not_as_described", label: "Barang tidak sesuai deskripsi" },
+  { id: "seller_unresponsive", label: "Penjual tidak responsif" },
+  { id: "fraud", label: "Penipuan / Produk palsu" },
+  { id: "damaged", label: "Barang rusak saat dikirim" },
+  { id: "misleading_photos", label: "Foto menyesatkan" },
+  { id: "price_issue", label: "Harga bermasalah" },
+  { id: "other", label: "Lainnya" },
+];
+
+export default function ProductDetailPage({
+  onNavigate,
+  productId,
+  isLoggedIn,
+  onLogin: _onLogin,
+}: ProductDetailPageProps) {
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportOtherReason, setReportOtherReason] = useState("");
+
+  const product = mockProducts.find((p) => p.id === productId) || mockProducts[0];
+
+  const handleAction = (action: () => void) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    action();
+  };
+
+  const handleReportSubmit = () => {
+    if (!reportReason || !reportDescription) {
+      alert("Pilih alasan dan masukkan deskripsi laporan");
+      return;
+    }
+
+    const finalReason = reportReason === "other"
+      ? reportOtherReason
+      : REPORT_REASONS.find((r) => r.id === reportReason)?.label;
+
+    if (!finalReason) {
+      alert("Deskripsi alasan laporan tidak boleh kosong");
+      return;
+    }
+
+    alert(`Laporan produk berhasil dikirim!\nAlasan: ${finalReason}\nDeskripsi: ${reportDescription}`);
+    setShowReportModal(false);
+    setReportReason("");
+    setReportDescription("");
+    setReportOtherReason("");
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <ProductDetailLoginDialog open={showLoginModal} onOpenChange={setShowLoginModal} onNavigate={onNavigate} />
+
+      <div className="container mx-auto px-4 py-8">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <button onClick={() => onNavigate("landing")} className="hover:text-primary-600">Beranda</button>
+          <span>/</span>
+          <button onClick={() => onNavigate("catalog")} className="hover:text-primary-600">Katalog</button>
+          <span>/</span>
+          <span className="text-foreground">{product.title}</span>
+        </nav>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            <ProductDetailGallery
+              images={product.images}
+              condition={product.condition}
+              price={product.price}
+              originalPrice={product.originalPrice}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+            />
+            <ProductDetailTabsPanel description={product.description} shippingOptions={product.shippingOptions} />
+          </div>
+
+          <ProductDetailSidebar
+            product={product}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            formatPrice={formatPrice}
+            onAction={handleAction}
+            onNavigate={onNavigate}
+            onOpenReport={() => setShowReportModal(true)}
+          />
+        </div>
+
+        <ProductDetailReportDialog
+          open={showReportModal}
+          onOpenChange={setShowReportModal}
+          reportReason={reportReason}
+          setReportReason={setReportReason}
+          reportDescription={reportDescription}
+          setReportDescription={setReportDescription}
+          reportOtherReason={reportOtherReason}
+          setReportOtherReason={setReportOtherReason}
+          reportReasons={REPORT_REASONS}
+          onSubmit={handleReportSubmit}
+        />
+      </div>
+    </div>
+  );
+}

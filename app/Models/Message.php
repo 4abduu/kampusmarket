@@ -19,7 +19,6 @@ class Message extends Model
         'type',
         'offer_price',
         'offer_status',
-        'file_url',
         'is_read',
         'read_at',
     ];
@@ -46,6 +45,38 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    /**
+     * Get the images for the message.
+     */
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get image URLs as array.
+     */
+    public function getImageUrls(): array
+    {
+        return $this->attachments
+            ->where('type', 'image')
+            ->pluck('url')
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Get file URLs as array.
+     */
+    public function getFileUrls(): array
+    {
+        return $this->attachments
+            ->where('type', 'file')
+            ->pluck('url')
+            ->values()
+            ->toArray();
     }
 
     /**

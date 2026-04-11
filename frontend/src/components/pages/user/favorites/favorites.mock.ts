@@ -1,0 +1,120 @@
+import type { Favorite, Faculty, Product, Seller } from "@/components/pages/user/favorites/favorites.types";
+
+const MOCK_FACULTIES: Record<string, Faculty> = {
+  filkom: { id: 3, code: "filkom", name: "Fakultas Ilmu Komputer (FILKOM)", icon: "💻", color: "bg-purple-500" },
+  feb: { id: 2, code: "feb", name: "Fakultas Ekonomi dan Bisnis (FEB)", icon: "📊", color: "bg-emerald-500" },
+  vokasi: { id: 1, code: "vokasi", name: "Fakultas Vokasi", icon: "🔧", color: "bg-blue-500" },
+  fh: { id: 7, code: "fh", name: "Fakultas Hukum (FH)", icon: "⚖️", color: "bg-yellow-500" },
+  fp: { id: 11, code: "fp", name: "Fakultas Pertanian (FP)", icon: "🌾", color: "bg-lime-500" },
+};
+
+const MOCK_SELLERS: Record<string, Seller> = {
+  s1: { id: 1, uuid: "u-a1b2c3d4", name: "Rizky Pratama", avatar: null, rating: 4.85, review_count: 47, is_verified: true, faculty: MOCK_FACULTIES.filkom },
+  s2: { id: 2, uuid: "u-e5f6g7h8", name: "Sinta Dewi", avatar: null, rating: 4.92, review_count: 63, is_verified: true, faculty: MOCK_FACULTIES.feb },
+  s3: { id: 3, uuid: "u-i9j0k1l2", name: "Ahmad Fauzi", avatar: null, rating: 4.70, review_count: 21, is_verified: false, faculty: MOCK_FACULTIES.vokasi },
+  s4: { id: 4, uuid: "u-m3n4o5p6", name: "Dina Safitri", avatar: null, rating: 4.95, review_count: 112, is_verified: true, faculty: MOCK_FACULTIES.fh },
+  s5: { id: 5, uuid: "u-q7r8s9t0", name: "Budi Setiawan", avatar: null, rating: 4.60, review_count: 8, is_verified: false, faculty: MOCK_FACULTIES.fp },
+};
+
+const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 1, uuid: "prod-001", seller_id: 1, category_id: 1,
+    title: "Laptop ASUS VivoBook 14 M415DA Ryzen 5 Ram 8GB",
+    slug: "laptop-asus-vivobook-14-m415da",
+    description: "Kondisi mulus, pemakaian 1 tahun untuk kuliah. Baterai masih sehat 95%. Kelengkapan lengkap dus, charger, tas.",
+    price: 450000000, original_price: 720000000, price_min: null, price_max: null, price_type: "fixed",
+    type: "barang", condition: "bekas", stock: 1, weight: 1600,
+    duration_min: null, duration_max: null, duration_unit: null, duration_is_plus: false,
+    availability_status: null, is_online: false, is_onsite: false, is_home_service: false,
+    can_nego: true, is_cod: false, is_pickup: true, is_delivery: true, delivery_fee_min: 1500000, delivery_fee_max: 2500000,
+    location: "Malang", views: 342, rating: 4.8, review_count: 12, sold_count: 0, status: "active",
+    created_at: "2025-01-10T08:00:00Z",
+    images: [
+      { id: 1, url: "https://picsum.photos/seed/laptop01/600/450", alt: "Laptop ASUS depan", sort_order: 0, is_primary: true },
+      { id: 2, url: "https://picsum.photos/seed/laptop02/600/450", alt: "Laptop ASUS samping", sort_order: 1, is_primary: false },
+    ],
+    seller: MOCK_SELLERS.s1,
+    category: { id: 1, uuid: "cat-001", name: "Elektronik", slug: "elektronik", icon: "🔌", type: "barang" },
+  },
+  {
+    id: 2, uuid: "prod-002", seller_id: 2, category_id: 8,
+    title: "Jasa Foto Produk & Flat Lay untuk UMKM",
+    slug: "jasa-foto-produk-flat-lay",
+    description: "Hasil foto profesional untuk katalog online shop. Bisa on-site ke tempatmu atau kirim barang ke studio.",
+    price: 25000000, original_price: null, price_min: 25000000, price_max: 75000000, price_type: "range",
+    type: "jasa", condition: null, stock: 0, weight: null,
+    duration_min: 2, duration_max: 5, duration_unit: "hari", duration_is_plus: false,
+    availability_status: "available", is_online: false, is_onsite: true, is_home_service: true,
+    can_nego: true, is_cod: false, is_pickup: false, is_delivery: false, delivery_fee_min: null, delivery_fee_max: null,
+    location: "Malang", views: 189, rating: 4.92, review_count: 28, sold_count: 45, status: "active",
+    created_at: "2025-01-08T14:00:00Z",
+    images: [
+      { id: 3, url: "https://picsum.photos/seed/photo01/600/450", alt: "Contoh foto produk", sort_order: 0, is_primary: true },
+    ],
+    seller: MOCK_SELLERS.s2,
+    category: { id: 8, uuid: "cat-008", name: "Fotografi & Video", slug: "fotografi-video", icon: "📸", type: "jasa" },
+  },
+  {
+    id: 3, uuid: "prod-003", seller_id: 3, category_id: 2,
+    title: "Paket Buku Manajemen Keuangan + Akuntansi Dasar",
+    slug: "paket-buku-manajemen-keuangan",
+    description: "2 buku kondisi baru segel, belum dipakai. Salah satu mata kuliah wajib FEB.",
+    price: 8500000, original_price: 15000000, price_min: null, price_max: null, price_type: "fixed",
+    type: "barang", condition: "baru", stock: 1, weight: 800,
+    duration_min: null, duration_max: null, duration_unit: null, duration_is_plus: false,
+    availability_status: null, is_online: false, is_onsite: false, is_home_service: false,
+    can_nego: false, is_cod: true, is_pickup: true, is_delivery: true, delivery_fee_min: 500000, delivery_fee_max: null,
+    location: "Malang", views: 87, rating: 5, review_count: 3, sold_count: 5, status: "active",
+    created_at: "2025-01-12T10:00:00Z",
+    images: [
+      { id: 4, url: "https://picsum.photos/seed/book01/600/450", alt: "Paket buku", sort_order: 0, is_primary: true },
+    ],
+    seller: MOCK_SELLERS.s3,
+    category: { id: 2, uuid: "cat-002", name: "Buku", slug: "buku", icon: "📖", type: "barang" },
+  },
+  {
+    id: 4, uuid: "prod-004", seller_id: 4, category_id: 10,
+    title: "Jasa Les Privat Bahasa Inggris Conversation",
+    slug: "jasa-les-privat-bahasa-inggris",
+    description: "Fokus speaking & listening. Tutor mahasiswa FH yang sudah TOEFL 580+. Bisa online via Zoom atau ketemuan di kampus.",
+    price: 5000000, original_price: null, price_min: 5000000, price_max: null, price_type: "starting",
+    type: "jasa", condition: null, stock: 0, weight: null,
+    duration_min: 1, duration_max: null, duration_unit: "jam", duration_is_plus: true,
+    availability_status: "available", is_online: true, is_onsite: true, is_home_service: false,
+    can_nego: false, is_cod: false, is_pickup: false, is_delivery: false, delivery_fee_min: null, delivery_fee_max: null,
+    location: "Malang", views: 256, rating: 4.95, review_count: 42, sold_count: 89, status: "active",
+    created_at: "2025-01-05T09:00:00Z",
+    images: [
+      { id: 5, url: "https://picsum.photos/seed/tutor01/600/450", alt: "Les privat", sort_order: 0, is_primary: true },
+    ],
+    seller: MOCK_SELLERS.s4,
+    category: { id: 10, uuid: "cat-010", name: "Pendidikan & Les", slug: "pendidikan-les", icon: "🎓", type: "jasa" },
+  },
+  {
+    id: 5, uuid: "prod-005", seller_id: 5, category_id: 5,
+    title: "Raket Badminton Yonex Astrox 77 + Senar BG66",
+    slug: "raket-badminton-yonex-astrox-77",
+    description: "Baru 2 bulan dipake, senar baru diganti BG66 Ultimax. Cocok buat yang suka smash keras.",
+    price: 35000000, original_price: null, price_min: null, price_max: null, price_type: "fixed",
+    type: "barang", condition: "bekas", stock: 1, weight: 90,
+    duration_min: null, duration_max: null, duration_unit: null, duration_is_plus: false,
+    availability_status: null, is_online: false, is_onsite: false, is_home_service: false,
+    can_nego: true, is_cod: true, is_pickup: true, is_delivery: false, delivery_fee_min: null, delivery_fee_max: null,
+    location: "Malang", views: 134, rating: 4.5, review_count: 2, sold_count: 0, status: "active",
+    created_at: "2025-01-14T16:00:00Z",
+    images: [
+      { id: 6, url: "https://picsum.photos/seed/raket01/600/450", alt: "Raket Yonex", sort_order: 0, is_primary: true },
+    ],
+    seller: MOCK_SELLERS.s5,
+    category: { id: 5, uuid: "cat-005", name: "Olahraga", slug: "olahraga", icon: "🏸", type: "barang" },
+  },
+];
+
+export const INITIAL_FAVORITES: Favorite[] = MOCK_PRODUCTS.map((product, index) => ({
+  id: index + 1,
+  uuid: `fav-${String(index + 1).padStart(3, "0")}`,
+  user_id: 1,
+  product_id: product.id,
+  created_at: `2025-01-${String(15 - index).padStart(2, "0")}T10:00:00Z`,
+  product,
+}));

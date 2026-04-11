@@ -114,6 +114,17 @@ class Withdrawal extends Model
     }
 
     /**
+     * Mark withdrawal as failed.
+     */
+    public function markAsFailed(string $reason): void
+    {
+        $this->status = WithdrawalStatus::FAILED;
+        $this->failure_reason = $reason;
+        $this->processed_at = now();
+        $this->save();
+    }
+
+    /**
      * Get amount in Rupiah.
      */
     public function getAmountInRupiah(): float

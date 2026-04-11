@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Favorite extends Model
 {
@@ -32,24 +33,26 @@ class Favorite extends Model
     }
 
     /**
-     * Toggle favorite for user and product.
+     * Create a favorite for a user and product.
      */
-    public static function toggle(int $userId, int $productId): bool
+    public static function createForUser(int $userId, int $productId): self
     {
-        $favorite = static::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->first();
-
-        if ($favorite) {
-            $favorite->delete();
-            return false; // Removed
-        }
-
-        static::create([
+        return static::firstOrCreate([
             'user_id' => $userId,
             'product_id' => $productId,
+        ], [
+            'uuid' => (string) Str::uuid(),
         ]);
-        return true; // Added
+    }
+
+    /**
+     * Remove a favorite for a user and product.
+     */
+    public static function removeForUser(int $userId, int $productId): bool
+    {
+        return (bool) static::where('user_id', $userId)
+            ->where('product_id', $productId)
+            ->delete();
     }
 
     /**

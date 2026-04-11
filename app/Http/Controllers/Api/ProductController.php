@@ -14,7 +14,6 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
 use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 
@@ -474,18 +473,53 @@ class ProductController extends Controller
     }
 
     /**
-     * Toggle favorite.
+     * Add a product to favorites.
      */
-    public function toggleFavorite(string $productId, Request $request): JsonResponse
+    public function addFavorite(string $productId, Request $request): JsonResponse
     {
         $product = Product::where('uuid', $productId)->firstOrFail();
 
-        $added = Favorite::toggle($request->user()->id, $product->id);
+        $favorite = Favorite::createForUser($request->user()->id, $product->id);
 
         return response()->json([
             'success' => true,
-            'message' => $added ? 'Ditambahkan ke favorit' : 'Dihapus dari favorit',
-            'data' => ['isFavorited' => $added],
+            'message' => $favorite->wasRecentlyCreated ? 'Ditambahkan ke favorit' : 'Sudah ada di favorit',
+            'data' => [
+                'isFavorited' => true,
+            ],
+        ], $favorite->wasRecentlyCreated ? 201 : 200);
+    }
+
+    /**
+     * Remove a product from favorites.
+     */
+    public function removeFavorite(string $productId, Request $request): JsonResponse
+    {
+        $product = Product::where('uuid', $productId)->firstOrFail();
+
+        Favorite::removeForUser($request->user()->id, $product->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dihapus dari favorit',
+            'data' => [
+                'isFavorited' => false,
+            ],
+        ]);
+    }
+
+    /**
+     * Check whether a product is favorited by the current user.
+     */
+    public function checkFavorite(string $productId, Request $request): JsonResponse
+    {
+        $product = Product::where('uuid', $productId)->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'isFavorited' => Favorite::isFavorited($request->user()->id, $product->id),
+            ],
         ]);
     }
 
@@ -494,7 +528,7 @@ class ProductController extends Controller
      */
     public function getFavorites(Request $request): JsonResponse
     {
-        $favorites = Favorite::with(['product.category', 'product.images', 'product.seller'])
+        $favorites = Favorite::with(['product.category', 'product.images', 'product.seller.faculty'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();

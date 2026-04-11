@@ -403,22 +403,22 @@ export const generateReportNumber = (): string => {
 
 // Available Faculties
 export const faculties = [
-  { id: "vokasi", name: "Fakultas Vokasi", icon: "🔧", color: "bg-blue-500" },
-  { id: "feb", name: "Fakultas Ekonomi dan Bisnis (FEB)", icon: "📊", color: "bg-primary-500" },
-  { id: "filkom", name: "Fakultas Ilmu Komputer (FILKOM)", icon: "💻", color: "bg-purple-500" },
-  { id: "ft", name: "Fakultas Teknik (FT)", icon: "⚙️", color: "bg-orange-500" },
-  { id: "fmipa", name: "Fakultas Matematika dan Ilmu Pengetahuan Alam (FMIPA)", icon: "🔬", color: "bg-cyan-500" },
-  { id: "fisip", name: "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)", icon: "🏛️", color: "bg-red-500" },
-  { id: "fh", name: "Fakultas Hukum (FH)", icon: "⚖️", color: "bg-yellow-500" },
-  { id: "fk", name: "Fakultas Kedokteran (FK)", icon: "🏥", color: "bg-pink-500" },
-  { id: "fkh", name: "Fakultas Kedokteran Hewan (FKH)", icon: "🐾", color: "bg-secondary-500" },
-  { id: "fapet", name: "Fakultas Peternakan (FAPET)", icon: "🐄", color: "bg-amber-500" },
-  { id: "fp", name: "Fakultas Pertanian (FP)", icon: "🌾", color: "bg-lime-500" },
-  { id: "fpi", name: "Fakultas Perikanan dan Ilmu Kelautan (FPI)", icon: "🐟", color: "bg-sky-500" },
-  { id: "fib", name: "Fakultas Ilmu Budaya (FIB)", icon: "📚", color: "bg-rose-500" },
-  { id: "psdku", name: "PSDKU", icon: "🎓", color: "bg-slate-500" },
-  { id: "alumni", name: "Alumni", icon: "👨‍🎓", color: "bg-indigo-500" },
-  { id: "masyarakat", name: "Masyarakat Umum", icon: "👥", color: "bg-gray-500" },
+  { id: "vokasi", name: "Fakultas Vokasi" },
+  { id: "feb", name: "Fakultas Ekonomi dan Bisnis (FEB)" },
+  { id: "filkom", name: "Fakultas Ilmu Komputer (FILKOM)" },
+  { id: "ft", name: "Fakultas Teknik (FT)" },
+  { id: "fmipa", name: "Fakultas Matematika dan Ilmu Pengetahuan Alam (FMIPA)" },
+  { id: "fisip", name: "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)" },
+  { id: "fh", name: "Fakultas Hukum (FH)" },
+  { id: "fk", name: "Fakultas Kedokteran (FK)" },
+  { id: "fkh", name: "Fakultas Kedokteran Hewan (FKH)" },
+  { id: "fapet", name: "Fakultas Peternakan (FAPET)" },
+  { id: "fp", name: "Fakultas Pertanian (FP)" },
+  { id: "fpi", name: "Fakultas Perikanan dan Ilmu Kelautan (FPI)" },
+  { id: "fib", name: "Fakultas Ilmu Budaya (FIB)" },
+  { id: "psdku", name: "PSDKU" },
+  { id: "alumni", name: "Alumni" },
+  { id: "masyarakat", name: "Masyarakat Umum" },
 ];
 
 // FACULTIES - simplified version for dropdowns (without icons)

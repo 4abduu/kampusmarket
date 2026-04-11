@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * yang sesuai dengan Frontend (camelCase, nested objects).
  * 
  * NORMALISASI YANG DITERAPKAN:
- * - faculty_id → faculty: { id, name, icon, color }
+ * - faculty_id → faculty: { id, name }
  * - wallet_balance (cent) → walletBalance (Rupiah)
  */
 class UserResource extends JsonResource
@@ -44,8 +44,6 @@ class UserResource extends JsonResource
                 return $this->faculty ? [
                     'id' => $this->faculty->code,
                     'name' => $this->faculty->name,
-                    'icon' => $this->faculty->icon,
-                    'color' => $this->faculty->color,
                 ] : null;
             }),
             

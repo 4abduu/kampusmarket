@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 /* ==========================================
    FONT IMPORTS
@@ -9,6 +8,10 @@
    ========================================== */
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
+
+/* Ensure Tailwind v4 scans app files and generates utilities. */
+@source "../index.html";
+@source "./**/*.{js,jsx,ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 

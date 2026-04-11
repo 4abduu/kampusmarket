@@ -7,6 +7,8 @@ use App\Models\Faculty;
 use App\Http\Resources\FacultyResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class FacultyController extends Controller
 {
@@ -21,6 +23,25 @@ class FacultyController extends Controller
             $query->where('is_active', $request->boolean('active'));
         } else {
             $query->where('is_active', true);
+        }
+
+        $faculties = $query->ordered()->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => FacultyResource::collection($faculties),
+        ]);
+    }
+
+    /**
+     * Display a listing of faculties for admin management.
+     */
+    public function adminIndex(Request $request): JsonResponse
+    {
+        $query = Faculty::query();
+
+        if ($request->has('active')) {
+            $query->where('is_active', $request->boolean('active'));
         }
 
         $faculties = $query->ordered()->get();
@@ -47,6 +68,103 @@ class FacultyController extends Controller
     }
 
     /**
+     * Store a new faculty.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'unique:faculties,code'],
+            'name' => ['required', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $faculty = Faculty::create([
+            'code' => Str::of($validated['code'])->lower()->trim()->toString(),
+            'name' => $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fakultas berhasil ditambahkan',
+            'data' => new FacultyResource($faculty),
+        ], 201);
+    }
+
+    /**
+     * Update the specified faculty.
+     */
+    public function update(Request $request, string $code): JsonResponse
+    {
+        $faculty = Faculty::where('code', $code)
+            ->orWhere('id', $code)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', Rule::unique('faculties', 'code')->ignore($faculty->id)],
+            'name' => ['required', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $faculty->update([
+            'code' => Str::of($validated['code'])->lower()->trim()->toString(),
+            'name' => $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? $faculty->sort_order,
+            'is_active' => $validated['is_active'] ?? $faculty->is_active,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fakultas berhasil diperbarui',
+            'data' => new FacultyResource($faculty->fresh()),
+        ]);
+    }
+
+    /**
+     * Update active status for a faculty.
+     */
+    public function updateStatus(Request $request, string $code): JsonResponse
+    {
+        $faculty = Faculty::where('code', $code)
+            ->orWhere('id', $code)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $faculty->update([
+            'is_active' => $validated['is_active'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status fakultas berhasil diperbarui',
+            'data' => new FacultyResource($faculty->fresh()),
+        ]);
+    }
+
+    /**
+     * Remove the specified faculty.
+     */
+    public function destroy(string $code): JsonResponse
+    {
+        $faculty = Faculty::where('code', $code)
+            ->orWhere('id', $code)
+            ->firstOrFail();
+
+        $faculty->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fakultas berhasil dihapus',
+        ]);
+    }
+
+    /**
      * Get faculties with user count.
      */
     public function withUserCount(): JsonResponse
@@ -62,8 +180,6 @@ class FacultyController extends Controller
                 return [
                     'id' => $faculty->code,
                     'name' => $faculty->name,
-                    'icon' => $faculty->icon,
-                    'color' => $faculty->color,
                     'userCount' => $faculty->users_count,
                 ];
             }),
@@ -85,7 +201,6 @@ class FacultyController extends Controller
                 return [
                     'value' => $faculty->code,
                     'label' => $faculty->name,
-                    'icon' => $faculty->icon,
                 ];
             }),
         ]);

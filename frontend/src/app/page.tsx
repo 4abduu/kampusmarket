@@ -1,49 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AdminFooter from "@/components/layout/AdminFooter";
-
-// Pages
-import LandingPage from "@/components/pages/LandingPage";
-import LoginPage from "@/components/pages/LoginPage";
-import RegisterPage from "@/components/pages/RegisterPage";
-import ForgotPasswordPage from "@/components/pages/ForgotPasswordPage";
-import FacultySelectionPage from "@/components/pages/FacultySelectionPage";
-import CatalogPage from "@/components/pages/CatalogPage";
-import ServicesPage from "@/components/pages/ServicesPage";
-import ServiceDetailPage from "@/components/pages/ServiceDetailPage";
-import ProductDetailPage from "@/components/pages/ProductDetailPage";
-import CheckoutPage from "@/components/pages/CheckoutPage";
-import UserDashboardPage from "@/components/pages/UserDashboardPage";
-import ChatPage from "@/components/pages/ChatPage";
-import AdminDashboardPage from "@/components/pages/AdminDashboardPage";
-import AddProductPage from "@/components/pages/AddProductPage";
-import CartPage from "@/components/pages/CartPage";
-import OrdersListPage from "@/components/pages/OrdersListPage";
-import OrderDetailPage from "@/components/pages/OrderDetailPage";
-import RatingPage from "@/components/pages/RatingPage";
-import UserNotificationsPage from "@/components/pages/UserNotificationsPage";
-import AdminNotificationsPage from "@/components/pages/AdminNotificationsPage";
-import PaymentSuccessPage from "@/components/pages/PaymentSuccessPage";
-import BookingSuccessPage from "@/components/pages/BookingSuccessPage";
-import EmailVerificationPage from "@/components/pages/EmailVerificationPage";
-import SearchResultsPage from "@/components/pages/SearchResultsPage";
-import ProfilePage from "@/components/pages/ProfilePage";
-
-// Navigation data type
-interface NavigationData {
-  category?: string;
-  userName?: string;
-  userEmail?: string;
-  registeredEmail?: string;
-  searchQuery?: string;
-  userId?: string;
-  productId?: string;
-  orderId?: string;
-}
+import SellerWelcomeModal from "@/app/components/SellerWelcomeModal";
+import { renderPage } from "@/app/navigation/renderPage";
+import { NO_FOOTER_PAGES, NO_NAVBAR_PAGES } from "@/app/navigation/constants";
+import type { NavigationData, GooglePendingSession } from "@/app/navigation/types";
 
 export default function Home() {
   // Get initial page from URL hash
@@ -61,11 +25,14 @@ export default function Home() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [chatAction, setChatAction] = useState<"chat" | "nego" | null>(null);
+  const [selectedSuccessType, setSelectedSuccessType] = useState<"product" | "service" | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [isCustomerOnly, setIsCustomerOnly] = useState(false); // true = customer only, false = seller
   const [showSellerWelcome, setShowSellerWelcome] = useState(false); // popup for new seller
   const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
+  const [googleAuthToken, setGoogleAuthToken] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const handleNavigate = (page: string, data?: string | NavigationData) => {
@@ -88,6 +55,8 @@ export default function Home() {
       }
       setSelectedCategory(null);
       setSearchQuery(null);
+      setChatAction(null);
+      setSelectedSuccessType(null);
     } else if (data) {
       // Navigation data object
       if ("category" in data && data.category) {
@@ -110,6 +79,16 @@ export default function Home() {
         setSelectedProductId(data.productId);
         setSelectedUserId(null);
       }
+      if ("chatAction" in data) {
+        setChatAction(data.chatAction || null);
+      } else {
+        setChatAction(null);
+      }
+      if ("successType" in data) {
+        setSelectedSuccessType(data.successType || null);
+      } else {
+        setSelectedSuccessType(null);
+      }
       if ("userName" in data || "userEmail" in data) {
         setGoogleUserData({
           userName: data.userName,
@@ -122,6 +101,12 @@ export default function Home() {
     } else {
       // No data - reset category
       setSelectedCategory(null);
+      setChatAction(null);
+      setSelectedSuccessType(null);
+    }
+
+    if (page !== "chat") {
+      setChatAction(null);
     }
     
     window.location.hash = page;
@@ -129,6 +114,7 @@ export default function Home() {
   };
 
   const handleLogin = (role: "user" | "admin" = "user", customerOnly: boolean = false) => {
+    setGoogleAuthToken(null);
     setIsLoggedIn(true);
     setUserRole(role);
     setIsCustomerOnly(customerOnly);
@@ -152,7 +138,19 @@ export default function Home() {
     setShowSellerWelcome(true);
   };
 
+  const handleGooglePendingSelection = (session: GooglePendingSession) => {
+    setGoogleAuthToken(session.token);
+    setGoogleUserData({
+      userName: session.userName,
+      userEmail: session.userEmail,
+    });
+    setCurrentPage("faculty-selection");
+    window.location.hash = "faculty-selection";
+    window.scrollTo(0, 0);
+  };
+
   const handleLogout = () => {
+    setGoogleAuthToken(null);
     setIsLoggedIn(false);
     setUserRole(null);
     setIsCustomerOnly(false);
@@ -174,114 +172,12 @@ export default function Home() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, [currentPage]);
 
-  // Pages that don't need footer (admin pages use minimal footer)
-  const noFooterPages = ["login", "register", "forgot-password", "faculty-selection", "email-verification", "chat", "checkout", "cart", "order-detail", "rating", "notifications", "admin-notifications", "payment-success", "booking-success", "admin"];
-  // Pages that don't need navbar
-  const noNavbarPages: string[] = [];
-
   // Check if current page is admin-related
   const isAdminPage = currentPage === "admin" || currentPage === "admin-notifications";
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case "login":
-        return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case "register":
-        return <RegisterPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case "forgot-password":
-        return <ForgotPasswordPage onNavigate={handleNavigate} />;
-      case "faculty-selection":
-        return (
-          <FacultySelectionPage
-            onNavigate={handleNavigate}
-            onLogin={handleLogin}
-            userName={googleUserData?.userName}
-            userEmail={googleUserData?.userEmail}
-          />
-        );
-      case "email-verification":
-        return (
-          <EmailVerificationPage
-            onNavigate={handleNavigate}
-            email={registeredEmail || undefined}
-          />
-        );
-      case "catalog":
-        return <CatalogPage onNavigate={handleNavigate} initialCategory={selectedCategory} />;
-      case "services":
-        return <ServicesPage onNavigate={handleNavigate} initialCategory={selectedCategory} />;
-      case "product":
-        return (
-          <ProductDetailPage
-            onNavigate={handleNavigate}
-            productId={selectedProductId || "p1"}
-            isLoggedIn={isLoggedIn}
-            onLogin={handleLogin}
-          />
-        );
-      case "service":
-        return (
-          <ServiceDetailPage
-            onNavigate={handleNavigate}
-            serviceId={selectedProductId || "s1"}
-          />
-        );
-      case "checkout":
-        return <CheckoutPage onNavigate={handleNavigate} productId={selectedProductId || undefined} />;
-      case "payment-success":
-        return <PaymentSuccessPage onNavigate={handleNavigate} />;
-      case "booking-success":
-        return <BookingSuccessPage onNavigate={handleNavigate} />;
-      case "cart":
-        return <CartPage onNavigate={handleNavigate} />;
-      case "add-product":
-        return <AddProductPage onNavigate={handleNavigate} />;
-      case "orders":
-        return <OrdersListPage onNavigate={handleNavigate} />;
-      case "order-detail":
-        return <OrderDetailPage onNavigate={handleNavigate} orderId={selectedOrderId || undefined} />;
-      case "rating":
-        return <RatingPage onNavigate={handleNavigate} />;
-      case "dashboard":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="dashboard" />;
-      case "my-products":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="my-products" />;
-      case "dashboard-wallet":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="wallet" />;
-      case "settings":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="settings" />;
-      case "orders":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="orders" />;
-      case "chat":
-        return <ChatPage onNavigate={handleNavigate} />;
-      case "notifications":
-        return <UserNotificationsPage onNavigate={handleNavigate} />;
-      case "admin":
-        return <AdminDashboardPage onNavigate={handleNavigate} />;
-      case "admin-notifications":
-        return <AdminNotificationsPage onNavigate={handleNavigate} />;
-      case "search":
-        return <SearchResultsPage onNavigate={handleNavigate} searchQuery={searchQuery || undefined} />;
-      case "profile":
-        return <ProfilePage onNavigate={handleNavigate} userId={selectedUserId || undefined} />;
-      case "wallet":
-        return <UserDashboardPage onNavigate={handleNavigate} currentPage="wallet" />;
-      case "landing":
-      default:
-        return (
-          <LandingPage
-            onNavigate={handleNavigate}
-            isLoggedIn={isLoggedIn}
-            isCustomerOnly={isCustomerOnly}
-            onStartSelling={handleStartSelling}
-          />
-        );
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {!noNavbarPages.includes(currentPage) && (
+      {!NO_NAVBAR_PAGES.includes(currentPage) && (
         <Navbar
           currentPage={currentPage}
           onNavigate={handleNavigate}
@@ -294,50 +190,38 @@ export default function Home() {
         />
       )}
       
-      {/* Seller Welcome Popup */}
-      {showSellerWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md mx-4 p-6 text-center animate-in fade-in-0 zoom-in-95">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center">
-              <span className="text-4xl">🎉</span>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-              Selamat Bergabung sebagai Seller!
-            </h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">
-              Kamu sekarang bisa mulai berjualan di KampusMarket. 
-              Tambahkan produk pertamamu dan mulai dapatkan penghasilan!
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowSellerWelcome(false)}
-                className="flex-1"
-              >
-                Nanti Saja
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowSellerWelcome(false);
-                  handleNavigate("add-product");
-                }}
-                className="flex-1 bg-primary-600 hover:bg-primary-700"
-              >
-                Tambah Produk
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SellerWelcomeModal
+        open={showSellerWelcome}
+        onClose={() => setShowSellerWelcome(false)}
+        onNavigate={handleNavigate}
+      />
       
       <main className="flex-1">
-        {renderPage()}
+        {renderPage({
+          currentPage,
+          selectedProductId,
+          selectedUserId,
+          selectedOrderId,
+          selectedCategory,
+          searchQuery,
+          chatAction,
+          selectedSuccessType,
+          registeredEmail,
+          googleUserData,
+          googleAuthToken,
+          isLoggedIn,
+          onNavigate: handleNavigate,
+          onLogin: handleLogin,
+          onGooglePendingSelection: handleGooglePendingSelection,
+          onStartSelling: handleStartSelling,
+          isCustomerOnly,
+        })}
       </main>
       
       {/* Footer Logic */}
       {isAdminPage ? (
         <AdminFooter />
-      ) : !noFooterPages.includes(currentPage) && (
+      ) : !NO_FOOTER_PAGES.includes(currentPage) && (
         <Footer onNavigate={handleNavigate} />
       )}
     </div>

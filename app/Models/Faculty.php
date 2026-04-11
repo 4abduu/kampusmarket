@@ -12,8 +12,6 @@ class Faculty extends Model
     protected $fillable = [
         'code',
         'name',
-        'icon',
-        'color',
         'sort_order',
         'is_active',
     ];

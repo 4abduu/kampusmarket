@@ -256,6 +256,29 @@ class WalletController extends Controller
     }
 
     /**
+     * Mark withdrawal as processing (Admin).
+     */
+    public function processWithdrawal(string $id): JsonResponse
+    {
+        $withdrawal = Withdrawal::where('uuid', $id)->firstOrFail();
+
+        if ($withdrawal->status->value !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Withdrawal harus disetujui terlebih dahulu',
+            ], 400);
+        }
+
+        $withdrawal->markAsProcessing();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Withdrawal sedang diproses',
+            'data' => new WithdrawalResource($withdrawal),
+        ]);
+    }
+
+    /**
      * Reject withdrawal (Admin).
      */
     public function rejectWithdrawal(string $id, Request $request): JsonResponse
@@ -297,6 +320,55 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Withdrawal ditolak dan dana dikembalikan',
+            'data' => new WithdrawalResource($withdrawal),
+        ]);
+    }
+
+    /**
+     * Fail withdrawal and refund user (Admin).
+     */
+    public function failWithdrawal(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'failureReason' => 'required|string|max:500',
+        ]);
+
+        $withdrawal = Withdrawal::where('uuid', $id)->firstOrFail();
+
+        if (!in_array($withdrawal->status->value, ['approved', 'processing'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Withdrawal tidak dapat ditandai gagal',
+            ], 400);
+        }
+
+        // Refund to user when payout fails.
+        $user = $withdrawal->user;
+        $balanceBefore = $user->wallet_balance;
+        $user->wallet_balance += $withdrawal->amount;
+        $user->save();
+
+        WalletTransaction::create([
+            'uuid' => NumberGenerator::uuid(),
+            'user_id' => $user->id,
+            'type' => 'refund',
+            'amount' => $withdrawal->amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->wallet_balance,
+            'description' => 'Refund from failed withdrawal ' . $withdrawal->withdrawal_number,
+            'related_withdrawal_id' => $withdrawal->id,
+            'status' => 'completed',
+        ]);
+
+        $withdrawal->markAsFailed($request->failureReason);
+
+        WalletTransaction::where('related_withdrawal_id', $withdrawal->id)
+            ->where('type', 'withdrawal')
+            ->update(['status' => 'failed']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Withdrawal gagal dan dana dikembalikan',
             'data' => new WithdrawalResource($withdrawal),
         ]);
     }

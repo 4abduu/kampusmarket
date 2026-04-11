@@ -8,6 +8,7 @@ enum CancelRequestStatus: string
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
     case CANCELLED = 'cancelled';
+    case WITHDRAWN = 'withdrawn';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum CancelRequestStatus: string
             self::APPROVED => 'Disetujui',
             self::REJECTED => 'Ditolak',
             self::CANCELLED => 'Dibatalkan',
+            self::WITHDRAWN => 'Ditarik',
         };
     }
 
@@ -26,6 +28,7 @@ enum CancelRequestStatus: string
             self::APPROVED => 'green',
             self::REJECTED => 'red',
             self::CANCELLED => 'gray',
+            self::WITHDRAWN => 'gray',
         };
     }
 }

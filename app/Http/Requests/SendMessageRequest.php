@@ -20,9 +20,11 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'content' => ['required_without:fileUrl', 'string', 'max:5000'],
+            'content' => ['required_without_all:fileUrl,imageUrls', 'string', 'max:5000'],
             'type' => ['required', 'in:text,offer,image,file'],
-            'fileUrl' => ['required_if:type,image,file', 'nullable', 'string', 'max:500'],
+            'fileUrl' => ['nullable', 'string', 'max:500', 'required_if:type,file'],
+            'imageUrls' => ['nullable', 'array', 'max:5', 'required_if:type,image'],
+            'imageUrls.*' => ['required', 'string', 'max:500'],
         ];
 
         // If type is offer, validate offer price
@@ -39,11 +41,16 @@ class SendMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.required_without' => 'Pesan wajib diisi',
+            'content.required_without_all' => 'Pesan wajib diisi',
             'content.max' => 'Pesan maksimal 5000 karakter',
             'type.required' => 'Tipe pesan wajib dipilih',
             'type.in' => 'Tipe pesan tidak valid',
             'fileUrl.required_if' => 'File wajib diupload untuk tipe ini',
+            'imageUrls.required_if' => 'Minimal 1 gambar wajib diupload untuk pesan gambar',
+            'imageUrls.array' => 'Format daftar gambar tidak valid',
+            'imageUrls.max' => 'Maksimal 5 gambar per pesan',
+            'imageUrls.*.required' => 'URL gambar tidak boleh kosong',
+            'imageUrls.*.max' => 'URL gambar maksimal 500 karakter',
             'offerPrice.required' => 'Harga penawaran wajib diisi',
             'offerPrice.min' => 'Harga penawaran minimal 0',
         ];
@@ -54,16 +61,27 @@ class SendMessageRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('offerPrice') && $this->offerPrice) {
-            $this->merge([
-                'offer_price' => $this->offerPrice * 100, // Convert to cent
-            ]);
+        $payload = [];
+
+        if ($this->has('offerPrice') && $this->offerPrice !== null && $this->offerPrice !== '') {
+            $payload['offer_price'] = $this->offerPrice * 100; // Convert to cent
         }
 
-        if ($this->has('fileUrl')) {
-            $this->merge([
-                'file_url' => $this->fileUrl,
-            ]);
+        if ($this->has('imageUrls') && is_array($this->imageUrls)) {
+            $payload['attachment_urls'] = $this->imageUrls;
+        }
+
+        if ($this->input('type') === 'image' && !$this->has('imageUrls') && $this->filled('fileUrl')) {
+            $payload['imageUrls'] = [$this->fileUrl];
+            $payload['attachment_urls'] = [$this->fileUrl];
+        }
+
+        if ($this->input('type') === 'file' && $this->filled('fileUrl')) {
+            $payload['attachment_urls'] = [$this->fileUrl];
+        }
+
+        if (!empty($payload)) {
+            $this->merge($payload);
         }
     }
 }

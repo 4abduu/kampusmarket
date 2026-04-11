@@ -20,9 +20,14 @@ class StoreCancelRequestRequest extends FormRequest
      */
     public function rules(): array
     {
+        $reasons = array_map(
+            static fn (CancelReason $reason) => $reason->value,
+            CancelReason::cases()
+        );
+
         return [
             'orderId' => ['required', 'exists:orders,uuid'],
-            'reason' => ['required', 'in:changed_mind,found_better_price,seller_not_responding,other'],
+            'reason' => ['required', 'in:' . implode(',', $reasons)],
             'description' => ['required', 'string', 'max:1000'],
             // 'evidence' => ['nullable', 'array', 'max:5'],
             // 'evidence.*' => ['string', 'max:500'],

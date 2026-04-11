@@ -20,8 +20,6 @@ class FacultyResource extends JsonResource
         return [
             'id' => $this->code,
             'name' => $this->name,
-            'icon' => $this->icon,
-            'color' => $this->color,
             'sortOrder' => $this->sort_order,
             'isActive' => $this->is_active,
         ];

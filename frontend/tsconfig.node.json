@@ -6,6 +6,8 @@
     "module": "ESNext",
     "types": ["node"],
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -26,6 +28,7 @@
     "paths": {
       "@/*": ["src/*"]
     }
+
   },
   "include": ["vite.config.ts"]
 }

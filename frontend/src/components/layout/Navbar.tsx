@@ -18,15 +18,13 @@ import {
   Search,
   Menu,
   User,
+  Heart,
   Package,
   MessageCircle,
   Wallet,
   Settings,
   LogOut,
   LayoutDashboard,
-  Users,
-  BarChart3,
-  FileText,
   Bell,
   Home,
   ShieldCheck,
@@ -41,6 +39,7 @@ interface NavbarProps {
   isLoggedIn: boolean;
   userRole: "user" | "admin" | null;
   isCustomerOnly?: boolean;
+  hasSellerProducts?: boolean;
   onLogin: () => void;
   onLogout: () => void;
   onToggleUserType?: () => void;
@@ -52,7 +51,8 @@ export default function Navbar({
   isLoggedIn,
   userRole,
   isCustomerOnly = false,
-  onLogin,
+  hasSellerProducts = false,
+  onLogin: _onLogin,
   onLogout,
   onToggleUserType,
 }: NavbarProps) {
@@ -156,10 +156,6 @@ export default function Navbar({
                   {adminUnreadCount > 0 && (
                     <Badge className="ml-auto bg-red-500 text-white text-xs">{adminUnreadCount}</Badge>
                   )}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onNavigate("settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Pengaturan</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className="text-red-600 focus:text-red-600">
@@ -276,7 +272,7 @@ export default function Navbar({
           {isLoggedIn ? (
             <>
               {/* Demo Toggle Button - Only show when logged in */}
-              {onToggleUserType && (
+              {onToggleUserType && hasSellerProducts && (
                 <Button
                   variant={isCustomerOnly ? "outline" : "default"}
                   size="sm"
@@ -326,6 +322,15 @@ export default function Navbar({
                     {userUnreadCount}
                   </Badge>
                 )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden sm:flex text-slate-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
+                onClick={() => onNavigate("favorites")}
+              >
+                <Heart className="h-5 w-5" />
               </Button>
 
               {/* User Menu */}
@@ -382,6 +387,10 @@ export default function Navbar({
                         <User className="mr-2 h-4 w-4" />
                         <span>Dashboard</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onNavigate("favorites") }>
+                        <Heart className="mr-2 h-4 w-4" />
+                        <span>Favorit</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onNavigate("notifications")}>
                         <Bell className="mr-2 h-4 w-4" />
                         <span>Notifikasi</span>
@@ -401,6 +410,10 @@ export default function Navbar({
                         <Wallet className="mr-2 h-4 w-4" />
                         <span>Dompet (Rp 250.000)</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onNavigate("settings")}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Pengaturan</span>
+                      </DropdownMenuItem>
                     </>
                   )}
                   
@@ -417,13 +430,13 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 onClick={() => onNavigate("login")}
-                className="hidden sm:flex"
+                className="hidden sm:flex h-9 px-4 text-sm font-medium"
               >
                 Masuk
               </Button>
               <Button
                 onClick={() => onNavigate("register")}
-                className="bg-primary-600 hover:bg-primary-700"
+                className="h-9 px-4 text-sm font-medium bg-primary-600 hover:bg-primary-700"
               >
                 Daftar
               </Button>
@@ -490,13 +503,13 @@ export default function Navbar({
                     <Button
                       variant="outline"
                       onClick={() => onNavigate("login")}
-                      className="w-full"
+                      className="w-full h-10 px-4 text-sm font-medium"
                     >
                       Masuk
                     </Button>
                     <Button
                       onClick={() => onNavigate("register")}
-                      className="w-full bg-primary-600 hover:bg-primary-700"
+                      className="w-full h-10 px-4 text-sm font-medium bg-primary-600 hover:bg-primary-700"
                     >
                       Daftar
                     </Button>

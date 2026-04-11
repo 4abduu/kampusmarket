@@ -26,9 +26,6 @@ return new class extends Migration
             $table->unsignedBigInteger('offer_price')->nullable(); // dalam cent
             $table->enum('offer_status', ['pending', 'accepted', 'rejected'])->nullable();
 
-            // File/Image
-            $table->string('file_url')->nullable();
-
             // Read status
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();

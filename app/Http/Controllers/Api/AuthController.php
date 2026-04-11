@@ -8,14 +8,14 @@ use App\Models\Faculty;
 use App\Models\PasswordResetOtp;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\GoogleLoginRequest;
+use App\Http\Requests\CompleteGoogleFacultyRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Laravel\Sanctum\PersonalAccessToken;
 use App\Http\Helpers\NumberGenerator;
 
 class AuthController extends Controller
@@ -38,7 +38,7 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'faculty_id' => $faculty?->id,
             'is_customer_only' => $request->isCustomerOnly ?? false,
-            'joined_at' => now(),
+            // 'joined_at' => now(),
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -91,41 +91,34 @@ class AuthController extends Controller
     /**
      * Google OAuth login/register.
      */
-    public function googleLogin(Request $request): JsonResponse
+    public function googleLogin(GoogleLoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'googleId' => 'required|string',
-            'email' => 'required|email',
-            'name' => 'required|string',
-            'avatar' => 'nullable|string',
-        ]);
+        $user = User::with('faculty')
+            ->where('google_id', $request->googleId)
+            ->orWhere('email', $request->email)
+            ->first();
 
-        // Check if user exists with this Google ID
-        $user = User::where('google_id', $request->googleId)->first();
+        $isNewUser = false;
 
         if (!$user) {
-            // Check if user exists with this email
-            $user = User::where('email', $request->email)->first();
+            $user = User::create([
+                'uuid' => NumberGenerator::uuid(),
+                'name' => $request->name,
+                'email' => $request->email,
+                'google_id' => $request->googleId,
+                'avatar' => $request->avatar,
+                'is_verified' => true,
+                'email_verified_at' => now(),
+                'is_customer_only' => $request->boolean('isCustomerOnly', false),
+            ]);
 
-            if ($user) {
-                // Link Google account
-                $user->update([
-                    'google_id' => $request->googleId,
-                    'avatar' => $request->avatar ?? $user->avatar,
-                ]);
-            } else {
-                // Create new user
-                $user = User::create([
-                    'uuid' => NumberGenerator::uuid(),
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'google_id' => $request->googleId,
-                    'avatar' => $request->avatar,
-                    'is_verified' => true, // Google verified
-                    'email_verified_at' => now(),
-                    'joined_at' => now(),
-                ]);
-            }
+            $isNewUser = true;
+        } elseif (!$user->google_id) {
+            $user->update([
+                'google_id' => $request->googleId,
+                'avatar' => $request->avatar ?? $user->avatar,
+                'is_verified' => true,
+            ]);
         }
 
         if ($user->is_banned) {
@@ -135,16 +128,58 @@ class AuthController extends Controller
             ], 403);
         }
 
+        $needsFacultySelection = !$user->faculty_id;
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Login berhasil',
+            'message' => $needsFacultySelection
+                ? 'Pilih fakultas untuk menyelesaikan pendaftaran'
+                : 'Login berhasil',
             'data' => [
                 'user' => new UserResource($user->load('faculty')),
                 'token' => $token,
                 'tokenType' => 'Bearer',
+                'requiresFacultySelection' => $needsFacultySelection,
+                'nextStep' => $needsFacultySelection ? 'faculty-selection' : 'home',
+                'isNewUser' => $isNewUser,
             ],
+        ], $needsFacultySelection ? 202 : 200);
+    }
+
+    /**
+     * Complete Google onboarding by setting faculty.
+     */
+    public function completeGoogleFaculty(CompleteGoogleFacultyRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Autentikasi diperlukan',
+            ], 401);
+        }
+
+        if ($user->faculty_id) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fakultas sudah terhubung pada akun ini',
+                'data' => new UserResource($user->load('faculty')),
+            ]);
+        }
+
+        $faculty = Faculty::where('code', $request->facultyId)->firstOrFail();
+
+        $user->update([
+            'faculty_id' => $faculty->id,
+            'is_customer_only' => $request->boolean('isCustomerOnly', $user->is_customer_only),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fakultas berhasil disimpan',
+            'data' => new UserResource($user->fresh(['faculty'])),
         ]);
     }
 

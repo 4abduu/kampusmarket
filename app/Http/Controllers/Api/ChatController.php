@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\Product;
-use App\Models\User;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Requests\SendMessageRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\NumberGenerator;
+use Illuminate\Support\Facades\DB;
 
 class ChatController extends Controller
 {
@@ -123,7 +123,7 @@ class ChatController extends Controller
         }
 
         $messages = $chat->messages()
-            ->with('sender')
+            ->with(['sender', 'chat', 'attachments'])
             ->latest()
             ->paginate(50);
 
@@ -145,6 +145,40 @@ class ChatController extends Controller
     }
 
     /**
+     * Get attachments for a specific message in a chat.
+     */
+    public function attachments(string $chatId, string $messageId, Request $request): JsonResponse
+    {
+        $chat = Chat::where('uuid', $chatId)->firstOrFail();
+
+        $userId = $request->user()->id;
+
+        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke chat ini',
+            ], 403);
+        }
+
+        $message = $chat->messages()
+            ->where('uuid', $messageId)
+            ->with('attachments')
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => $message->attachments->map(function ($attachment) {
+                return [
+                    'id' => $attachment->id,
+                    'type' => $attachment->type,
+                    'url' => $attachment->url,
+                    'sortOrder' => $attachment->sort_order,
+                ];
+            })->values(),
+        ]);
+    }
+
+    /**
      * Send a message.
      */
     public function sendMessage(string $id, SendMessageRequest $request): JsonResponse
@@ -161,30 +195,51 @@ class ChatController extends Controller
             ], 403);
         }
 
-        // Create message
-        $message = Message::create([
-            'uuid' => NumberGenerator::uuid(),
-            'chat_id' => $chat->id,
-            'sender_id' => $userId,
-            'content' => $request->content,
-            'type' => $request->type,
-            'offer_price' => $request->offer_price,
-            'file_url' => $request->file_url,
-        ]);
+        $message = DB::transaction(function () use ($request, $chat, $userId) {
+            $message = Message::create([
+                'uuid' => NumberGenerator::uuid(),
+                'chat_id' => $chat->id,
+                'sender_id' => $userId,
+                'content' => $request->content,
+                'type' => $request->type,
+                'offer_price' => $request->offer_price,
+            ]);
 
-        // Update chat last message
-        $chat->update([
-            'last_message' => $request->type === 'text' ? $request->content : '[' . $request->type . ']',
-            'last_message_at' => now(),
-        ]);
+            if (in_array($request->type, ['image', 'file'], true)) {
+                $attachmentType = $request->type;
+                $maxItems = $attachmentType === 'image' ? 5 : 1;
 
-        // Increment unread for other user
-        $chat->incrementUnreadFor($userId);
+                $attachmentRows = collect($request->input('attachment_urls', []))
+                    ->take($maxItems)
+                    ->values()
+                    ->map(fn ($url, $index) => [
+                        'type' => $attachmentType,
+                        'url' => $url,
+                        'sort_order' => $index + 1,
+                    ])
+                    ->all();
+
+                if (!empty($attachmentRows)) {
+                    $message->attachments()->createMany($attachmentRows);
+                }
+            }
+
+            // Keep chat summary in sync with latest message.
+            $chat->update([
+                'last_message' => $request->type === 'text' ? $request->content : '[' . $request->type . ']',
+                'last_message_at' => now(),
+            ]);
+
+            // Increment unread for other user
+            $chat->incrementUnreadFor($userId);
+
+            return $message;
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Pesan terkirim',
-            'data' => new MessageResource($message->load('sender')),
+            'data' => new MessageResource($message->load(['sender', 'chat', 'attachments'])),
         ]);
     }
 

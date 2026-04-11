@@ -17,6 +17,18 @@ class MessageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $imageUrls = $this->attachments
+            ->where('type', 'image')
+            ->pluck('url')
+            ->values()
+            ->toArray();
+
+        $fileUrls = $this->attachments
+            ->where('type', 'file')
+            ->pluck('url')
+            ->values()
+            ->toArray();
+
         return [
             // Primary identifier
             'id' => $this->uuid,
@@ -36,7 +48,9 @@ class MessageResource extends JsonResource
             'offerStatus' => $this->offer_status?->value ?? $this->offer_status,
             
             // File
-            'fileUrl' => $this->file_url,
+            'fileUrl' => $fileUrls[0] ?? null,
+            'fileUrls' => $fileUrls,
+            'imageUrls' => $imageUrls,
             
             // Read status
             'isRead' => $this->is_read,
