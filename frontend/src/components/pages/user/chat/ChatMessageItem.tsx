@@ -20,16 +20,18 @@ export default function ChatMessageItem({
   return (
     <div className={`flex ${message.isMe ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] sm:max-w-[75%] ${
-          message.isMe ? "bg-primary-600 text-white" : "bg-white dark:bg-slate-800 border"
-        } rounded-2xl px-3 sm:px-4 py-2`}
+        className={`max-w-[85%] sm:max-w-[75%] shadow-sm ${
+          message.isMe
+            ? "bg-primary-600 text-white rounded-2xl rounded-br-md"
+            : "bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 rounded-2xl rounded-bl-md"
+        } px-3 sm:px-4 py-2`}
       >
         {message.type === "product" && message.product && (
           <div
             className={`mb-2 rounded-xl overflow-hidden cursor-pointer ${
               message.isMe ? "bg-white/10" : "bg-slate-50 dark:bg-slate-700"
             }`}
-            onClick={() => onNavigate("product", message.product?.id)}
+            onClick={() => onNavigate("product", message.product!.id)}
           >
             <div className="flex items-center gap-2 p-2">
               <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-200 dark:bg-slate-600 rounded-lg flex items-center justify-center shrink-0">
@@ -102,9 +104,7 @@ export default function ChatMessageItem({
         )}
 
         {message.type === "image" && message.imageUrl && (
-          <div className="mt-1">
-            <img src={message.imageUrl} alt="Gambar chat" className="max-h-48 rounded-lg border" />
-          </div>
+          <img src={message.imageUrl} alt="Gambar chat" className="rounded-lg max-h-56" />
         )}
 
         <div className="flex items-center justify-end gap-1 mt-1">

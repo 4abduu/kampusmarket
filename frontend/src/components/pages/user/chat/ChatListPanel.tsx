@@ -22,7 +22,7 @@ export default function ChatListPanel({
   return (
     <Card
       className={`
-        lg:col-span-1 overflow-hidden transition-all duration-300
+        lg:col-span-1 overflow-hidden transition-all duration-300 border-slate-200/80 dark:border-slate-800/80 shadow-sm rounded-2xl bg-white/90 dark:bg-slate-900/85 backdrop-blur
         ${showChatList ? "block" : "hidden lg:block"}
       `}
     >
@@ -35,8 +35,10 @@ export default function ChatListPanel({
             <div
               key={chat.id}
               onClick={() => onSelectChat(chat)}
-              className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
-                selectedChat?.id === chat.id ? "bg-primary-50 dark:bg-primary-900/20" : ""
+              className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors ${
+                selectedChat?.id === chat.id
+                  ? "bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-200 dark:ring-primary-800"
+                  : ""
               }`}
             >
               <Avatar className="h-11 w-11 sm:h-12 sm:w-12 shrink-0">

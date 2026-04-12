@@ -2,19 +2,23 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   ArrowLeft,
-  Flag,
   Image as ImageIcon,
   MessageCircle,
   MoreVertical,
-  Phone,
   Receipt,
   Send,
   Smile,
   X,
   Handshake,
+  User,
 } from "lucide-react"
 import type { Chat } from "@/lib/mock-data"
 import { EMOJIS, type ChatMessage } from "@/components/pages/user/chat/chat.types"
@@ -33,6 +37,7 @@ interface Props {
   fileInputRef: React.RefObject<HTMLInputElement | null>
   messagesEndRef: React.RefObject<HTMLDivElement | null>
   onNavigate: (page: string, productId?: string) => void
+  onOpenProfile: (chat: Chat) => void
   setShowNegoModal: (open: boolean) => void
   setShowOfferModal: (open: boolean) => void
   onBackToList: () => void
@@ -58,6 +63,7 @@ export default function ChatConversationPanel({
   fileInputRef,
   messagesEndRef,
   onNavigate,
+  onOpenProfile,
   setShowNegoModal,
   setShowOfferModal,
   onBackToList,
@@ -72,43 +78,67 @@ export default function ChatConversationPanel({
   return (
     <Card
       className={`
-        lg:col-span-2 flex flex-col overflow-hidden transition-all duration-300
+        lg:col-span-2 flex flex-col overflow-hidden transition-all duration-300 border-slate-200/80 dark:border-slate-800/80 shadow-sm rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur
         ${!showChatList || selectedChat ? "flex" : "hidden lg:flex"}
       `}
     >
       {selectedChat ? (
         <>
-          <CardHeader className="border-b p-3 sm:p-4">
+          <CardHeader className="border-b border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/70 dark:bg-slate-900/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" onClick={onBackToList}>
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
-                  <AvatarFallback className="bg-primary-100 text-primary-700 text-xs sm:text-sm">
-                    {selectedChat.seller.name.split(" ").map((name) => name[0]).join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => onOpenProfile(selectedChat)}
+                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                  aria-label="Lihat profil"
+                >
+                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
+                    <AvatarFallback className="bg-primary-100 text-primary-700 text-xs sm:text-sm">
+                      {selectedChat.seller.name.split(" ").map((name) => name[0]).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenProfile(selectedChat)}
+                  className="min-w-0 text-left rounded-md px-1 -mx-1 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                  aria-label="Buka profil penjual"
+                >
                   <p className="font-medium text-sm sm:text-base truncate">{selectedChat.seller.name}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span className="w-2 h-2 bg-primary-500 rounded-full shrink-0" />
-                    <span>{isSellerView ? "Pembeli" : "Penjual"} • Online</span>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0 animate-pulse" />
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                      {isSellerView ? "Pembeli" : "Penjual"} online
+                    </span>
                   </p>
-                </div>
+                </button>
               </div>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                  <Phone className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                    aria-label="Menu chat"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => onOpenProfile(selectedChat)}>
+                    <User className="h-4 w-4" />
+                    Lihat Profil
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
 
-          <ScrollArea className="flex-1 p-3 sm:p-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.10),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(51,65,85,0.35),_transparent_55%)]">
             <div className="space-y-3 sm:space-y-4">
               {messages.map((message) => (
                 <ChatMessageItem
@@ -122,7 +152,7 @@ export default function ChatConversationPanel({
               ))}
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           {attachedImage && (
             <div className="px-4 py-2 border-t bg-slate-50 dark:bg-slate-800/50">
@@ -151,7 +181,7 @@ export default function ChatConversationPanel({
             </div>
           )}
 
-          <div className="border-t p-3 sm:p-4">
+          <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur">
             <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
@@ -186,7 +216,7 @@ export default function ChatConversationPanel({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={onKeyPress}
-                className="flex-1 text-sm"
+                className="flex-1 text-sm border-slate-300 dark:border-slate-700 focus-visible:ring-primary-500"
               />
               <Button
                 className="bg-primary-600 hover:bg-primary-700 h-8 w-8 sm:h-9 sm:w-9 shrink-0"
@@ -200,29 +230,17 @@ export default function ChatConversationPanel({
 
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
               {!isSellerView && (
-                <>
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap" onClick={() => setShowNegoModal(true)}>
-                    <Handshake className="h-3 w-3 mr-1" />
-                    Ajukan Nego
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap ml-auto text-red-500 hover:text-red-600">
-                    <Flag className="h-3 w-3 mr-1" />
-                    Laporkan
-                  </Button>
-                </>
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap" onClick={() => setShowNegoModal(true)}>
+                  <Handshake className="h-3 w-3 mr-1" />
+                  Ajukan Nego
+                </Button>
               )}
 
               {isSellerView && (
-                <>
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap" onClick={() => setShowOfferModal(true)}>
-                    <Receipt className="h-3 w-3 mr-1" />
-                    Buat Penawaran
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap ml-auto text-red-500 hover:text-red-600">
-                    <Flag className="h-3 w-3 mr-1" />
-                    Laporkan
-                  </Button>
-                </>
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm whitespace-nowrap" onClick={() => setShowOfferModal(true)}>
+                  <Receipt className="h-3 w-3 mr-1" />
+                  Buat Penawaran
+                </Button>
               )}
             </div>
           </div>

@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { mockChats, mockProducts, mockServices, mockUsers, type Chat, type Product } from "@/lib/mock-data";
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import {
+  mockChats,
+  mockProducts,
+  mockServices,
+  mockUsers,
+  type Chat,
+  type Product,
+} from "@/lib/mock-data";
 import ChatRoleToggle from "@/components/pages/user/chat/ChatRoleToggle";
 import ChatListPanel from "@/components/pages/user/chat/ChatListPanel";
 import ChatConversationPanel from "@/components/pages/user/chat/ChatConversationPanel";
@@ -32,6 +39,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastContextKeyRef = useRef<string | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -106,7 +114,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     {
       id: "m8",
       senderId: "buyer",
-      content: "Deal kak!",
+      content: "Deal kak! 👍",
       time: "14:20",
       isMe: !isSellerView,
       type: "text",
@@ -114,7 +122,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   ];
 
   const messages = selectedChat ? (chatMessages[selectedChat.id] || getInitialMessages()) : [];
-  const lastContextKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,7 +166,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setShowChatList(false);
     setSelectedProduct(contextProduct);
 
-    const inquiryTime = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    const inquiryTime = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     setChatMessages((prev) => {
       if (prev[targetChat.id]) {
         return prev;
@@ -172,7 +183,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             {
               id: `ctx-text-${Date.now()}`,
               senderId: "buyer",
-              content: `Halo kak, saya tertarik dengan produk ini.`,
+              content: "Halo kak, saya tertarik dengan produk ini.",
               time: inquiryTime,
               isMe: true,
               type: "text",
@@ -214,6 +225,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setSelectedChat(chat);
     setShowChatList(false);
     setSelectedProduct(mockProducts[0]);
+
     if (!chatMessages[chat.id]) {
       setChatMessages((prev) => ({
         ...prev,
@@ -227,7 +239,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setSelectedChat(null);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOpenProfile = (chat: Chat) => {
+    onNavigate("profile", chat.product.sellerId || chat.seller.id);
+  };
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -271,22 +287,16 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
     setNewMessage("");
     setAttachedImage(null);
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
 
     setTimeout(() => {
-      const buyerReplies = [
-        "Baik kak, saya cek dulu ya",
-        "Siap kak, bentar ya!",
-        "Oke kak, ditunggu ya",
-      ];
-      const sellerReplies = [
-        "Siap kak, mau yang mana?",
-        "Masih ada kak, mau ambil dimana?",
-        "Bisa kak, ongkir gratis ya!",
-      ];
+      const buyerReplies = ["Baik kak, saya cek dulu ya 👍", "Siap kak, bentar ya!", "Oke kak, ditunggu ya 🙏"];
+      const sellerReplies = ["Siap kak, mau yang mana?", "Masih ada kak, mau ambil dimana?", "Bisa kak, ongkir gratis ya!"];
       const replies = isSellerView ? buyerReplies : sellerReplies;
+
       const replyMsg: ChatMessage = {
         id: `m${Date.now() + 1}`,
         senderId: isSellerView ? "buyer" : "seller",
@@ -295,6 +305,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         isMe: false,
         type: "text",
       };
+
       setChatMessages((prev) => ({
         ...prev,
         [selectedChat.id]: [...(prev[selectedChat.id] || []), replyMsg],
@@ -302,7 +313,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     }, 1000 + Math.random() * 1000);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -312,7 +323,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const handleSubmitNego = () => {
     if (!selectedChat || !selectedProduct || !negoPrice) return;
 
-    const price = parseInt(negoPrice.replace(/\D/g, ""));
+    const price = parseInt(negoPrice.replace(/\D/g, ""), 10);
     if (isNaN(price) || price <= 0) return;
 
     const newMsg: ChatMessage = {
@@ -336,16 +347,19 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
     setTimeout(() => {
       const acceptChance = Math.random();
+
       const replyMsg: ChatMessage = {
         id: `m${Date.now() + 1}`,
         senderId: "seller",
-        content: acceptChance > 0.5
-          ? `Oke deal! ${formatPrice(price)} bisa ya. Saya buatin invoicenya.`
-          : `Maaf kak, minimal ${formatPrice(price + 20000)} ya.`,
+        content:
+          acceptChance > 0.5
+            ? `Oke deal! ${formatPrice(price)} bisa ya. Saya buatin invoicenya.`
+            : `Maaf kak, minimal ${formatPrice(price + 20000)} ya.`,
         time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
         isMe: isSellerView,
         type: "text",
       };
+
       setChatMessages((prev) => ({
         ...prev,
         [selectedChat.id]: [...(prev[selectedChat.id] || []), replyMsg],
@@ -363,6 +377,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             product: selectedProduct,
             offerPrice: price,
           };
+
           setChatMessages((prev) => ({
             ...prev,
             [selectedChat.id]: [...(prev[selectedChat.id] || []), offerMsg],
@@ -375,7 +390,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const handleSubmitOffer = () => {
     if (!selectedChat || !selectedProduct || !offerPrice) return;
 
-    const price = parseInt(offerPrice.replace(/\D/g, ""));
+    const price = parseInt(offerPrice.replace(/\D/g, ""), 10);
     if (isNaN(price) || price <= 0) return;
 
     const newMsg: ChatMessage = {
@@ -398,7 +413,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setOfferPrice("");
   };
 
-  const handleAcceptOffer = () => {
+  const handleAcceptOffer = (_message: ChatMessage) => {
     if (!selectedChat) return;
 
     const newMsg: ChatMessage = {
@@ -419,11 +434,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const formatPriceInput = (value: string) => {
     const num = value.replace(/\D/g, "");
     if (num === "") return "";
-    return parseInt(num).toLocaleString("id-ID");
+    return parseInt(num, 10).toLocaleString("id-ID");
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-100 via-slate-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <ChatRoleToggle isSellerView={isSellerView} setIsSellerView={setIsSellerView} />
 
@@ -449,6 +464,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             fileInputRef={fileInputRef}
             messagesEndRef={messagesEndRef}
             onNavigate={onNavigate}
+            onOpenProfile={handleOpenProfile}
             setShowNegoModal={setShowNegoModal}
             setShowOfferModal={setShowOfferModal}
             onBackToList={handleBackToList}
@@ -469,7 +485,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         showOfferModal={showOfferModal}
         setShowOfferModal={setShowOfferModal}
         selectedProduct={selectedProduct}
-        setSelectedProduct={setSelectedProduct}
+        setSelectedProduct={(product) => setSelectedProduct(product)}
         products={mockProducts}
         negoPrice={negoPrice}
         setNegoPrice={setNegoPrice}
