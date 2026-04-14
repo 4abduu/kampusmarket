@@ -7,6 +7,7 @@ import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/Pr
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ProductDetailSidebar from "@/components/pages/guest/product-detail/ProductDetailSidebar";
 import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/ProductDetailTabsPanel";
+import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 
 interface ProductDetailPageProps {
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
@@ -79,56 +80,63 @@ export default function ProductDetailPage({
     }).format(price);
   };
 
+  const mainContent = (
+    <>
+      <ProductDetailGallery
+        images={product.images}
+        condition={product.condition}
+        price={product.price}
+        originalPrice={product.originalPrice}
+        selectedImage={selectedImage}
+        setSelectedImage={setSelectedImage}
+      />
+      <ProductDetailTabsPanel description={product.description} shippingOptions={product.shippingOptions} />
+    </>
+  );
+
+  const sidebarContent = (
+    <ProductDetailSidebar
+      product={product}
+      quantity={quantity}
+      setQuantity={setQuantity}
+      formatPrice={formatPrice}
+      onAction={handleAction}
+      onNavigate={onNavigate}
+      onOpenReport={() => setShowReportModal(true)}
+    />
+  );
+
+  const breadcrumbs = [
+    { label: "Beranda", onClick: () => onNavigate("landing") },
+    { label: "Katalog", onClick: () => onNavigate("catalog") },
+    { label: product.title },
+  ];
+
+  const bottomContent = (
+    <ProductDetailReportDialog
+      open={showReportModal}
+      onOpenChange={setShowReportModal}
+      reportReason={reportReason}
+      setReportReason={setReportReason}
+      reportDescription={reportDescription}
+      setReportDescription={setReportDescription}
+      reportOtherReason={reportOtherReason}
+      setReportOtherReason={setReportOtherReason}
+      reportReasons={REPORT_REASONS}
+      onSubmit={handleReportSubmit}
+    />
+  );
+
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <>
       <ProductDetailLoginDialog open={showLoginModal} onOpenChange={setShowLoginModal} onNavigate={onNavigate} />
 
-      <div className="container mx-auto px-4 py-8">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <button onClick={() => onNavigate("landing")} className="hover:text-primary-600">Beranda</button>
-          <span>/</span>
-          <button onClick={() => onNavigate("catalog")} className="hover:text-primary-600">Katalog</button>
-          <span>/</span>
-          <span className="text-foreground">{product.title}</span>
-        </nav>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <ProductDetailGallery
-              images={product.images}
-              condition={product.condition}
-              price={product.price}
-              originalPrice={product.originalPrice}
-              selectedImage={selectedImage}
-              setSelectedImage={setSelectedImage}
-            />
-            <ProductDetailTabsPanel description={product.description} shippingOptions={product.shippingOptions} />
-          </div>
-
-          <ProductDetailSidebar
-            product={product}
-            quantity={quantity}
-            setQuantity={setQuantity}
-            formatPrice={formatPrice}
-            onAction={handleAction}
-            onNavigate={onNavigate}
-            onOpenReport={() => setShowReportModal(true)}
-          />
-        </div>
-
-        <ProductDetailReportDialog
-          open={showReportModal}
-          onOpenChange={setShowReportModal}
-          reportReason={reportReason}
-          setReportReason={setReportReason}
-          reportDescription={reportDescription}
-          setReportDescription={setReportDescription}
-          reportOtherReason={reportOtherReason}
-          setReportOtherReason={setReportOtherReason}
-          reportReasons={REPORT_REASONS}
-          onSubmit={handleReportSubmit}
-        />
-      </div>
-    </div>
+      <DetailPageShell
+        breadcrumbs={breadcrumbs}
+        mainContent={mainContent}
+        sidebarContent={sidebarContent}
+        bottomContent={bottomContent}
+      />
+    </>
   );
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
 import {
   Calendar,
   Clock,
@@ -61,8 +65,39 @@ export default function ProductDetailSidebar({
   onNavigate,
   onOpenReport,
 }: ProductDetailSidebarProps) {
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const productShareUrl = `https://kampusmarket.id/p/${product.id}`;
+
+  const handleCopyProductLink = async () => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(productShareUrl);
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 1800);
+    } catch {
+      setIsCopied(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <DetailShareDialog
+        open={showShareModal}
+        onOpenChange={(open) => {
+          setShowShareModal(open);
+          if (!open) setIsCopied(false);
+        }}
+        shareUrl={productShareUrl}
+        isCopied={isCopied}
+        onCopy={handleCopyProductLink}
+        title="Bagikan Produk"
+        description="Bagikan produk ini ke:"
+        inputAriaLabel="Link produk"
+      />
+
       <Card>
         <CardContent className="p-6 space-y-4">
           <div>
@@ -132,7 +167,10 @@ export default function ProductDetailSidebar({
 
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" className="flex-1"><Heart className="h-4 w-4 mr-1" />Simpan</Button>
-            <Button variant="ghost" size="sm" className="flex-1"><Share2 className="h-4 w-4 mr-1" />Bagikan</Button>
+            <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowShareModal(true)}>
+              <Share2 className="h-4 w-4 mr-1" />
+              Bagikan
+            </Button>
           </div>
         </CardContent>
       </Card>

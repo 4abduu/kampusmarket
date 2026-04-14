@@ -5,6 +5,7 @@ import { Briefcase } from "lucide-react";
 import { mockServices } from "@/lib/mock-data";
 import ServiceDetailSidebar from "@/components/pages/guest/service-detail/ServiceDetailSidebar";
 import ServiceDetailTabsPanel from "@/components/pages/guest/service-detail/ServiceDetailTabsPanel";
+import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 
 interface ServiceDetailPageProps {
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
@@ -39,53 +40,57 @@ export default function ServiceDetailPage({ onNavigate, serviceId }: ServiceDeta
     }
   };
 
-  return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <button onClick={() => onNavigate("landing")} className="hover:text-primary-600">Beranda</button>
-          <span>/</span>
-          <button onClick={() => onNavigate("services")} className="hover:text-primary-600">Layanan Jasa</button>
-          <span>/</span>
-          <span className="text-foreground">{service.title}</span>
-        </nav>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <Card className="overflow-hidden">
-              <div className="relative bg-emerald-50 dark:bg-emerald-900/20 h-96 flex items-center justify-center">
-                <Briefcase className="h-36 w-36 text-emerald-600/60" />
-                <Badge className="absolute top-4 left-4 bg-primary-500">{service.category}</Badge>
-              </div>
-            </Card>
-
-            {service.portfolio && service.portfolio.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {service.portfolio.map((_, index) => (
-                  <button
-                    key={index}
-                    className="shrink-0 w-20 h-20 rounded-lg border-2 border-transparent hover:border-primary-300 overflow-hidden transition-colors"
-                  >
-                    <div className="bg-emerald-50 dark:bg-emerald-900/20 w-full h-full flex items-center justify-center">
-                      <Briefcase className="h-8 w-8 text-emerald-600/70" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <ServiceDetailTabsPanel description={service.description} />
-          </div>
-
-          <ServiceDetailSidebar
-            service={service}
-            serviceId={serviceId}
-            formatPrice={formatPrice}
-            getEstimasiPengerjaan={getEstimasiPengerjaan}
-            onNavigate={onNavigate}
-          />
+  const mainContent = (
+    <>
+      <Card className="overflow-hidden">
+        <div className="relative flex h-96 items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
+          <Briefcase className="h-36 w-36 text-emerald-600/60" />
+          <Badge className="absolute top-4 left-4 bg-primary-500">{service.category}</Badge>
         </div>
-      </div>
-    </div>
+      </Card>
+
+      {service.portfolio && service.portfolio.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {service.portfolio.map((_, index) => (
+            <button
+              key={index}
+              className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition-colors hover:border-primary-300"
+              title={`Portfolio ${index + 1}`}
+              aria-label={`Portfolio ${index + 1}`}
+            >
+              <div className="flex h-full w-full items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
+                <Briefcase className="h-8 w-8 text-emerald-600/70" />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <ServiceDetailTabsPanel description={service.description} />
+    </>
+  );
+
+  const sidebarContent = (
+    <ServiceDetailSidebar
+      service={service}
+      serviceId={serviceId}
+      formatPrice={formatPrice}
+      getEstimasiPengerjaan={getEstimasiPengerjaan}
+      onNavigate={onNavigate}
+    />
+  );
+
+  const breadcrumbs = [
+    { label: "Beranda", onClick: () => onNavigate("landing") },
+    { label: "Layanan Jasa", onClick: () => onNavigate("services") },
+    { label: service.title },
+  ];
+
+  return (
+    <DetailPageShell
+      breadcrumbs={breadcrumbs}
+      mainContent={mainContent}
+      sidebarContent={sidebarContent}
+    />
   );
 }

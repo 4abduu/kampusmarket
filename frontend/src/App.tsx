@@ -127,24 +127,50 @@ function AppContent() {
   const currentSuccessType = successTypeParam === "service" ? "service" : successTypeParam === "product" ? "product" : null;
 
   // Page Logic
-  const noFooterPages = ["/login", "/register", "/forgot-password", "/faculty-selection", "/email-verification", "/chat", "/checkout", "/cart", "/order-detail", "/rating", "/notifications", "/admin-notifications", "/checkout-success", "/payment-success", "/booking-success", "/admin"];
+  // Pages that don't need footer n navbar
+  const noNavbarPages = [
+    "login",
+    "register",
+    "forgot-password",
+    "faculty-selection",
+    "email-verification",
+    "payment-success",
+    "booking-success",
+  ];
+
+  const noFooterPages = [
+    "login",
+    "register",
+    "forgot-password",
+    "faculty-selection",
+    "email-verification",
+    "chat",
+    "checkout",
+    "payment-success",
+    "booking-success",
+    "admin",
+    "admin-notifications",
+  ];
+  const hideNavbar = noNavbarPages.some((p) => location.pathname.startsWith(`/${p}`));
   const isAdminPage = location.pathname.startsWith("/admin");
   const hasSellerProducts = sellerProductCount > 0;
   const effectiveIsCustomerOnly = isCustomerOnly || !hasSellerProducts;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar
-        currentPage={location.pathname}
-        onNavigate={handleNavigate}
-        isLoggedIn={isLoggedIn}
-        userRole={userRole}
-        isCustomerOnly={effectiveIsCustomerOnly}
-        hasSellerProducts={hasSellerProducts}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
-        onToggleUserType={handleToggleUserType}
-      />
+      {!hideNavbar && (
+        <Navbar
+          currentPage={location.pathname}
+          onNavigate={handleNavigate}
+          isLoggedIn={isLoggedIn}
+          userRole={userRole}
+          isCustomerOnly={effectiveIsCustomerOnly}
+          hasSellerProducts={hasSellerProducts}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+          onToggleUserType={handleToggleUserType}
+        />
+      )}
 
       <SellerWelcomeModal
         open={showSellerWelcome}

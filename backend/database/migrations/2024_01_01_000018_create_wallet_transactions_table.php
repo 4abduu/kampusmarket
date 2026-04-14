@@ -19,7 +19,7 @@ return new class extends Migration
 
             $table->enum('type', ['top_up', 'withdrawal', 'payment', 'refund', 'income', 'admin_fee']);
 
-            $table->unsignedBigInteger('amount'); // dalam cent
+            $table->bigInteger('amount'); // signed: kredit(+), debit(-) dalam cent
             $table->unsignedBigInteger('balance_before')->default(0);
             $table->unsignedBigInteger('balance_after')->default(0);
             $table->text('description')->nullable();
