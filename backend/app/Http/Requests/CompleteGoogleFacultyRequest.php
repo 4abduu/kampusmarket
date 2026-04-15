@@ -21,7 +21,6 @@ class CompleteGoogleFacultyRequest extends FormRequest
     {
         return [
             'facultyId' => ['required', 'string', 'exists:faculties,code'],
-            'isCustomerOnly' => ['nullable', 'boolean'],
         ];
     }
 

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Check, Loader2, Sparkles, Ban } from "lucide-react";
 import { faculties as fallbackFaculties } from "@/lib/mock-data";
 import { getInitialsFromName } from "@/components/pages/guest/faculty-selection/facultySelection.utils";
+import { API_BASE_URL } from "@/lib/config";
 
 interface FacultySelectionPageProps {
   onLogin: (role?: "user" | "admin", customerOnly?: boolean) => void;
@@ -41,7 +42,7 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail, aut
 
     const loadFaculties = async () => {
       try {
-        const response = await fetch("/api/faculties/dropdown", {
+        const response = await fetch(`${API_BASE_URL}/faculties/dropdown`, {
           headers: {
             Accept: "application/json",
           },
@@ -85,7 +86,7 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail, aut
 
     try {
       if (authToken) {
-        const response = await fetch("/api/auth/google/complete-faculty", {
+        const response = await fetch(`${API_BASE_URL}/auth/google/complete-faculty`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -104,13 +105,13 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail, aut
         }
 
         const nextRole = result.data?.role === "admin" ? "admin" : "user";
-        onLogin(nextRole, result.data?.isCustomerOnly ?? false);
+        onLogin(nextRole);
         return;
       } else {
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
-      onLogin("user", false);
+      onLogin("user");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Gagal menyimpan fakultas");
     } finally {

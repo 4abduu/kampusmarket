@@ -45,7 +45,6 @@ return new class extends Migration
             $table->text('ban_reason')->nullable();
             $table->boolean('is_warned')->default(false);
             $table->text('warning_reason')->nullable();
-            $table->boolean('is_customer_only')->default(false);
 
             // Stats
             $table->decimal('rating', 3, 2)->default(0); // 0.00 - 5.00

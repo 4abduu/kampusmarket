@@ -48,6 +48,7 @@ interface RenderPageParams {
   onLogin: (role?: "user" | "admin", customerOnly?: boolean) => void;
   onGooglePendingSelection: (session: GooglePendingSession) => void;
   onStartSelling: () => void;
+  onSellerProductCountChange?: (count: number) => void;
   isCustomerOnly: boolean;
 }
 
@@ -68,6 +69,7 @@ export function renderPage(params: RenderPageParams) {
     onLogin,
     onGooglePendingSelection,
     onStartSelling,
+    onSellerProductCountChange,
     isCustomerOnly,
   } = params;
 
@@ -125,14 +127,14 @@ export function renderPage(params: RenderPageParams) {
     case "favorites":
       return <FavoritesPage onNavigate={onNavigate} />;
     case "dashboard":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" />;
+      return <UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} />;
     case "my-products":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="my-products" />;
+      return <UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} />;
     case "dashboard-wallet":
     case "wallet":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="wallet" />;
+      return <UserDashboardPage onNavigate={onNavigate} currentPage="wallet" onSellerProductCountChange={onSellerProductCountChange} />;
     case "settings":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="settings" />;
+      return <UserDashboardPage onNavigate={onNavigate} currentPage="settings" onSellerProductCountChange={onSellerProductCountChange} />;
     case "chat":
       return <ChatPage onNavigate={onNavigate} initialContextId={selectedProductId || undefined} initialChatAction={chatAction || undefined} />;
     case "notifications":

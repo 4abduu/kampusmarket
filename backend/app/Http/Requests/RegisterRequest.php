@@ -26,7 +26,6 @@ class RegisterRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:20'],
             'facultyId' => ['nullable', 'string', 'exists:faculties,code'],
-            'isCustomerOnly' => ['boolean'],
         ];
     }
 
@@ -57,10 +56,5 @@ class RegisterRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('isCustomerOnly')) {
-            $this->merge([
-                'is_customer_only' => $this->isCustomerOnly,
-            ]);
-        }
     }
 }

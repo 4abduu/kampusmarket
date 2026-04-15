@@ -39,10 +39,8 @@ interface NavbarProps {
   isLoggedIn: boolean;
   userRole: "user" | "admin" | null;
   isCustomerOnly?: boolean;
-  hasSellerProducts?: boolean;
   onLogin: () => void;
   onLogout: () => void;
-  onToggleUserType?: () => void;
 }
 
 export default function Navbar({
@@ -51,10 +49,8 @@ export default function Navbar({
   isLoggedIn,
   userRole,
   isCustomerOnly = false,
-  hasSellerProducts = false,
   onLogin: _onLogin,
   onLogout,
-  onToggleUserType,
 }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const userUnreadCount = useNotificationStore((state) => state.unreadCount);
@@ -271,18 +267,6 @@ export default function Navbar({
         <div className="flex items-center gap-2">
           {isLoggedIn ? (
             <>
-              {/* Demo Toggle Button - Only show when logged in */}
-              {onToggleUserType && hasSellerProducts && (
-                <Button
-                  variant={isCustomerOnly ? "outline" : "default"}
-                  size="sm"
-                  onClick={onToggleUserType}
-                  className={`hidden sm:flex text-xs ${isCustomerOnly ? "border-amber-500 text-amber-600" : "bg-primary-600 hover:bg-primary-700"}`}
-                >
-                  {isCustomerOnly ? "👤 Demo: Customer" : "🏪 Demo: Seller"}
-                </Button>
-              )}
-
               {/* Cart Button */}
               <Button
                 variant="ghost"

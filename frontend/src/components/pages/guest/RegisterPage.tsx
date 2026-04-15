@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Package, Mail, Lock, User, Eye, EyeOff, Phone, Building2, AlertCircle } from "lucide-react";
+import { Package, Mail, Lock, User, Eye, EyeOff, Phone, Building2, AlertCircle, Loader2, Check } from "lucide-react";
 import { FACULTIES } from "@/lib/mock-data";
+import { API_BASE_URL } from "@/lib/config";
 
 interface RegisterPageProps {
   onNavigate: (page: string, data?: { registeredEmail?: string }) => void;
@@ -17,25 +18,106 @@ interface RegisterPageProps {
 
 export default function RegisterPage({ onNavigate }: RegisterPageProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
-    faculty: "",
+    faculty_id: "",
     agreeTerms: false,
   });
 
-  const handleGoogleRegister = () => {
-    // Redirect to faculty selection for Google register flow
-    onNavigate("faculty-selection");
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleRegister = () => {
+    window.location.href = `${API_BASE_URL}/auth/google/redirect`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to email verification with the registered email
-    onNavigate("email-verification", { registeredEmail: formData.email });
+    setError(null);
+
+    // Validation
+    if (!formData.name.trim()) {
+      setError("Nama lengkap harus diisi");
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError("Email harus diisi");
+      return;
+    }
+
+    if (formData.password.length < 8 || !/[0-9]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/[A-Z]/.test(formData.password)) {
+      setError("Password minimal 8 karakter");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Password tidak cocok");
+      return;
+    }
+
+    if (!formData.faculty_id) {
+      setError("Pilih fakultas");
+      return;
+    }
+
+    if (!formData.agreeTerms) {
+      setError("Anda harus menyetujui syarat dan ketentuan");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          password_confirmation: formData.confirmPassword,
+          facultyId: formData.faculty_id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Registrasi gagal");
+      }
+
+      if (!result.success) {
+        throw new Error(result.message || "Registrasi gagal");
+      }
+
+      // Store token dan navigate ke email verification
+      localStorage.setItem("authToken", result.data.token);
+      localStorage.setItem("tokenType", result.data.tokenType);
+      
+      onNavigate("email-verification", { registeredEmail: formData.email });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat registrasi");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -88,6 +170,13 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+              {error}
+            </div>
+          )}
+
           {/* Registration Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -96,11 +185,14 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   placeholder="Masukkan nama lengkap"
                   className="pl-10"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  required
                 />
               </div>
             </div>
@@ -114,11 +206,14 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="nama@email.com"
                   className="pl-10"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  required
                 />
               </div>
               <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg text-xs text-amber-700">
@@ -133,29 +228,34 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="phone"
+                  name="phone"
                   type="tel"
                   placeholder="08xx xxxx xxxx"
                   className="pl-10"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
               </div>
             </div>
 
             {/* Faculty Selection - ONCE ONLY */}
             <div className="space-y-2">
-              <Label htmlFor="faculty">
+              <Label htmlFor="faculty_id">
                 Fakultas
                 <span className="text-amber-600 ml-1 text-xs">⚠️ Hanya bisa dipilih sekali!</span>
               </Label>
               <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <select
-                  id="faculty"
+                  id="faculty_id"
+                  name="faculty_id"
                   title="Pilih fakultas"
                   className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={formData.faculty}
-                  onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                  value={formData.faculty_id}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  required
                 >
                   <option value="">Pilih fakultas...</option>
                   {FACULTIES.map((f) => (
@@ -176,10 +276,13 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Minimal 8 karakter"
-                  className="pl-10 pr-10"
+                  placeholder="Masukkan password"
+                  className={`pl-10 pr-10 ${passwordError && formData.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    setPasswordError("");
+                  }}
                 />
                 <button
                   type="button"
@@ -189,6 +292,37 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {formData.password && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Password harus memenuhi syarat:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${formData.password.length >= 8 ? "text-primary-600" : "text-muted-foreground"}`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${formData.password.length >= 8 ? "bg-primary-100" : "bg-slate-100"}`}>
+                        {formData.password.length >= 8 ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      </div>
+                      Minimal 8 karakter
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${/[0-9]/.test(formData.password) ? "text-primary-600" : "text-muted-foreground"}`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[0-9]/.test(formData.password) ? "bg-primary-100" : "bg-slate-100"}`}>
+                        {/[0-9]/.test(formData.password) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      </div>
+                      1 Angka
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${/[a-z]/.test(formData.password) ? "text-primary-600" : "text-muted-foreground"}`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[a-z]/.test(formData.password) ? "bg-primary-100" : "bg-slate-100"}`}>
+                        {/[a-z]/.test(formData.password) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      </div>
+                      1 Huruf kecil
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${/[A-Z]/.test(formData.password) ? "text-primary-600" : "text-muted-foreground"}`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[A-Z]/.test(formData.password) ? "bg-primary-100" : "bg-slate-100"}`}>
+                        {/[A-Z]/.test(formData.password) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      </div>
+                      1 Huruf besar
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -197,12 +331,23 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Ulangi password"
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -216,16 +361,27 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                 Saya setuju dengan{" "}
                 <a href="#" className="text-primary-600 hover:underline">
                   Syarat & Ketentuan
-                </a>{" "}
-                dan{" "}
+                </a>
+                {" "}dan{" "}
                 <a href="#" className="text-primary-600 hover:underline">
                   Kebijakan Privasi
                 </a>
               </Label>
             </div>
 
-            <Button type="submit" className="w-full bg-primary-600 hover:bg-primary-700" disabled={!formData.agreeTerms}>
-              Daftar
+            <Button 
+              type="submit" 
+              className="w-full bg-primary-600 hover:bg-primary-700"
+              disabled={!formData.agreeTerms || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sedang Mendaftar...
+                </>
+              ) : (
+                "Daftar"
+              )}
             </Button>
           </form>
         </CardContent>
@@ -241,7 +397,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               }}
               className="text-primary-600 hover:underline font-medium"
             >
-              Masuk
+              Masuk di sini
             </a>
           </p>
         </CardFooter>

@@ -69,7 +69,9 @@ Route::get('/users/{id}/reviews', [UserController::class, 'reviews']);
 // Authentication
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect']);
 Route::post('/auth/google', [AuthController::class, 'googleLogin']);
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 Route::post('/auth/google/complete-faculty', [AuthController::class, 'completeGoogleFaculty'])->middleware('auth:sanctum');
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);

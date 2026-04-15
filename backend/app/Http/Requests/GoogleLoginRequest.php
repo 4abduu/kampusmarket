@@ -24,7 +24,6 @@ class GoogleLoginRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'avatar' => ['nullable', 'string', 'max:500'],
-            'isCustomerOnly' => ['nullable', 'boolean'],
         ];
     }
 }

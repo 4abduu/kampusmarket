@@ -64,9 +64,6 @@ class UserResource extends JsonResource
             // Wallet (convert from cent to Rupiah)
             'walletBalance' => (int) ($this->wallet_balance / 100),
             
-            // Flags
-            'isCustomerOnly' => $this->is_customer_only,
-            
             // Timestamps
             'joinedAt' => $this->joined_at?->format('Y-m-d') ?? $this->created_at->format('Y-m-d'),
             'createdAt' => $this->created_at->format('F Y'),

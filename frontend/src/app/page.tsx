@@ -8,15 +8,30 @@ import SellerWelcomeModal from "@/app/components/SellerWelcomeModal";
 import { renderPage } from "@/app/navigation/renderPage";
 import { NO_FOOTER_PAGES, NO_NAVBAR_PAGES } from "@/app/navigation/constants";
 import type { NavigationData, GooglePendingSession } from "@/app/navigation/types";
+import { getInitialSellerProductCount } from "@/components/pages/user/dashboard/seller-products";
+
+function getPageFromLocation(): string {
+  if (typeof window === "undefined") {
+    return "landing";
+  }
+
+  const hash = window.location.hash.slice(1);
+  if (hash) {
+    return hash.split("?")[0] || "landing";
+  }
+
+  const pathname = window.location.pathname.replace(/^\/+/, "");
+  if (pathname) {
+    return pathname.split("/")[0] || "landing";
+  }
+
+  return "landing";
+}
 
 export default function Home() {
   // Get initial page from URL hash
   const initialPage = useMemo(() => {
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash.slice(1);
-      return hash || "landing";
-    }
-    return "landing";
+    return getPageFromLocation();
   }, []);
 
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -29,7 +44,7 @@ export default function Home() {
   const [selectedSuccessType, setSelectedSuccessType] = useState<"product" | "service" | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
-  const [isCustomerOnly, setIsCustomerOnly] = useState(false); // true = customer only, false = seller
+  const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false); // popup for new seller
   const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
   const [googleAuthToken, setGoogleAuthToken] = useState<string | null>(null);
@@ -113,11 +128,10 @@ export default function Home() {
     window.scrollTo(0, 0);
   };
 
-  const handleLogin = (role: "user" | "admin" = "user", customerOnly: boolean = false) => {
+  const handleLogin = (role: "user" | "admin" = "user") => {
     setGoogleAuthToken(null);
     setIsLoggedIn(true);
     setUserRole(role);
-    setIsCustomerOnly(customerOnly);
     if (role === "admin") {
       setCurrentPage("admin");
       window.location.hash = "admin";
@@ -127,14 +141,8 @@ export default function Home() {
     }
   };
 
-  // Toggle demo user type (seller vs customer-only)
-  const handleToggleUserType = () => {
-    setIsCustomerOnly((prev) => !prev);
-  };
-
   // Handle when customer wants to start selling
   const handleStartSelling = () => {
-    setIsCustomerOnly(false);
     setShowSellerWelcome(true);
   };
 
@@ -153,7 +161,6 @@ export default function Home() {
     setGoogleAuthToken(null);
     setIsLoggedIn(false);
     setUserRole(null);
-    setIsCustomerOnly(false);
     setShowSellerWelcome(false);
     setCurrentPage("landing");
     window.location.hash = "landing";
@@ -172,8 +179,57 @@ export default function Home() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, [currentPage]);
 
+  // Handle Google OAuth redirect back from backend.
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const token = searchParams.get("token");
+
+    if (!token) {
+      return;
+    }
+
+    const tokenType = searchParams.get("tokenType") || "Bearer";
+    const requiresFacultySelection = searchParams.get("requiresFacultySelection") === "true";
+    const isNewUser = searchParams.get("isNewUser") === "true";
+    const userName = searchParams.get("userName") || undefined;
+    const userEmail = searchParams.get("userEmail") || undefined;
+
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("tokenType", tokenType);
+    setGoogleAuthToken(token);
+    setGoogleUserData({ userName, userEmail });
+    setIsLoggedIn(true);
+    setUserRole("user");
+
+    const nextPage = requiresFacultySelection ? "faculty-selection" : getPageFromLocation() === "dashboard" ? "dashboard" : "landing";
+
+    if (requiresFacultySelection) {
+      setCurrentPage("faculty-selection");
+      window.location.hash = "faculty-selection";
+    } else if (nextPage === "dashboard") {
+      setCurrentPage("dashboard");
+      window.location.hash = "dashboard";
+    } else {
+      setCurrentPage("landing");
+      window.location.hash = "landing";
+    }
+
+    if (isNewUser && !requiresFacultySelection) {
+      setShowSellerWelcome(false);
+    }
+
+    const cleanUrl = `${window.location.pathname}${window.location.hash ? window.location.hash : ""}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }, []);
+
   // Check if current page is admin-related
   const isAdminPage = currentPage === "admin" || currentPage === "admin-notifications";
+  const hasSellerProducts = sellerProductCount > 0;
+  const isCustomerOnly = !hasSellerProducts;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -186,7 +242,6 @@ export default function Home() {
           isCustomerOnly={isCustomerOnly}
           onLogin={handleLogin}
           onLogout={handleLogout}
-          onToggleUserType={handleToggleUserType}
         />
       )}
       
@@ -215,6 +270,7 @@ export default function Home() {
           onGooglePendingSelection: handleGooglePendingSelection,
           onStartSelling: handleStartSelling,
           isCustomerOnly,
+          onSellerProductCountChange: setSellerProductCount,
         })}
       </main>
       

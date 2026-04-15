@@ -31,7 +31,6 @@ class User extends Authenticatable
         'ban_reason',
         'is_warned',
         'warning_reason',
-        'is_customer_only',
         'rating',
         'review_count',
         'wallet_balance',
@@ -50,7 +49,6 @@ class User extends Authenticatable
         'is_verified' => 'boolean',
         'is_banned' => 'boolean',
         'is_warned' => 'boolean',
-        'is_customer_only' => 'boolean',
         'wallet_balance' => 'integer',
         'rating' => 'decimal:2',
         'review_count' => 'integer',
@@ -249,14 +247,9 @@ class User extends Authenticatable
         return $this->is_verified;
     }
 
-    public function isCustomerOnly(): bool
-    {
-        return $this->is_customer_only;
-    }
-
     public function canSell(): bool
     {
-        return !$this->is_customer_only && !$this->is_banned;
+        return !$this->is_banned;
     }
 
     /**

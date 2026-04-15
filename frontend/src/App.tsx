@@ -19,7 +19,6 @@ function AppContent() {
   // Auth State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
-  const [isCustomerOnly, setIsCustomerOnly] = useState(false);
   const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
   
@@ -77,12 +76,11 @@ function AppContent() {
     window.scrollTo(0, 0);
   };
 
-  const handleLogin = (role: "user" | "admin" = "user", customerOnly: boolean = false) => {
+  const handleLogin = (role: "user" | "admin" = "user") => {
     setGoogleAuthSession(null);
     setGoogleUserData(null);
     setIsLoggedIn(true);
     setUserRole(role);
-    setIsCustomerOnly(customerOnly);
     if (role === "admin") {
       navigate("/admin");
     } else {
@@ -95,18 +93,11 @@ function AppContent() {
     setGoogleUserData(null);
     setIsLoggedIn(false);
     setUserRole(null);
-    setIsCustomerOnly(false);
     setShowSellerWelcome(false);
     navigate("/");
   };
 
-  const handleToggleUserType = () => {
-    if (sellerProductCount <= 0) return;
-    setIsCustomerOnly((prev) => !prev);
-  };
-
   const handleStartSelling = () => {
-    setIsCustomerOnly(false);
     setShowSellerWelcome(true);
   };
 
@@ -154,7 +145,7 @@ function AppContent() {
   const hideNavbar = noNavbarPages.some((p) => location.pathname.startsWith(`/${p}`));
   const isAdminPage = location.pathname.startsWith("/admin");
   const hasSellerProducts = sellerProductCount > 0;
-  const effectiveIsCustomerOnly = isCustomerOnly || !hasSellerProducts;
+  const isCustomerOnly = !hasSellerProducts;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -164,11 +155,9 @@ function AppContent() {
           onNavigate={handleNavigate}
           isLoggedIn={isLoggedIn}
           userRole={userRole}
-          isCustomerOnly={effectiveIsCustomerOnly}
-          hasSellerProducts={hasSellerProducts}
+          isCustomerOnly={isCustomerOnly}
           onLogin={handleLogin}
           onLogout={handleLogout}
-          onToggleUserType={handleToggleUserType}
         />
       )}
 
@@ -188,7 +177,7 @@ function AppContent() {
           onStartSelling={handleStartSelling}
           onGooglePendingSelection={handleGooglePendingSelection}
           isLoggedIn={isLoggedIn}
-          isCustomerOnly={effectiveIsCustomerOnly}
+          isCustomerOnly={isCustomerOnly}
           onSellerProductCountChange={setSellerProductCount}
           registeredEmail={registeredEmail}
           currentId={currentId}
