@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { mockAddresses, mockOrders, type Address as AddressType, type Product } from "@/lib/mock-data"
 import { BANK_OPTIONS, EWALLET_OPTIONS } from "@/components/pages/user/dashboard/constants"
 import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck } from "lucide-react"
+import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 
 type PasswordValidations = {
   minLength: boolean
@@ -126,6 +127,9 @@ type Props = {
 
   showPaymentDialog: boolean
   setShowPaymentDialog: (open: boolean) => void
+  paymentRequest: { orderId: string; orderTitle: string; totalPayment: number } | null
+  handlePayWithWallet: () => void
+  handlePayWithMidtrans: () => void
 
   showProductSuccess: boolean
   productSuccessMessage: string
@@ -201,6 +205,9 @@ export default function UserDashboardDialogs({
   setShowOrderConfirmDialog,
   showPaymentDialog,
   setShowPaymentDialog,
+  paymentRequest,
+  handlePayWithWallet,
+  handlePayWithMidtrans,
   showProductSuccess,
   productSuccessMessage,
   showProfileSuccess,
@@ -698,26 +705,17 @@ export default function UserDashboardDialogs({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pilih Metode Pembayaran</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {[
-              { id: "gopay", label: "GoPay", icon: "💚" },
-              { id: "ovo", label: "OVO", icon: "💜" },
-              { id: "dana", label: "DANA", icon: "💙" },
-              { id: "bca", label: "Transfer BCA", icon: "🏦" },
-            ].map((method) => (
-              <button key={method.id} className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left" onClick={() => setShowPaymentDialog(false)}>
-                <span className="text-xl">{method.icon}</span>
-                <span className="font-medium">{method.label}</span>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        totalPayment={paymentRequest?.totalPayment || 0}
+        formatPrice={formatPrice}
+        title="Pilih Metode Pembayaran"
+        description={paymentRequest ? `Lanjutkan pembayaran untuk ${paymentRequest.orderTitle}.` : "Pilih metode pembayaran yang ingin digunakan."}
+        summaryLabel={paymentRequest ? `Pembayaran ${paymentRequest.orderId}` : "Total pembayaran"}
+        onPayWithWallet={handlePayWithWallet}
+        onPayWithMidtrans={handlePayWithMidtrans}
+      />
 
       {showProductSuccess && (
         <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">

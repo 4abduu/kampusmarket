@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowRight, Info } from "lucide-react"
+import { Info } from "lucide-react"
+import PaymentMethodDialog, { type PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog"
 
 interface CancelReasonOption {
   value: string
@@ -40,7 +41,7 @@ interface OrderDetailDialogsProps {
   setShowPaymentDialog: (open: boolean) => void
   totalPayment: number
   formatPrice: (price: number) => string
-  handlePayment: () => void
+  handlePayment: (method: PaymentMethod) => void
   showRejectDialog: boolean
   setShowRejectDialog: (open: boolean) => void
   isService: boolean
@@ -86,35 +87,17 @@ export default function OrderDetailDialogs({
 }: OrderDetailDialogsProps) {
   return (
     <>
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pilih Metode Pembayaran</DialogTitle>
-            <DialogDescription>
-              Total pembayaran: <strong className="text-primary-600">{formatPrice(totalPayment)}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            {[
-              { id: "gopay", label: "GoPay", icon: "💚" },
-              { id: "ovo", label: "OVO", icon: "💜" },
-              { id: "dana", label: "DANA", icon: "💙" },
-              { id: "bca", label: "Transfer BCA", icon: "🏦" },
-              { id: "mandiri", label: "Transfer Mandiri", icon: "🏦" },
-            ].map((method) => (
-              <button
-                key={method.id}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                onClick={handlePayment}
-              >
-                <span className="text-xl">{method.icon}</span>
-                <span className="font-medium">{method.label}</span>
-                <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        totalPayment={totalPayment}
+        formatPrice={formatPrice}
+        title="Pilih Metode Pembayaran"
+        description="Pilih dompet jika ingin bayar langsung dari saldo akun, atau Midtrans jika ingin memakai popup pembayaran bawaan."
+        summaryLabel="Total pembayaran pesanan"
+        onPayWithWallet={() => handlePayment("wallet")}
+        onPayWithMidtrans={() => handlePayment("midtrans")}
+      />
 
       <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <AlertDialogContent>
@@ -193,6 +176,8 @@ export default function OrderDetailDialogs({
               <Label htmlFor="cancelReason">Alasan Pembatalan *</Label>
               <select
                 id="cancelReason"
+                aria-label="Alasan pembatalan"
+                title="Alasan pembatalan"
                 className="w-full p-2 border rounded-lg bg-background"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}

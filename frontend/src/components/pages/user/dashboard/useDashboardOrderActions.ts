@@ -1,11 +1,19 @@
 import { useState } from "react"
 import { mockOrders } from "@/lib/mock-data"
+import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
+
+type PaymentRequest = {
+  orderId: string
+  orderTitle: string
+  totalPayment: number
+}
 
 export function useDashboardOrderActions() {
   const [showShippingDialog, setShowShippingDialog] = useState(false)
   const [shippingFee, setShippingFee] = useState("")
   const [showOrderConfirmDialog, setShowOrderConfirmDialog] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null)
 
   const [showServicePriceDialog, setShowServicePriceDialog] = useState(false)
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<string | null>(null)
@@ -33,12 +41,31 @@ export function useDashboardOrderActions() {
     setServicePriceForm({ price: "", notes: "" })
   }
 
-  const handleAcceptPrice = (orderId: string) => {
-    console.log("Price accepted for order:", orderId)
+  const handleAcceptPrice = (order: OrderListItem) => {
+    setPaymentRequest({
+      orderId: order.id,
+      orderTitle: order.productTitle,
+      totalPayment: order.totalPrice,
+    })
+    setShowPaymentDialog(true)
   }
 
   const handleRejectPrice = (orderId: string) => {
     console.log("Price rejected for order:", orderId)
+  }
+
+  const handlePayWithWallet = () => {
+    if (!paymentRequest) return
+    console.log("Payment via wallet:", paymentRequest)
+    setShowPaymentDialog(false)
+    setPaymentRequest(null)
+  }
+
+  const handlePayWithMidtrans = () => {
+    if (!paymentRequest) return
+    console.log("Payment via Midtrans:", paymentRequest)
+    setShowPaymentDialog(false)
+    setPaymentRequest(null)
   }
 
   return {
@@ -50,6 +77,7 @@ export function useDashboardOrderActions() {
     setShowOrderConfirmDialog,
     showPaymentDialog,
     setShowPaymentDialog,
+    paymentRequest,
     showServicePriceDialog,
     setShowServicePriceDialog,
     selectedServiceOrder,
@@ -59,5 +87,7 @@ export function useDashboardOrderActions() {
     handleSubmitServicePrice,
     handleAcceptPrice,
     handleRejectPrice,
+    handlePayWithWallet,
+    handlePayWithMidtrans,
   }
 }

@@ -23,7 +23,6 @@ import {
   getDurationLabel,
   getInitials,
   getPriceLabel,
-  getPrimaryImage,
   getSavings,
 } from "@/components/pages/user/favorites/favorites.helpers";
 import type { Product } from "@/components/pages/user/favorites/favorites.types";

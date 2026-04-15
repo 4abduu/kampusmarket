@@ -12,6 +12,7 @@ import OrderDetailDialogs from "@/components/pages/user/order-detail/OrderDetail
 import OrderDetailStatusSection from "@/components/pages/user/order-detail/OrderDetailStatusSection";
 import OrderDetailProductCard from "@/components/pages/user/order-detail/OrderDetailProductCard";
 import OrderDetailSummaryColumn from "@/components/pages/user/order-detail/OrderDetailSummaryColumn";
+import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
 
 interface OrderDetailPageProps {
   onNavigate: (page: string) => void;
@@ -283,7 +284,8 @@ export default function OrderDetailPage({ onNavigate, orderId }: OrderDetailPage
   };
 
   // For demo: simulate payment
-  const handlePayment = () => {
+  const handlePayment = (method: PaymentMethod) => {
+    console.log("Payment method selected:", method);
     setShowPaymentDialog(false);
     setOrderStatus("processing");
   };

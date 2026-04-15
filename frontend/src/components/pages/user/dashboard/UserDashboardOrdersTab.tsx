@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { mockOrders } from "@/lib/mock-data"
+import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
 import { AlertCircle, Briefcase, Check, CheckCircle2, DollarSign, MessageCircle, Package, Truck } from "lucide-react"
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
   handleOpenServicePriceDialog: (orderId: string) => void
   setShowOrderConfirmDialog: (open: boolean) => void
   handleRejectPrice: (orderId: string) => void
-  handleAcceptPrice: (orderId: string) => void
+  handleAcceptPrice: (order: OrderListItem) => void
 }
 
 export default function UserDashboardOrdersTab({
@@ -121,7 +122,7 @@ export default function UserDashboardOrdersTab({
                         <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50" onClick={() => handleRejectPrice(order.id)}>
                           <AlertCircle className="h-4 w-4 mr-1" />Tolak
                         </Button>
-                        <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => handleAcceptPrice(order.id)}>
+                        <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => handleAcceptPrice(order)}>
                           <Check className="h-4 w-4 mr-1" />Setuju & Bayar
                         </Button>
                       </div>

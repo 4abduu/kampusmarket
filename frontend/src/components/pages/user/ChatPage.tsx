@@ -14,6 +14,7 @@ import ChatListPanel from "@/components/pages/user/chat/ChatListPanel";
 import ChatConversationPanel from "@/components/pages/user/chat/ChatConversationPanel";
 import ChatActionModals from "@/components/pages/user/chat/ChatActionModals";
 import type { ChatMessage, ChatState } from "@/components/pages/user/chat/chat.types";
+import PaymentMethodDialog, { type PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
 
 interface ChatPageProps {
   onNavigate: (page: string, productId?: string) => void;
@@ -34,6 +35,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const [negoPrice, setNegoPrice] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentRequest, setPaymentRequest] = useState<{ title: string; totalPayment: number } | null>(null);
 
   const [isSellerView, setIsSellerView] = useState(false);
 
@@ -431,6 +434,25 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     }));
   };
 
+  const handleOpenPaymentDialog = (message: ChatMessage) => {
+    const product = message.product || selectedProduct;
+    if (!product) return;
+
+    setPaymentRequest({
+      title: product.title,
+      totalPayment: message.offerPrice || product.price,
+    });
+    setShowPaymentDialog(true);
+  };
+
+  const handlePayWithMethod = (method: PaymentMethod) => {
+    if (!paymentRequest) return;
+
+    console.log("Chat payment method selected:", method, paymentRequest);
+    setShowPaymentDialog(false);
+    setPaymentRequest(null);
+  };
+
   const formatPriceInput = (value: string) => {
     const num = value.replace(/\D/g, "");
     if (num === "") return "";
@@ -474,6 +496,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             onSendMessage={handleSendMessage}
             onKeyPress={handleKeyPress}
             onAcceptOffer={handleAcceptOffer}
+            onOpenPaymentDialog={handleOpenPaymentDialog}
             formatPrice={formatPrice}
           />
         </div>
@@ -495,6 +518,18 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         formatPriceInput={formatPriceInput}
         handleSubmitNego={handleSubmitNego}
         handleSubmitOffer={handleSubmitOffer}
+      />
+
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        totalPayment={paymentRequest?.totalPayment || 0}
+        formatPrice={formatPrice}
+        title="Pilih Metode Pembayaran"
+        description={paymentRequest ? `Lanjutkan pembayaran untuk ${paymentRequest.title}.` : "Pilih metode pembayaran yang ingin digunakan."}
+        summaryLabel="Total pembayaran"
+        onPayWithWallet={() => handlePayWithMethod("wallet")}
+        onPayWithMidtrans={() => handlePayWithMethod("midtrans")}
       />
     </div>
   );

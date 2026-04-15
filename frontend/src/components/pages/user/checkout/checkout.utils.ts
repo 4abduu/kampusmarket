@@ -77,7 +77,7 @@ export const resolveCheckoutProduct = (productId?: string): CheckoutResolvedProd
     product,
     isService,
     isVariablePricing,
-    defaultShippingMethod: isService ? "onsite" : "cod",
+    defaultShippingMethod: isService ? "pickup" : "cod",
   };
 };
 

@@ -8,6 +8,7 @@ interface Props {
   formatPrice: (price: number) => string
   onNavigate: (page: string, productId?: string) => void
   onAcceptOffer: (message: ChatMessage) => void
+  onOpenPaymentDialog: (message: ChatMessage) => void
 }
 
 export default function ChatMessageItem({
@@ -16,6 +17,7 @@ export default function ChatMessageItem({
   formatPrice,
   onNavigate,
   onAcceptOffer,
+  onOpenPaymentDialog,
 }: Props) {
   return (
     <div className={`flex ${message.isMe ? "justify-end" : "justify-start"}`}>
@@ -91,7 +93,7 @@ export default function ChatMessageItem({
                 <Button size="sm" className="flex-1 bg-primary-600 text-white hover:bg-primary-700" onClick={() => onAcceptOffer(message)}>
                   Terima
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => onNavigate("checkout")}>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => onOpenPaymentDialog(message)}>
                   Bayar Sekarang
                 </Button>
               </div>

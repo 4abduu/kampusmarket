@@ -47,6 +47,7 @@ interface Props {
   onSendMessage: () => void
   onKeyPress: (e: React.KeyboardEvent) => void
   onAcceptOffer: (message: ChatMessage) => void
+  onOpenPaymentDialog: (message: ChatMessage) => void
   formatPrice: (price: number) => string
 }
 
@@ -73,6 +74,7 @@ export default function ChatConversationPanel({
   onSendMessage,
   onKeyPress,
   onAcceptOffer,
+  onOpenPaymentDialog,
   formatPrice,
 }: Props) {
   return (
@@ -148,6 +150,7 @@ export default function ChatConversationPanel({
                   formatPrice={formatPrice}
                   onNavigate={onNavigate}
                   onAcceptOffer={onAcceptOffer}
+                  onOpenPaymentDialog={onOpenPaymentDialog}
                 />
               ))}
               <div ref={messagesEndRef} />
