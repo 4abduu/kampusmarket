@@ -42,7 +42,6 @@ interface RenderPageParams {
   selectedSuccessType: "product" | "service" | null;
   registeredEmail: string | null;
   googleUserData: { userName?: string; userEmail?: string } | null;
-  googleAuthToken: string | null;
   isLoggedIn: boolean;
   onNavigate: NavigateFn;
   onLogin: (role?: "user" | "admin", customerOnly?: boolean) => void;
@@ -63,7 +62,6 @@ export function renderPage(params: RenderPageParams) {
     selectedSuccessType,
     registeredEmail,
     googleUserData,
-    googleAuthToken,
     isLoggedIn,
     onNavigate,
     onLogin,
@@ -86,7 +84,6 @@ export function renderPage(params: RenderPageParams) {
           onLogin={onLogin}
           userName={googleUserData?.userName}
           userEmail={googleUserData?.userEmail}
-          authToken={googleAuthToken || undefined}
         />
       );
     case "email-verification":

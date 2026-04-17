@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { Address as AddressType } from "@/lib/mock-data"
 
 interface DashboardUser {
@@ -37,6 +37,16 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     bio: currentUser.bio || "",
     faculty: currentUser.faculty || "",
   })
+
+  useEffect(() => {
+    setProfileForm({
+      name: currentUser.name,
+      email: currentUser.email,
+      phone: currentUser.phone || "",
+      bio: currentUser.bio || "",
+      faculty: currentUser.faculty || "",
+    })
+  }, [currentUser])
   const [showProfileSuccess, setShowProfileSuccess] = useState(false)
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)

@@ -32,12 +32,14 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useAdminNotificationStore } from "@/lib/admin-notification-store";
+import type { User as AppUser } from "@/lib/mock-data";
 
 interface NavbarProps {
   currentPage: string;
   onNavigate: (page: string, data?: string | { searchQuery?: string }) => void;
   isLoggedIn: boolean;
   userRole: "user" | "admin" | null;
+  currentUser?: AppUser | null;
   isCustomerOnly?: boolean;
   onLogin: () => void;
   onLogout: () => void;
@@ -48,6 +50,7 @@ export default function Navbar({
   onNavigate,
   isLoggedIn,
   userRole,
+  currentUser,
   isCustomerOnly = false,
   onLogin: _onLogin,
   onLogout,
@@ -55,6 +58,21 @@ export default function Navbar({
   const [searchQuery, setSearchQuery] = useState("");
   const userUnreadCount = useNotificationStore((state) => state.unreadCount);
   const adminUnreadCount = useAdminNotificationStore((state) => state.unreadCount);
+  const displayName = currentUser?.name || (isCustomerOnly ? "Rina Wulandari" : "Ahmad Santoso");
+  const displayEmail = currentUser?.email || (isCustomerOnly ? "rina.wulandari@student.ac.id" : "ahmad@student.ac.id");
+  const displayAvatar = currentUser?.avatar || "/avatar.png";
+  const displayInitials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const walletText = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(currentUser?.walletBalance || 0);
 
   // User nav links
   const userNavLinks = [
@@ -322,9 +340,9 @@ export default function Navbar({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatar.png" alt="User" />
+                      <AvatarImage src={displayAvatar} alt={displayName} />
                       <AvatarFallback className={isCustomerOnly ? "bg-blue-100 text-blue-700" : "bg-primary-100 text-primary-700"}>
-                        {isCustomerOnly ? "RW" : "AS"}
+                        {displayInitials}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -333,10 +351,10 @@ export default function Navbar({
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {isCustomerOnly ? "Rina Wulandari" : "Ahmad Santoso"}
+                        {displayName}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {isCustomerOnly ? "rina.wulandari@student.ac.id" : "ahmad@student.ac.id"}
+                        {displayEmail}
                       </p>
                       {isCustomerOnly && (
                         <span className="text-xs text-blue-600 mt-1">Customer Only</span>
@@ -392,7 +410,7 @@ export default function Navbar({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onNavigate("wallet")}>
                         <Wallet className="mr-2 h-4 w-4" />
-                        <span>Dompet (Rp 250.000)</span>
+                        <span>Dompet ({walletText})</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onNavigate("settings")}>
                         <Settings className="mr-2 h-4 w-4" />

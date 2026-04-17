@@ -47,7 +47,6 @@ export default function Home() {
   const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false); // popup for new seller
   const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
-  const [googleAuthToken, setGoogleAuthToken] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const handleNavigate = (page: string, data?: string | NavigationData) => {
@@ -129,7 +128,6 @@ export default function Home() {
   };
 
   const handleLogin = (role: "user" | "admin" = "user") => {
-    setGoogleAuthToken(null);
     setIsLoggedIn(true);
     setUserRole(role);
     if (role === "admin") {
@@ -147,7 +145,6 @@ export default function Home() {
   };
 
   const handleGooglePendingSelection = (session: GooglePendingSession) => {
-    setGoogleAuthToken(session.token);
     setGoogleUserData({
       userName: session.userName,
       userEmail: session.userEmail,
@@ -158,7 +155,6 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    setGoogleAuthToken(null);
     setIsLoggedIn(false);
     setUserRole(null);
     setShowSellerWelcome(false);
@@ -192,15 +188,11 @@ export default function Home() {
       return;
     }
 
-    const tokenType = searchParams.get("tokenType") || "Bearer";
     const requiresFacultySelection = searchParams.get("requiresFacultySelection") === "true";
     const isNewUser = searchParams.get("isNewUser") === "true";
     const userName = searchParams.get("userName") || undefined;
     const userEmail = searchParams.get("userEmail") || undefined;
 
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("tokenType", tokenType);
-    setGoogleAuthToken(token);
     setGoogleUserData({ userName, userEmail });
     setIsLoggedIn(true);
     setUserRole("user");
@@ -263,7 +255,6 @@ export default function Home() {
           selectedSuccessType,
           registeredEmail,
           googleUserData,
-          googleAuthToken,
           isLoggedIn,
           onNavigate: handleNavigate,
           onLogin: handleLogin,

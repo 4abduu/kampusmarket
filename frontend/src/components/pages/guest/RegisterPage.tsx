@@ -84,6 +84,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -108,9 +109,8 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
         throw new Error(result.message || "Registrasi gagal");
       }
 
-      // Store token dan navigate ke email verification
-      localStorage.setItem("authToken", result.data.token);
-      localStorage.setItem("tokenType", result.data.tokenType);
+      // Auth token is now stored as HttpOnly cookie automatically by the backend
+      // No need to store in localStorage
       
       onNavigate("email-verification", { registeredEmail: formData.email });
     } catch (err) {

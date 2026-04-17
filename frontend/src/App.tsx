@@ -1,8 +1,11 @@
 import { BrowserRouter, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
+import { userApi } from "@/lib/api/users";
+import type { User } from "@/lib/mock-data";
+import AuthLoadingSkeleton from "@/components/pages/guest/AuthLoadingSkeleton";
 
 // Layout
 import Navbar from "@/components/layout/Navbar";
@@ -19,13 +22,51 @@ function AppContent() {
   // Auth State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
   
   // Data State
   const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
-  const [googleAuthSession, setGoogleAuthSession] = useState<GoogleAuthSession | null>(null);
+
+  const syncAuthUser = async () => {
+    try {
+      console.debug("[App] Checking auth status via /auth/me");
+      const user = await userApi.me();
+
+      if (user) {
+        console.debug("[App] User authenticated:", {
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+        });
+        setAuthUser(user);
+        setIsLoggedIn(true);
+        setUserRole(user.role === "admin" ? "admin" : "user");
+      } else {
+        console.debug("[App] No authenticated user found");
+        setAuthUser(null);
+        setIsLoggedIn(false);
+        setUserRole(null);
+      }
+    } catch (error) {
+      console.debug("[App] Auth check failed:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+      setAuthUser(null);
+      setIsLoggedIn(false);
+      setUserRole(null);
+    } finally {
+      setAuthReady(true);
+    }
+  };
+
+  // Check auth status on app load
+  useEffect(() => {
+    void syncAuthUser();
+  }, []);
 
   // Handle Navigation
   const handleNavigate = (page: string, data?: string | NavigationData) => {
@@ -77,10 +118,10 @@ function AppContent() {
   };
 
   const handleLogin = (role: "user" | "admin" = "user") => {
-    setGoogleAuthSession(null);
     setGoogleUserData(null);
     setIsLoggedIn(true);
     setUserRole(role);
+    void syncAuthUser();
     if (role === "admin") {
       navigate("/admin");
     } else {
@@ -88,9 +129,17 @@ function AppContent() {
     }
   };
 
-  const handleLogout = () => {
-    setGoogleAuthSession(null);
+  const handleLogout = async () => {
+    try {
+      await userApi.logout();
+    } catch (error) {
+      console.debug("[App] Logout API failed, continuing local cleanup", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+
     setGoogleUserData(null);
+    setAuthUser(null);
     setIsLoggedIn(false);
     setUserRole(null);
     setShowSellerWelcome(false);
@@ -102,7 +151,6 @@ function AppContent() {
   };
 
   const handleGooglePendingSelection = (session: GoogleAuthSession) => {
-    setGoogleAuthSession(session);
     setGoogleUserData({
       userName: session.userName,
       userEmail: session.userEmail,
@@ -127,6 +175,7 @@ function AppContent() {
     "email-verification",
     "payment-success",
     "booking-success",
+    "unauthorized",
   ];
 
   const noFooterPages = [
@@ -140,21 +189,39 @@ function AppContent() {
     "payment-success",
     "booking-success",
     "admin",
+    "stats",
     "admin-notifications",
+    "unauthorized",
   ];
   const hideNavbar = noNavbarPages.some((p) => location.pathname.startsWith(`/${p}`));
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAdminPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/stats");
   const hasSellerProducts = sellerProductCount > 0;
   const isCustomerOnly = !hasSellerProducts;
 
+  // Check if current path matches a known route pattern (for 404 pages)
+  const knownPagePrefixes = [
+    "login", "register", "forgot-password", "faculty-selection", "email-verification",
+    "catalog", "services", "product", "service", "search",
+    "checkout", "cart", "checkout-success", "payment-success", "booking-success",
+    "dashboard", "my-products", "wallet", "settings", "orders", "favorites", "order-detail", "rating", "chat", "notifications", "profile", "add-product",
+    "admin", "stats", "admin-notifications", "unauthorized",
+  ];
+  const isKnownRoute = location.pathname === "/" || knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
+  const isNotFoundPage = !isKnownRoute;
+
+  if (!authReady) {
+    return <AuthLoadingSkeleton />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {!hideNavbar && (
+      {!hideNavbar && !isNotFoundPage && (
         <Navbar
           currentPage={location.pathname}
           onNavigate={handleNavigate}
           isLoggedIn={isLoggedIn}
           userRole={userRole}
+          currentUser={authUser}
           isCustomerOnly={isCustomerOnly}
           onLogin={handleLogin}
           onLogout={handleLogout}
@@ -183,14 +250,14 @@ function AppContent() {
           currentId={currentId}
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
-          googleAuthSession={googleAuthSession}
+          currentUser={authUser}
         />
       </main>
 
       {/* Footer Logic */}
-      {isAdminPage ? (
+      {isAdminPage && !isNotFoundPage ? (
         <AdminFooter />
-      ) : !noFooterPages.some(p => location.pathname.startsWith(p)) && (
+      ) : !isNotFoundPage && !noFooterPages.some((p) => location.pathname.startsWith(`/${p}`)) && (
         <Footer onNavigate={handleNavigate} />
       )}
       

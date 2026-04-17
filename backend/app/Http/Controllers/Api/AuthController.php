@@ -22,6 +22,25 @@ use App\Http\Helpers\NumberGenerator;
 
 class AuthController extends Controller
 {
+    private function getAuthCookieConfig(): array
+    {
+        $isSecure = config('app.env') === 'production';
+        $cookieDomain = config('app.env') === 'production' ? env('COOKIE_DOMAIN', 'localhost') : 'localhost';
+
+        return [$cookieDomain, $isSecure];
+    }
+
+    private function attachAuthCookies($response, string $token, bool $needsFacultySelection, bool $isNewUser = false)
+    {
+        [$cookieDomain, $isSecure] = $this->getAuthCookieConfig();
+
+        $response->cookie('authToken', $token, 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
+        $response->cookie('requiresFacultySelection', $needsFacultySelection ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
+        $response->cookie('isNewUser', $isNewUser ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
+
+        return $response;
+    }
+
     /**
      * Register a new user.
      */
@@ -55,7 +74,7 @@ class AuthController extends Controller
                 'email' => $user->email,
             ]);
 
-            return response()->json([
+            $response = response()->json([
                 'success' => true,
                 'message' => 'Registrasi berhasil',
                 'data' => [
@@ -64,6 +83,7 @@ class AuthController extends Controller
                     'tokenType' => 'Bearer',
                 ],
             ], 201);
+            return $this->attachAuthCookies($response, $token, false, false);
         } catch (\Throwable $e) {
             Log::error('Auth register failed', [
                 'email' => $request->email,
@@ -113,7 +133,7 @@ class AuthController extends Controller
                 'email' => $user->email,
             ]);
 
-            return response()->json([
+            $response = response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
@@ -122,6 +142,7 @@ class AuthController extends Controller
                     'tokenType' => 'Bearer',
                 ],
             ]);
+            return $this->attachAuthCookies($response, $token, false, false);
         } catch (\Throwable $e) {
             Log::error('Auth login failed with exception', [
                 'email' => $request->email,
@@ -193,7 +214,7 @@ class AuthController extends Controller
                 'needs_faculty_selection' => $needsFacultySelection,
             ]);
 
-            return response()->json([
+            $response = response()->json([
                 'success' => true,
                 'message' => $needsFacultySelection
                     ? 'Pilih fakultas untuk menyelesaikan pendaftaran'
@@ -207,6 +228,7 @@ class AuthController extends Controller
                     'isNewUser' => $isNewUser,
                 ],
             ], $needsFacultySelection ? 202 : 200);
+            return $this->attachAuthCookies($response, $token, $needsFacultySelection, $isNewUser);
         } catch (\Throwable $e) {
             Log::error('Auth Google login failed with exception', [
                 'email' => $request->email,
@@ -335,19 +357,6 @@ class AuthController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
             $needsFacultySelection = !$user->faculty_id;
 
-            // Build query parameters for redirect
-            $queryParams = http_build_query([
-                'token' => $token,
-                'tokenType' => 'Bearer',
-                'requiresFacultySelection' => $needsFacultySelection ? 'true' : 'false',
-                'isNewUser' => $isNewUser ? 'true' : 'false',
-                'userId' => $user->uuid,
-                'userName' => $user->name,
-            ]);
-
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-            $redirectPath = $needsFacultySelection ? '/faculty-selection' : '/dashboard';
-
             Log::info('Auth Google callback success', [
                 'user_id' => $user->id,
                 'email' => $user->email,
@@ -355,7 +364,9 @@ class AuthController extends Controller
                 'needs_faculty_selection' => $needsFacultySelection,
             ]);
 
-            return redirect("$frontendUrl$redirectPath?$queryParams");
+            // Set HttpOnly cookies
+            $response = redirect(env('FRONTEND_URL', 'http://localhost:5173') . ($needsFacultySelection ? '/faculty-selection' : '/'));
+            return $this->attachAuthCookies($response, $token, $needsFacultySelection, $isNewUser);
         } catch (\Exception $e) {
             Log::error('Auth Google callback failed with exception', [
                 'state' => $state,
@@ -431,22 +442,86 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         // Revoke current token
-        $request->user()->currentAccessToken()->delete();
+        if ($request->user()) {
+            $request->user()->currentAccessToken()->delete();
+        }
 
-        return response()->json([
+        // Determine cookie settings
+        $isSecure = config('app.env') === 'production';
+        $cookieDomain = config('app.env') === 'production' ? env('COOKIE_DOMAIN', 'localhost') : 'localhost';
+
+        // Clear auth cookies by setting them with empty value and immediate expiry
+        $response = response()->json([
             'success' => true,
             'message' => 'Logout berhasil',
         ]);
+
+        // Clear authToken cookie
+        $response->cookie(
+            'authToken',
+            '',
+            -1, // Expired
+            '/',
+            $cookieDomain,
+            $isSecure,
+            true,
+            false,
+            'Lax'
+        );
+
+        // Clear requiresFacultySelection cookie
+        $response->cookie(
+            'requiresFacultySelection',
+            '',
+            -1,
+            '/',
+            $cookieDomain,
+            $isSecure,
+            true,
+            false,
+            'Lax'
+        );
+
+        // Clear isNewUser cookie
+        $response->cookie(
+            'isNewUser',
+            '',
+            -1,
+            '/',
+            $cookieDomain,
+            $isSecure,
+            true,
+            false,
+            'Lax'
+        );
+
+        return $response;
     }
 
     /**
      * Get current authenticated user.
+     * Used by frontend to check login status and restore session after page reload.
      */
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if (!$user) {
+            Log::debug('Auth /me endpoint called without authenticated user', [
+                'has_auth_header' => $request->header('Authorization') ? 'yes' : 'no',
+                'has_cookie' => $request->hasCookie('authToken') ? 'yes' : 'no',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null,
+            ], 401);
+        }
+
         return response()->json([
             'success' => true,
-            'data' => new UserResource($request->user()->load(['faculty', 'addresses'])),
+            'data' => new UserResource($user->load(['faculty', 'addresses'])),
         ]);
     }
 

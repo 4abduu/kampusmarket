@@ -15,12 +15,12 @@ import { Building2, Check, Loader2, Sparkles, Ban } from "lucide-react";
 import { faculties as fallbackFaculties } from "@/lib/mock-data";
 import { getInitialsFromName } from "@/components/pages/guest/faculty-selection/facultySelection.utils";
 import { API_BASE_URL } from "@/lib/config";
+import { userApi } from "@/lib/api/users";
 
 interface FacultySelectionPageProps {
   onLogin: (role?: "user" | "admin", customerOnly?: boolean) => void;
   userName?: string;
   userEmail?: string;
-  authToken?: string;
 }
 
 type FacultyOption = {
@@ -28,7 +28,7 @@ type FacultyOption = {
   name: string;
 };
 
-export default function FacultySelectionPage({ onLogin, userName, userEmail, authToken }: FacultySelectionPageProps) {
+export default function FacultySelectionPage({ onLogin, userName, userEmail }: FacultySelectionPageProps) {
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>(fallbackFaculties);
@@ -85,30 +85,12 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail, aut
     setIsLoading(true);
 
     try {
-      if (authToken) {
-        const response = await fetch(`${API_BASE_URL}/auth/google/complete-faculty`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            facultyId: selectedFaculty,
-          }),
-        });
+      const result = await userApi.completeGoogleFacultySelection(selectedFaculty);
 
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Gagal menyimpan fakultas");
-        }
-
-        const nextRole = result.data?.role === "admin" ? "admin" : "user";
+      if (result?.data) {
+        const nextRole = result.data.role === "admin" ? "admin" : "user";
         onLogin(nextRole);
         return;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
       onLogin("user");

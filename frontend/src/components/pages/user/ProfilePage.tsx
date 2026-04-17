@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, Package } from "lucide-react";
-import { categories, mockProducts, mockServices, mockUsers, serviceCategories } from "@/lib/mock-data";
+import { categories, mockProducts, mockServices, mockUsers, serviceCategories, type User } from "@/lib/mock-data";
+import { userApi } from "@/lib/api/users";
 import ProfileProductsTab from "@/components/pages/user/profile/ProfileProductsTab";
 import ProfileReviewsTab from "@/components/pages/user/profile/ProfileReviewsTab";
 import ProfileServicesTab from "@/components/pages/user/profile/ProfileServicesTab";
@@ -23,7 +24,22 @@ type ServiceItem = (typeof mockServices)[number];
 type UserServiceItem = ProductItem | ServiceItem;
 
 export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
-  const user = mockUsers.find((u) => u.id === userId) || mockUsers[0];
+  const [authUser, setAuthUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (userId) return;
+
+    const loadAuthUser = async () => {
+      const user = await userApi.me();
+      setAuthUser(user);
+    };
+
+    void loadAuthUser();
+  }, [userId]);
+
+  const user = (userId
+    ? mockUsers.find((u) => u.id === userId)
+    : authUser) || mockUsers[0];
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("products");
   const [productCategory, setProductCategory] = useState<string | null>(null);

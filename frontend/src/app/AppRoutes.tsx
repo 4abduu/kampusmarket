@@ -1,7 +1,9 @@
 import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
+import { UnauthorizedPage, NotFoundPage } from "@/components/pages/guest";
+import type { User } from "@/lib/mock-data";
 
 const LandingPage = lazy(() => import("@/components/pages/guest/LandingPage"));
 const LoginPage = lazy(() => import("@/components/pages/guest/LoginPage"));
@@ -40,9 +42,47 @@ type AppRoutesProps = {
   registeredEmail: string | null;
   currentId: string | null;
   googleUserData: { userName?: string; userEmail?: string } | null;
-  googleAuthSession: GoogleAuthSession | null;
+  currentUser: User | null;
   currentSuccessType: "product" | "service" | null;
 };
+
+function ProtectedRoute({
+  isLoggedIn,
+  element,
+}: {
+  isLoggedIn: boolean;
+  element: React.ReactElement;
+}): React.ReactElement {
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/unauthorized" replace state={{ from: location.pathname }} />;
+  }
+
+  return element;
+}
+
+function RoleProtectedRoute({
+  isLoggedIn,
+  isAdmin,
+  element,
+}: {
+  isLoggedIn: boolean;
+  isAdmin: boolean;
+  element: React.ReactElement;
+}): React.ReactElement {
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/unauthorized" replace state={{ from: location.pathname }} />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/unauthorized" replace state={{ from: location.pathname, reason: "forbidden" }} />;
+  }
+
+  return element;
+}
 
 export default function AppRoutes({
   onNavigate,
@@ -55,9 +95,12 @@ export default function AppRoutes({
   registeredEmail,
   currentId,
   googleUserData,
-  googleAuthSession,
+  currentUser,
   currentSuccessType,
 }: AppRoutesProps) {
+  const location = useLocation();
+  const unauthorizedState = location.state as { reason?: string } | null;
+
   return (
     <Suspense
       fallback={(
@@ -86,7 +129,15 @@ export default function AppRoutes({
               onLogin={onLogin}
               userName={googleUserData?.userName}
               userEmail={googleUserData?.userEmail}
-              authToken={googleAuthSession?.token}
+            />
+          )}
+        />
+        <Route
+          path="/unauthorized"
+          element={(
+            <UnauthorizedPage
+              onNavigate={onNavigate}
+              variant={unauthorizedState?.reason === "forbidden" ? "forbidden" : "guest"}
             />
           )}
         />
@@ -98,28 +149,30 @@ export default function AppRoutes({
         <Route path="/product/:id" element={<ProductDetailPage onNavigate={onNavigate} productId={currentId || "p1"} isLoggedIn={isLoggedIn} onLogin={onLogin} />} />
         <Route path="/service/:id" element={<ServiceDetailPage onNavigate={onNavigate} serviceId={currentId || "s1"} />} />
 
-        <Route path="/checkout" element={<CheckoutPage onNavigate={onNavigate} />} />
-        <Route path="/cart" element={<CartPage onNavigate={onNavigate} />} />
+        <Route path="/checkout" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<CheckoutPage onNavigate={onNavigate} />} />} />
+        <Route path="/cart" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<CartPage onNavigate={onNavigate} />} />} />
         <Route path="/checkout-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType={currentSuccessType || "product"} />} />
         <Route path="/payment-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="product" />} />
         <Route path="/booking-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="service" />} />
 
-        <Route path="/dashboard" element={<UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} />} />
-        <Route path="/my-products" element={<UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} />} />
-        <Route path="/wallet" element={<UserDashboardPage onNavigate={onNavigate} currentPage="wallet" onSellerProductCountChange={onSellerProductCountChange} />} />
-        <Route path="/settings" element={<UserDashboardPage onNavigate={onNavigate} currentPage="settings" onSellerProductCountChange={onSellerProductCountChange} />} />
-        <Route path="/orders" element={<OrdersListPage onNavigate={onNavigate} />} />
-        <Route path="/favorites" element={<FavoritesPage onNavigate={onNavigate} />} />
-        <Route path="/order-detail/:id" element={<OrderDetailPage onNavigate={onNavigate} orderId={currentId || undefined} />} />
-        <Route path="/rating" element={<RatingPage onNavigate={onNavigate} />} />
-        <Route path="/chat" element={<ChatPage onNavigate={onNavigate} />} />
-        <Route path="/notifications" element={<UserNotificationsPage onNavigate={onNavigate} />} />
-        <Route path="/profile/:id?" element={<ProfilePage onNavigate={onNavigate} userId={currentId || undefined} />} />
-        <Route path="/add-product" element={<AddProductPage onNavigate={onNavigate} />} />
+        <Route path="/dashboard" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />
+        <Route path="/my-products" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />
+        <Route path="/wallet" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="wallet" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />
+        <Route path="/settings" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="settings" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />
+        <Route path="/orders" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<OrdersListPage onNavigate={onNavigate} />} />} />
+        <Route path="/favorites" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<FavoritesPage onNavigate={onNavigate} />} />} />
+        <Route path="/order-detail/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<OrderDetailPage onNavigate={onNavigate} orderId={currentId || undefined} />} />} />
+        <Route path="/rating" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<RatingPage onNavigate={onNavigate} />} />} />
+        <Route path="/chat" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<ChatPage onNavigate={onNavigate} />} />} />
+        <Route path="/notifications" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserNotificationsPage onNavigate={onNavigate} />} />} />
+        <Route path="/profile/:id?" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<ProfilePage onNavigate={onNavigate} userId={currentId || undefined} />} />} />
+        <Route path="/add-product" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<AddProductPage onNavigate={onNavigate} />} />} />
 
         <Route path="/search" element={<SearchResultsPage onNavigate={onNavigate} />} />
-        <Route path="/admin" element={<AdminDashboardPage onNavigate={onNavigate} />} />
-        <Route path="/admin-notifications" element={<AdminNotificationsPage onNavigate={onNavigate} />} />
+        <Route path="/admin" element={<RoleProtectedRoute isLoggedIn={isLoggedIn} isAdmin={currentUser?.role === "admin"} element={<AdminDashboardPage onNavigate={onNavigate} />} />} />
+        <Route path="/stats" element={<RoleProtectedRoute isLoggedIn={isLoggedIn} isAdmin={currentUser?.role === "admin"} element={<AdminDashboardPage onNavigate={onNavigate} />} />} />
+        <Route path="/admin-notifications" element={<RoleProtectedRoute isLoggedIn={isLoggedIn} isAdmin={currentUser?.role === "admin"} element={<AdminNotificationsPage onNavigate={onNavigate} />} />} />
+        <Route path="*" element={<NotFoundPage onNavigate={onNavigate} />} />
       </Routes>
     </Suspense>
   );

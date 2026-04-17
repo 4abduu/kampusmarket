@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import {
+  type User,
   mockUsers,
   mockAddresses,
   getFacultyName,
@@ -31,16 +32,22 @@ interface UserDashboardPageProps {
   onNavigate: (page: string, productId?: string) => void
   currentPage?: string
   onSellerProductCountChange?: (count: number) => void
+  currentUser?: User | null
 }
 
-export default function UserDashboardPage({ onNavigate, currentPage = "dashboard", onSellerProductCountChange }: UserDashboardPageProps) {
+export default function UserDashboardPage({
+  onNavigate,
+  currentPage = "dashboard",
+  onSellerProductCountChange,
+  currentUser: authUser,
+}: UserDashboardPageProps) {
   const [activeTab, setActiveTab] = useState(() => getDashboardTabFromPage(currentPage))
 
   useEffect(() => {
     setActiveTab(getDashboardTabFromPage(currentPage))
   }, [currentPage])
 
-  const currentUser = mockUsers[0]
+  const currentUser = authUser || mockUsers[0]
 
   const products = useDashboardProducts({
     initialProducts: getInitialSellerProducts(),

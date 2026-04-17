@@ -39,6 +39,7 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -62,9 +63,8 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
       }
 
       const authData = result.data;
-      // Store token untuk request berikutnya
-      localStorage.setItem("authToken", authData.token);
-      localStorage.setItem("tokenType", authData.tokenType);
+      // Auth token is now stored as HttpOnly cookie automatically by the backend
+      // No need to store in localStorage
 
       onLogin(authData?.user?.role === "admin" ? "admin" : "user");
     } catch (err) {
