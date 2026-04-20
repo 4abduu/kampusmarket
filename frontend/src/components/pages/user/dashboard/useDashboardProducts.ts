@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import type { Product } from "@/lib/mock-data"
+import { updateProduct, deleteProduct as apiDeleteProduct } from "@/lib/api/products"
 
 type ProductFilter = "semua" | "barang" | "jasa"
 
@@ -47,30 +48,51 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
     setShowEditProductDialog(true)
   }
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!editingProduct) return
 
-    setUserProducts((previous) => previous.map((product) => (
-      product.id === editingProduct.id ? editingProduct : product
-    )))
+    try {
+      // If product came from backend (has id), call API to persist
+      if (editingProduct.id) {
+        await updateProduct(editingProduct.id, editingProduct as any)
+      }
 
-    setShowEditProductDialog(false)
-    setEditingProduct(null)
-    setProductSuccessMessage(editingProduct.type === "jasa" ? "Jasa berhasil diperbarui!" : "Produk berhasil diperbarui!")
-    setShowProductSuccess(true)
-    setTimeout(() => setShowProductSuccess(false), 3000)
+      setUserProducts((previous) => previous.map((product) => (
+        product.id === editingProduct.id ? editingProduct : product
+      )))
+
+      setShowEditProductDialog(false)
+      setEditingProduct(null)
+      setProductSuccessMessage(editingProduct.type === "jasa" ? "Jasa berhasil diperbarui!" : "Produk berhasil diperbarui!")
+      setShowProductSuccess(true)
+      setTimeout(() => setShowProductSuccess(false), 3000)
+    } catch (err: any) {
+      console.error('Failed to update product:', err)
+      alert(err?.message || 'Gagal memperbarui produk. Silakan coba lagi.')
+    }
   }
 
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (!productToDelete) return
 
     const deletedProduct = userProducts.find((product) => product.id === productToDelete)
-    setUserProducts((previous) => previous.filter((product) => product.id !== productToDelete))
-    setShowDeleteProductDialog(false)
-    setProductToDelete(null)
-    setProductSuccessMessage(deletedProduct?.type === "jasa" ? "Jasa berhasil dihapus!" : "Produk berhasil dihapus!")
-    setShowProductSuccess(true)
-    setTimeout(() => setShowProductSuccess(false), 3000)
+
+    try {
+      // If product has id, delete on server
+      if (productToDelete) {
+        await apiDeleteProduct(productToDelete)
+      }
+
+      setUserProducts((previous) => previous.filter((product) => product.id !== productToDelete))
+      setShowDeleteProductDialog(false)
+      setProductToDelete(null)
+      setProductSuccessMessage(deletedProduct?.type === "jasa" ? "Jasa berhasil dihapus!" : "Produk berhasil dihapus!")
+      setShowProductSuccess(true)
+      setTimeout(() => setShowProductSuccess(false), 3000)
+    } catch (err: any) {
+      console.error('Failed to delete product:', err)
+      alert(err?.message || 'Gagal menghapus produk. Silakan coba lagi.')
+    }
   }
 
   return {

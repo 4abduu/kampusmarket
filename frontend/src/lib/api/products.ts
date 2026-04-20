@@ -56,6 +56,12 @@ export const productsApi = {
     search?: string;
     page?: number;
     per_page?: number;
+    condition?: string;
+    price_min?: number;
+    price_max?: number;
+    sort_by?: string; // e.g. 'price', 'rating', 'created_at'
+    sort_order?: 'asc' | 'desc';
+    location?: string;
   }): Promise<ProductsListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.type) queryParams.append("type", params.type);
@@ -63,6 +69,12 @@ export const productsApi = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.condition) queryParams.append("condition", params.condition);
+    if (typeof params?.price_min !== "undefined") queryParams.append("price_min", params.price_min.toString());
+    if (typeof params?.price_max !== "undefined") queryParams.append("price_max", params.price_max.toString());
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.location) queryParams.append("location", params.location);
 
     const url = `${API_BASE_URL}/products${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
     return request<ProductsListResponse>(url);

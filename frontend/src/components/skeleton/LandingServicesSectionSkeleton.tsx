@@ -27,13 +27,13 @@ export default function LandingServicesSectionSkeleton({ itemCount = 3 }: Landin
               </div>
               <CardContent className="p-4">
                 <Skeleton className="h-6 w-24 mb-2" />
-                <p className="font-medium line-clamp-2 mb-2">
+                <div className="font-medium line-clamp-2 mb-2">
                   <Skeleton className="h-5 w-full" />
-                </p>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                </div>
+                <div className="text-sm text-muted-foreground line-clamp-2 mb-3">
                   <Skeleton className="h-4 w-full mb-1" />
                   <Skeleton className="h-4 w-3/4" />
-                </p>
+                </div>
                 <div className="flex items-center gap-1 mb-3">
                   <Skeleton className="h-4 w-4" />
                   <Skeleton className="h-4 w-12" />

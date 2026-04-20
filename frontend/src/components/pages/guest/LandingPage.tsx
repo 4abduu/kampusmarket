@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { categories, mockProducts, mockServices, serviceCategories } from "@/lib/mock-data";
 import { productsApi } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
 import LandingCategoriesSection from "@/components/pages/guest/landing/LandingCategoriesSection";
@@ -27,26 +26,22 @@ export default function LandingPage({
 }: LandingPageProps) {
   const [categoryType, setCategoryType] = useState<LandingCategoryType>("barang");
   const [showSellerBanner, setShowSellerBanner] = useState(true);
-  const [barangCategories, setBarangCategories] = useState<Array<{ id: string; label: string }>>(categories);
-  const [jasaCategories, setJasaCategories] = useState<Array<{ id: string; label: string }>>(serviceCategories);
-  const [barangProducts, setBarangProducts] = useState<any>(mockProducts);
-  const [jasaProducts, setJasaProducts] = useState<any>(mockServices);
+  const [barangCategories, setBarangCategories] = useState<Array<{ id: string; label: string }>>([]);
+  const [jasaCategories, setJasaCategories] = useState<Array<{ id: string; label: string }>>([]);
+  const [barangProducts, setBarangProducts] = useState<any>([]);
+  const [jasaProducts, setJasaProducts] = useState<any>([]);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  // Hapus loading state global, skeleton per section saja
+  const [heroLoading, setHeroLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Fetch categories and products from API
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log('[LandingPage] Fetching categories and products...');
-        // setIsLoading(true); // dihapus, skeleton per section
         setFetchError(null);
 
-        // Fetch categories
         const barangCatsResponse = await categoriesApi.getCategoriesByType("barang");
         const jasaCatsResponse = await categoriesApi.getCategoriesByType("jasa");
-        // Map API categories to UI format
         if (barangCatsResponse?.length) {
           setBarangCategories(barangCatsResponse.map((cat: any) => ({ id: cat.id, label: cat.name })));
         }
@@ -54,33 +49,26 @@ export default function LandingPage({
           setJasaCategories(jasaCatsResponse.map((cat: any) => ({ id: cat.id, label: cat.name })));
         }
 
-        // Fetch 3 produk terbaru campuran barang & jasa untuk hero section
         const featuredResponse = await productsApi.getProducts({ per_page: 3 });
-        if (featuredResponse?.data?.length) {
-          setFeaturedProducts(featuredResponse.data);
-        } else {
-          setFeaturedProducts([]);
-        }
+        console.debug('[LandingPage] featuredResponse:', featuredResponse);
+        setFeaturedProducts(featuredResponse?.data ?? featuredResponse ?? []);
 
-        // Fetch produk barang & jasa untuk section bawah
         const barangResponse = await productsApi.getProducts({ type: "barang", per_page: 8 });
         const jasaResponse = await productsApi.getProducts({ type: "jasa", per_page: 3 });
-        if (barangResponse?.data?.length) {
-          setBarangProducts(barangResponse.data as any);
-        }
-        if (jasaResponse?.data?.length) {
-          setJasaProducts(jasaResponse.data as any);
-        }
+        console.debug('[LandingPage] barangResponse:', barangResponse);
+        console.debug('[LandingPage] jasaResponse:', jasaResponse);
+        setBarangProducts(barangResponse?.data ?? barangResponse ?? []);
+        setJasaProducts(jasaResponse?.data ?? jasaResponse ?? []);
         console.log('[LandingPage] Data fetch completed');
       } catch (error) {
         console.error("[LandingPage] Error fetching data:", error);
-        setFetchError('Gagal memuat beberapa data. Menampilkan katalog default.');
-        // Continue with mock data - don't block UI
+        setFetchError('Gagal memuat beberapa data. Silakan muat ulang.');
+        // keep arrays empty so UI reflects DB state
       } finally {
-        // setIsLoading(false); // dihapus, skeleton per section
+        setHeroLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -99,6 +87,7 @@ export default function LandingPage({
           <AlertDescription>{fetchError}</AlertDescription>
         </Alert>
       )}
+
       <LandingSellerBanner
         open={showSellerBanner}
         isLoggedIn={isLoggedIn}
@@ -107,7 +96,7 @@ export default function LandingPage({
         onStartSelling={onStartSelling}
       />
 
-      <LandingHeroSection featuredProducts={featuredProducts} onNavigate={onNavigate} />
+      <LandingHeroSection featuredProducts={featuredProducts} onNavigate={onNavigate} isLoading={heroLoading} />
       <LandingFeaturesSection />
 
       <LandingCategoriesSection

@@ -79,8 +79,23 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
           })));
         }
 
-        // Fetch services
-        const response = await getProducts({ type: 'jasa', per_page: 100 });
+        // Fetch services (map sort option to backend params)
+        const productParams: any = { type: 'jasa', per_page: 100 };
+        if (sortBy === 'termurah') {
+          productParams.sort_by = 'price';
+          productParams.sort_order = 'asc';
+        } else if (sortBy === 'termahal') {
+          productParams.sort_by = 'price';
+          productParams.sort_order = 'desc';
+        } else if (sortBy === 'terpopuler') {
+          productParams.sort_by = 'popular';
+          productParams.sort_order = 'desc';
+        } else {
+          productParams.sort_by = 'created_at';
+          productParams.sort_order = 'desc';
+        }
+
+        const response = await getProducts(productParams);
         if (response?.data?.length) {
           setServices(response.data);
           console.log('[ServicesPage] Services loaded:', response.data.length);

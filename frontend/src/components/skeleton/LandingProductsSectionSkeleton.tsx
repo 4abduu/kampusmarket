@@ -26,9 +26,9 @@ export default function LandingProductsSectionSkeleton({ itemCount = 8 }: Landin
                 <Skeleton className="w-full h-full" />
               </div>
               <CardContent className="p-4">
-                <p className="font-medium line-clamp-2 mb-2">
+                <div className="font-medium line-clamp-2 mb-2">
                   <Skeleton className="h-5 w-full" />
-                </p>
+                </div>
                 <div className="flex items-center gap-1 mb-2">
                   <Skeleton className="h-4 w-4" />
                   <Skeleton className="h-4 w-12" />

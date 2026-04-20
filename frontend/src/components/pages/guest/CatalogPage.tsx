@@ -103,12 +103,21 @@ export default function CatalogPage({ onNavigate, initialCategory }: CatalogPage
         if (selectedConditions.length > 0) {
           params.condition = selectedConditions[0];
         }
+        // Map UI sort options to backend query params `sort_by` and `sort_order`
         if (sortBy === 'termurah') {
-          params.sort = 'price_asc';
+          params.sort_by = 'price';
+          params.sort_order = 'asc';
         } else if (sortBy === 'termahal') {
-          params.sort = 'price_desc';
+          params.sort_by = 'price';
+          params.sort_order = 'desc';
         } else if (sortBy === 'terpopuler') {
-          params.sort = 'views_desc';
+          // backend recognizes 'popular' to sort by sold_count
+          params.sort_by = 'popular';
+          params.sort_order = 'desc';
+        } else {
+          // terbaru
+          params.sort_by = 'created_at';
+          params.sort_order = 'desc';
         }
 
         const data = await getProducts(params);

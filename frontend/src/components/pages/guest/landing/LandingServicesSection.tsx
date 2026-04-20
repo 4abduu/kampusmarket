@@ -75,8 +75,20 @@ export default function LandingServicesSection({
 
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-primary-600">
-                    Rp {service.priceMin.toLocaleString("id-ID")} - Rp{" "}
-                    {service.priceMax.toLocaleString("id-ID")}
+                    {(() => {
+                      const min = Number(service.priceMin);
+                      const max = Number(service.priceMax);
+                      if (Number.isFinite(min) && Number.isFinite(max)) {
+                        return `Rp ${min.toLocaleString("id-ID")} - Rp ${max.toLocaleString("id-ID")}`;
+                      }
+                      if (Number.isFinite(min)) {
+                        return `Rp ${min.toLocaleString("id-ID")}`;
+                      }
+                      if (Number.isFinite(max)) {
+                        return `Rp ${max.toLocaleString("id-ID")}`;
+                      }
+                      return "—";
+                    })()}
                   </span>
                 </div>
               </CardContent>

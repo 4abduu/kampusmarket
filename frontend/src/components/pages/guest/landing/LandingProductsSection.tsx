@@ -76,7 +76,10 @@ export default function LandingProductsSection({
 
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg font-bold text-primary-600">
-                    Rp {product.price.toLocaleString("id-ID")}
+                    {(() => {
+                      const p = Number(product.price);
+                      return Number.isFinite(p) ? `Rp ${p.toLocaleString("id-ID")}` : "—";
+                    })()}
                   </span>
 
                   {product.originalPrice && (
