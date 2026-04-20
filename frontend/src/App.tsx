@@ -5,7 +5,7 @@ import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
 import type { User } from "@/lib/mock-data";
-import AuthLoadingSkeleton from "@/components/pages/guest/AuthLoadingSkeleton";
+// import AuthLoadingSkeleton from "@/components/pages/guest/AuthLoadingSkeleton";
 
 // Layout
 import Navbar from "@/components/layout/Navbar";
@@ -23,7 +23,7 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  // const [authReady, setAuthReady] = useState(false);
   const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
   
@@ -59,13 +59,28 @@ function AppContent() {
       setIsLoggedIn(false);
       setUserRole(null);
     } finally {
-      setAuthReady(true);
+      // setAuthReady(true);
     }
   };
 
   // Check auth status on app load
   useEffect(() => {
     void syncAuthUser();
+  }, []);
+
+  // Handle unauthorized event (when API returns true 401)
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      console.warn("[App] Unauthorized event - User session expired");
+      setAuthUser(null);
+      setIsLoggedIn(false);
+      setUserRole(null);
+      // Don't navigate here, let the app naturally show unauthorized page
+      // or user can click login manually
+    };
+
+    window.addEventListener('unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('unauthorized', handleUnauthorized);
   }, []);
 
   // Handle Navigation
@@ -209,9 +224,10 @@ function AppContent() {
   const isKnownRoute = location.pathname === "/" || knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
   const isNotFoundPage = !isKnownRoute;
 
-  if (!authReady) {
-    return <AuthLoadingSkeleton />;
-  }
+  // Tidak ada loading fullscreen, langsung render halaman utama
+  // if (!authReady) {
+  //   return <AuthLoadingSkeleton />;
+  // }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

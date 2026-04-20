@@ -84,6 +84,23 @@ function RoleProtectedRoute({
   return element;
 }
 
+function PublicRoute({
+  isLoggedIn,
+  element,
+  allowLoggedIn = false,
+}: {
+  isLoggedIn: boolean;
+  element: React.ReactElement;
+  allowLoggedIn?: boolean;
+}): React.ReactElement {
+  // If already logged in and this is a public route (like login/register), redirect to home
+  if (isLoggedIn && !allowLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  return element;
+}
+
 export default function AppRoutes({
   onNavigate,
   onLogin,
@@ -113,15 +130,40 @@ export default function AppRoutes({
         <Route
           path="/login"
           element={(
-            <LoginPage
-              onNavigate={onNavigate}
-              onLogin={onLogin}
-              onGooglePendingSelection={onGooglePendingSelection}
+            <PublicRoute
+              isLoggedIn={isLoggedIn}
+              element={
+                <LoginPage
+                  onNavigate={onNavigate}
+                  onLogin={onLogin}
+                  onGooglePendingSelection={onGooglePendingSelection}
+                />
+              }
             />
           )}
         />
-        <Route path="/register" element={<RegisterPage onNavigate={onNavigate} onLogin={onLogin} />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={onNavigate} />} />
+        <Route
+          path="/register"
+          element={(
+            <PublicRoute
+              isLoggedIn={isLoggedIn}
+              element={
+                <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />
+              }
+            />
+          )}
+        />
+        <Route
+          path="/forgot-password"
+          element={(
+            <PublicRoute
+              isLoggedIn={isLoggedIn}
+              element={
+                <ForgotPasswordPage onNavigate={onNavigate} />
+              }
+            />
+          )}
+        />
         <Route
           path="/faculty-selection"
           element={(

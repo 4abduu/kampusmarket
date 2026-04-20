@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -25,17 +24,23 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  MapPin,
   Briefcase,
   Grid,
   List,
   X,
   ChevronLeft,
   ChevronRight,
-  Wallet,
+  AlertCircle,
+  MapPin,
 } from "lucide-react";
-import { mockServices, serviceCategories } from "@/lib/mock-data";
+import { getCategories } from "@/lib/api/categories";
+import { getProducts } from "@/lib/api/products";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ServicesFilterSidebar from "@/components/pages/guest/services/ServicesFilterSidebar";
+import { Skeleton } from "@/components/ui/skeleton";
+import ServicesPageSkeleton from "@/components/skeleton/ServicesPageSkeleton";
+import EmptyState from "@/components/shared/EmptyState";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -51,10 +56,51 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
   const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [currentPage, setCurrentPage] = useState(1);
+  const [services, setServices] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredServices = mockServices.filter((service) => {
-    if (selectedCategory && service.category.toLowerCase() !== selectedCategory.toLowerCase()) return false;
-    if (service.priceMin > priceRange[1]) return false;
+  // Fetch services and categories from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('[ServicesPage] Fetching services and categories...');
+        setLoading(true);
+        setError(null);
+
+        // Fetch categories
+        const catsResponse = await getCategories({ type: 'jasa' });
+        if (catsResponse?.length) {
+          setCategories(catsResponse.map((cat: any) => ({
+            id: cat.id,
+            name: cat.name,
+            label: cat.name,
+          })));
+        }
+
+        // Fetch services
+        const response = await getProducts({ type: 'jasa', per_page: 100 });
+        if (response?.data?.length) {
+          setServices(response.data);
+          console.log('[ServicesPage] Services loaded:', response.data.length);
+        } else {
+          setServices([]);
+        }
+      } catch (err: any) {
+        console.error('[ServicesPage] Error fetching data:', err);
+        setError('Gagal memuat layanan jasa. Silakan coba lagi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredServices = services.filter((service) => {
+    if (selectedCategory && service.category_id !== selectedCategory) return false;
+    if (service.price > priceRange[1]) return false;
     if (searchQuery && !service.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -83,7 +129,7 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
       setSearchQuery("");
       setCurrentPage(1);
     },
-    categories: serviceCategories,
+    categories,
   };
 
   return (
@@ -101,7 +147,17 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0">
             <Card className="p-4 sticky top-20">
-              <ServicesFilterSidebar {...filterSidebarProps} />
+              {loading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-10 w-full mt-4" />
+                </div>
+              ) : (
+                <ServicesFilterSidebar {...filterSidebarProps} />
+              )}
             </Card>
           </aside>
 
@@ -182,7 +238,7 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
             {selectedCategory && (
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="secondary" className="gap-1">
-                  {serviceCategories.find((c) => c.id === selectedCategory)?.label}
+                  {categories.find((c: any) => c.id === selectedCategory)?.name}
                   <button
                     onClick={() => setSelectedCategory(null)}
                     title="Hapus filter kategori jasa"
@@ -195,9 +251,38 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
             )}
 
             {/* Results Count */}
-            <p className="text-sm text-muted-foreground mb-4">
-              Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredServices.length)} dari {filteredServices.length} jasa
-            </p>
+            {!loading && !error && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredServices.length)} dari {filteredServices.length} jasa
+              </p>
+            )}
+
+            {/* Services Loading/Error/Empty */}
+            {loading ? (
+              <ServicesPageSkeleton itemCount={ITEMS_PER_PAGE} hideSidebar={true} />
+            ) : error ? (
+              <div className="space-y-3">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            ) : filteredServices.length === 0 ? (
+              <EmptyState
+                icon="package"
+                title="Tidak ada layanan jasa"
+                description="Tidak ada jasa yang sesuai dengan filter Anda. Coba ubah filter atau lihat semua layanan."
+              />
+            ) : (
+              <>
 
             {/* Service Grid */}
             {viewMode === "grid" ? (
@@ -232,7 +317,7 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                       <div className="flex items-center gap-2 mt-3">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                            {service.provider.name.split(" ").map((n) => n[0]).join("")}
+                            {service.provider.name.split(" ").map((n: string) => n[0]).join("")}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs text-muted-foreground">
@@ -298,29 +383,8 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
               </div>
             )}
 
-            {/* Empty State */}
-            {filteredServices.length === 0 && (
-              <div className="text-center py-12">
-                <Wallet className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Tidak ada jasa ditemukan</h3>
-                <p className="text-muted-foreground mb-4">
-                  Coba ubah filter atau kata kunci pencarian
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setPriceRange([0, 1000000]);
-                    setSearchQuery("");
-                  }}
-                >
-                  Reset Filter
-                </Button>
-              </div>
-            )}
-
             {/* Pagination */}
-            {totalPages > 1 && (
+            {totalPages > 1 && paginatedServices.length > 0 && (
               <div className="flex items-center justify-center gap-2 mt-8">
                 <Button
                   variant="outline"
@@ -352,6 +416,8 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
+            )}
+              </>
             )}
           </main>
         </div>

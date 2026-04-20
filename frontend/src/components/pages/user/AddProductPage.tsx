@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { categories, serviceCategories } from "@/lib/mock-data";
+import { createProduct } from "@/lib/api/products";
 import AddProductTypeSelector from "@/components/pages/user/add-product/AddProductTypeSelector";
 import AddProductBasicInfoSection from "@/components/pages/user/add-product/AddProductBasicInfoSection";
 import AddProductPricingSection from "@/components/pages/user/add-product/AddProductPricingSection";
@@ -63,6 +64,8 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
   const [formData, setFormData] = useState<AddProductFormData>(defaultFormData);
   const [shippingOptions, setShippingOptions] = useState<AddProductShippingOptions>(defaultShippingOptions);
   const [images, setImages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (productType === "jasa" && formData.canNego) {
@@ -114,43 +117,65 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
     (productType === "barang" && !shippingOptions.isCod && !shippingOptions.isPickup && !shippingOptions.isDelivery) ||
     (productType === "jasa" && !shippingOptions.isOnsite && !shippingOptions.isHomeService && !shippingOptions.isOnline);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     if (submitDisabled) {
-      alert(productType === "barang" ? "Pilih minimal satu metode pengiriman!" : "Pilih minimal satu metode pelayanan!");
+      setSubmitError(productType === "barang" ? "Pilih minimal satu metode pengiriman!" : "Pilih minimal satu metode pelayanan!");
       return;
     }
 
     if (productType === "jasa") {
       if (pricingType === "tetap" && !formData.price) {
-        alert("Masukkan harga jasa!");
+        setSubmitError("Masukkan harga jasa!");
         return;
       }
       if (pricingType === "mulai_dari" && !formData.priceMin) {
-        alert("Masukkan harga minimum!");
+        setSubmitError("Masukkan harga minimum!");
         return;
       }
       if (pricingType === "rentang" && (!formData.priceMin || !formData.priceMax)) {
-        alert("Masukkan harga minimum dan maksimum!");
+        setSubmitError("Masukkan harga minimum dan maksimum!");
         return;
       }
     }
 
-    const payload = buildAddProductPayload(
-      productType,
-      pricingType,
-      durationUnit,
-      durationIsPlus,
-      availabilityStatus,
-      formData,
-      shippingOptions,
-    );
+    if (!formData.title || !formData.category) {
+      setSubmitError("Judul dan kategori tidak boleh kosong!");
+      return;
+    }
 
-    // Placeholder for API integration.
-    console.log("submit add product payload", payload, { imagesCount: images.length });
-    alert("Produk berhasil disimpan!");
-    onNavigate("dashboard");
+    setIsLoading(true);
+    try {
+      const payload = buildAddProductPayload(
+        productType,
+        pricingType,
+        durationUnit,
+        durationIsPlus,
+        availabilityStatus,
+        formData,
+        shippingOptions,
+      );
+
+      // Normalize prices from Rupiah string to cent (number)
+      const normalizedPayload = {
+        ...payload,
+        price: formData.price ? parseInt(formData.price.replace(/\./g, '')) * 100 : undefined,
+        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice.replace(/\./g, '')) * 100 : undefined,
+        priceMin: formData.priceMin ? parseInt(formData.priceMin.replace(/\./g, '')) * 100 : undefined,
+        priceMax: formData.priceMax ? parseInt(formData.priceMax.replace(/\./g, '')) * 100 : undefined,
+      };
+
+      await createProduct(normalizedPayload);
+      alert("Produk berhasil disimpan!");
+      onNavigate("dashboard");
+    } catch (err: any) {
+      console.error('Failed to create product:', err);
+      setSubmitError(err.message || 'Gagal menyimpan produk. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const currentCategories = productType === "barang" ? categories : serviceCategories;
@@ -218,10 +243,17 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
             />
           )}
 
+          {submitError && (
+            <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+              {submitError}
+            </div>
+          )}
+
           <AddProductActions
             productType={productType}
-            submitDisabled={submitDisabled}
+            submitDisabled={submitDisabled || isLoading}
             onCancel={() => onNavigate("dashboard")}
+            isLoading={isLoading}
           />
         </form>
       </div>

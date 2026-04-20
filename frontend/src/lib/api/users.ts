@@ -30,6 +30,11 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
   const payload = await parseJson<ApiEnvelope<T>>(response);
 
   if (!response.ok || payload?.success === false) {
+    // Only log error if not 401 (unauthorized)
+    if (response.status !== 401) {
+      // eslint-disable-next-line no-console
+      console.error(`[API] ${url} failed:`, payload?.message || response.statusText);
+    }
     throw new Error(payload?.message || "Request failed");
   }
 

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { mockProducts } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { getProductDetail } from "@/lib/api/products";
 import ProductDetailGallery from "@/components/pages/guest/product-detail/ProductDetailGallery";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ProductDetailSidebar from "@/components/pages/guest/product-detail/ProductDetailSidebar";
 import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/ProductDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
+import ProductDetailPageSkeleton from "@/components/skeleton/ProductDetailPageSkeleton";
 
 interface ProductDetailPageProps {
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
@@ -39,8 +41,30 @@ export default function ProductDetailPage({
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportOtherReason, setReportOtherReason] = useState("");
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const product = mockProducts.find((p) => p.id === productId) || mockProducts[0];
+  // Fetch product detail
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getProductDetail(productId);
+        setProduct(data);
+      } catch (err) {
+        console.error('Failed to fetch product:', err);
+        setError('Gagal memuat detail produk. Silakan coba lagi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId]);
 
   const handleAction = (action: () => void) => {
     if (!isLoggedIn) {
@@ -80,17 +104,40 @@ export default function ProductDetailPage({
     }).format(price);
   };
 
+  // Loading state
+  if (loading) {
+    return <ProductDetailPageSkeleton />;
+  }
+
+  // Error or not found
+  if (error || !product) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-red-500">{error || 'Produk tidak ditemukan'}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const mainContent = (
     <>
       <ProductDetailGallery
-        images={product.images}
+        images={product.images || []}
         condition={product.condition}
         price={product.price}
         originalPrice={product.originalPrice}
         selectedImage={selectedImage}
         setSelectedImage={setSelectedImage}
       />
-      <ProductDetailTabsPanel description={product.description} shippingOptions={product.shippingOptions} />
+      <ProductDetailTabsPanel 
+        description={product.description} 
+        shippingOptions={product.shippingOptions || []} 
+      />
     </>
   );
 
