@@ -17,6 +17,7 @@ use App\Http\Helpers\NumberGenerator;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ShippingType;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -25,36 +26,66 @@ class OrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        $query = Order::with(['product.images', 'buyer', 'seller', 'selectedShippingOption'])
-            ->where('buyer_id', $user->id)
-            ->orWhere('seller_id', $user->id);
+            if (!$user) {
+                Log::warning('[OrderController] Unauthorized access attempt');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
 
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+            Log::info('[OrderController] Fetching orders for user', [
+                'user_id' => $user->id,
+                'status' => $request->status,
+                'role' => $request->as
+            ]);
+
+            $query = Order::with(['product.images', 'buyer', 'seller', 'selectedShippingOption'])
+                ->where('buyer_id', $user->id)
+                ->orWhere('seller_id', $user->id);
+
+            // Filter by status
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by type (as buyer or seller)
+            if ($request->has('as') && $request->as === 'seller') {
+                $query->where('seller_id', $user->id);
+            } elseif ($request->has('as') && $request->as === 'buyer') {
+                $query->where('buyer_id', $user->id);
+            }
+
+            $perPage = $request->get('per_page', 10);
+            $orders = $query->latest()->paginate($perPage);
+
+            Log::info('[OrderController] Orders fetched successfully', [
+                'count' => $orders->total(),
+                'user_id' => $user->id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => OrderResource::collection($orders),
+                'meta' => [
+                    'current_page' => $orders->currentPage(),
+                    'last_page' => $orders->lastPage(),
+                    'total' => $orders->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[OrderController] Error fetching orders', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch orders'
+            ], 500);
         }
-
-        // Filter by type (as buyer or seller)
-        if ($request->has('as') && $request->as === 'seller') {
-            $query->where('seller_id', $user->id);
-        } elseif ($request->has('as') && $request->as === 'buyer') {
-            $query->where('buyer_id', $user->id);
-        }
-
-        $perPage = $request->get('per_page', 10);
-        $orders = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => OrderResource::collection($orders),
-            'meta' => [
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'total' => $orders->total(),
-            ],
-        ]);
     }
 
     /**
@@ -144,7 +175,7 @@ class OrderController extends Controller
         // Create order
         $order = Order::create([
             'uuid' => NumberGenerator::uuid(),
-            'order_number' => NumberGenerator::orderNumber(),
+            'order_number' => NumberGenerator::orderNumber($product->type->value ?? $product->type),
             'product_id' => $product->id,
             'product_title' => $product->title,
             'product_type' => $product->type->value,

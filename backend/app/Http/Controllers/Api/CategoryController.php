@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -15,26 +16,45 @@ class CategoryController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Category::query();
+        try {
+            Log::info('[CategoryController] Fetching categories', [
+                'type' => $request->type,
+                'user' => $request->user()?->id
+            ]);
 
-        // Filter by type
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
+            $query = Category::query();
+
+            // Filter by type
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
+            }
+
+            // Filter by active status
+            if ($request->has('active')) {
+                $query->where('is_active', $request->boolean('active'));
+            } else {
+                $query->where('is_active', true);
+            }
+
+            $categories = $query->ordered()->get();
+
+            Log::info('[CategoryController] Categories fetched successfully', [
+                'count' => $categories->count()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => CategoryResource::collection($categories),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[CategoryController] Error fetching categories', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories'
+            ], 500);
         }
-
-        // Filter by active status
-        if ($request->has('active')) {
-            $query->where('is_active', $request->boolean('active'));
-        } else {
-            $query->where('is_active', true);
-        }
-
-        $categories = $query->ordered()->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => CategoryResource::collection($categories),
-        ]);
     }
 
     /**
@@ -42,14 +62,33 @@ class CategoryController extends Controller
      */
     public function show(string $slug): JsonResponse
     {
-        $category = Category::where('slug', $slug)
-            ->orWhere('uuid', $slug)
-            ->firstOrFail();
+        try {
+            Log::info('[CategoryController] Fetching category', ['slug' => $slug]);
 
-        return response()->json([
-            'success' => true,
-            'data' => new CategoryResource($category),
-        ]);
+            $category = Category::where('slug', $slug)
+                ->orWhere('uuid', $slug)
+                ->firstOrFail();
+
+            Log::info('[CategoryController] Category fetched', [
+                'id' => $category->id,
+                'slug' => $category->slug,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => new CategoryResource($category),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[CategoryController] Error fetching category', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Kategori tidak ditemukan',
+            ], 404);
+        }
     }
 
     /**
@@ -57,22 +96,40 @@ class CategoryController extends Controller
      */
     public function byType(string $type): JsonResponse
     {
-        if (!in_array($type, ['barang', 'jasa'])) {
+        try {
+            Log::info('[CategoryController] Fetching categories by type', ['type' => $type]);
+
+            if (!in_array($type, ['barang', 'jasa'])) {
+                Log::warning('[CategoryController] Invalid category type requested', ['type' => $type]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe kategori tidak valid',
+                ], 400);
+            }
+
+            $categories = Category::where('type', $type)
+                ->where('is_active', true)
+                ->ordered()
+                ->get();
+
+            Log::info('[CategoryController] Categories by type fetched', ['type' => $type, 'count' => $categories->count()]);
+
+            return response()->json([
+                'success' => true,
+                'data' => CategoryResource::collection($categories),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[CategoryController] Error fetching categories by type', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Tipe kategori tidak valid',
-            ], 400);
+                'message' => 'Gagal mengambil kategori',
+            ], 500);
         }
-
-        $categories = Category::where('type', $type)
-            ->where('is_active', true)
-            ->ordered()
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => CategoryResource::collection($categories),
-        ]);
     }
 
     /**
@@ -80,28 +137,43 @@ class CategoryController extends Controller
      */
     public function withProductCount(Request $request): JsonResponse
     {
-        $type = $request->get('type');
+        try {
+            $type = $request->get('type');
 
-        $categories = Category::withCount(['products' => function ($query) {
-            $query->where('status', 'active');
-        }])
-            ->when($type, fn($q) => $q->where('type', $type))
-            ->where('is_active', true)
-            ->ordered()
-            ->get();
+            Log::info('[CategoryController] Fetching categories with product counts', ['type' => $type]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories->map(function ($category) {
-                return [
-                    'id' => $category->uuid,
-                    'name' => $category->name,
-                    'slug' => $category->slug,
-                    'icon' => $category->icon,
-                    'type' => $category->type,
-                    'productCount' => $category->products_count,
-                ];
-            }),
-        ]);
+            $categories = Category::withCount(['products' => function ($query) {
+                $query->where('status', 'active');
+            }])
+                ->when($type, fn($q) => $q->where('type', $type))
+                ->where('is_active', true)
+                ->ordered()
+                ->get();
+
+            Log::info('[CategoryController] Categories with counts fetched', ['count' => $categories->count()]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $categories->map(function ($category) {
+                    return [
+                        'id' => $category->uuid,
+                        'name' => $category->name,
+                        'slug' => $category->slug,
+                        'icon' => $category->icon,
+                        'type' => $category->type,
+                        'productCount' => $category->products_count,
+                    ];
+                }),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[CategoryController] Error fetching categories with product counts', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil kategori dengan jumlah produk',
+            ], 500);
+        }
     }
 }

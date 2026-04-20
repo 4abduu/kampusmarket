@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -24,8 +25,15 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions'])
-            ->where('status', 'active');
+        try {
+            Log::info('[ProductController] Fetching products', [
+                'type' => $request->type,
+                'category' => $request->category,
+                'user' => $request->user()?->id
+            ]);
+
+            $query = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions'])
+                ->where('status', 'active');
 
         // Filter by type
         if ($request->has('type')) {
@@ -85,6 +93,11 @@ class ProductController extends Controller
         $perPage = $request->get('per_page', 12);
         $products = $query->paginate($perPage);
 
+        Log::info('[ProductController] Products fetched successfully', [
+            'count' => $products->total(),
+            'per_page' => $perPage
+        ]);
+
         return response()->json([
             'success' => true,
             'data' => ProductResource::collection($products),
@@ -95,6 +108,16 @@ class ProductController extends Controller
                 'total' => $products->total(),
             ],
         ]);
+        } catch (\Exception $e) {
+            Log::error('[ProductController] Error fetching products', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch products'
+            ], 500);
+        }
     }
 
     /**

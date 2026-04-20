@@ -30,22 +30,28 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Create test users
-        $seller = User::factory()->create([
-            'uuid' => NumberGenerator::uuid(),
-            'name' => 'Penjual Test',
-            'email' => 'seller@example.com',
-            'password' => Hash::make('password123'),
-            'faculty_id' => $faculty->id,
-        ]);
+        // Create test users (idempotent)
+        $seller = User::where('email', 'seller@example.com')->first();
+        if (!$seller) {
+            $seller = User::factory()->create([
+                'uuid' => NumberGenerator::uuid(),
+                'name' => 'Penjual Test',
+                'email' => 'seller@example.com',
+                'password' => Hash::make('password123'),
+                'faculty_id' => $faculty->id,
+            ]);
+        }
 
-        $buyer = User::factory()->create([
-            'uuid' => NumberGenerator::uuid(),
-            'name' => 'Pembeli Test',
-            'email' => 'buyer@example.com',
-            'password' => Hash::make('password123'),
-            'faculty_id' => $faculty->id,
-        ]);
+        $buyer = User::where('email', 'buyer@example.com')->first();
+        if (!$buyer) {
+            $buyer = User::factory()->create([
+                'uuid' => NumberGenerator::uuid(),
+                'name' => 'Pembeli Test',
+                'email' => 'buyer@example.com',
+                'password' => Hash::make('password123'),
+                'faculty_id' => $faculty->id,
+            ]);
+        }
 
         // Create categories
         $categoryBarang = Category::firstOrCreate(

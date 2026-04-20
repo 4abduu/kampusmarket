@@ -9,46 +9,48 @@ class NumberGenerator
 {
     /**
      * Generate Order Number
-     * Format: KM-YYYYMMDD-XXXX
+     * Format: ORD-JS/BRG-KM-YYYYMMDD-XXXX
+     * @param string $productType 'barang' atau 'jasa'
      */
-    public static function orderNumber(): string
+    public static function orderNumber(string $productType): string
     {
         $date = now()->format('Ymd');
         $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        return "KM-{$date}-{$random}";
+        $type = $productType === 'jasa' ? 'JS' : 'BRG';
+        return "ORD-{$type}-KM-{$date}-{$random}";
     }
 
     /**
      * Generate Withdrawal Number
-     * Format: WD-YYYYMMDD-XXXX
+     * Format: WD-KM-YYYYMMDD-XXXX
      */
     public static function withdrawalNumber(): string
     {
         $date = now()->format('Ymd');
         $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        return "WD-{$date}-{$random}";
+        return "WD-KM-{$date}-{$random}";
     }
 
     /**
      * Generate Report Number
-     * Format: RP-YYYYMMDD-XXXX
+     * Format: RP-KM-YYYYMMDD-XXXX
      */
     public static function reportNumber(): string
     {
         $date = now()->format('Ymd');
         $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        return "RP-{$date}-{$random}";
+        return "RP-KM-{$date}-{$random}";
     }
 
     /**
      * Generate Cancel Request Number
-     * Format: CR-YYYYMMDD-XXXX
+     * Format: CR-KM-YYYYMMDD-XXXX
      */
     public static function cancelRequestNumber(): string
     {
         $date = now()->format('Ymd');
         $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        return "CR-{$date}-{$random}";
+        return "CR-KM-{$date}-{$random}";
     }
 
     /**
