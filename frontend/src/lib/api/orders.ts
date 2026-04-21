@@ -1,13 +1,19 @@
 import apiClient from './client';
 
+const unwrapApiData = <T>(response: any): T => {
+  // Supports both transformed client responses and raw axios-like responses.
+  const payload = response?.data ?? response;
+  return (payload?.data ?? payload) as T;
+};
+
 export interface CreateOrderPayload {
   productId: string;
   quantity: number;
   negoPrice?: number;
-  selectedShippingOptionId: string;
+  selectedShippingOptionId?: string;
   shippingType: string;
   shippingNotes?: string;
-  selectedAddressId?: string;
+  selectedAddressId?: string | null;
   serviceDate?: string;
   serviceTime?: string;
   serviceNotes?: string;
@@ -17,6 +23,7 @@ export interface CreateOrderPayload {
 
 export interface Order {
   id: string;
+  uuid?: string;
   orderNumber: string;
   product: any;
   productTitle: string;
@@ -42,12 +49,18 @@ export interface Order {
   cancelledAt?: string;
 }
 
+export interface PaymentResponse {
+  snap_token?: string;
+  payment_uuid?: string;
+  token?: string;
+}
+
 /**
  * Create a new order
  */
 export const createOrder = async (payload: CreateOrderPayload): Promise<Order> => {
   const response = await apiClient.post('/orders', payload);
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
@@ -66,7 +79,7 @@ export const getUserOrders = async (
   params.append('page', page.toString());
 
   const response = await apiClient.get(`/orders?${params.toString()}`);
-  return response.data;
+  return unwrapApiData<{ data: Order[]; meta: any }>(response);
 };
 
 /**
@@ -83,7 +96,7 @@ export const getBuyerOrders = async (
   params.append('page', page.toString());
 
   const response = await apiClient.get(`/orders/buyer?${params.toString()}`);
-  return response.data;
+  return unwrapApiData<{ data: Order[]; meta: any }>(response);
 };
 
 /**
@@ -100,7 +113,7 @@ export const getSellerOrders = async (
   params.append('page', page.toString());
 
   const response = await apiClient.get(`/orders/seller?${params.toString()}`);
-  return response.data;
+  return unwrapApiData<{ data: Order[]; meta: any }>(response);
 };
 
 /**
@@ -108,15 +121,15 @@ export const getSellerOrders = async (
  */
 export const getOrderDetail = async (orderId: string): Promise<Order> => {
   const response = await apiClient.get(`/orders/${orderId}`);
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
- * Pay for order
+ * Pay for order (returns snap token for Midtrans)
  */
-export const payOrder = async (orderId: string): Promise<Order> => {
+export const payOrder = async (orderId: string): Promise<PaymentResponse> => {
   const response = await apiClient.post(`/orders/${orderId}/pay`);
-  return response.data.data;
+  return unwrapApiData<PaymentResponse>(response);
 };
 
 /**
@@ -124,7 +137,7 @@ export const payOrder = async (orderId: string): Promise<Order> => {
  */
 export const completeOrder = async (orderId: string): Promise<Order> => {
   const response = await apiClient.post(`/orders/${orderId}/complete`);
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
@@ -134,7 +147,7 @@ export const cancelOrder = async (orderId: string, reason: string): Promise<Orde
   const response = await apiClient.post(`/orders/${orderId}/cancel`, {
     cancelReason: reason,
   });
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
@@ -149,7 +162,7 @@ export const offerPrice = async (
     offeredPrice: price,
     priceOfferNotes: notes,
   });
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
@@ -159,7 +172,7 @@ export const confirmPrice = async (orderId: string, accepted: boolean): Promise<
   const response = await apiClient.post(`/orders/${orderId}/confirm-price`, {
     accepted,
   });
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };
 
 /**
@@ -174,5 +187,5 @@ export const setShippingFee = async (
     shippingFee: fee,
     shippingMethod: method,
   });
-  return response.data.data;
+  return unwrapApiData<Order>(response);
 };

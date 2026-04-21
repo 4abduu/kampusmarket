@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import apiClient from "@/lib/api/client";
 import {
   ChevronLeft,
 } from "lucide-react";
@@ -283,12 +284,52 @@ export default function OrderDetailPage({ onNavigate, orderId }: OrderDetailPage
     setOrderStatus("completed");
   };
 
-  // For demo: simulate payment
+  // Handle payment (connect to backend Midtrans)
   const handlePayment = (method: PaymentMethod) => {
-    console.log("Payment method selected:", method);
-    setShowPaymentDialog(false);
-    setOrderStatus("processing");
-  };
+    if (method !== 'midtrans') {
+      console.log('Payment method selected:', method)
+      setShowPaymentDialog(false)
+      setOrderStatus('processing')
+      return
+    }
+
+    ;(async () => {
+      try {
+        const res = await apiClient.post(`/orders/${order.id}/pay`)
+        const token = res.data?.snap_token || res.data?.snapToken || (res.data as any)?.token
+        if (token) {
+          openMidtrans(token)
+        } else {
+          console.error('No snap token returned', res)
+        }
+      } catch (err) {
+        console.error('Error creating snap token', err)
+      } finally {
+        setShowPaymentDialog(false)
+      }
+    })()
+  }
+
+  function openMidtrans(token: string) {
+    const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || ''
+    const isSandbox = (import.meta.env.VITE_MIDTRANS_IS_SANDBOX || 'true') === 'true'
+    const snapSrc = isSandbox
+      ? 'https://app.sandbox.midtrans.com/snap/snap.js'
+      : 'https://app.midtrans.com/snap/snap.js'
+
+    if (!document.querySelector(`script[src="${snapSrc}"]`)) {
+      const script = document.createElement('script')
+      script.src = snapSrc
+      if (clientKey) script.setAttribute('data-client-key', clientKey)
+      script.async = true
+      document.body.appendChild(script)
+      script.onload = () => {
+        ;(window as any).snap?.pay(token)
+      }
+    } else {
+      ;(window as any).snap?.pay(token)
+    }
+  }
 
   // For CUSTOMER: Determine if order can be cancelled directly (no admin approval needed)
   const canCancelDirectly = ["pending", "waiting_price", "waiting_shipping_fee"].includes(orderStatus);

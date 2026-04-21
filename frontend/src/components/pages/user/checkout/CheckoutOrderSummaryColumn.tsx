@@ -5,11 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Briefcase, CalendarIcon, Clock, Package, Shield } from "lucide-react"
-import type { Product, Address } from "@/lib/mock-data"
+import { Briefcase, CalendarIcon, Clock, Package, Shield, Loader2 } from "lucide-react"
+import type { Address, CheckoutProduct } from "@/components/pages/user/checkout/checkout.types"
 
 interface Props {
-  product: Product
+  product: CheckoutProduct
   isService: boolean
   quantity: number
   displayPrice: string
@@ -25,6 +25,7 @@ interface Props {
   isDeliveryAddressMissing: boolean
   selectedAddressId: string | null
   addresses: Address[]
+  isSubmitting?: boolean
 }
 
 export default function CheckoutOrderSummaryColumn({
@@ -44,7 +45,10 @@ export default function CheckoutOrderSummaryColumn({
   isDeliveryAddressMissing,
   selectedAddressId,
   addresses,
+  isSubmitting = false,
 }: Props) {
+  const sellerName = product.seller?.name || "Tidak diketahui";
+
   return (
     <div className="space-y-4">
       <Card>
@@ -77,10 +81,10 @@ export default function CheckoutOrderSummaryColumn({
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                {product.seller.name.split(" ").map((name) => name[0]).join("")}
+                {sellerName.split(" ").map((name) => name[0]).join("")}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm">{product.seller.name}</span>
+            <span className="text-sm">{sellerName}</span>
           </div>
 
           <Separator />
@@ -168,9 +172,16 @@ export default function CheckoutOrderSummaryColumn({
             className="w-full bg-primary-600 hover:bg-primary-700"
             size="lg"
             onClick={handleCreateOrder}
-            disabled={isBookingDateMissing || isServiceRequirementsMissing || isDeliveryAddressMissing}
+            disabled={isBookingDateMissing || isServiceRequirementsMissing || isDeliveryAddressMissing || isSubmitting}
           >
-            {isService ? "Buat Booking" : "Buat Pesanan"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Memproses...
+              </>
+            ) : (
+              isService ? "Buat Booking" : "Buat Pesanan"
+            )}
           </Button>
 
           {isService && !bookingDate && (

@@ -192,3 +192,14 @@
     @apply font-sans;
   }
 }
+
+/* When a page needs to take over the full viewport (no navbar/footer),
+   components can add `no-chrome` to body. This hides header/footer and
+   prevents scrolling for a true full-page experience. */
+body.no-chrome {
+  overflow: hidden;
+}
+body.no-chrome header,
+body.no-chrome footer {
+  display: none !important;
+}

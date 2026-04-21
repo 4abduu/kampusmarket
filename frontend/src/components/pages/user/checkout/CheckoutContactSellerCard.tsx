@@ -6,10 +6,10 @@ import { MessageCircle, Phone } from "lucide-react"
 interface Props {
   sellerName: string
   sellerPhone?: string
-  onNavigate: (page: string) => void
+  onChat: () => void
 }
 
-export default function CheckoutContactSellerCard({ sellerName, sellerPhone, onNavigate }: Props) {
+export default function CheckoutContactSellerCard({ sellerName, sellerPhone, onChat }: Props) {
   return (
     <Card>
       <CardHeader>
@@ -27,10 +27,10 @@ export default function CheckoutContactSellerCard({ sellerName, sellerPhone, onN
           </Avatar>
           <div className="flex-1">
             <p className="font-medium">{sellerName}</p>
-            <p className="text-sm text-muted-foreground">{sellerPhone}</p>
+            <p className="text-sm text-muted-foreground">{sellerPhone || "-"}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => onNavigate("chat")}>
+            <Button variant="outline" size="sm" onClick={onChat}>
               <MessageCircle className="h-4 w-4 mr-1" />
               Chat
             </Button>

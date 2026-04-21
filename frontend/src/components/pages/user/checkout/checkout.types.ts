@@ -1,9 +1,41 @@
 import type { ComponentType } from "react";
 import type { NavigationData } from "@/app/navigation/types";
-import type { Address, Product } from "@/lib/mock-data";
+
+export interface CheckoutSeller {
+  id?: string;
+  name?: string;
+  phone?: string;
+}
+
+export interface CheckoutProduct {
+  id?: string;
+  uuid?: string;
+  title: string;
+  type?: "barang" | "jasa";
+  price?: number;
+  priceMin?: number;
+  priceMax?: number;
+  priceType?: "fixed" | "starting" | "range";
+  durationMin?: number;
+  durationMax?: number;
+  durationUnit?: string;
+  seller?: CheckoutSeller;
+}
+
+export interface Address {
+  id: string;
+  userId: string;
+  label: string;
+  recipient: string;
+  phone?: string;
+  address: string;
+  notes?: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
 
 export interface CheckoutPageProps {
-  onNavigate: (page: string, data?: NavigationData) => void;
+  onNavigate: (page: string, data?: string | NavigationData) => void;
   productId?: string;
 }
 
@@ -15,6 +47,8 @@ export interface CheckoutShippingOption {
   label: string;
   description: string;
   icon: ComponentType<{ className?: string }>;
+  price: number;
+  optionId?: string;
   info: {
     title: string;
     description: string;
@@ -32,7 +66,7 @@ export interface NewAddressForm {
 }
 
 export interface CheckoutResolvedProduct {
-  product: Product;
+  product: CheckoutProduct;
   isService: boolean;
   isVariablePricing: boolean;
   defaultShippingMethod: CheckoutServiceMethod | CheckoutProductMethod;

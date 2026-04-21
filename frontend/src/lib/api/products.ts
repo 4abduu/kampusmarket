@@ -18,6 +18,10 @@ interface ProductsListResponse {
   };
 }
 
+const CACHE_TTL_MS = 30_000;
+const responseCache = new Map<string, { timestamp: number; data: unknown }>();
+const inflightRequests = new Map<string, Promise<unknown>>();
+
 const parseJson = async <T>(response: Response): Promise<T> => {
   const payload = (await response.json()) as T;
   return payload;
@@ -25,8 +29,26 @@ const parseJson = async <T>(response: Response): Promise<T> => {
 
 const request = async <T>(
   url: string,
-  init?: RequestInit
+  init?: RequestInit,
+  options?: { cacheKey?: string; cacheTtlMs?: number }
 ): Promise<T> => {
+  const method = init?.method?.toUpperCase() || "GET";
+  const cacheKey = method === "GET" ? options?.cacheKey : undefined;
+  const cacheTtlMs = options?.cacheTtlMs ?? CACHE_TTL_MS;
+
+  if (cacheKey) {
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cacheTtlMs) {
+      return cached.data as T;
+    }
+
+    const inflight = inflightRequests.get(cacheKey);
+    if (inflight) {
+      return (await inflight) as T;
+    }
+  }
+
+  const run = async () => {
   const response = await fetch(url, {
     credentials: "include",
     headers: {
@@ -43,7 +65,40 @@ const request = async <T>(
     throw new Error(payload?.message || "Request failed");
   }
 
-  return (payload?.data as T) ?? ({} as T);
+  // For ProductsListResponse, backend returns: {success, data: [...array...], meta: {...}}
+  // We need to return: {data: [...array...], meta: {...}}
+  // So if we detect meta in payload, return {data: payload.data, meta: payload.meta}
+  if (payload?.meta) {
+    const result = {
+      data: payload.data,
+      meta: payload.meta,
+    } as unknown as T;
+
+    if (cacheKey) {
+      responseCache.set(cacheKey, { timestamp: Date.now(), data: result });
+    }
+
+    return result;
+  }
+
+  const result = (payload?.data as T) ?? ({} as T);
+
+  if (cacheKey) {
+    responseCache.set(cacheKey, { timestamp: Date.now(), data: result });
+  }
+
+  return result;
+  };
+
+  if (!cacheKey) {
+    return run();
+  }
+
+  const promise = run().finally(() => {
+    inflightRequests.delete(cacheKey);
+  });
+  inflightRequests.set(cacheKey, promise as Promise<unknown>);
+  return promise;
 };
 
 export const productsApi = {
@@ -77,14 +132,14 @@ export const productsApi = {
     if (params?.location) queryParams.append("location", params.location);
 
     const url = `${API_BASE_URL}/products${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
-    return request<ProductsListResponse>(url);
+    return request<ProductsListResponse>(url, undefined, { cacheKey: `products:${queryParams.toString() || "all"}` });
   },
 
   /**
    * Get product by slug or ID.
    */
   async getProduct(id: string): Promise<Product> {
-    return request<Product>(`${API_BASE_URL}/products/${id}`);
+    return request<Product>(`${API_BASE_URL}/products/${id}`, undefined, { cacheKey: `product:${id}` });
   },
 
   /**

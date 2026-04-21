@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
@@ -93,9 +93,13 @@ function PublicRoute({
   element: React.ReactElement;
   allowLoggedIn?: boolean;
 }): React.ReactElement {
+  const location = useLocation();
+
   // If already logged in and this is a public route (like login/register), redirect to home
   if (isLoggedIn && !allowLoggedIn) {
-    return <Navigate to="/" replace />;
+    const stateFrom = (location.state as { from?: string } | null)?.from;
+    const previousPath = stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
+    return <Navigate to={previousPath} replace />;
   }
 
   return element;
@@ -117,6 +121,13 @@ export default function AppRoutes({
 }: AppRoutesProps) {
   const location = useLocation();
   const unauthorizedState = location.state as { reason?: string } | null;
+
+  useEffect(() => {
+    const authPaths = new Set(["/login", "/register", "/forgot-password", "/faculty-selection", "/email-verification"]);
+    if (!authPaths.has(location.pathname)) {
+      sessionStorage.setItem("lastNonAuthPath", location.pathname + location.search);
+    }
+  }, [location.pathname, location.search]);
 
   return (
     <Suspense
@@ -167,10 +178,15 @@ export default function AppRoutes({
         <Route
           path="/faculty-selection"
           element={(
-            <FacultySelectionPage
-              onLogin={onLogin}
-              userName={googleUserData?.userName}
-              userEmail={googleUserData?.userEmail}
+            <PublicRoute
+              isLoggedIn={isLoggedIn}
+              element={
+                <FacultySelectionPage
+                  onLogin={onLogin}
+                  userName={googleUserData?.userName}
+                  userEmail={googleUserData?.userEmail}
+                />
+              }
             />
           )}
         />
@@ -183,19 +199,31 @@ export default function AppRoutes({
             />
           )}
         />
-        <Route path="/email-verification" element={<EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />} />
+        <Route
+          path="/email-verification"
+          element={(
+            <PublicRoute
+              isLoggedIn={isLoggedIn}
+              element={<EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />}
+            />
+          )}
+        />
 
         <Route path="/" element={<LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />} />
         <Route path="/catalog" element={<CatalogPage onNavigate={onNavigate} />} />
         <Route path="/services" element={<ServicesPage onNavigate={onNavigate} />} />
         <Route path="/product/:id" element={<ProductDetailPage onNavigate={onNavigate} productId={currentId || "p1"} isLoggedIn={isLoggedIn} onLogin={onLogin} />} />
-        <Route path="/service/:id" element={<ServiceDetailPage onNavigate={onNavigate} serviceId={currentId || "s1"} />} />
+        <Route path="/service/:id" element={<ServiceDetailPage onNavigate={onNavigate} serviceId={currentId || "s1"} isLoggedIn={isLoggedIn} />} />
 
         <Route path="/checkout" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<CheckoutPage onNavigate={onNavigate} />} />} />
+        <Route path="/checkout/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<CheckoutPage onNavigate={onNavigate} productId={currentId || undefined} />} />} />
         <Route path="/cart" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<CartPage onNavigate={onNavigate} />} />} />
-        <Route path="/checkout-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType={currentSuccessType || "product"} />} />
-        <Route path="/payment-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="product" />} />
-        <Route path="/booking-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="service" />} />
+        <Route path="/checkout-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType={currentSuccessType || "product"} orderId={currentId || undefined} />} />
+        <Route path="/checkout-success/:id" element={<CheckoutSuccessPage onNavigate={onNavigate} successType={currentSuccessType || "product"} orderId={currentId || undefined} />} />
+        <Route path="/payment-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="product" orderId={currentId || undefined} />} />
+        <Route path="/payment-success/:id" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="product" orderId={currentId || undefined} />} />
+        <Route path="/booking-success" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="service" orderId={currentId || undefined} />} />
+        <Route path="/booking-success/:id" element={<CheckoutSuccessPage onNavigate={onNavigate} successType="service" orderId={currentId || undefined} />} />
 
         <Route path="/dashboard" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />
         <Route path="/my-products" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} currentUser={currentUser} />} />} />

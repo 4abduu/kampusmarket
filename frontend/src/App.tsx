@@ -23,7 +23,7 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
-  // const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
   
@@ -59,7 +59,7 @@ function AppContent() {
       setIsLoggedIn(false);
       setUserRole(null);
     } finally {
-      // setAuthReady(true);
+      setAuthReady(true);
     }
   };
 
@@ -191,6 +191,10 @@ function AppContent() {
     "payment-success",
     "booking-success",
     "unauthorized",
+    "not-found",
+    "notfound",
+    "404",
+    "no-access",
   ];
 
   const noFooterPages = [
@@ -207,6 +211,10 @@ function AppContent() {
     "stats",
     "admin-notifications",
     "unauthorized",
+    "not-found",
+    "notfound",
+    "404",
+    "no-access",
   ];
   const hideNavbar = noNavbarPages.some((p) => location.pathname.startsWith(`/${p}`));
   const isAdminPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/stats");
@@ -224,10 +232,13 @@ function AppContent() {
   const isKnownRoute = location.pathname === "/" || knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
   const isNotFoundPage = !isKnownRoute;
 
-  // Tidak ada loading fullscreen, langsung render halaman utama
-  // if (!authReady) {
-  //   return <AuthLoadingSkeleton />;
-  // }
+  if (!authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

@@ -25,44 +25,20 @@ import {
   Wallet,
 } from "lucide-react";
 
-interface ServiceProvider {
-  name: string;
-  isVerified?: boolean;
-}
-
-interface ServiceShape {
-  id: string;
-  title: string;
-  category: string;
-  rating: number;
-  orderCount: number;
-  createdAt: string;
-  priceMin: number;
-  priceMax: number;
-  canNego?: boolean;
-  availabilityStatus?: string;
-  durationIsPlus?: boolean;
-  durationMin?: number;
-  durationMax?: number;
-  durationUnit?: string;
-  location?: string;
-  provider: ServiceProvider;
-}
-
 interface ServiceDetailSidebarProps {
-  service: ServiceShape;
+  service: any;
   serviceId: string;
   formatPrice: (price: number) => string;
-  getEstimasiPengerjaan: (category: string) => string;
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
+  onAction: (action: () => void) => void;
 }
 
 export default function ServiceDetailSidebar({
   service,
   serviceId,
   formatPrice,
-  getEstimasiPengerjaan,
   onNavigate,
+  onAction,
 }: ServiceDetailSidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -104,17 +80,12 @@ export default function ServiceDetailSidebar({
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{service.rating}</span>
+                <span>{service.rating || 0}</span>
               </div>
               <span>•</span>
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
-                <span>{service.orderCount} pesanan</span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{service.createdAt}</span>
+                <span>{service.sold_count || 0} pesanan</span>
               </div>
             </div>
           </div>
@@ -122,11 +93,19 @@ export default function ServiceDetailSidebar({
           <div>
             <p className="text-sm text-muted-foreground mb-1">Rentang Harga</p>
             <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold text-primary-600">{formatPrice(service.priceMin)}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-xl font-bold text-primary-600">{formatPrice(service.priceMax)}</span>
+              <span className="text-3xl font-bold text-primary-600">
+                {formatPrice(service.price_min || service.price || 0)}
+              </span>
+              {service.price_max && service.price_max !== service.price_min && (
+                <>
+                  <span className="text-muted-foreground">-</span>
+                  <span className="text-xl font-bold text-primary-600">
+                    {formatPrice(service.price_max)}
+                  </span>
+                </>
+              )}
             </div>
-            {service.canNego && <Badge variant="outline" className="mt-2">Harga bisa dinego</Badge>}
+            {service.can_negotiate && <Badge variant="outline" className="mt-2">Harga bisa dinego</Badge>}
           </div>
 
           <Separator />
@@ -164,13 +143,13 @@ export default function ServiceDetailSidebar({
             <div className="flex items-center gap-2 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20">
               <Clock className="h-5 w-5 text-primary-600" />
               <span className="font-medium">
-                {service.durationIsPlus && service.durationMin
-                  ? `${service.durationMin} ${service.durationUnit}+`
-                  : service.durationMin && service.durationMax
-                  ? `${service.durationMin} - ${service.durationMax} ${service.durationUnit}`
-                  : service.durationMin
-                  ? `${service.durationMin} ${service.durationUnit}`
-                  : getEstimasiPengerjaan(service.category)}
+                {service.duration_is_plus && service.duration_min
+                  ? `${service.duration_min} ${service.duration_unit || 'hari'}+`
+                  : service.duration_min && service.duration_max
+                  ? `${service.duration_min} - ${service.duration_max} ${service.duration_unit || 'hari'}`
+                  : service.duration_min
+                  ? `${service.duration_min} ${service.duration_unit || 'hari'}`
+                  : "Sesuai kesepakatan"}
               </span>
             </div>
           </div>
@@ -179,19 +158,19 @@ export default function ServiceDetailSidebar({
             <Label>Lokasi</Label>
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{service.location}</span>
+              <span>{service.location || "Tidak ada"}</span>
             </div>
           </div>
 
           <Separator />
 
           <div className="space-y-2">
-            <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("checkout", serviceId)} disabled={service.availabilityStatus === "full"}>
+            <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onAction(() => onNavigate("checkout", serviceId))} disabled={service.availabilityStatus === "full"}>
               <Calendar className="h-4 w-4 mr-2" />
               {service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
             </Button>
 
-            <Button variant="outline" className="w-full" onClick={() => onNavigate("chat", { productId: serviceId, chatAction: "chat" })}>
+            <Button variant="outline" className="w-full" onClick={() => onAction(() => onNavigate("chat", { productId: serviceId, chatAction: "chat" }))}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat Penjual
             </Button>
@@ -212,13 +191,13 @@ export default function ServiceDetailSidebar({
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-12 w-12">
               <AvatarFallback className="bg-primary-100 text-primary-700">
-                {service.provider.name.split(" ").map((n) => n[0]).join("")}
+                {service.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium">{service.provider.name}</p>
-                {service.provider.isVerified && (
+                <p className="font-medium">{service.seller?.name || "Unknown Seller"}</p>
+                {service.seller?.is_verified && (
                   <Badge variant="outline" className="text-xs">
                     <Shield className="h-3 w-3 mr-1 text-primary-600" />
                     Terverifikasi
@@ -227,20 +206,20 @@ export default function ServiceDetailSidebar({
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3 w-3" />
-                {service.location}
+                {service.location || "Tidak ada"}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 text-center text-sm mb-4">
             <div>
-              <p className="font-bold text-lg">{service.orderCount}</p>
+              <p className="font-bold text-lg">{service.sold_count || 0}</p>
               <p className="text-muted-foreground">Pesanan</p>
             </div>
             <div>
               <p className="font-bold text-lg flex items-center justify-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                {service.rating}
+                {service.rating || 0}
               </p>
               <p className="text-muted-foreground">Rating</p>
             </div>
@@ -251,7 +230,7 @@ export default function ServiceDetailSidebar({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={() => onNavigate("chat", { productId: serviceId, chatAction: "chat" })}>
+            <Button variant="outline" onClick={() => onAction(() => onNavigate("chat", { productId: serviceId, chatAction: "chat" }))}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat
             </Button>

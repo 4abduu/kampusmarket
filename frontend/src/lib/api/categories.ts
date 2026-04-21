@@ -7,10 +7,32 @@ type ApiEnvelope<T> = {
   data?: T;
 };
 
+const CACHE_TTL_MS = 60_000;
+const responseCache = new Map<string, { timestamp: number; data: unknown }>();
+const inflightRequests = new Map<string, Promise<unknown>>();
+
 const request = async <T>(
   url: string,
-  init?: RequestInit
+  init?: RequestInit,
+  options?: { cacheKey?: string; cacheTtlMs?: number }
 ): Promise<T> => {
+  const method = init?.method?.toUpperCase() || "GET";
+  const cacheKey = method === "GET" ? options?.cacheKey : undefined;
+  const cacheTtlMs = options?.cacheTtlMs ?? CACHE_TTL_MS;
+
+  if (cacheKey) {
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cacheTtlMs) {
+      return cached.data as T;
+    }
+
+    const inflight = inflightRequests.get(cacheKey);
+    if (inflight) {
+      return (await inflight) as T;
+    }
+  }
+
+  const run = async () => {
   const response = await fetch(url, {
     credentials: "include",
     headers: {
@@ -27,7 +49,23 @@ const request = async <T>(
     throw new Error(payload?.message || "Request failed");
   }
 
-  return (payload?.data as T) ?? ({} as T);
+  const result = (payload?.data as T) ?? ({} as T);
+  if (cacheKey) {
+    responseCache.set(cacheKey, { timestamp: Date.now(), data: result });
+  }
+
+  return result;
+  };
+
+  if (!cacheKey) {
+    return run();
+  }
+
+  const promise = run().finally(() => {
+    inflightRequests.delete(cacheKey);
+  });
+  inflightRequests.set(cacheKey, promise as Promise<unknown>);
+  return promise;
 };
 
 export const categoriesApi = {
@@ -38,7 +76,7 @@ export const categoriesApi = {
     const queryParams = new URLSearchParams();
     if (params?.type) queryParams.append("type", params.type);
     const url = `${API_BASE_URL}/categories${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
-    return request<Category[]>(url);
+    return request<Category[]>(url, undefined, { cacheKey: `categories:${queryParams.toString() || "all"}` });
   },
 
   /**
@@ -50,7 +88,7 @@ export const categoriesApi = {
     const queryParams = new URLSearchParams();
     if (params?.type) queryParams.append("type", params.type);
     const url = `${API_BASE_URL}/categories/with-products${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
-    return request<Array<Category & { productCount: number }>>(url);
+    return request<Array<Category & { productCount: number }>>(url, undefined, { cacheKey: `categories-with-count:${queryParams.toString() || "all"}` });
   },
 
   /**
@@ -59,7 +97,7 @@ export const categoriesApi = {
   async getCategoriesByType(
     type: "barang" | "jasa"
   ): Promise<Category[]> {
-    return request<Category[]>(`${API_BASE_URL}/categories/type/${type}`);
+    return request<Category[]>(`${API_BASE_URL}/categories/type/${type}`, undefined, { cacheKey: `categories-type:${type}` });
   },
 
   /**

@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Home, Search, AlertCircle } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 interface NotFoundPageProps {
@@ -8,6 +9,26 @@ interface NotFoundPageProps {
 }
 
 export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
+  // Hide global chrome (navbar/footer) and disable scrolling while this page is mounted
+  useEffect(() => {
+    const prev = document.body.classList.contains('no-chrome');
+    const prevOverflow = document.body.style.overflow;
+    document.body.classList.add('no-chrome');
+    document.body.style.overflow = 'hidden';
+    // Ensure URL reflects the Not Found page so layout rules apply
+    try {
+      if (!window.location.pathname.startsWith('/not-found')) {
+        window.history.replaceState({}, '', '/not-found');
+      }
+    } catch (e) {
+      // ignore
+    }
+    return () => {
+      if (!prev) document.body.classList.remove('no-chrome');
+      document.body.style.overflow = prevOverflow || '';
+    };
+  }, []);
+
   const handleSearchClick = () => {
     if (onNavigate) {
       onNavigate("search");

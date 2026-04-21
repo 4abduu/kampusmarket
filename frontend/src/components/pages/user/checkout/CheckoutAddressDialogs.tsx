@@ -11,9 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { MapPin } from "lucide-react"
-import type { Address } from "@/lib/mock-data"
-import type { NavigationData } from "@/app/navigation/types"
-import type { NewAddressForm } from "@/components/pages/user/checkout/checkout.types"
+import type { Address, NewAddressForm } from "@/components/pages/user/checkout/checkout.types"
 
 interface CheckoutAddressDialogsProps {
   showAddressModal: boolean
@@ -24,7 +22,6 @@ interface CheckoutAddressDialogsProps {
   newAddress: NewAddressForm
   setNewAddress: (address: NewAddressForm) => void
   handleSaveAddress: () => void
-  onNavigate: (page: string, data?: NavigationData) => void
 }
 
 export default function CheckoutAddressDialogs({
@@ -36,7 +33,6 @@ export default function CheckoutAddressDialogs({
   newAddress,
   setNewAddress,
   handleSaveAddress,
-  onNavigate,
 }: CheckoutAddressDialogsProps) {
   return (
     <>
@@ -161,7 +157,6 @@ export default function CheckoutAddressDialogs({
               className="w-full sm:w-auto"
               onClick={() => {
                 setShowSaveAddressDialog(false)
-                onNavigate("checkout-success", { successType: "product" })
               }}
             >
               Tidak, Teruskan Tanpa Menyimpan
@@ -170,7 +165,6 @@ export default function CheckoutAddressDialogs({
               className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700"
               onClick={() => {
                 handleSaveAddress()
-                onNavigate("checkout-success", { successType: "product" })
               }}
             >
               Ya, Simpan Alamat

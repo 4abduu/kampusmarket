@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CancelRequestController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -145,6 +146,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/orders/{id}/confirm-price', [OrderController::class, 'confirmPrice']);
     Route::get('/orders/{id}/history', [OrderController::class, 'history']);
 
+    // Payments (create snap token)
+    Route::post('/payments/create-snap', [PaymentController::class, 'createSnap']);
+
     // ----------------------------------------
     // CHATS
     // ----------------------------------------
@@ -250,3 +254,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/withdrawals/{id}/fail', [WalletController::class, 'failWithdrawal']);
     Route::put('/withdrawals/{id}/complete', [WalletController::class, 'completeWithdrawal']);
 });
+
+// Public webhook endpoint for Midtrans notifications
+Route::post('/payments/midtrans/webhook', [PaymentController::class, 'webhook']);

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Building, Check, Edit, Home, MapPin, MapPinned, Plus, Trash2 } from "lucide-react"
 
-import type { Address } from "@/lib/mock-data"
+import type { Address } from "@/components/pages/user/checkout/checkout.types"
 
 type AddressSectionProps = {
   addresses: Address[]

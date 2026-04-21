@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -20,69 +21,118 @@ import {
   AlertCircle,
   FileText,
 } from "lucide-react";
+import { getOrderDetail, type Order } from "@/lib/api/orders";
+import BookingSuccessPageSkeleton from "@/components/skeleton/BookingSuccessPageSkeleton";
+import type { NavigationData } from "@/app/navigation/types";
 
 interface BookingSuccessPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, data?: string | NavigationData) => void;
+  orderId?: string;
 }
 
-export default function BookingSuccessPage({ onNavigate }: BookingSuccessPageProps) {
-  // Mock booking data - in real app this would come from state/API
-  const bookingData = {
-    bookingId: "BOOK-2024-00567",
-    bookingDate: new Date().toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    service: {
-      title: "Jasa Fotografi Wisuda",
-      category: "Fotografi",
-      priceMin: 150000,
-      priceMax: 500000,
-      priceType: "range",
-      durationMin: 2,
-      durationMax: 4,
-      durationUnit: "jam",
-      provider: {
-        name: "Andi Fotografer",
-        phone: "081234567890",
-        rating: 4.9,
-        totalOrders: 127,
-      },
-    },
-    schedule: {
-      startDate: "Senin, 20 Januari 2025",
-      deadline: "Senin, 20 Januari 2025",
-      time: "14:00 - 18:00 WIB",
-    },
-    serviceMethod: "home_service", // onsite, home_service, online
-    location: "Kampus Universitas Indonesia, Depok",
-    notes: "Foto wisuda dengan 2 orang, perlu 10 foto edit + 5 foto cetak. Lokasi di sekitar gedung rektorat.",
-    requirements: "Untuk foto wisuda dengan 2 orang, perlu 10 foto edit + 5 foto cetak. Waktu pengambilan sore hari.",
-    estimatedPrice: 350000,
-    priceStatus: "pending", // pending = menunggu konfirmasi harga, confirmed = harga sudah fix
-    status: "pending_confirmation",
-  };
+export default function BookingSuccessPage({ onNavigate, orderId }: BookingSuccessPageProps) {
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(Boolean(orderId));
+
+  useEffect(() => {
+    const loadOrder = async () => {
+      if (!orderId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await getOrderDetail(orderId);
+        setOrder(data);
+      } catch (error) {
+        console.error("[BookingSuccessPage] Failed to fetch order detail", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadOrder();
+  }, [orderId]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(price);
+    }).format(price || 0);
   };
+
+  const normalizeServiceMethod = (method: string): "pickup" | "cod" | "online" => {
+    switch (method.toLowerCase()) {
+      case "onsite":
+      case "pickup":
+        return "pickup";
+      case "home_service":
+      case "cod":
+        return "cod";
+      default:
+        return "online";
+    }
+  };
+
+  const orderStatus = String((order as any)?.status || "pending_confirmation");
+  const serviceMethodRaw = String((order as any)?.shippingType || (order as any)?.shipping_type || "online");
+  const serviceMethodKey = normalizeServiceMethod(serviceMethodRaw);
+
+  const bookingData = useMemo(() => {
+    const createdAt = (order as any)?.createdAt || (order as any)?.created_at;
+
+    return {
+      bookingId: (order as any)?.orderNumber || (order as any)?.order_number || orderId || "-",
+      bookingDate: createdAt
+        ? new Date(createdAt).toLocaleDateString("id-ID", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "-",
+      service: {
+        title: (order as any)?.productTitle || (order as any)?.product?.title || "Layanan Jasa",
+        category: (order as any)?.product?.category?.name || "Jasa",
+        priceMin: Number((order as any)?.product?.priceMin || (order as any)?.finalPrice || 0),
+        priceMax: Number((order as any)?.product?.priceMax || (order as any)?.finalPrice || 0),
+        durationMin: Number((order as any)?.product?.durationMin || 1),
+        durationMax: Number((order as any)?.product?.durationMax || 1),
+        durationUnit: (order as any)?.product?.durationUnit || "jam",
+        provider: {
+          name: (order as any)?.seller?.name || "Penyedia Jasa",
+          phone: (order as any)?.seller?.phone || "-",
+          rating: Number((order as any)?.seller?.rating || 0),
+          totalOrders: Number((order as any)?.seller?.soldCount || 0),
+        },
+      },
+      schedule: {
+        startDate: (order as any)?.serviceDate || "Sesuai kesepakatan",
+        deadline: (order as any)?.serviceDeadline || "",
+        time: (order as any)?.serviceTime || "",
+      },
+      serviceMethod: serviceMethodKey,
+      location: (order as any)?.shippingAddress || (order as any)?.shipping_address || "Sesuai kesepakatan",
+      notes: (order as any)?.serviceNotes || (order as any)?.service_notes || "",
+      requirements: (order as any)?.notes || "",
+      estimatedPrice: Number((order as any)?.totalPrice || (order as any)?.total_price || 0),
+      priceStatus: orderStatus === "waiting_price" || orderStatus === "waiting_confirmation" ? "pending" : "confirmed",
+      status: orderStatus,
+    };
+  }, [order, orderId, serviceMethodKey, orderStatus]);
 
   const getServiceMethodLabel = (method: string) => {
     switch (method) {
-      case "onsite":
-        return { label: "Ke Lokasi Penyedia Jasa", icon: Home, color: "bg-blue-100 text-blue-700" };
-      case "home_service":
-        return { label: "Home Service", icon: MapPin, color: "bg-amber-100 text-amber-700" };
+      case "pickup":
+        return { label: "Datang ke Lokasi", icon: Home, color: "bg-blue-100 text-blue-700" };
+      case "cod":
+        return { label: "Jasa Datang ke Lokasi", icon: MapPin, color: "bg-amber-100 text-amber-700" };
       case "online":
-        return { label: "Online", icon: Monitor, color: "bg-purple-100 text-purple-700" };
+        return { label: "Online/Remote", icon: Monitor, color: "bg-purple-100 text-purple-700" };
       default:
         return { label: "Sesuai Kesepakatan", icon: Calendar, color: "bg-slate-100 text-slate-700" };
     }
@@ -95,35 +145,36 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
     ];
 
     if (bookingData.priceStatus === "pending") {
-      baseSteps.push({ 
-        icon: Wallet, 
-        text: "Penyedia jasa akan memberikan penawaran harga final" 
+      baseSteps.push({
+        icon: Wallet,
+        text: "Penyedia jasa akan memberikan penawaran harga final",
       });
     }
 
     switch (bookingData.serviceMethod) {
-      case "onsite":
+      case "pickup":
         baseSteps.push(
           { icon: Home, text: "Datang ke lokasi penyedia jasa sesuai jadwal" },
-          { icon: Wallet, text: "Bayar di tempat atau transfer" }
+          { icon: Wallet, text: "Bayar di tempat atau transfer" },
         );
         break;
-      case "home_service":
+      case "cod":
         baseSteps.push(
           { icon: MapPin, text: "Koordinasikan lokasi dan waktu dengan penyedia" },
-          { icon: Wallet, text: "Bayar di tempat saat layanan selesai" }
+          { icon: Wallet, text: "Bayar di tempat saat layanan selesai" },
         );
         break;
       case "online":
         baseSteps.push(
-          { icon: Monitor, text: "Layanan akan dilakukan secara online" },
-          { icon: Wallet, text: "Bayar via transfer sebelum/sesudah layanan" }
+          { icon: Monitor, text: "Layanan akan dilakukan secara online/remote" },
+          { icon: Wallet, text: "Bayar via transfer sebelum/sesudah layanan" },
         );
         break;
       default:
-        baseSteps.push(
-          { icon: Calendar, text: "Koordinasikan detail dengan penyedia jasa" }
-        );
+        baseSteps.push({
+          icon: Calendar,
+          text: "Koordinasikan detail dengan penyedia jasa",
+        });
     }
 
     return baseSteps;
@@ -131,10 +182,13 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
   const serviceMethod = getServiceMethodLabel(bookingData.serviceMethod);
 
+  if (loading) {
+    return <BookingSuccessPageSkeleton />;
+  }
+
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-purple-50 to-white dark:from-purple-950/30 dark:to-background">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-purple-100 to-white dark:from-purple-950/30 dark:to-background">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Success Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/50 mb-4">
             <CheckCircle2 className="h-12 w-12 text-purple-600" />
@@ -147,7 +201,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </p>
         </div>
 
-        {/* Booking Info Card */}
         <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -166,7 +219,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </CardContent>
         </Card>
 
-        {/* Service Info */}
         <Card className="mb-6">
           <CardContent className="p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2">
@@ -176,7 +228,7 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
             <div className="flex gap-4 mb-4">
               <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-3xl">📸</span>
+                <span className="text-3xl">🛠️</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -193,14 +245,13 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
             <Separator className="my-4" />
 
-            {/* Schedule Info */}
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <Calendar className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">Jadwal Pelaksanaan</p>
                   <p className="font-medium">{bookingData.schedule.startDate}</p>
-                  <p className="text-sm text-muted-foreground">{bookingData.schedule.time}</p>
+                  {bookingData.schedule.time && <p className="text-sm text-muted-foreground">{bookingData.schedule.time}</p>}
                 </div>
               </div>
 
@@ -233,7 +284,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
             <Separator className="my-4" />
 
-            {/* Service Requirements */}
             {bookingData.requirements && (
               <div className="mb-4">
                 <div className="flex items-start gap-3">
@@ -248,7 +298,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
               </div>
             )}
 
-            {/* Notes */}
             {bookingData.notes && (
               <div className="mb-4">
                 <div className="flex items-start gap-3">
@@ -263,7 +312,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
               </div>
             )}
 
-            {/* Price Info */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Estimasi Harga</span>
@@ -275,7 +323,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
 
             <Separator className="my-4" />
 
-            {/* Price Status Alert */}
             {bookingData.priceStatus === "pending" ? (
               <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                 <div className="flex items-start gap-3">
@@ -285,7 +332,7 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
                       Harga Akan Dikonfirmasi
                     </p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Penyedia jasa akan memberikan penawaran harga final berdasarkan kompleksitas kebutuhan kamu. 
+                      Penyedia jasa akan memberikan penawaran harga final berdasarkan kompleksitas kebutuhan kamu.
                       Harga estimasi: <strong>{formatPrice(bookingData.estimatedPrice)}</strong>
                     </p>
                   </div>
@@ -298,7 +345,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
               </div>
             )}
 
-            {/* Provider Info */}
             <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
@@ -307,7 +353,7 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
                 <div className="flex-1">
                   <p className="font-medium">{bookingData.service.provider.name}</p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>⭐ {bookingData.service.provider.rating}</span>
+                    <span>⭐ {bookingData.service.provider.rating || "-"}</span>
                     <span>•</span>
                     <span>{bookingData.service.provider.totalOrders} pesanan</span>
                   </div>
@@ -317,7 +363,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </CardContent>
         </Card>
 
-        {/* Next Steps */}
         <Card className="mb-6">
           <CardContent className="p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2">
@@ -339,7 +384,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </CardContent>
         </Card>
 
-        {/* Contact Provider */}
         <Card className="mb-6 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -374,27 +418,25 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </CardContent>
         </Card>
 
-        {/* Tips Card */}
         <Card className="mb-6 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-              💡 Tips untuk Booking Jasa
+              Tips untuk Booking Jasa
             </h3>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <li>• Pastikan nomor WhatsApp kamu aktif dan bisa dihubungi</li>
-              <li>• Siapkan detail kebutuhan yang jelas untuk hasil maksimal</li>
-              <li>• Tanyakan portofolio atau contoh hasil sebelumnya</li>
-              <li>• Diskusikan revisi dan garansi sebelum pengerjaan dimulai</li>
+              <li>Pastikan nomor WhatsApp kamu aktif dan bisa dihubungi</li>
+              <li>Siapkan detail kebutuhan yang jelas untuk hasil maksimal</li>
+              <li>Tanyakan portofolio atau contoh hasil sebelumnya</li>
+              <li>Diskusikan revisi dan garansi sebelum pengerjaan dimulai</li>
             </ul>
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <div className="space-y-3">
           <Button
             className="w-full bg-purple-600 hover:bg-purple-700"
             size="lg"
-            onClick={() => onNavigate("order-detail")}
+            onClick={() => (orderId ? onNavigate("order-detail", orderId) : onNavigate("order-detail"))}
           >
             <Briefcase className="h-5 w-5 mr-2" />
             Lihat Detail Booking
@@ -419,7 +461,6 @@ export default function BookingSuccessPage({ onNavigate }: BookingSuccessPagePro
           </Button>
         </div>
 
-        {/* Breadcrumb */}
         <nav className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-8">
           <button onClick={() => onNavigate("landing")} className="hover:text-purple-600">
             Beranda

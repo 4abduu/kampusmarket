@@ -31,12 +31,12 @@ class StoreOrderRequest extends FormRequest
 
             // Shipping
             'shippingType' => ['required', 'in:gratis,cod,pickup,delivery,online,onsite,home_service'],
-            'selectedShippingOptionId' => ['required', 'exists:shipping_options,uuid'],
+            'selectedShippingOptionId' => ['nullable', 'exists:shipping_options,uuid'],
             'selectedAddressId' => ['required_if:shippingType,delivery', 'exists:addresses,uuid'],
             'shippingNotes' => ['nullable', 'string', 'max:500'],
 
             // Payment
-            'paymentMethod' => ['required', 'in:balance,cod,transfer'],
+            'paymentMethod' => ['required', 'in:balance,cod,transfer,midtrans'],
 
             // Notes
             'notes' => ['nullable', 'string', 'max:500'],

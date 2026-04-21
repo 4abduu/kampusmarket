@@ -121,7 +121,10 @@ export default function CatalogPage({ onNavigate, initialCategory }: CatalogPage
         }
 
         const data = await getProducts(params);
-        setProducts(data.data || []);
+        console.log('[CatalogPage] API Response:', { data, dataStructure: Object.keys(data) });
+        const products = data.data || data || [];
+        console.log('[CatalogPage] Products extracted:', { count: Array.isArray(products) ? products.length : 0, products });
+        setProducts(Array.isArray(products) ? products : []);
       } catch (err) {
         console.error('Failed to fetch products:', err);
         setError('Gagal memuat produk. Silakan coba lagi.');
@@ -347,7 +350,7 @@ export default function CatalogPage({ onNavigate, initialCategory }: CatalogPage
                       <Card
                         key={product.uuid}
                         className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                        onClick={() => onNavigate("product-detail", product.uuid)}
+                        onClick={() => onNavigate("product", product.uuid)}
                   >
                         <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
                           {product.images && product.images.length > 0 ? (
@@ -417,7 +420,7 @@ export default function CatalogPage({ onNavigate, initialCategory }: CatalogPage
                       <Card
                         key={product.uuid}
                         className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                        onClick={() => onNavigate("product-detail", product.uuid)}
+                        onClick={() => onNavigate("product", product.uuid)}
                       >
                         <div className="flex">
                           <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">

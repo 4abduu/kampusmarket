@@ -15,6 +15,26 @@ export const NO_FOOTER_PAGES = [
   "payment-success",
   "booking-success",
   "admin",
+  // Pages that should render without footer (full page): not found / unauthorized
+  "not-found",
+  "notfound",
+  "404",
+  "unauthorized",
+  "no-access",
 ];
 
-export const NO_NAVBAR_PAGES: string[] = [];
+export const NO_NAVBAR_PAGES: string[] = [
+  // Pages that should render without top navbar
+  "login",
+  "register",
+  "forgot-password",
+  "faculty-selection",
+  "email-verification",
+  "payment-success",
+  "booking-success",
+  "unauthorized",
+  "not-found",
+  "notfound",
+  "404",
+  "no-access",
+];

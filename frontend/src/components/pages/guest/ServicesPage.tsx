@@ -96,10 +96,12 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
         }
 
         const response = await getProducts(productParams);
+        console.log('[ServicesPage] API Response:', { response, dataStructure: Object.keys(response || {}) });
         if (response?.data?.length) {
           setServices(response.data);
-          console.log('[ServicesPage] Services loaded:', response.data.length);
+          console.log('[ServicesPage] Services loaded:', response.data.length, { services: response.data });
         } else {
+          console.warn('[ServicesPage] No services data in response:', { response });
           setServices([]);
         }
       } catch (err: any) {
@@ -308,11 +310,19 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                     className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
                     onClick={() => onNavigate("service", service.id)}
                   >
-                    <div className="relative bg-emerald-50 dark:bg-emerald-900/20 h-40 flex items-center justify-center">
-                      <Briefcase className="h-12 w-12 text-emerald-600/70" />
+                    <div className="relative bg-muted h-40 flex items-center justify-center overflow-hidden">
+                      {service.images && service.images.length > 0 ? (
+                        <img
+                          src={service.images[0].url || service.images[0]}
+                          alt={service.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <Briefcase className="h-12 w-12 text-muted-foreground/50" />
+                      )}
                     </div>
                     <CardContent className="p-4">
-                      <Badge variant="outline" className="mb-2">{service.category}</Badge>
+                      <Badge variant="outline" className="mb-2">{service.category?.name || "Jasa"}</Badge>
                       <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
                         {service.title}
                       </p>
@@ -321,26 +331,23 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                       </p>
                       <div className="flex items-center gap-1 mb-3">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{service.rating}</span>
-                        <span className="text-sm text-muted-foreground">({service.orderCount} pesanan)</span>
+                        <span className="text-sm font-medium">{service.rating || 0}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary-600">
-                          Rp {service.priceMin.toLocaleString("id-ID")} - {service.priceMax.toLocaleString("id-ID")}
+                          Rp {(service.price || service.price_min || 0).toLocaleString("id-ID")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                            {service.provider.name.split(" ").map((n: string) => n[0]).join("")}
+                            {service.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-xs text-muted-foreground">
-                          {service.provider.name.split(" ")[0]}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{service.seller?.name || "Unknown"}</span>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                           <MapPin className="h-3 w-3" />
-                          {service.location}
+                          {service.location || "-"}
                         </div>
                       </div>
                     </CardContent>
@@ -357,13 +364,21 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                     onClick={() => onNavigate("service", service.id)}
                   >
                     <div className="flex">
-                      <div className="relative bg-emerald-50 dark:bg-emerald-900/20 w-48 shrink-0 flex items-center justify-center">
-                        <Briefcase className="h-10 w-10 text-emerald-600/70" />
+                      <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
+                        {service.images && service.images.length > 0 ? (
+                          <img
+                            src={service.images[0].url || service.images[0]}
+                            alt={service.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <Briefcase className="h-10 w-10 text-muted-foreground/50" />
+                        )}
                       </div>
                       <CardContent className="flex-1 p-4">
                         <div className="flex justify-between">
                           <div>
-                            <Badge variant="outline" className="mb-1">{service.category}</Badge>
+                            <Badge variant="outline" className="mb-1">{service.category?.name || "Jasa"}</Badge>
                             <p className="font-medium mb-1 group-hover:text-primary-600 transition-colors">
                               {service.title}
                             </p>
@@ -373,21 +388,17 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span>{service.rating}</span>
+                                <span>{service.rating || 0}</span>
                               </div>
-                              <span>{service.orderCount} pesanan</span>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {service.location}
+                                {service.location || "-"}
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-xl font-bold text-primary-600">
-                              Rp {service.priceMin.toLocaleString("id-ID")}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              s/d Rp {service.priceMax.toLocaleString("id-ID")}
+                              Rp {(service.price || service.price_min || 0).toLocaleString("id-ID")}
                             </p>
                           </div>
                         </div>

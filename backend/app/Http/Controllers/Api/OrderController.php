@@ -16,6 +16,9 @@ use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Services\MidtransService;
+use App\Models\Payment;
+use Illuminate\Support\Str;
 use App\Enums\ShippingType;
 use Illuminate\Support\Facades\Log;
 
@@ -124,9 +127,18 @@ class OrderController extends Controller
         $negoPrice = $request->nego_price ?? null;
         $finalPrice = $negoPrice ?? $basePrice;
 
-        $selectedShippingOption = $product->shippingOptions()
-            ->where('uuid', $request->selected_shipping_option_id)
-            ->first();
+        $selectedShippingOption = null;
+        if ($request->selected_shipping_option_id) {
+            $selectedShippingOption = $product->shippingOptions()
+                ->where('uuid', $request->selected_shipping_option_id)
+                ->first();
+        }
+
+        if (!$selectedShippingOption && $request->shippingType) {
+            $selectedShippingOption = $product->shippingOptions()
+                ->where('type', $request->shippingType)
+                ->first();
+        }
 
         if (!$selectedShippingOption) {
             return response()->json([
@@ -145,8 +157,9 @@ class OrderController extends Controller
 
         $shippingFee = (int) ($selectedShippingOption->price ?? 0);
 
-        // Determine initial status based on product type
-        $initialStatus = OrderStatus::PENDING;
+        // Determine initial status based on product type.
+        // Default is waiting_payment so checkout can proceed to pay immediately.
+        $initialStatus = OrderStatus::WAITING_PAYMENT;
 
         if ($product->type->value === 'jasa' && $product->price_type->value !== 'fixed') {
             // Variable pricing for jasa - need seller to set price
@@ -492,8 +505,8 @@ class OrderController extends Controller
             ], 403);
         }
 
-        // Check if status is waiting_payment
-        if ($order->status !== OrderStatus::WAITING_PAYMENT) {
+        // Allow payment for legacy pending orders and current waiting_payment orders.
+        if (!in_array($order->status, [OrderStatus::WAITING_PAYMENT, OrderStatus::PENDING], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Status pesanan tidak valid untuk pembayaran',
@@ -502,6 +515,58 @@ class OrderController extends Controller
 
         $buyer = $request->user();
         $totalPrice = $order->total_price;
+
+        // If payment method is midtrans, create payment and return snap token
+        if ($order->payment_method === 'midtrans') {
+            $midtrans = app(MidtransService::class);
+
+            $payment = Payment::create([
+                'uuid' => Str::uuid(),
+                'order_id' => $order->id,
+                'payment_gateway' => 'midtrans',
+                'payment_method' => null,
+                'transaction_id' => null,
+                'gross_amount' => $order->total_price,
+                'currency' => 'IDR',
+                'status' => 'pending',
+            ]);
+
+            $payload = [
+                'transaction_details' => [
+                    'order_id' => $payment->uuid,
+                    'gross_amount' => (int) ($payment->gross_amount / 100),
+                ],
+                'item_details' => [
+                    [
+                        'id' => $order->product_id,
+                        'price' => (int) ($order->final_price / 100),
+                        'quantity' => $order->quantity,
+                        'name' => $order->product_title,
+                    ],
+                ],
+                'customer_details' => [
+                    'first_name' => $order->buyer?->name ?? 'Buyer',
+                    'email' => $order->buyer?->email ?? null,
+                ],
+            ];
+
+            $result = $midtrans->createSnapToken($payload);
+            $payment->raw_response = $result;
+            if (isset($result['token'])) {
+                $payment->transaction_id = $result['transaction_id'] ?? null;
+                $payment->save();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Snap token created',
+                    'data' => [
+                        'snap_token' => $result['token'],
+                        'payment_uuid' => $payment->uuid,
+                    ],
+                ]);
+            }
+
+            return response()->json(['success' => false, 'error' => $result], 500);
+        }
 
         // Check balance if payment method is balance
         if ($order->payment_method === 'balance') {

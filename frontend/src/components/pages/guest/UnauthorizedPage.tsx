@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Bot, Home, LogIn, ShieldAlert, ShieldX, UserPlus, TriangleAlert } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 interface UnauthorizedPageProps {
@@ -9,6 +10,26 @@ interface UnauthorizedPageProps {
 }
 
 export default function UnauthorizedPage({ onNavigate, variant = "guest" }: UnauthorizedPageProps) {
+  // Hide global chrome (navbar/footer) and disable scrolling while this page is mounted
+  useEffect(() => {
+    const prev = document.body.classList.contains('no-chrome');
+    const prevOverflow = document.body.style.overflow;
+    document.body.classList.add('no-chrome');
+    document.body.style.overflow = 'hidden';
+    // Ensure URL reflects the Unauthorized page so layout rules apply
+    try {
+      if (!window.location.pathname.startsWith('/unauthorized')) {
+        window.history.replaceState({}, '', '/unauthorized');
+      }
+    } catch (e) {
+      // ignore
+    }
+    return () => {
+      if (!prev) document.body.classList.remove('no-chrome');
+      document.body.style.overflow = prevOverflow || '';
+    };
+  }, []);
+
   const isForbidden = variant === "forbidden";
 
   const handleLoginClick = () => {

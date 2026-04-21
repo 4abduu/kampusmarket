@@ -73,12 +73,16 @@ export function renderPage(params: RenderPageParams) {
 
   switch (currentPage) {
     case "login":
+      if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return <LoginPage onNavigate={onNavigate} onLogin={onLogin} onGooglePendingSelection={onGooglePendingSelection} />;
     case "register":
+      if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />;
     case "forgot-password":
+      if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return <ForgotPasswordPage onNavigate={onNavigate} />;
     case "faculty-selection":
+      if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return (
         <FacultySelectionPage
           onLogin={onLogin}
@@ -87,6 +91,7 @@ export function renderPage(params: RenderPageParams) {
         />
       );
     case "email-verification":
+      if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return <EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />;
     case "catalog":
       return <CatalogPage onNavigate={onNavigate} initialCategory={selectedCategory} />;
@@ -102,7 +107,7 @@ export function renderPage(params: RenderPageParams) {
         />
       );
     case "service":
-      return <ServiceDetailPage onNavigate={onNavigate} serviceId={selectedProductId || "s1"} />;
+      return <ServiceDetailPage onNavigate={onNavigate} serviceId={selectedProductId || "s1"} isLoggedIn={isLoggedIn} />;
     case "checkout":
       return <CheckoutPage onNavigate={onNavigate} productId={selectedProductId || undefined} />;
     case "checkout-success":

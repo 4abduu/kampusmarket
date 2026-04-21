@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
 import ProductDetailGallery from "@/components/pages/guest/product-detail/ProductDetailGallery";
@@ -44,14 +44,24 @@ export default function ProductDetailPage({
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchedIdRef = useRef<string | null>(null);
 
   // Fetch product detail
   useEffect(() => {
+    if (!productId || fetchedIdRef.current === productId) {
+      return;
+    }
+    fetchedIdRef.current = productId;
+
     const fetchProduct = async () => {
       setLoading(true);
       setError(null);
       try {
         const data = await getProductDetail(productId);
+        if (data.type !== "barang") {
+          setError('URL tidak valid untuk halaman ini. Silakan periksa kembali.');
+          return;
+        }
         setProduct(data);
       } catch (err) {
         console.error('Failed to fetch product:', err);
@@ -61,9 +71,7 @@ export default function ProductDetailPage({
       }
     };
 
-    if (productId) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [productId]);
 
   const handleAction = (action: () => void) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { productsApi } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
 import LandingCategoriesSection from "@/components/pages/guest/landing/LandingCategoriesSection";
@@ -11,8 +11,10 @@ import LandingHowItWorksSection from "@/components/pages/guest/landing/LandingHo
 import LandingProductsSection from "@/components/pages/guest/landing/LandingProductsSection";
 import LandingSellerBanner from "@/components/pages/guest/landing/LandingSellerBanner";
 import LandingServicesSection from "@/components/pages/guest/landing/LandingServicesSection";
+import CategorySectionSkeleton from "@/components/skeleton/CategorySectionSkeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import type {
   LandingCategoryType,
   LandingPageProps,
@@ -26,44 +28,58 @@ export default function LandingPage({
 }: LandingPageProps) {
   const [categoryType, setCategoryType] = useState<LandingCategoryType>("barang");
   const [showSellerBanner, setShowSellerBanner] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [barangCategories, setBarangCategories] = useState<Array<{ id: string; label: string }>>([]);
   const [jasaCategories, setJasaCategories] = useState<Array<{ id: string; label: string }>>([]);
   const [barangProducts, setBarangProducts] = useState<any>([]);
   const [jasaProducts, setJasaProducts] = useState<any>([]);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [heroLoading, setHeroLoading] = useState<boolean>(true);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+
+  const handleAction = (action: () => void) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    action();
+  };
 
   useEffect(() => {
+    if (hasFetchedRef.current) {
+      return;
+    }
+    hasFetchedRef.current = true;
+
     const fetchData = async () => {
       try {
-        console.log('[LandingPage] Fetching categories and products...');
         setFetchError(null);
+        setCategoriesLoading(true);
 
-        const barangCatsResponse = await categoriesApi.getCategoriesByType("barang");
-        const jasaCatsResponse = await categoriesApi.getCategoriesByType("jasa");
+        const [barangCatsResponse, jasaCatsResponse, featuredResponse, barangResponse, jasaResponse] = await Promise.all([
+          categoriesApi.getCategoriesByType("barang"),
+          categoriesApi.getCategoriesByType("jasa"),
+          productsApi.getProducts({ per_page: 3 }),
+          productsApi.getProducts({ type: "barang", per_page: 8 }),
+          productsApi.getProducts({ type: "jasa", per_page: 3 }),
+        ]);
+
         if (barangCatsResponse?.length) {
           setBarangCategories(barangCatsResponse.map((cat: any) => ({ id: cat.id, label: cat.name })));
         }
         if (jasaCatsResponse?.length) {
           setJasaCategories(jasaCatsResponse.map((cat: any) => ({ id: cat.id, label: cat.name })));
         }
-
-        const featuredResponse = await productsApi.getProducts({ per_page: 3 });
-        console.debug('[LandingPage] featuredResponse:', featuredResponse);
+        setCategoriesLoading(false);
         setFeaturedProducts(featuredResponse?.data ?? featuredResponse ?? []);
-
-        const barangResponse = await productsApi.getProducts({ type: "barang", per_page: 8 });
-        const jasaResponse = await productsApi.getProducts({ type: "jasa", per_page: 3 });
-        console.debug('[LandingPage] barangResponse:', barangResponse);
-        console.debug('[LandingPage] jasaResponse:', jasaResponse);
         setBarangProducts(barangResponse?.data ?? barangResponse ?? []);
         setJasaProducts(jasaResponse?.data ?? jasaResponse ?? []);
-        console.log('[LandingPage] Data fetch completed');
       } catch (error) {
         console.error("[LandingPage] Error fetching data:", error);
         setFetchError('Gagal memuat beberapa data. Silakan muat ulang.');
-        // keep arrays empty so UI reflects DB state
+        setCategoriesLoading(false);
       } finally {
         setHeroLoading(false);
       }
@@ -80,37 +96,44 @@ export default function LandingPage({
   };
 
   return (
-    <div className="flex flex-col">
-      {fetchError && (
-        <Alert variant="destructive" className="m-4 mb-0 border-amber-200 bg-amber-50 text-amber-800">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{fetchError}</AlertDescription>
-        </Alert>
-      )}
+    <>
+      <ProductDetailLoginDialog open={showLoginModal} onOpenChange={setShowLoginModal} onNavigate={onNavigate} />
+      <div className="flex flex-col">
+        {fetchError && (
+          <Alert variant="destructive" className="m-4 mb-0 border-amber-200 bg-amber-50 text-amber-800">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{fetchError}</AlertDescription>
+          </Alert>
+        )}
 
-      <LandingSellerBanner
-        open={showSellerBanner}
-        isLoggedIn={isLoggedIn}
-        isCustomerOnly={isCustomerOnly}
-        onClose={() => setShowSellerBanner(false)}
-        onStartSelling={onStartSelling}
-      />
+        <LandingSellerBanner
+          open={showSellerBanner}
+          isLoggedIn={isLoggedIn}
+          isCustomerOnly={isCustomerOnly}
+          onClose={() => setShowSellerBanner(false)}
+          onStartSelling={onStartSelling}
+        />
 
-      <LandingHeroSection featuredProducts={featuredProducts} onNavigate={onNavigate} isLoading={heroLoading} />
-      <LandingFeaturesSection />
+        <LandingHeroSection featuredProducts={featuredProducts} onNavigate={onNavigate} isLoading={heroLoading} onAction={handleAction} />
+        <LandingFeaturesSection />
 
-      <LandingCategoriesSection
-        categoryType={categoryType}
-        onCategoryTypeChange={setCategoryType}
-        currentCategories={currentCategories}
-        onCategoryClick={handleCategoryClick}
-        onNavigate={onNavigate}
-      />
+        {categoriesLoading ? (
+          <CategorySectionSkeleton />
+        ) : (
+          <LandingCategoriesSection
+            categoryType={categoryType}
+            onCategoryTypeChange={setCategoryType}
+            currentCategories={currentCategories}
+            onCategoryClick={handleCategoryClick}
+            onNavigate={onNavigate}
+          />
+        )}
 
-      <LandingProductsSection products={barangProducts as any} onNavigate={onNavigate} />
-      <LandingServicesSection services={jasaProducts as any} onNavigate={onNavigate} />
-      <LandingHowItWorksSection />
-      <LandingCtaSection isLoggedIn={isLoggedIn} onNavigate={onNavigate} />
-    </div>
+        <LandingProductsSection products={barangProducts as any} onNavigate={onNavigate} />
+        <LandingServicesSection services={jasaProducts as any} onNavigate={onNavigate} />
+        <LandingHowItWorksSection />
+        <LandingCtaSection isLoggedIn={isLoggedIn} onNavigate={onNavigate} />
+      </div>
+    </>
   );
 }

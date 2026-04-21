@@ -51,7 +51,7 @@ export default function CheckoutShippingMethodSection({
                 <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <option.icon className="h-5 w-5 text-primary-600" />
+                    {option.icon ? <option.icon className="h-5 w-5 text-primary-600" /> : <Truck className="h-5 w-5 text-primary-600" />}
                     <span className="font-medium">{option.label}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
