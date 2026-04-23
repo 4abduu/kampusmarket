@@ -281,13 +281,14 @@ class AuthController extends Controller
             ]);
 
             // Exchange authorization code for access token
-            $tokenResponse = Http::post('https://oauth2.googleapis.com/token', [
-                'client_id' => config('services.google.client_id'),
-                'client_secret' => config('services.google.client_secret'),
-                'code' => $code,
-                'grant_type' => 'authorization_code',
-                'redirect_uri' => config('services.google.redirect_uri'),
-            ]);
+            $tokenResponse = Http::withoutVerifying()
+                ->post('https://oauth2.googleapis.com/token', [
+                    'client_id' => config('services.google.client_id'),
+                    'client_secret' => config('services.google.client_secret'),
+                    'code' => $code,
+                    'grant_type' => 'authorization_code',
+                    'redirect_uri' => config('services.google.redirect_uri'),
+                ]);
 
             $tokenData = $tokenResponse->json();
 
@@ -301,7 +302,8 @@ class AuthController extends Controller
             }
 
             // Get user info from Google
-            $userResponse = Http::withToken($tokenData['access_token'])
+            $userResponse = Http::withoutVerifying()
+                ->withToken($tokenData['access_token'])
                 ->get('https://www.googleapis.com/oauth2/v2/userinfo');
 
             if (!$userResponse->successful()) {
