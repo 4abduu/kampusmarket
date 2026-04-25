@@ -3,10 +3,24 @@
 import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Briefcase, ChevronLeft, Eye, Image as ImageIcon, Package, ShoppingBag, Upload } from "lucide-react";
+import {
+  Briefcase,
+  ChevronLeft,
+  Eye,
+  Image as ImageIcon,
+  ShoppingBag,
+  Upload,
+} from "lucide-react";
+import ProductImage from "@/components/common/ProductImage";
 import { mockOrders, mockReviews, type Order } from "@/lib/mock-data";
 import RatingImagePreview from "@/components/pages/user/rating/RatingImagePreview";
 import RatingOrderCard from "@/components/pages/user/rating/RatingOrderCard";
@@ -22,9 +36,13 @@ const MAX_COMMENT_LENGTH = 500;
 const MAX_IMAGES = 5;
 
 export default function RatingPage({ onNavigate }: RatingPageProps) {
-  const completedOrders = mockOrders.filter((order) => order.status === "completed");
+  const completedOrders = mockOrders.filter(
+    (order) => order.status === "completed",
+  );
   const reviewedOrderIds = mockReviews.map((review) => review.orderId);
-  const ordersToReview = completedOrders.filter((order) => !reviewedOrderIds.includes(order.id));
+  const ordersToReview = completedOrders.filter(
+    (order) => !reviewedOrderIds.includes(order.id),
+  );
 
   const [step, setStep] = useState<"select" | "form" | "success">("select");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -110,18 +128,26 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
       <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
         <div className="container mx-auto px-4 py-8 max-w-2xl">
           <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="icon" onClick={() => onNavigate("orders")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onNavigate("orders")}
+            >
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Beri Rating</h1>
-              <p className="text-muted-foreground">Pilih pesanan yang ingin di-review</p>
+              <p className="text-muted-foreground">
+                Pilih pesanan yang ingin di-review
+              </p>
             </div>
           </div>
 
           {ordersToReview.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">{ordersToReview.length} pesanan selesai menunggu review</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {ordersToReview.length} pesanan selesai menunggu review
+              </p>
               <ScrollArea className="max-h-[calc(100vh-250px)]">
                 <div className="space-y-3 pr-4">
                   {ordersToReview.map((order) => (
@@ -142,9 +168,15 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                 <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
                   <ShoppingBag className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="font-medium mb-2">Tidak Ada Pesanan untuk Di-review</h3>
-                <p className="text-sm text-muted-foreground mb-4">Semua pesanan yang sudah selesai sudah kamu review.</p>
-                <Button variant="outline" onClick={() => onNavigate("catalog")}>Belanja Sekarang</Button>
+                <h3 className="font-medium mb-2">
+                  Tidak Ada Pesanan untuk Di-review
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Semua pesanan yang sudah selesai sudah kamu review.
+                </p>
+                <Button variant="outline" onClick={() => onNavigate("catalog")}>
+                  Belanja Sekarang
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -162,7 +194,9 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Beri Rating</h1>
-            <p className="text-muted-foreground">Bagikan pengalaman belanjamu</p>
+            <p className="text-muted-foreground">
+              Bagikan pengalaman belanjamu
+            </p>
           </div>
         </div>
 
@@ -170,19 +204,28 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex gap-4">
-                <div className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${selectedOrder.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
+                <div
+                  className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${selectedOrder.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}
+                >
                   {selectedOrder.productType === "jasa" ? (
                     <Briefcase className="h-8 w-8 text-emerald-600/70" />
-                  ) : selectedOrder.product.images[0] ? (
-                    <img src={selectedOrder.product.images[0]} alt={selectedOrder.productTitle} className="w-full h-full object-cover" />
                   ) : (
-                    <Package className="h-8 w-8 text-muted-foreground/30" />
+                    <ProductImage
+                      src={selectedOrder.product.images?.[0]}
+                      alt={selectedOrder.productTitle}
+                      className="w-full h-full"
+                      imageClassName="w-full h-full object-cover"
+                    />
                   )}
                 </div>
                 <div>
                   <p className="font-medium">{selectedOrder.productTitle}</p>
-                  <p className="text-sm text-muted-foreground">{formatPrice(selectedOrder.finalPrice)}</p>
-                  <p className="text-sm text-muted-foreground">dari {selectedOrder.seller.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatPrice(selectedOrder.finalPrice)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    dari {selectedOrder.seller.name}
+                  </p>
                   <Badge variant="secondary" className="mt-2 text-xs">
                     {selectedOrder.productType === "barang" ? "Barang" : "Jasa"}
                   </Badge>
@@ -195,7 +238,9 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="text-lg">Rating Produk</CardTitle>
-            <CardDescription>Bagaimana kualitas produk/jasa ini?</CardDescription>
+            <CardDescription>
+              Bagaimana kualitas produk/jasa ini?
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center py-4">
@@ -207,7 +252,9 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="text-lg">Ulasan</CardTitle>
-            <CardDescription>Ceritakan pengalamanmu dengan produk/jasa ini</CardDescription>
+            <CardDescription>
+              Ceritakan pengalamanmu dengan produk/jasa ini
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -224,10 +271,14 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
             <div className="flex justify-between items-center mt-2">
               <p className="text-xs text-muted-foreground">
                 {comment.length > 0 && comment.length < 20 && (
-                  <span className="text-amber-500">Minimal 20 karakter untuk ulasan yang bermanfaat</span>
+                  <span className="text-amber-500">
+                    Minimal 20 karakter untuk ulasan yang bermanfaat
+                  </span>
                 )}
               </p>
-              <p className={`text-xs ${comment.length >= MAX_COMMENT_LENGTH * 0.9 ? "text-amber-500" : "text-muted-foreground"}`}>
+              <p
+                className={`text-xs ${comment.length >= MAX_COMMENT_LENGTH * 0.9 ? "text-amber-500" : "text-muted-foreground"}`}
+              >
                 {comment.length}/{MAX_COMMENT_LENGTH}
               </p>
             </div>
@@ -237,13 +288,18 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Foto (Opsional)</CardTitle>
-            <CardDescription>Tambahkan foto untuk ulasan yang lebih informatif (maks. {MAX_IMAGES} foto)</CardDescription>
+            <CardDescription>
+              Tambahkan foto untuk ulasan yang lebih informatif (maks.{" "}
+              {MAX_IMAGES} foto)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RatingImagePreview images={images} onRemove={handleRemoveImage} />
 
             {images.length < MAX_IMAGES && (
-              <div className={`mt-3 ${images.length > 0 ? "" : "border-2 border-dashed border-slate-200 dark:border-slate-700"} rounded-lg`}>
+              <div
+                className={`mt-3 ${images.length > 0 ? "" : "border-2 border-dashed border-slate-200 dark:border-slate-700"} rounded-lg`}
+              >
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -268,23 +324,42 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                       <ImageIcon className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <p className="text-sm font-medium">{images.length > 0 ? "Tambah Foto" : "Upload Foto"}</p>
-                  {images.length === 0 && <p className="text-xs text-muted-foreground mt-1">Klik atau drag & drop gambar di sini</p>}
+                  <p className="text-sm font-medium">
+                    {images.length > 0 ? "Tambah Foto" : "Upload Foto"}
+                  </p>
+                  {images.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Klik atau drag & drop gambar di sini
+                    </p>
+                  )}
                 </label>
               </div>
             )}
 
-            {images.length > 0 && <p className="text-xs text-muted-foreground mt-2">{images.length}/{MAX_IMAGES} foto terupload</p>}
+            {images.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {images.length}/{MAX_IMAGES} foto terupload
+              </p>
+            )}
           </CardContent>
         </Card>
 
         <div className="space-y-3">
-          <Button className="w-full bg-primary-600 hover:bg-primary-700" size="lg" disabled={!isFormValid} onClick={() => setShowPreview(true)}>
+          <Button
+            className="w-full bg-primary-600 hover:bg-primary-700"
+            size="lg"
+            disabled={!isFormValid}
+            onClick={() => setShowPreview(true)}
+          >
             <Eye className="h-4 w-4 mr-2" />
             Lihat Preview
           </Button>
 
-          {!isFormValid && <p className="text-center text-sm text-muted-foreground">Beri rating untuk melanjutkan</p>}
+          {!isFormValid && (
+            <p className="text-center text-sm text-muted-foreground">
+              Beri rating untuk melanjutkan
+            </p>
+          )}
         </div>
 
         <RatingPreviewModal

@@ -10,6 +10,8 @@ export default function CatalogFilterSidebar({
   setSelectedCategory,
   selectedConditions,
   handleConditionChange,
+  tempPrice,
+  setTempPrice,
   priceRange,
   setPriceRange,
   onResetFilters,
@@ -53,9 +55,14 @@ export default function CatalogFilterSidebar({
             <Checkbox
               id="baru"
               checked={selectedConditions.includes("baru")}
-              onCheckedChange={(checked) => handleConditionChange("baru", checked as boolean)}
+              onCheckedChange={(checked) =>
+                handleConditionChange("baru", checked as boolean)
+              }
             />
-            <Label htmlFor="baru" className="text-sm font-normal cursor-pointer">
+            <Label
+              htmlFor="baru"
+              className="text-sm font-normal cursor-pointer"
+            >
               Baru
             </Label>
           </div>
@@ -63,9 +70,14 @@ export default function CatalogFilterSidebar({
             <Checkbox
               id="bekas"
               checked={selectedConditions.includes("bekas")}
-              onCheckedChange={(checked) => handleConditionChange("bekas", checked as boolean)}
+              onCheckedChange={(checked) =>
+                handleConditionChange("bekas", checked as boolean)
+              }
             />
-            <Label htmlFor="bekas" className="text-sm font-normal cursor-pointer">
+            <Label
+              htmlFor="bekas"
+              className="text-sm font-normal cursor-pointer"
+            >
               Bekas
             </Label>
           </div>
@@ -76,21 +88,41 @@ export default function CatalogFilterSidebar({
         <h3 className="font-semibold mb-3">Rentang Harga</h3>
         <div className="space-y-4">
           <Slider
-            value={priceRange}
-            onValueChange={setPriceRange}
-            max={1000000}
+            value={tempPrice}
+            onValueChange={setTempPrice}
+            // Radix `Slider` exposes `onValueCommit` which fires when user releases the thumb
+            onValueCommit={(val: number[]) => {
+              setPriceRange(val);
+            }}
+            max={20000000}
             step={10000}
             className="w-full"
           />
           <div className="flex items-center gap-2">
-            <Input type="text" value={`Rp ${priceRange[0].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+            <Input
+              type="text"
+              value={`Rp ${tempPrice[0].toLocaleString("id-ID")}`}
+              readOnly
+              className="text-xs"
+            />
             <span>-</span>
-            <Input type="text" value={`Rp ${priceRange[1].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+            <Input
+              type="text"
+              value={`Rp ${tempPrice[1].toLocaleString("id-ID")}`}
+              readOnly
+              className="text-xs"
+            />
           </div>
         </div>
       </div>
 
-      <Button variant="outline" className="w-full" onClick={onResetFilters}>
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => {
+          onResetFilters();
+        }}
+      >
         Reset Filter
       </Button>
     </div>

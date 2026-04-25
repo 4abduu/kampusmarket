@@ -48,14 +48,24 @@ export default function ServicesFilterSidebar({
           <Slider
             value={priceRange}
             onValueChange={setPriceRange}
-            max={1000000}
+            max={20000000}
             step={10000}
             className="w-full"
           />
           <div className="flex items-center gap-2">
-            <Input type="text" value={`Rp ${priceRange[0].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+            <Input
+              type="text"
+              value={`Rp ${priceRange[0].toLocaleString("id-ID")}`}
+              readOnly
+              className="text-xs"
+            />
             <span>-</span>
-            <Input type="text" value={`Rp ${priceRange[1].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+            <Input
+              type="text"
+              value={`Rp ${priceRange[1].toLocaleString("id-ID")}`}
+              readOnly
+              className="text-xs"
+            />
           </div>
         </div>
       </div>

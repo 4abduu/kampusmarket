@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
 import ProductDetailGallery from "@/components/pages/guest/product-detail/ProductDetailGallery";
@@ -12,8 +13,10 @@ import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 import ProductDetailPageSkeleton from "@/components/skeleton/ProductDetailPageSkeleton";
 
 interface ProductDetailPageProps {
-  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
-  productId: string;
+  onNavigate: (
+    page: string,
+    data?: string | { productId?: string; chatAction?: "chat" | "nego" },
+  ) => void;
   isLoggedIn: boolean;
   onLogin: (role?: "user" | "admin") => void;
 }
@@ -30,10 +33,11 @@ const REPORT_REASONS = [
 
 export default function ProductDetailPage({
   onNavigate,
-  productId,
   isLoggedIn,
   onLogin: _onLogin,
 }: ProductDetailPageProps) {
+  const params = useParams();
+  const productId = params.id as string | undefined;
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -59,13 +63,15 @@ export default function ProductDetailPage({
       try {
         const data = await getProductDetail(productId);
         if (data.type !== "barang") {
-          setError('URL tidak valid untuk halaman ini. Silakan periksa kembali.');
+          setError(
+            "URL tidak valid untuk halaman ini. Silakan periksa kembali.",
+          );
           return;
         }
         setProduct(data);
       } catch (err) {
-        console.error('Failed to fetch product:', err);
-        setError('Gagal memuat detail produk. Silakan coba lagi.');
+        console.error("Failed to fetch product:", err);
+        setError("Gagal memuat detail produk. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
@@ -88,16 +94,19 @@ export default function ProductDetailPage({
       return;
     }
 
-    const finalReason = reportReason === "other"
-      ? reportOtherReason
-      : REPORT_REASONS.find((r) => r.id === reportReason)?.label;
+    const finalReason =
+      reportReason === "other"
+        ? reportOtherReason
+        : REPORT_REASONS.find((r) => r.id === reportReason)?.label;
 
     if (!finalReason) {
       alert("Deskripsi alasan laporan tidak boleh kosong");
       return;
     }
 
-    alert(`Laporan produk berhasil dikirim!\nAlasan: ${finalReason}\nDeskripsi: ${reportDescription}`);
+    alert(
+      `Laporan produk berhasil dikirim!\nAlasan: ${finalReason}\nDeskripsi: ${reportDescription}`,
+    );
     setShowReportModal(false);
     setReportReason("");
     setReportDescription("");
@@ -124,7 +133,9 @@ export default function ProductDetailPage({
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-red-500">{error || 'Produk tidak ditemukan'}</p>
+              <p className="text-red-500">
+                {error || "Produk tidak ditemukan"}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -142,9 +153,9 @@ export default function ProductDetailPage({
         selectedImage={selectedImage}
         setSelectedImage={setSelectedImage}
       />
-      <ProductDetailTabsPanel 
-        description={product.description} 
-        shippingOptions={product.shippingOptions || []} 
+      <ProductDetailTabsPanel
+        description={product.description}
+        shippingOptions={product.shippingOptions || []}
       />
     </>
   );
@@ -184,7 +195,11 @@ export default function ProductDetailPage({
 
   return (
     <>
-      <ProductDetailLoginDialog open={showLoginModal} onOpenChange={setShowLoginModal} onNavigate={onNavigate} />
+      <ProductDetailLoginDialog
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        onNavigate={onNavigate}
+      />
 
       <DetailPageShell
         breadcrumbs={breadcrumbs}

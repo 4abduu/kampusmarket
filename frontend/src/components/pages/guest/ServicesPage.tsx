@@ -37,6 +37,7 @@ import { getCategories } from "@/lib/api/categories";
 import { getProducts } from "@/lib/api/products";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ServicesFilterSidebar from "@/components/pages/guest/services/ServicesFilterSidebar";
+import ProductImage from "@/components/common/ProductImage";
 import { Skeleton } from "@/components/ui/skeleton";
 import ServicesPageSkeleton from "@/components/skeleton/ServicesPageSkeleton";
 import EmptyState from "@/components/shared/EmptyState";
@@ -49,11 +50,16 @@ interface ServicesPageProps {
   initialCategory?: string | null;
 }
 
-export default function ServicesPage({ onNavigate, initialCategory }: ServicesPageProps) {
+export default function ServicesPage({
+  onNavigate,
+  initialCategory,
+}: ServicesPageProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null);
-  const [priceRange, setPriceRange] = useState([0, 1000000]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    initialCategory ?? null,
+  );
+  const [priceRange, setPriceRange] = useState([0, 20000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [currentPage, setCurrentPage] = useState(1);
   const [services, setServices] = useState<any[]>([]);
@@ -65,48 +71,57 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('[ServicesPage] Fetching services and categories...');
+        console.log("[ServicesPage] Fetching services and categories...");
         setLoading(true);
         setError(null);
 
         // Fetch categories
-        const catsResponse = await getCategories({ type: 'jasa' });
+        const catsResponse = await getCategories({ type: "jasa" });
         if (catsResponse?.length) {
-          setCategories(catsResponse.map((cat: any) => ({
-            id: cat.id,
-            name: cat.name,
-            label: cat.name,
-          })));
+          setCategories(
+            catsResponse.map((cat: any) => ({
+              id: cat.id,
+              name: cat.name,
+              label: cat.name,
+            })),
+          );
         }
 
         // Fetch services (map sort option to backend params)
-        const productParams: any = { type: 'jasa', per_page: 100 };
-        if (sortBy === 'termurah') {
-          productParams.sort_by = 'price';
-          productParams.sort_order = 'asc';
-        } else if (sortBy === 'termahal') {
-          productParams.sort_by = 'price';
-          productParams.sort_order = 'desc';
-        } else if (sortBy === 'terpopuler') {
-          productParams.sort_by = 'popular';
-          productParams.sort_order = 'desc';
+        const productParams: any = { type: "jasa", per_page: 100 };
+        if (sortBy === "termurah") {
+          productParams.sort_by = "price";
+          productParams.sort_order = "asc";
+        } else if (sortBy === "termahal") {
+          productParams.sort_by = "price";
+          productParams.sort_order = "desc";
+        } else if (sortBy === "terpopuler") {
+          productParams.sort_by = "popular";
+          productParams.sort_order = "desc";
         } else {
-          productParams.sort_by = 'created_at';
-          productParams.sort_order = 'desc';
+          productParams.sort_by = "created_at";
+          productParams.sort_order = "desc";
         }
 
         const response = await getProducts(productParams);
-        console.log('[ServicesPage] API Response:', { response, dataStructure: Object.keys(response || {}) });
+        console.log("[ServicesPage] API Response:", {
+          response,
+          dataStructure: Object.keys(response || {}),
+        });
         if (response?.data?.length) {
           setServices(response.data);
-          console.log('[ServicesPage] Services loaded:', response.data.length, { services: response.data });
+          console.log("[ServicesPage] Services loaded:", response.data.length, {
+            services: response.data,
+          });
         } else {
-          console.warn('[ServicesPage] No services data in response:', { response });
+          console.warn("[ServicesPage] No services data in response:", {
+            response,
+          });
           setServices([]);
         }
       } catch (err: any) {
-        console.error('[ServicesPage] Error fetching data:', err);
-        setError('Gagal memuat layanan jasa. Silakan coba lagi.');
+        console.error("[ServicesPage] Error fetching data:", err);
+        setError("Gagal memuat layanan jasa. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
@@ -116,9 +131,26 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
   }, []);
 
   const filteredServices = services.filter((service) => {
-    if (selectedCategory && service.category_id !== selectedCategory) return false;
-    if (service.price > priceRange[1]) return false;
-    if (searchQuery && !service.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (selectedCategory) {
+      const svcCat =
+        // prefer common shapes returned from API
+        service.category_id ??
+        service.categoryId ??
+        service.category?.id ??
+        service.category;
+      if (String(svcCat) !== String(selectedCategory)) return false;
+    }
+
+    const priceVal =
+      service.price ?? service.price_min ?? service.priceMin ?? 0;
+    if (priceVal > priceRange[1] || priceVal < priceRange[0]) return false;
+
+    if (
+      searchQuery &&
+      !service.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
+
     return true;
   });
 
@@ -126,8 +158,20 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
+
+  // Ensure currentPage stays within valid bounds when filters or results change
+  useEffect(() => {
+    if (totalPages === 0) {
+      if (currentPage !== 1) setCurrentPage(1);
+      return;
+    }
+
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages]);
 
   const filterSidebarProps = {
     selectedCategory,
@@ -142,7 +186,7 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
     },
     onResetFilters: () => {
       setSelectedCategory(null);
-      setPriceRange([0, 1000000]);
+      setPriceRange([0, 20000000]);
       setSearchQuery("");
       setCurrentPage(1);
     },
@@ -219,7 +263,13 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
                 </Sheet>
 
                 {/* Sort */}
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select
+                  value={sortBy}
+                  onValueChange={(val) => {
+                    setSortBy(val);
+                    setCurrentPage(1);
+                  }}
+                >
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Urutkan" />
                   </SelectTrigger>
@@ -270,13 +320,21 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
             {/* Results Count */}
             {!loading && !error && (
               <p className="text-sm text-muted-foreground mb-4">
-                Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredServices.length)} dari {filteredServices.length} jasa
+                Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                {Math.min(
+                  currentPage * ITEMS_PER_PAGE,
+                  filteredServices.length,
+                )}{" "}
+                dari {filteredServices.length} jasa
               </p>
             )}
 
             {/* Services Loading/Error/Empty */}
             {loading ? (
-              <ServicesPageSkeleton itemCount={ITEMS_PER_PAGE} hideSidebar={true} />
+              <ServicesPageSkeleton
+                itemCount={ITEMS_PER_PAGE}
+                hideSidebar={true}
+              />
             ) : error ? (
               <div className="space-y-3">
                 <Alert variant="destructive">
@@ -300,149 +358,175 @@ export default function ServicesPage({ onNavigate, initialCategory }: ServicesPa
               />
             ) : (
               <>
-
-            {/* Service Grid */}
-            {viewMode === "grid" ? (
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {paginatedServices.map((service) => (
-                  <Card
-                    key={service.id}
-                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                    onClick={() => onNavigate("service", service.id)}
-                  >
-                    <div className="relative bg-muted h-40 flex items-center justify-center overflow-hidden">
-                      {service.images && service.images.length > 0 ? (
-                        <img
-                          src={service.images[0].url || service.images[0]}
-                          alt={service.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <Briefcase className="h-12 w-12 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <Badge variant="outline" className="mb-2">{service.category?.name || "Jasa"}</Badge>
-                      <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
-                        {service.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {service.description}
-                      </p>
-                      <div className="flex items-center gap-1 mb-3">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{service.rating || 0}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-primary-600">
-                          Rp {(service.price || service.price_min || 0).toLocaleString("id-ID")}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                            {service.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-muted-foreground">{service.seller?.name || "Unknown"}</span>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
-                          <MapPin className="h-3 w-3" />
-                          {service.location || "-"}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              // List View
-              <div className="space-y-4">
-                {paginatedServices.map((service) => (
-                  <Card
-                    key={service.id}
-                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                    onClick={() => onNavigate("service", service.id)}
-                  >
-                    <div className="flex">
-                      <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
-                        {service.images && service.images.length > 0 ? (
-                          <img
-                            src={service.images[0].url || service.images[0]}
+                {/* Service Grid */}
+                {viewMode === "grid" ? (
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {paginatedServices.map((service) => (
+                      <Card
+                        key={service.id}
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        onClick={() => onNavigate("service", service.id)}
+                      >
+                        <div className="relative bg-muted h-40 flex items-center justify-center overflow-hidden">
+                          <ProductImage
+                            src={
+                              service.images?.[0]?.url || service.images?.[0]
+                            }
                             alt={service.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-full bg-muted flex items-center justify-center"
+                            imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            fallbackImageUrl="https://placehold.net/default.svg"
                           />
-                        ) : (
-                          <Briefcase className="h-10 w-10 text-muted-foreground/50" />
-                        )}
-                      </div>
-                      <CardContent className="flex-1 p-4">
-                        <div className="flex justify-between">
-                          <div>
-                            <Badge variant="outline" className="mb-1">{service.category?.name || "Jasa"}</Badge>
-                            <p className="font-medium mb-1 group-hover:text-primary-600 transition-colors">
-                              {service.title}
-                            </p>
-                            <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                              {service.description}
-                            </p>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span>{service.rating || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
-                                {service.location || "-"}
-                              </div>
+                        </div>
+                        <CardContent className="p-4">
+                          <Badge variant="outline" className="mb-2">
+                            {service.category?.name || "Jasa"}
+                          </Badge>
+                          <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                            {service.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {service.description}
+                          </p>
+                          <div className="flex items-center gap-1 mb-3">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm font-medium">
+                              {service.rating || 0}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-lg font-bold text-primary-600">
+                              Rp{" "}
+                              {(
+                                service.price ||
+                                service.price_min ||
+                                0
+                              ).toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-3">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
+                                {service.seller?.name
+                                  ?.split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("") || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs text-muted-foreground">
+                              {service.seller?.name || "Unknown"}
+                            </span>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                              <MapPin className="h-3 w-3" />
+                              {service.location || "-"}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-primary-600">
-                              Rp {(service.price || service.price_min || 0).toLocaleString("id-ID")}
-                            </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  // List View
+                  <div className="space-y-4">
+                    {paginatedServices.map((service) => (
+                      <Card
+                        key={service.id}
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        onClick={() => onNavigate("service", service.id)}
+                      >
+                        <div className="flex">
+                          <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
+                            <ProductImage
+                              src={
+                                service.images?.[0]?.url || service.images?.[0]
+                              }
+                              alt={service.title}
+                              className="w-full h-full bg-muted flex items-center justify-center"
+                              imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              fallbackImageUrl="https://placehold.net/default.svg"
+                            />
                           </div>
+                          <CardContent className="flex-1 p-4">
+                            <div className="flex justify-between">
+                              <div>
+                                <Badge variant="outline" className="mb-1">
+                                  {service.category?.name || "Jasa"}
+                                </Badge>
+                                <p className="font-medium mb-1 group-hover:text-primary-600 transition-colors">
+                                  {service.title}
+                                </p>
+                                <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                                  {service.description}
+                                </p>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    <span>{service.rating || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="h-4 w-4" />
+                                    {service.location || "-"}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-primary-600">
+                                  Rp{" "}
+                                  {(
+                                    service.price ||
+                                    service.price_min ||
+                                    0
+                                  ).toLocaleString("id-ID")}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
                         </div>
-                      </CardContent>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
 
-            {/* Pagination */}
-            {totalPages > 1 && paginatedServices.length > 0 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => setCurrentPage(page)}
-                    className={currentPage === page ? "bg-primary-600 hover:bg-primary-700" : ""}
-                  >
-                    {page}
-                  </Button>
-                ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => setCurrentPage(page)}
+                          className={
+                            currentPage === page
+                              ? "bg-primary-600 hover:bg-primary-700"
+                              : ""
+                          }
+                        >
+                          {page}
+                        </Button>
+                      ),
+                    )}
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </main>

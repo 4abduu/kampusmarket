@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
+import ProductImage from "@/components/common/ProductImage";
 import ServiceDetailSidebar from "@/components/pages/guest/service-detail/ServiceDetailSidebar";
 import ServiceDetailTabsPanel from "@/components/pages/guest/service-detail/ServiceDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
@@ -12,12 +12,19 @@ import ServiceDetailPageSkeleton from "@/components/skeleton/ServiceDetailPageSk
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 
 interface ServiceDetailPageProps {
-  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
+  onNavigate: (
+    page: string,
+    data?: string | { productId?: string; chatAction?: "chat" | "nego" },
+  ) => void;
   serviceId: string;
   isLoggedIn: boolean;
 }
 
-export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }: ServiceDetailPageProps) {
+export default function ServiceDetailPage({
+  onNavigate,
+  serviceId,
+  isLoggedIn,
+}: ServiceDetailPageProps) {
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,13 +52,15 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
       try {
         const data = await getProductDetail(serviceId);
         if (data.type !== "jasa") {
-          setError('URL tidak valid untuk halaman ini. Silakan periksa kembali.');
+          setError(
+            "URL tidak valid untuk halaman ini. Silakan periksa kembali.",
+          );
           return;
         }
         setService(data);
       } catch (err) {
-        console.error('[ServiceDetailPage] Failed to fetch service:', err);
-        setError('Gagal memuat detail layanan. Silakan coba lagi.');
+        console.error("[ServiceDetailPage] Failed to fetch service:", err);
+        setError("Gagal memuat detail layanan. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
@@ -70,7 +79,9 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-red-500">{error || 'Layanan tidak ditemukan'}</p>
+              <p className="text-red-500">
+                {error || "Layanan tidak ditemukan"}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -90,15 +101,13 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
     <>
       <Card className="overflow-hidden">
         <div className="relative flex h-96 items-center justify-center bg-muted overflow-hidden">
-          {service.images && service.images.length > 0 ? (
-            <img
-              src={service.images[0].url || service.images[0]}
-              alt={service.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Briefcase className="h-36 w-36 text-muted-foreground/50" />
-          )}
+          <ProductImage
+            src={service.images?.[0]?.url || service.images?.[0]}
+            alt={service.title}
+            className="w-full h-full bg-muted flex items-center justify-center"
+            imageClassName="w-full h-full object-cover"
+            fallbackImageUrl="https://placehold.net/default.svg"
+          />
           <Badge className="absolute top-4 left-4 bg-primary-500">
             {service.category?.name || "Jasa"}
           </Badge>
@@ -114,13 +123,13 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
               title={`Foto ${index + 1}`}
               aria-label={`Foto ${index + 1}`}
             >
-              <div className="flex h-full w-full items-center justify-center bg-muted overflow-hidden">
-                <img
-                  src={image.url || image}
-                  alt={`Foto ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <ProductImage
+                src={image.url || image}
+                alt={`Foto ${index + 1}`}
+                className="w-full h-full bg-muted flex items-center justify-center"
+                imageClassName="w-full h-full object-cover"
+                fallbackImageUrl="https://placehold.net/default.svg"
+              />
             </button>
           ))}
         </div>
@@ -148,7 +157,11 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
 
   return (
     <>
-      <ProductDetailLoginDialog open={showLoginModal} onOpenChange={setShowLoginModal} onNavigate={onNavigate} />
+      <ProductDetailLoginDialog
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        onNavigate={onNavigate}
+      />
       <DetailPageShell
         breadcrumbs={breadcrumbs}
         mainContent={mainContent}

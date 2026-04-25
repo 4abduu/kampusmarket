@@ -2,10 +2,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, MapPin, Package, Star, User } from "lucide-react";
+import { MapPin, Package, Star, User } from "lucide-react";
+import ProductImage from "@/components/common/ProductImage";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product, User as UserType } from "@/lib/mock-data";
-import type { SearchNavigateFn, SearchViewMode } from "@/components/pages/guest/search-results/searchResults.types";
+import type {
+  SearchNavigateFn,
+  SearchViewMode,
+} from "@/components/pages/guest/search-results/searchResults.types";
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -28,26 +32,36 @@ export function SearchProductCard({
     return (
       <Card
         className="cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => onNavigate(product.type === "jasa" ? "service" : "product", product.id)}
+        onClick={() =>
+          onNavigate(
+            product.type === "jasa" ? "service" : "product",
+            product.id,
+          )
+        }
       >
         <CardContent className="p-4 flex gap-4">
           <div
-            className={`w-24 h-24 rounded-lg flex items-center justify-center flex-shrink-0 ${
+            className={`w-24 h-24 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${
               product.type === "jasa"
                 ? "bg-emerald-50 dark:bg-emerald-900/20"
                 : "bg-slate-100 dark:bg-slate-800"
             }`}
           >
-            {product.type === "jasa" ? (
-              <Briefcase className="h-8 w-8 text-emerald-600/70" />
-            ) : (
-              <Package className="h-8 w-8 text-muted-foreground/30" />
-            )}
+            <ProductImage
+              src={product.images?.[0]}
+              alt={product.title}
+              className="w-full h-full"
+              imageClassName="w-full h-full object-cover"
+              fallbackImageUrl="https://placehold.net/default.svg"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <Badge variant={product.type === "jasa" ? "secondary" : "default"} className="mb-1">
+                <Badge
+                  variant={product.type === "jasa" ? "secondary" : "default"}
+                  className="mb-1"
+                >
                   {product.type === "jasa" ? "Jasa" : "Barang"}
                 </Badge>
                 <h3 className="font-semibold line-clamp-1">{product.title}</h3>
@@ -59,7 +73,9 @@ export function SearchProductCard({
                   : formatPrice(product.price)}
               </p>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{product.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+              {product.description}
+            </p>
             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -80,7 +96,9 @@ export function SearchProductCard({
   return (
     <Card
       className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden group"
-      onClick={() => onNavigate(product.type === "jasa" ? "service" : "product", product.id)}
+      onClick={() =>
+        onNavigate(product.type === "jasa" ? "service" : "product", product.id)
+      }
     >
       <div
         className={`aspect-square relative ${
@@ -90,19 +108,30 @@ export function SearchProductCard({
         }`}
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          {product.type === "jasa" ? (
-            <Briefcase className="h-12 w-12 text-emerald-600/70" />
-          ) : (
-            <Package className="h-12 w-12 text-muted-foreground/30" />
-          )}
+          <ProductImage
+            src={product.images?.[0]}
+            alt={product.title}
+            className="w-full h-full"
+            imageClassName="w-full h-full object-cover"
+            fallbackImageUrl="https://placehold.net/default.svg"
+          />
         </div>
-        <Badge variant={product.type === "jasa" ? "secondary" : "default"} className="absolute top-2 left-2">
+        <Badge
+          variant={product.type === "jasa" ? "secondary" : "default"}
+          className="absolute top-2 left-2"
+        >
           {product.type === "jasa" ? "Jasa" : "Barang"}
         </Badge>
-        {product.originalPrice && <Badge variant="destructive" className="absolute top-2 right-2">Diskon</Badge>}
+        {product.originalPrice && (
+          <Badge variant="destructive" className="absolute top-2 right-2">
+            Diskon
+          </Badge>
+        )}
       </div>
       <CardContent className="p-3">
-        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary-600 transition-colors">{product.title}</h3>
+        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary-600 transition-colors">
+          {product.title}
+        </h3>
         <p className="font-bold text-primary-600 mt-1">
           {product.priceType === "starting" && "Mulai "}
           {product.priceType === "range" && product.priceMin
@@ -118,7 +147,9 @@ export function SearchProductCard({
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             {product.rating}
           </span>
-          <span className="text-muted-foreground">Terjual {product.soldCount}</span>
+          <span className="text-muted-foreground">
+            Terjual {product.soldCount}
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -141,18 +172,32 @@ export function SearchUserCard({
           <Avatar className="h-12 w-12">
             <AvatarImage src={user.avatar} />
             <AvatarFallback className="bg-primary-100 text-primary-700">
-              {user.name.split(" ").map((n) => n[0]).join("")}
+              {user.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold truncate">{user.name}</h3>
               {user.isVerified && (
-                <Badge variant="outline" className="text-xs border-primary-500 text-primary-600">Terverifikasi</Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs border-primary-500 text-primary-600"
+                >
+                  Terverifikasi
+                </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-            {user.faculty && <p className="text-xs text-muted-foreground mt-1">{user.faculty}</p>}
+            <p className="text-sm text-muted-foreground truncate">
+              {user.email}
+            </p>
+            {user.faculty && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {user.faculty}
+              </p>
+            )}
           </div>
         </div>
 
@@ -162,13 +207,18 @@ export function SearchUserCard({
             <p className="text-xs text-muted-foreground">Produk</p>
           </div>
           <div className="text-center">
-            <p className="font-bold text-lg">{userProducts.reduce((sum, p) => sum + p.soldCount, 0)}</p>
+            <p className="font-bold text-lg">
+              {userProducts.reduce((sum, p) => sum + p.soldCount, 0)}
+            </p>
             <p className="text-xs text-muted-foreground">Terjual</p>
           </div>
           <div className="text-center">
             <p className="font-bold text-lg">
               {userProducts.length > 0
-                ? (userProducts.reduce((sum, p) => sum + p.rating, 0) / userProducts.length).toFixed(1)
+                ? (
+                    userProducts.reduce((sum, p) => sum + p.rating, 0) /
+                    userProducts.length
+                  ).toFixed(1)
                 : "-"}
             </p>
             <p className="text-xs text-muted-foreground">Rating</p>
@@ -177,26 +227,33 @@ export function SearchUserCard({
 
         {userProducts.length > 0 && (
           <div className="mt-4">
-            <p className="text-xs text-muted-foreground mb-2">Produk terbaru:</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Produk terbaru:
+            </p>
             <div className="flex gap-2 overflow-x-auto pb-2">
               {userProducts.slice(0, 3).map((product) => (
                 <div
                   key={product.id}
-                  className={`w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500 ${
+                  className={`w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500 overflow-hidden ${
                     product.type === "jasa"
                       ? "bg-emerald-50 dark:bg-emerald-900/20"
                       : "bg-slate-100 dark:bg-slate-800"
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNavigate(product.type === "jasa" ? "service" : "product", product.id);
+                    onNavigate(
+                      product.type === "jasa" ? "service" : "product",
+                      product.id,
+                    );
                   }}
                 >
-                  {product.type === "jasa" ? (
-                    <Briefcase className="h-6 w-6 text-emerald-600/70" />
-                  ) : (
-                    <Package className="h-6 w-6 text-muted-foreground/30" />
-                  )}
+                  <ProductImage
+                    src={product.images?.[0]}
+                    alt={product.title}
+                    className="w-full h-full flex items-center justify-center"
+                    imageClassName="w-full h-full object-cover"
+                    fallbackImageUrl="https://placehold.net/default.svg"
+                  />
                 </div>
               ))}
               {userProducts.length > 3 && (
@@ -208,7 +265,11 @@ export function SearchUserCard({
           </div>
         )}
 
-        <Button variant="outline" className="w-full mt-4" onClick={() => onNavigate("chat")}>
+        <Button
+          variant="outline"
+          className="w-full mt-4"
+          onClick={() => onNavigate("chat")}
+        >
           <User className="h-4 w-4 mr-2" />
           Lihat Profil
         </Button>
@@ -222,7 +283,9 @@ export function SearchEmptyState({ type }: { type: string }) {
     <div className="text-center py-12">
       <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
       <h3 className="font-semibold mb-1">Tidak ada {type} ditemukan</h3>
-      <p className="text-sm text-muted-foreground">Coba kata kunci lain untuk menemukan {type}</p>
+      <p className="text-sm text-muted-foreground">
+        Coba kata kunci lain untuk menemukan {type}
+      </p>
     </div>
   );
 }

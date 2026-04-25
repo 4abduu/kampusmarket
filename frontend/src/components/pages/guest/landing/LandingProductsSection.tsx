@@ -1,8 +1,9 @@
-import { MapPin, Package, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import ProductImage from "@/components/common/ProductImage";
 
 import type { Product } from "@/lib/mock-data";
 import LandingProductsSectionSkeleton from "@/components/skeleton/LandingProductsSectionSkeleton";
@@ -42,13 +43,20 @@ export default function LandingProductsSection({
               className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
               onClick={() => onNavigate("product", product.id)}
             >
-              <div className="relative bg-muted h-48 flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground/30" />
+              <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
+                <ProductImage
+                  src={product.images?.[0]}
+                  alt={product.title}
+                  className="w-full h-full"
+                  imageClassName="w-full h-full object-cover"
+                  showError={false}
+                />
 
                 {product.originalPrice && (
                   <Badge className="absolute top-2 left-2 bg-red-500">
-                    -{Math.round(
-                      (1 - product.price / product.originalPrice) * 100
+                    -
+                    {Math.round(
+                      (1 - product.price / product.originalPrice) * 100,
                     )}
                     %
                   </Badge>
@@ -78,7 +86,9 @@ export default function LandingProductsSection({
                   <span className="text-lg font-bold text-primary-600">
                     {(() => {
                       const p = Number(product.price);
-                      return Number.isFinite(p) ? `Rp ${p.toLocaleString("id-ID")}` : "—";
+                      return Number.isFinite(p)
+                        ? `Rp ${p.toLocaleString("id-ID")}`
+                        : "—";
                     })()}
                   </span>
 
