@@ -3,7 +3,7 @@
 # 🛍️ KampusMarket
 **Platform Marketplace Hyperlocal untuk Mahasiswa Universitas Brawijaya**
 
-Jual beli barang & jasa antar mahasiswa dengan sistem chat realtime, negosiasi langsung, dan transaksi aman.
+Jual beli barang & jasa antar mahasiswa dengan sistem escrow aman, negosiasi realtime, dan pembayaran digital terintegrasi.
 
 [![Status][status-shield]][status-url]
 [![Version][version-shield]][version-url]
@@ -15,7 +15,7 @@ Jual beli barang & jasa antar mahasiswa dengan sistem chat realtime, negosiasi l
 
 <br />
 
-> **⚠️ Note:** Proyek ini masih dalam tahap aktif pengembangan (Beta). Fitur dan API masih dapat berubah sebelum versi 1.0.0 dirilis.
+> **⚠️ Note:** Proyek ini masih dalam tahap aktif pengembangan (Beta). Fitur, business logic, dan API masih dapat berubah sebelum versi 1.0.0 dirilis.
 
 </div>
 
@@ -23,31 +23,47 @@ Jual beli barang & jasa antar mahasiswa dengan sistem chat realtime, negosiasi l
 
 ## 🎯 Tentang Proyek Ini
 
-**KampusMarket** bukan sekadar marketplace biasa. Platform ini dirancang khusus untuk ekosistem kampus Universitas Brawijaya dengan mengedepankan tiga pilar utama:
+**KampusMarket** bukan marketplace biasa. Platform ini dirancang khusus untuk ekosistem kampus Universitas Brawijaya dengan menempatkan **identitas kampus sebagai inti kepercayaan**. 
 
-🏫 **Hyperlocal** — Fokus hanya untuk ekosistem kampus UB.  
-🤝 **Trust-based** — User teridentifikasi jelas berdasarkan fakultas.  
-⚡ **Realtime** — Komunikasi dan negosiasi terjadi secara langsung.
+Berbeda dari marketplace umum, KampusMarket memfasilitasi kebutuhan spesifik mahasiswa—mulai dari jual beli barang bekas, booking jasa (desain, fotographer, teknisi), hingga negosiasi harga—semuanya dalam satu ekosistem yang terverifikasi.
 
-Apa yang bisa kamu lakukan di KampusMarket?
-- 🛍️ Jual beli barang bekas (buku, elektronik, perlengkapan kos)
-- 🧑‍💻 Tawarkan layanan jasa (desain, fotografi, les privat)
-- 💬 Negosiasi harga langsung via chat realtime
-- 💰 Transaksi aman dengan sistem harga fleksibel
+**Pilar Utama KampusMarket:**
+- 🏫 **Hyperlocal & Trust-based** — User dikaitkan dengan fakultasnya, menjaga akuntabilitas setiap transaksi.
+- 🤝 **Unified Account** — Satu akun untuk jadi Pembeli dan Penjual. Konteks UI menyesuaikan secara otomatis.
+- ⚡ **Realtime Interaction** — Negosiasi harga dan koordinasi terjadi langsung di dalam chat.
+- 🔒 **Escrow System** — Dana pembeli ditahan sistem, baru diteruskan ke penjual setelah transaksi selesai.
 
 ---
 
 ## ✨ Fitur Utama
 
-<div align="center">
+### 💬 Komunikasi & Negosiasi Realtime
+| Fitur | Deskripsi |
+| :--- | :--- |
+| 💬 **Realtime Chat (Reverb)** | Chat langsung antar user menggunakan WebSocket (Laravel Reverb + Echo). |
+| ✍️ **Typing Indicator** | Menampilkan status “sedang mengetik” secara realtime. |
+| ✔️ **Read Receipt** | Double tick (read) otomatis saat user membuka chat. |
+| 🤝 **In-Chat Negotiation** | Tawar-menawar langsung di dalam chat. Harga deal otomatis ter-update ke order. |
+| 🧠 **Optimistic UI** | Chat langsung muncul tanpa nunggu response server. |
 
-| 💬 Realtime & Chat | 🤝 Transaksi & Produk | 🧠 UX & System |
-| :--- | :--- | :--- |
-| 💬 **Realtime Chat** via Laravel Reverb | 📦 **Unified Product** (Barang & Jasa dalam satu model) | 🧠 **Optimistic UI** (Chat tanpa delay) |
-| ✍️ **Typing Indicator** (Sedang mengetik) | 🧾 **Offer System** (Tawar harga di chat) | 🏫 **Faculty Verified** (Akuntabilitas user) |
-| ✔️ **Read Receipt** (Double tick / dibaca) | 🛵 **Flexible Shipping** (COD, Pickup, Delivery) | 🔒 **Secure Auth** (Login terproteksi) |
+### 🛍️ Transaksi, Order & Pembayaran
+| Fitur | Deskripsi |
+| :--- | :--- |
+| 📦 **Unified Product** | Barang & Jasa dalam satu model produk (menggunakan field `type`). |
+| 🚚 **Multi-Shipping Method** | Support COD, Antar Manual (input ongkir oleh seller), dan Ambil Sendiri. |
+| 📅 **Service Booking** | Alur booking khusus jasa dengan penentuan harga oleh penyedia (Home Service / Online). |
+| 🔒 **Secure Escrow** | Semua pembayaran digital ditahan sistem hingga pembeli konfirmasi selesai. |
+| 💳 **Midtrans Payment** | Integrasi payment gateway untuk pembayaran & top-up saldo. |
+| 💰 **Internal Wallet** | Dompet digital dengan fitur top-up & penarikan dana (withdrawal by Admin). |
+| 🛡️ **Smart Cancellation** | Pembatalan sebelum bayar langsung otomatis. Setelah bayar wajib melalui mediasi Admin. |
 
-</div>
+### 🛡️ Moderasi & Admin
+| Fitur | Deskripsi |
+| :--- | :--- |
+| 🏫 **Faculty Verification** | Wajib pilih fakultas saat daftar (khususnya Google OAuth) demi akuntabilitas. |
+| 🔑 **Google OAuth + Sanctum** | Login cepat dengan Google, dilindungi SPA Authentication Laravel Sanctum. |
+| ⚖️ **Admin Mediation** | Admin berperan sebagai otoritas final untuk pembatalan escrow & penarikan dana. |
+| 🚨 **Report System** | Sistem laporkan user/produk bermasalah (anti-duplikat laporan). |
 
 ---
 
@@ -63,29 +79,30 @@ Proyek ini menggunakan arsitektur modern yang memisahkan antara Frontend dan Bac
 [![TypeScript][TypeScript.org]][TypeScript-url] &nbsp;
 [![Tailwind CSS][Tailwind.com]][Tailwind-url]
 
-### ⚙️ Backend & Database
+### ⚙️ Backend & Integrations
 [![Laravel][Laravel.com]][Laravel-url] &nbsp;
-[![MySQL][MySQL.com]][MySQL-url]
+[![MySQL][MySQL.com]][MySQL-url] &nbsp;
+[![Midtrans][Midtrans.com]][Midtrans-url]
 
 </div>
 
 ---
 
-## 🏗️ Arsitektur & Realtime Flow
+## 🏗️ Arsitektur & Alur Sistem
 
-Kami menggunakan **Laravel Reverb** untuk menangani komunikasi realtime secara native tanpa layanan pihak ketiga.
+Aplikasi menggunakan pemisahan konteks (SPA Frontend terpisah dari API Backend) dengan lapisan WebSocket untuk real-time dan Payment Gateway untuk keamanan finansial.
 
 ```text
 ┌─────────────────────────┐        ┌─────────────────────────┐
 │      🎨 FRONTEND        │        │       ⚙️ BACKEND        │
-│   React + Vite + TS     │        │   Laravel + Eloquent    │
-│   Tailwind + Echo JS    │        │   MySQL + Reverb WS     │
-└────────────┬────────────┘        └────────────┬────────────┘
+│   React + Vite + TS     │◄──────►│   Laravel + Sanctum     │
+│   Tailwind + Echo JS    │ SPA    │   MySQL + Eloquent      │
+└────────────┬────────────┘  Auth  └──────┬──────────────────┘
              │                                   │
-             │  1️⃣ REST API (Axios)             │
+             │  1️⃣ REST API (Axios)             │ 3️⃣ Midtrans API (Escrow/Payment)
              │ ─────────────────────────────────▶│
              │                                   │
-             │  2️⃣ Broadcast Event (MessageSent) │
+             │  2️⃣ Broadcast Event (Chat/Nego)  │
              │◀──────────────────────────────────│
              │                                   │
              │      ┌───────────────┐            │
@@ -93,12 +110,6 @@ Kami menggunakan **Laravel Reverb** untuk menangani komunikasi realtime secara n
              └──────┤  (Reverb)     ├────────────┘
                     └───────────────┘
 ```
-
-**Cara kerja Realtime Chat:**
-1. User A kirim pesan → Server Laravel menerima via REST API.
-2. Laravel mem-broadcast event `MessageSent`.
-3. Server Reverb meneruskan event via WebSocket ke User B.
-4. UI User B ter-update secara instan (Optimistic UI).
 
 ---
 
@@ -109,9 +120,9 @@ Ikuti langkah-langkah ini untuk menjalankan proyek di komputer lokal kamu.
 ### 📋 Prerequisites
 Pastikan software berikut sudah terinstall:
 - Node.js >= 18.x
-- PHP >= 8.1
-- Composer
+- PHP >= 8.1 & Composer
 - MySQL
+- Midtrans Sandbox Account
 
 ### 🚀 Installation
 
@@ -136,8 +147,10 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Konfigurasi database dan Reverb di file `.env`:
+Konfigurasi penting di file `.env`:
+
 ```env
+# Database
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -145,18 +158,47 @@ DB_DATABASE=kampusmarket
 DB_USERNAME=root
 DB_PASSWORD=
 
-BROADCAST_DRIVER=reverb
-QUEUE_CONNECTION=sync
+# Frontend URL & Sanctum (Wajib diisi untuk SPA Auth)
+FRONTEND_URL=http://localhost:5173
+SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:8000
+SESSION_DOMAIN=localhost
+
+# Google OAuth
+GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=YOUR_CLIENT_SECRET
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+
+# Midtrans Sandbox
+MIDTRANS_SERVER_KEY=SB-Mid-server-YOUR_SERVER_KEY
+MIDTRANS_CLIENT_KEY=SB-Mid-client-YOUR_CLIENT_KEY
+MIDTRANS_IS_SANDBOX=true
+
+# Broadcasting & Queue (Penting untuk Chat & Event)
+BROADCAST_CONNECTION=reverb
+QUEUE_CONNECTION=database
+
+REVERB_APP_ID=kampusmarket
+REVERB_APP_KEY=kampusmarket-key
+REVERB_APP_SECRET=kampusmarket-secret
+REVERB_HOST=localhost
+REVERB_PORT=8080
+REVERB_SCHEME=http
 ```
 
-Jalankan migrasi dan server:
+Jalankan migrasi dan storage link:
 ```bash
 php artisan migrate
+php artisan storage:link
+```
+
+Jalankan server utama:
+```bash
 php artisan serve
 ```
 
-*(Di terminal terpisah)* Jalankan WebSocket Server:
+*(Di terminal terpisah)* Jalankan Queue Worker & WebSocket Server:
 ```bash
+php artisan queue:work
 php artisan reverb:start
 ```
 </details>
@@ -172,10 +214,16 @@ npm install
 ```
 
 Buat file `.env` di dalam folder `frontend`:
+
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api
 
-VITE_REVERB_APP_KEY=your-key
+# Midtrans Client
+VITE_MIDTRANS_CLIENT_KEY=SB-Mid-client-YOUR_CLIENT_KEY
+VITE_MIDTRANS_IS_SANDBOX=true
+
+# Reverb WebSocket
+VITE_REVERB_APP_KEY=kampusmarket-key
 VITE_REVERB_HOST=localhost
 VITE_REVERB_PORT=8080
 VITE_REVERB_SCHEME=http
@@ -187,7 +235,22 @@ npm run dev
 ```
 </details>
 
-> **🔥 Penting:** Jika Reverb server tidak dijalankan, chat masih bisa muncul (via fallback/polling), namun **tidak akan realtime**.
+> **🔥 Penting:** 
+> - Pastikan `php artisan reverb:start` dan `php artisan queue:work` berjalan di background agar fitur Chat Realtime & Payment Webhook berjalan lancar.
+> - Jika WebSocket mati, chat masih bisa berjalan (fallback), namun **tidak realtime**.
+
+---
+
+## 🧠 Business Logic Highlights
+
+Proyek ini memiliki alur bisnis yang dirancang khusus untuk kebutuhan marketplace kampus:
+
+1. **Garis Pembayaran (Escrow Boundary):** Sebelum pembayaran, penjual bisa menolak langsung & pembeli bisa batal langsung. Setelah pembayaran, segala bentuk pembatalan **wajib melalui mediasi Admin** untuk keamanan dana escrow.
+2. **Negosiasi via Chat:** Harga tawar (`nego_price`) tidak diinput sembarangan, melainkan di-deal langsung di dalam chat, yang kemudian sistem otomatis terapkan ke order.
+3. **Alur Terpisah Barang vs Jasa:** 
+   - **Barang:** Punya alur input ongkir manual oleh penjual (Antar Manual) dan bisa COD.
+   - **Jasa:** Penyedia jasa wajib mengirimkan penawaran harga berdasarkan *brief* dari pemesan (status `waiting_price`). Jasa *Online/Remote* tidak mendukung COD.
+4. **Dana Aman:** Biaya platform 5% dipotong dari pendapatan penjual saat dana escrow dicairkan, bukan ditambahkan ke tagihan pembeli.
 
 ---
 
@@ -229,3 +292,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [Laravel-url]: https://laravel.com/
 [MySQL.com]: https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white
 [MySQL-url]: https://www.mysql.com/
+[Midtrans.com]: https://img.shields.io/badge/Midtrans-0082C8?style=for-the-badge&logo=midtrans&logoColor=white
+[Midtrans-url]: https://midtrans.com/
