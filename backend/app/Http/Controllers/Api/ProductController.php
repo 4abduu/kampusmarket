@@ -33,7 +33,13 @@ class ProductController extends Controller
             ]);
 
             $query = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions'])
-                ->where('status', 'active');
+                ->where('status', 'active')
+                // FIX #1: Sembunyikan produk tipe 'barang' dengan stok 0 dari listing publik
+                // Jasa tidak punya konsep stok, jadi tidak difilter
+                ->where(function ($q) {
+                    $q->where('type', 'jasa')
+                      ->orWhere('stock', '>', 0);
+                });
 
         // Filter by type
         if ($request->has('type')) {

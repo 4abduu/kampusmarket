@@ -1,5 +1,14 @@
+/**
+ * AppRoutes.tsx [REVISI]
+ *
+ * Perubahan:
+ * - Tambah ChatPageWrapper yang baca query params (?productId=&action=) 
+ *   lalu teruskan ke ChatPage sebagai initialContextId + initialChatAction.
+ *   Ini yang menjembatani handleNavigate("chat", { productId, chatAction })
+ *   dengan props yang dibutuhkan ChatPage.
+ */
 import { lazy, Suspense, useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 
 import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
 import { UnauthorizedPage, NotFoundPage } from "@/components/pages/guest";
@@ -45,6 +54,24 @@ type AppRoutesProps = {
   currentUser: User | null;
   currentSuccessType: "product" | "service" | null;
 };
+
+// [BARU] Wrapper yang baca query params dan teruskan ke ChatPage
+function ChatPageWrapper({ onNavigate, currentUser }: { onNavigate: NavigateHandler; currentUser: User | null }) {
+  const [searchParams] = useSearchParams();
+  const initialContextId = searchParams.get("productId") ?? undefined;
+  const actionParam = searchParams.get("action");
+  const initialChatAction: "chat" | "nego" | undefined =
+    actionParam === "nego" ? "nego" : actionParam === "chat" ? "chat" : undefined;
+
+  return (
+    <ChatPage
+      onNavigate={onNavigate}
+      initialContextId={initialContextId}
+      initialChatAction={initialChatAction}
+      currentUser={currentUser}
+    />
+  );
+}
 
 function ProtectedRoute({
   isLoggedIn,
@@ -95,7 +122,6 @@ function PublicRoute({
 }): React.ReactElement {
   const location = useLocation();
 
-  // If already logged in and this is a public route (like login/register), redirect to home
   if (isLoggedIn && !allowLoggedIn) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
     const previousPath = stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
@@ -131,16 +157,16 @@ export default function AppRoutes({
 
   return (
     <Suspense
-      fallback={(
+      fallback={
         <div className="flex min-h-[40vh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
         </div>
-      )}
+      }
     >
       <Routes>
         <Route
           path="/login"
-          element={(
+          element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
               element={
@@ -151,33 +177,29 @@ export default function AppRoutes({
                 />
               }
             />
-          )}
+          }
         />
         <Route
           path="/register"
-          element={(
+          element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
-              element={
-                <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />
-              }
+              element={<RegisterPage onNavigate={onNavigate} onLogin={onLogin} />}
             />
-          )}
+          }
         />
         <Route
           path="/forgot-password"
-          element={(
+          element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
-              element={
-                <ForgotPasswordPage onNavigate={onNavigate} />
-              }
+              element={<ForgotPasswordPage onNavigate={onNavigate} />}
             />
-          )}
+          }
         />
         <Route
           path="/faculty-selection"
-          element={(
+          element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
               element={
@@ -188,25 +210,25 @@ export default function AppRoutes({
                 />
               }
             />
-          )}
+          }
         />
         <Route
           path="/unauthorized"
-          element={(
+          element={
             <UnauthorizedPage
               onNavigate={onNavigate}
               variant={unauthorizedState?.reason === "forbidden" ? "forbidden" : "guest"}
             />
-          )}
+          }
         />
         <Route
           path="/email-verification"
-          element={(
+          element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
               element={<EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />}
             />
-          )}
+          }
         />
 
         <Route path="/" element={<LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />} />
@@ -233,7 +255,18 @@ export default function AppRoutes({
         <Route path="/favorites" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<FavoritesPage onNavigate={onNavigate} />} />} />
         <Route path="/order-detail/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<OrderDetailPage onNavigate={onNavigate} orderId={currentId || undefined} />} />} />
         <Route path="/rating" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<RatingPage onNavigate={onNavigate} />} />} />
-        <Route path="/chat" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<ChatPage onNavigate={onNavigate} />} />} />
+
+        {/* [REVISI] ChatPage sekarang menggunakan ChatPageWrapper yang membaca query params */}
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute
+              isLoggedIn={isLoggedIn}
+              element={<ChatPageWrapper onNavigate={onNavigate} currentUser={currentUser} />}
+            />
+          }
+        />
+
         <Route path="/notifications" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<UserNotificationsPage onNavigate={onNavigate} />} />} />
         <Route path="/profile/:id?" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<ProfilePage onNavigate={onNavigate} userId={currentId || undefined} />} />} />
         <Route path="/add-product" element={<ProtectedRoute isLoggedIn={isLoggedIn} element={<AddProductPage onNavigate={onNavigate} />} />} />

@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
 import type { Product } from "@/lib/mock-data";
 import LandingProductsSectionSkeleton from "@/components/skeleton/LandingProductsSectionSkeleton";
 
@@ -12,13 +11,19 @@ interface LandingProductsSectionProps {
   onNavigate: (page: string, data?: string) => void;
 }
 
-export default function LandingProductsSection({
-  products,
-  onNavigate,
-}: LandingProductsSectionProps) {
+export default function LandingProductsSection({ products, onNavigate }: LandingProductsSectionProps) {
   if (!products || products.length === 0) {
     return <LandingProductsSectionSkeleton />;
   }
+
+  // FIX #1: Sembunyikan produk stok 0 dari landing — hanya tampil yang ada stoknya
+  const availableProducts = products.filter(p => {
+    // Jasa tidak punya stok — selalu tampil
+    if (p.type === 'jasa') return true;
+    // Barang: sembunyikan kalau stok = 0
+    const stock = (p as Product & { stock?: number }).stock;
+    return stock === undefined || stock > 0;
+  });
 
   return (
     <section className="py-16 bg-slate-50 dark:bg-slate-800/50">
@@ -26,38 +31,40 @@ export default function LandingProductsSection({
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold mb-2">Katalog Barang</h2>
-            <p className="text-muted-foreground">
-              Temukan barang berkualitas dari mahasiswa
-            </p>
+            <p className="text-muted-foreground">Temukan barang berkualitas dari mahasiswa</p>
           </div>
-          <Button variant="outline" onClick={() => onNavigate("catalog")}>
-            Lihat Semua
-          </Button>
+          <Button variant="outline" onClick={() => onNavigate("catalog")}>Lihat Semua</Button>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.slice(0, 8).map((product) => (
+          {availableProducts.slice(0, 8).map((product) => (
             <Card
               key={product.id}
               className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
               onClick={() => onNavigate("product", product.id)}
             >
-              <div className="relative bg-muted h-48 flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground/30" />
+              <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
+                {(product as Product & { images?: { url: string }[] | string[] }).images?.length ? (
+                  <img
+                    src={
+                      typeof (product as Product & { images?: { url: string }[] | string[] }).images![0] === 'string'
+                        ? (product as Product & { images?: string[] }).images![0]
+                        : ((product as Product & { images?: { url: string }[] }).images![0] as { url: string }).url
+                    }
+                    alt={product.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <Package className="h-16 w-16 text-muted-foreground/30" />
+                )}
 
                 {product.originalPrice && (
                   <Badge className="absolute top-2 left-2 bg-red-500">
-                    -{Math.round(
-                      (1 - product.price / product.originalPrice) * 100
-                    )}
-                    %
+                    -{Math.round((1 - product.price / product.originalPrice) * 100)}%
                   </Badge>
                 )}
-
-                {product.condition === "baru" && (
-                  <Badge className="absolute top-2 right-2 bg-primary-500">
-                    Baru
-                  </Badge>
+                {(product as Product & { condition?: string }).condition === "baru" && (
+                  <Badge className="absolute top-2 right-2 bg-primary-500">Baru</Badge>
                 )}
               </div>
 
@@ -69,9 +76,7 @@ export default function LandingProductsSection({
                 <div className="flex items-center gap-1 mb-2">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="text-sm">{product.rating}</span>
-                  <span className="text-sm text-muted-foreground">
-                    ({product.soldCount} terjual)
-                  </span>
+                  <span className="text-sm text-muted-foreground">({(product as Product & { soldCount?: number }).soldCount ?? 0} terjual)</span>
                 </div>
 
                 <div className="flex items-center gap-2 mb-2">
@@ -81,7 +86,6 @@ export default function LandingProductsSection({
                       return Number.isFinite(p) ? `Rp ${p.toLocaleString("id-ID")}` : "—";
                     })()}
                   </span>
-
                   {product.originalPrice && (
                     <span className="text-sm text-muted-foreground line-through">
                       Rp {product.originalPrice.toLocaleString("id-ID")}
@@ -93,28 +97,19 @@ export default function LandingProductsSection({
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                        {product.seller.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {product.seller.name.split(" ").map(n => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
-
-                    <span className="text-xs text-muted-foreground">
-                      {product.seller.name.split(" ")[0]}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{product.seller.name.split(" ")[0]}</span>
                   </div>
-
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" />
                     {product.location.split(",")[0]}
                   </div>
                 </div>
 
-                {product.canNego && (
-                  <Badge variant="outline" className="mt-2 text-xs">
-                    Bisa Nego
-                  </Badge>
+                {(product as Product & { canNego?: boolean }).canNego && (
+                  <Badge variant="outline" className="mt-2 text-xs">Bisa Nego</Badge>
                 )}
               </CardContent>
             </Card>
