@@ -25,7 +25,7 @@ Jual beli barang & jasa antar mahasiswa dengan sistem escrow aman, negosiasi rea
 
 **KampusMarket** bukan marketplace biasa. Platform ini dirancang khusus untuk ekosistem kampus Universitas Brawijaya dengan menempatkan **identitas kampus sebagai inti kepercayaan**. 
 
-Berbeda dari marketplace umum, KampusMarket memfasilitasi kebutuhan spesifik mahasiswa—mulai dari jual beli barang bekas, booking jasa (desain, fotographer, teknisi), hingga negosiasi harga—semuanya dalam satu ekosistem yang terverifikasi.
+Berbeda dari marketplace umum, KampusMarket memfasilitasi kebutuhan spesifik mahasiswa—mulai dari jual beli barang bekas, booking jasa (desain, fotografer, teknisi), hingga negosiasi harga—semuanya dalam satu ekosistem yang terverifikasi.
 
 **Pilar Utama KampusMarket:**
 - 🏫 **Hyperlocal & Trust-based** — User dikaitkan dengan fakultasnya, menjaga akuntabilitas setiap transaksi.
@@ -57,58 +57,72 @@ Berbeda dari marketplace umum, KampusMarket memfasilitasi kebutuhan spesifik mah
 | 💰 **Internal Wallet** | Dompet digital dengan fitur top-up & penarikan dana (withdrawal by Admin). |
 | 🛡️ **Smart Cancellation** | Pembatalan sebelum bayar langsung otomatis. Setelah bayar wajib melalui mediasi Admin. |
 
-### 🛡️ Moderasi & Admin
+### 🎨 UI, UX & Engineering
 | Fitur | Deskripsi |
 | :--- | :--- |
-| 🏫 **Faculty Verification** | Wajib pilih fakultas saat daftar (khususnya Google OAuth) demi akuntabilitas. |
-| 🔑 **Google OAuth + Sanctum** | Login cepat dengan Google, dilindungi SPA Authentication Laravel Sanctum. |
-| ⚖️ **Admin Mediation** | Admin berperan sebagai otoritas final untuk pembatalan escrow & penarikan dana. |
-| 🚨 **Report System** | Sistem laporkan user/produk bermasalah (anti-duplikat laporan). |
+| 🧩 **shadcn/ui + Radix** | Komponen UI yang accessible, customizable, dan super modern. |
+| 🐻 **Zustand + RHF** | State management yang ringan (Zustand) & form handling yang powerful (React Hook Form). |
+| 📊 **Interactive Chart** | Dashboard admin & stats visual menggunakan Recharts. |
 
 ---
 
 ## 🛠️ Tech Stack
 
-Proyek ini menggunakan arsitektur modern yang memisahkan antara Frontend dan Backend.
+Proyek ini menggunakan teknologi paling modern di ekosistem web saat ini, menggabungkan kekuatan Laravel dengan elegant-nya React.
 
 <div align="center">
 
-### 🎨 Frontend
+### 🎨 Frontend Ecosystem
 [![React][React.js]][React-url] &nbsp;
-[![Vite][Vite.js]][Vite-url] &nbsp;
 [![TypeScript][TypeScript.org]][TypeScript-url] &nbsp;
-[![Tailwind CSS][Tailwind.com]][Tailwind-url]
+[![Vite][Vite.js]][Vite-url] &nbsp;
+[![Tailwind CSS][Tailwind.com]][Tailwind-url] &nbsp;
+[![shadcn][Shadcn.com]][Shadcn-url]
 
-### ⚙️ Backend & Integrations
+### ⚙️ Backend Ecosystem
 [![Laravel][Laravel.com]][Laravel-url] &nbsp;
 [![MySQL][MySQL.com]][MySQL-url] &nbsp;
 [![Midtrans][Midtrans.com]][Midtrans-url]
 
 </div>
 
+<details>
+<summary><b>📖 Detail Library & Tools</b></summary>
+
+**Frontend (React + Vite)**
+- **Core:** React 19, React Router v7, TypeScript 5.9
+- **Styling & UI:** Tailwind CSS v4, shadcn/ui, Radix UI Primitives, Lucide Icons, Geist Font
+- **State & Data:** Zustand, React Hook Form, Axios, Laravel Echo + Pusher-js
+- **Utilities:** date-fns, Recharts, Sonner (Toasts), cmdk (Command Menu)
+
+**Backend (Laravel 11)**
+- **Core:** Laravel Framework 11, PHP 8.2+
+- **Auth & Routing:** Laravel Sanctum (SPA Auth), Inertia.js, Ziggy (Route names to JS)
+- **Realtime:** Laravel Reverb (WebSocket Server)
+- **Payments:** Midtrans Core API
+- **Code Quality:** Laravel Pint, PHPUnit, Spatie Ignition
+</details>
+
 ---
 
-## 🏗️ Arsitektur & Alur Sistem
+## 🏗️ Arsitektur Sistem
 
-Aplikasi menggunakan pemisahan konteks (SPA Frontend terpisah dari API Backend) dengan lapisan WebSocket untuk real-time dan Payment Gateway untuk keamanan finansial.
+Aplikasi menggunakan pendekatan **Modern Monolith** dengan Inertia.js yang menjembatani Laravel dan React tanpa harus menulis API ganda. Dilengkapi lapisan WebSocket untuk realtime dan Payment Gateway untuk keamanan finansial.
 
 ```text
-┌─────────────────────────┐        ┌─────────────────────────┐
-│      🎨 FRONTEND        │        │       ⚙️ BACKEND        │
-│   React + Vite + TS     │◄──────►│   Laravel + Sanctum     │
-│   Tailwind + Echo JS    │ SPA    │   MySQL + Eloquent      │
-└────────────┬────────────┘  Auth  └──────┬──────────────────┘
+┌─────────────────────────────────┐        ┌─────────────────────────┐
+│          🎨 FRONTEND            │        │       ⚙️ BACKEND        │
+│  React + Vite + TypeScript      │◄──────►│   Laravel 11 + Sanctum  │
+│  shadcn/ui + Zustand + Geist    │ Inertia │   MySQL + Eloquent      │
+│  React Hook Form + Ziggy Routes │--------►│   Inertia.js Adapter    │
+└────────────┬────────────────────┘  SSR    └──────┬──────────────────┘
              │                                   │
-             │  1️⃣ REST API (Axios)             │ 3️⃣ Midtrans API (Escrow/Payment)
-             │ ─────────────────────────────────▶│
-             │                                   │
-             │  2️⃣ Broadcast Event (Chat/Nego)  │
-             │◀──────────────────────────────────│
-             │                                   │
-             │      ┌───────────────┐            │
-             │      │  WebSocket    │            │
-             └──────┤  (Reverb)     ├────────────┘
-                    └───────────────┘
+             │                                   │ 3️⃣ Midtrans API (Webhook/Escrow)
+             │                                   ▼
+             │  2️⃣ Broadcast Event (Chat/Nego)  ┌─────────────┐
+             │◀──────────────────────────────────┤ WebSocket   │
+             │                                   │ (Reverb)    │
+             └───────────────────────────────────┴─────────────┘
 ```
 
 ---
@@ -119,8 +133,8 @@ Ikuti langkah-langkah ini untuk menjalankan proyek di komputer lokal kamu.
 
 ### 📋 Prerequisites
 Pastikan software berikut sudah terinstall:
+- PHP >= 8.2 & Composer
 - Node.js >= 18.x
-- PHP >= 8.1 & Composer
 - MySQL
 - Midtrans Sandbox Account
 
@@ -138,10 +152,7 @@ cd kampusmarket
 <details>
 <summary><b>2. Setup Backend (Laravel)</b></summary>
 
-Buka terminal di folder `backend`:
-
 ```bash
-cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -254,18 +265,6 @@ Proyek ini memiliki alur bisnis yang dirancang khusus untuk kebutuhan marketplac
 
 ---
 
-## 🤝 Contributing
-
-Kontribusi selalu terbuka! Mari bikin KampusMarket makin keren bersama.
-
-1. 🍴 Fork the Project
-2. 🔧 Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 Push to the Branch (`git push origin feature/AmazingFeature`)
-5. 📮 Open a Pull Request
-
----
-
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
@@ -280,17 +279,19 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [license-shield]: https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge
 [license-url]: https://github.com/username/kampusmarket/blob/main/LICENSE
 
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React.js]: https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
 [React-url]: https://reactjs.org/
-[Vite.js]: https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white
+[Vite.js]: https://img.shields.io/badge/Vite_8-646CFF?style=for-the-badge&logo=vite&logoColor=white
 [Vite-url]: https://vitejs.dev/
-[Tailwind.com]: https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white
+[Tailwind.com]: https://img.shields.io/badge/Tailwind_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white
 [Tailwind-url]: https://tailwindcss.com/
-[TypeScript.org]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript.org]: https://img.shields.io/badge/TypeScript_5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white
 [TypeScript-url]: https://www.typescriptlang.org/
-[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
+[Laravel.com]: https://img.shields.io/badge/Laravel_11-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
 [Laravel-url]: https://laravel.com/
 [MySQL.com]: https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white
 [MySQL-url]: https://www.mysql.com/
 [Midtrans.com]: https://img.shields.io/badge/Midtrans-0082C8?style=for-the-badge&logo=midtrans&logoColor=white
 [Midtrans-url]: https://midtrans.com/
+[Shadcn.com]: https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white
+[Shadcn-url]: https://ui.shadcn.com/
