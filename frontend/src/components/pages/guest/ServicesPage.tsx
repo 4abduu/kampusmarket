@@ -45,6 +45,70 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ITEMS_PER_PAGE = 8;
 
+function buildParams({
+  page,
+  perPage,
+  type,
+  category,
+  search,
+  conditions,
+  priceRange,
+  sortBy,
+}: {
+  page: number;
+  perPage: number;
+  type: string;
+  category: string | null;
+  search: string;
+  conditions: string[];
+  priceRange: number[];
+  sortBy: string;
+}) {
+  const params: any = {
+    page,
+    per_page: perPage,
+    type,
+  };
+
+  if (category && category !== "all") {
+    params.category = category;
+  }
+
+  if (search && search.trim() !== "") {
+    params.search = search.trim();
+  }
+
+  if (Array.isArray(conditions) && conditions.length > 0) {
+    params.condition = conditions.join(",");
+  }
+
+  if (priceRange && priceRange.length === 2) {
+    const [min, max] = priceRange;
+    if (typeof min === "number" && min > 0) {
+      params.price_min = min;
+    }
+    if (typeof max === "number" && max < 20000000) {
+      params.price_max = max;
+    }
+  }
+
+  if (sortBy === "termurah") {
+    params.sort_by = "price";
+    params.sort_order = "asc";
+  } else if (sortBy === "termahal") {
+    params.sort_by = "price";
+    params.sort_order = "desc";
+  } else if (sortBy === "terpopuler") {
+    params.sort_by = "rating";
+    params.sort_order = "desc";
+  } else {
+    params.sort_by = "created_at";
+    params.sort_order = "desc";
+  }
+
+  return params;
+}
+
 interface ServicesPageProps {
   onNavigate: (page: string, serviceId?: string) => void;
   initialCategory?: string | null;
@@ -57,109 +121,95 @@ export default function ServicesPage({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    initialCategory ?? null,
+    () => initialCategory ?? null,
   );
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 20000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch services and categories from API
+  // Sync initialCategory from props
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log("[ServicesPage] Fetching services and categories...");
-        setLoading(true);
-        setError(null);
+    if (initialCategory !== undefined) {
+      setSelectedCategory(initialCategory ?? null);
+      setCurrentPage(1);
+    }
+  }, [initialCategory]);
 
-        // Fetch categories
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
         const catsResponse = await getCategories({ type: "jasa" });
         if (catsResponse?.length) {
           setCategories(
             catsResponse.map((cat: any) => ({
-              id: cat.id,
+              id: cat.slug,
               name: cat.name,
               label: cat.name,
             })),
           );
         }
+      } catch (err) {
+        console.error("[ServicesPage] Error fetching categories:", err);
+      }
+    };
 
-        // Fetch services (map sort option to backend params)
-        const productParams: any = { type: "jasa", per_page: 100 };
-        if (sortBy === "termurah") {
-          productParams.sort_by = "price";
-          productParams.sort_order = "asc";
-        } else if (sortBy === "termahal") {
-          productParams.sort_by = "price";
-          productParams.sort_order = "desc";
-        } else if (sortBy === "terpopuler") {
-          productParams.sort_by = "popular";
-          productParams.sort_order = "desc";
-        } else {
-          productParams.sort_by = "created_at";
-          productParams.sort_order = "desc";
-        }
+    fetchCategories();
+  }, []);
 
-        const response = await getProducts(productParams);
-        console.log("[ServicesPage] API Response:", {
-          response,
-          dataStructure: Object.keys(response || {}),
+  // Fetch services from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = buildParams({
+          page: currentPage,
+          perPage: ITEMS_PER_PAGE,
+          type: "jasa",
+          category: selectedCategory,
+          search: searchQuery,
+          conditions: selectedConditions,
+          priceRange,
+          sortBy,
         });
-        if (response?.data?.length) {
-          setServices(response.data);
-          console.log("[ServicesPage] Services loaded:", response.data.length, {
-            services: response.data,
-          });
-        } else {
-          console.warn("[ServicesPage] No services data in response:", {
-            response,
-          });
-          setServices([]);
+        console.log("REQUEST PARAMS:", params);
+
+        const response = await getProducts(params);
+        const items = (response as any)?.data ?? (response as any) ?? [];
+        setServices(items);
+        if ((response as any)?.meta?.last_page) {
+          setTotalPages((response as any).meta.last_page);
         }
       } catch (err: any) {
         console.error("[ServicesPage] Error fetching data:", err);
-        setError("Gagal memuat layanan jasa. Silakan coba lagi.");
+        setError("Gagal memuat data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchServices();
+  }, [
+    selectedCategory,
+    searchQuery,
+    selectedConditions,
+    priceRange,
+    sortBy,
+    currentPage,
+  ]);
 
-  const filteredServices = services.filter((service) => {
-    if (selectedCategory) {
-      const svcCat =
-        // prefer common shapes returned from API
-        service.category_id ??
-        service.categoryId ??
-        service.category?.id ??
-        service.category;
-      if (String(svcCat) !== String(selectedCategory)) return false;
-    }
+  const paginatedServices = services;
 
-    const priceVal =
-      service.price ?? service.price_min ?? service.priceMin ?? 0;
-    if (priceVal > priceRange[1] || priceVal < priceRange[0]) return false;
-
-    if (
-      searchQuery &&
-      !service.title?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-      return false;
-
-    return true;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
-  const paginatedServices = filteredServices.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  console.log("CATEGORY:", selectedCategory);
+  console.log("ITEM COUNT:", services.length);
 
   // Ensure currentPage stays within valid bounds when filters or results change
   useEffect(() => {
@@ -172,6 +222,10 @@ export default function ServicesPage({
       setCurrentPage(totalPages);
     }
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, selectedConditions, priceRange, sortBy]);
 
   const filterSidebarProps = {
     selectedCategory,
@@ -320,12 +374,12 @@ export default function ServicesPage({
             {/* Results Count */}
             {!loading && !error && (
               <p className="text-sm text-muted-foreground mb-4">
-                Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                Menampilkan {services.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
                 {Math.min(
                   currentPage * ITEMS_PER_PAGE,
-                  filteredServices.length,
+                  services.length,
                 )}{" "}
-                dari {filteredServices.length} jasa
+                dari {services.length} jasa
               </p>
             )}
 
@@ -350,7 +404,7 @@ export default function ServicesPage({
                   Coba Lagi
                 </Button>
               </div>
-            ) : filteredServices.length === 0 ? (
+            ) : services.length === 0 ? (
               <EmptyState
                 icon="package"
                 title="Tidak ada layanan jasa"

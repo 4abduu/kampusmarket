@@ -69,6 +69,70 @@ interface Category {
 
 const ITEMS_PER_PAGE = 12;
 
+function buildParams({
+  page,
+  perPage,
+  type,
+  category,
+  search,
+  conditions,
+  priceRange,
+  sortBy,
+}: {
+  page: number;
+  perPage: number;
+  type: string;
+  category: string | null;
+  search: string;
+  conditions: string[];
+  priceRange: number[];
+  sortBy: string;
+}) {
+  const params: any = {
+    page,
+    per_page: perPage,
+    type,
+  };
+
+  if (category && category !== "all") {
+    params.category = category;
+  }
+
+  if (search && search.trim() !== "") {
+    params.search = search.trim();
+  }
+
+  if (Array.isArray(conditions) && conditions.length > 0) {
+    params.condition = conditions.join(",");
+  }
+
+  if (priceRange && priceRange.length === 2) {
+    const [min, max] = priceRange;
+    if (typeof min === "number" && min > 0) {
+      params.price_min = min;
+    }
+    if (typeof max === "number" && max < 20000000) {
+      params.price_max = max;
+    }
+  }
+
+  if (sortBy === "termurah") {
+    params.sort_by = "price";
+    params.sort_order = "asc";
+  } else if (sortBy === "termahal") {
+    params.sort_by = "price";
+    params.sort_order = "desc";
+  } else if (sortBy === "terpopuler") {
+    params.sort_by = "rating";
+    params.sort_order = "desc";
+  } else {
+    params.sort_by = "created_at";
+    params.sort_order = "desc";
+  }
+
+  return params;
+}
+
 export default function CatalogPage({
   onNavigate,
   initialCategory,
@@ -77,12 +141,12 @@ export default function CatalogPage({
   isLoggedIn?: boolean;
   initialCategory?: string;
 }) {
-  console.log("CATALOG PAGE LOADED");
+  console.log("CATALOG PAGE LOADED - initialCategory:", initialCategory);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(() =>
     initialCategory || null,
   );
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -91,29 +155,56 @@ export default function CatalogPage({
   const [sortBy, setSortBy] = useState("terbaru");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Sync initialCategory from props
+  useEffect(() => {
+    if (initialCategory !== undefined) {
+      setSelectedCategory(initialCategory || null);
+      setCurrentPage(1);
+    }
+  }, [initialCategory]);
 
   // Fetch products (real API)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const params: any = { page: currentPage, per_page: ITEMS_PER_PAGE, type: "barang" };
-        console.log("PARAMS:", params);
+        const params = buildParams({
+          page: currentPage,
+          perPage: ITEMS_PER_PAGE,
+          type: "barang",
+          category: selectedCategory,
+          search: searchQuery,
+          conditions: selectedConditions,
+          priceRange,
+          sortBy,
+        });
+        console.log("REQUEST PARAMS:", params);
         const res = await getProducts(params);
-        console.log("RESPONSE:", res);
         const items = (res as any)?.data ?? (res as any) ?? [];
         setProducts(items as Product[]);
+        if ((res as any)?.meta?.last_page) {
+          setTotalPages((res as any).meta.last_page);
+        }
       } catch (err) {
         console.error(err);
-        setError("Gagal memuat produk. Silakan coba lagi.");
+        setError("Gagal memuat data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [currentPage]);
+  }, [
+    selectedCategory,
+    searchQuery,
+    selectedConditions,
+    priceRange,
+    sortBy,
+    currentPage,
+  ]);
 
   // Fetch categories from API (use same endpoint as LandingPage - "barang" type only)
   useEffect(() => {
@@ -125,14 +216,14 @@ export default function CatalogPage({
           const mappedCategories = res
             .filter((cat: any) => cat.type === "barang")
             .map((cat: any) => ({
-              id: cat.id,
+              id: cat.slug,
               label: cat.name,
               slug: cat.slug,
             }));
 
           // Ensure "kecantikan" category exists (add if missing)
           const hasKecantikan = mappedCategories.some(
-            (cat) => cat.slug === "kecantikan"
+            (cat) => cat.slug === "kecantikan",
           );
 
           if (!hasKecantikan) {
@@ -158,7 +249,9 @@ export default function CatalogPage({
           mappedCategories.sort((a, b) => {
             const indexA = order.indexOf(a.slug);
             const indexB = order.indexOf(b.slug);
-            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+            return (
+              (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
+            );
           });
 
           setCategories(mappedCategories);
@@ -180,33 +273,10 @@ export default function CatalogPage({
 
   console.log("PRODUCTS STATE:", products);
 
-  // Filter only barang (products), exclude jasa (services)
-  const onlyBarang = products.filter((p) => p.type === "barang");
+  const paginatedProducts = products;
 
-  const filteredProducts = onlyBarang
-    .filter((p) =>
-      !selectedCategory
-        ? true
-        : p.categoryId === selectedCategory || p.category === selectedCategory
-    )
-    .filter((product) => {
-      const matchesSearch = product.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesCondition =
-        !product.condition || selectedConditions.length === 0 ||
-        selectedConditions.includes(product.condition);
-      const matchesPrice =
-        product.price >= priceRange[0] && product.price <= priceRange[1];
-
-      return matchesSearch && matchesCondition && matchesPrice;
-    });
-
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  console.log("CATEGORY:", selectedCategory);
+  console.log("ITEM COUNT:", products.length);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -406,10 +476,10 @@ export default function CatalogPage({
             )}
 
             {/* Products Loading/Error/Empty */}
-            {loading && paginatedProducts.length === 0 ? (
+            {loading ? (
               <CatalogPageSkeleton
-                itemCount={ITEMS_PER_PAGE}
-                hideSidebar={true}
+              itemCount={ITEMS_PER_PAGE}
+              hideSidebar={true}
               />
             ) : error ? (
               <div className="space-y-4">
@@ -439,14 +509,6 @@ export default function CatalogPage({
               />
             ) : (
               <>
-                <div className="relative">
-                  {loading && paginatedProducts.length > 0 && (
-                    <div className="absolute right-4 top-4 z-10 pointer-events-none">
-                      <span className="inline-flex items-center gap-2 rounded bg-black/50 text-white text-xs px-2 py-1">
-                        Memuat...
-                      </span>
-                    </div>
-                  )}
                   {/* Product Grid */}
                   {viewMode === "grid" ? (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -454,7 +516,10 @@ export default function CatalogPage({
                         <Card
                           key={product.uuid}
                           className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                          onClick={() => onNavigate("product", product.uuid)}
+                          onClick={() => {
+                            console.log("Product clicked:", product);
+                            onNavigate("product", product.id || product.uuid);
+                          }}
                         >
                           <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
                             <ProductImage
@@ -537,7 +602,10 @@ export default function CatalogPage({
                         <Card
                           key={product.uuid}
                           className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                          onClick={() => onNavigate("product", product.uuid)}
+                          onClick={() => {
+                            console.log("Product clicked:", product);
+                            onNavigate("product", product.id || product.uuid);
+                          }}
                         >
                           <div className="flex">
                             <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
@@ -595,7 +663,6 @@ export default function CatalogPage({
                       ))}
                     </div>
                   )}
-                </div>
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-8">

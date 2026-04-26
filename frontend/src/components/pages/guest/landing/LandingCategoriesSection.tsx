@@ -1,5 +1,11 @@
 import { useRef } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Package, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  Wallet,
+} from "lucide-react";
 import type { LandingCategoryType } from "@/components/pages/guest/landing/landing.types";
 
 interface LandingCategoryPill {
@@ -11,15 +17,13 @@ interface LandingCategoriesSectionProps {
   categoryType: LandingCategoryType;
   onCategoryTypeChange: (value: LandingCategoryType) => void;
   currentCategories: LandingCategoryPill[];
-  onCategoryClick: (categoryId: string) => void;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, params?: { category?: string }) => void;
 }
 
 export default function LandingCategoriesSection({
   categoryType,
   onCategoryTypeChange,
   currentCategories,
-  onCategoryClick,
   onNavigate,
 }: LandingCategoriesSectionProps) {
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
@@ -91,18 +95,21 @@ export default function LandingCategoriesSection({
               {currentCategories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => onCategoryClick(category.id)}
+                  onClick={() =>
+                    onNavigate(
+                      categoryType === "barang" ? "catalog" : "services",
+                      { category: category.id },
+                    )
+                  }
                   className={`flex items-center gap-2 px-4 py-2 rounded-full shrink-0 transition-all group ${
                     categoryType === "barang"
-                      ? "bg-white border border-primary-200 hover:border-primary-400 hover:bg-primary-50 dark:bg-slate-800 dark:border-primary-800 dark:hover:bg-primary-900/30"
-                      : "bg-gradient-to-r from-secondary-50 to-primary-50 border border-secondary-200 hover:border-secondary-400 hover:from-secondary-100 hover:to-primary-100 dark:from-slate-800 dark:to-slate-800 dark:border-secondary-800 dark:hover:from-secondary-900/30 dark:hover:to-primary-900/30"
+                      ? "bg-white border border-slate-200 hover:border-primary-400 hover:bg-transparent dark:bg-slate-800 dark:border-slate-700"
+                      : "bg-white border border-slate-200 hover:border-primary-400 hover:bg-transparent dark:bg-slate-800 dark:border-slate-700"
                   }`}
                 >
                   <span
                     className={`text-sm font-medium whitespace-nowrap ${
-                      categoryType === "barang"
-                        ? "group-hover:text-primary-700 dark:group-hover:text-primary-400"
-                        : "group-hover:text-secondary-700 dark:group-hover:text-secondary-400"
+                      "group-hover:text-primary-700 dark:group-hover:text-primary-400"
                     }`}
                   >
                     {category.label}
@@ -110,7 +117,9 @@ export default function LandingCategoriesSection({
                 </button>
               ))}
               <button
-                onClick={() => onNavigate(categoryType === "barang" ? "catalog" : "services")}
+                onClick={() =>
+                  onNavigate(categoryType === "barang" ? "catalog" : "services")
+                }
                 className={`flex items-center gap-1 px-4 py-2 rounded-full shrink-0 text-sm font-medium transition-all ${
                   categoryType === "barang"
                     ? "bg-primary-600 text-white hover:bg-primary-700"

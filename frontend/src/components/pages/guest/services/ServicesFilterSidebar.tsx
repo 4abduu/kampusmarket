@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import type { ServicesFilterSidebarProps } from "@/components/pages/guest/services/services.types";
+import CategorySection from "@/components/shared/CategorySection";
 
 export default function ServicesFilterSidebar({
   selectedCategory,
@@ -13,34 +14,11 @@ export default function ServicesFilterSidebar({
 }: ServicesFilterSidebarProps) {
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold mb-3">Kategori Jasa</h3>
-        <div className="space-y-2">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-              selectedCategory === null
-                ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                : "hover:bg-slate-100 dark:hover:bg-slate-800"
-            }`}
-          >
-            Semua Kategori
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                selectedCategory === category.id
-                  ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                  : "hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <CategorySection
+        categories={categories}
+        selected={selectedCategory}
+        onSelect={setSelectedCategory}
+      />
 
       <div>
         <h3 className="font-semibold mb-3">Rentang Harga</h3>

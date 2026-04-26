@@ -24,11 +24,16 @@ function AppContent() {
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [sellerProductCount, setSellerProductCount] = useState(getInitialSellerProductCount());
+  const [sellerProductCount, setSellerProductCount] = useState(
+    getInitialSellerProductCount(),
+  );
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
-  
+
   // Data State
-  const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
+  const [googleUserData, setGoogleUserData] = useState<{
+    userName?: string;
+    userEmail?: string;
+  } | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const syncAuthUser = async () => {
@@ -79,27 +84,27 @@ function AppContent() {
       // or user can click login manually
     };
 
-    window.addEventListener('unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('unauthorized', handleUnauthorized);
+    window.addEventListener("unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("unauthorized", handleUnauthorized);
   }, []);
 
   // Handle Navigation
   const handleNavigate = (page: string, data?: string | NavigationData) => {
     let url = `/${page === "landing" ? "" : page}`;
-    
+
     // Handle simple string ID (e.g. "product", "p1")
     if (typeof data === "string") {
-       // Jika page sudah mengandung id (misal profile/p1), jangan tambahkan /id lagi
-       if (!page.includes("/")) {
-         url = `/${page}/${data}`;
-       } else {
-         url = `/${page}`;
-       }
-    } 
+      // Jika page sudah mengandung id (misal profile/p1), jangan tambahkan /id lagi
+      if (!page.includes("/")) {
+        url = `/${page}/${data}`;
+      } else {
+        url = `/${page}`;
+      }
+    }
     // Handle object data
     else if (data) {
       const params = new URLSearchParams();
-      
+
       if ("category" in data && data.category) {
         params.set("category", data.category);
       }
@@ -110,19 +115,23 @@ function AppContent() {
       if ("successType" in data && data.successType) {
         params.set("successType", data.successType);
       }
-      
+
       // Handle specific ID overrides
       if ("userId" in data && data.userId) url = `/profile/${data.userId}`;
-      if ("productId" in data && data.productId) url = `/product/${data.productId}`;
-      
+      if ("productId" in data && data.productId)
+        url = `/product/${data.productId}`;
+
       // Store misc data in state
       if ("userName" in data || "userEmail" in data) {
-        setGoogleUserData({ userName: data.userName, userEmail: data.userEmail });
+        setGoogleUserData({
+          userName: data.userName,
+          userEmail: data.userEmail,
+        });
       }
       if ("registeredEmail" in data && data.registeredEmail) {
         setRegisteredEmail(data.registeredEmail);
       }
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
@@ -175,10 +184,18 @@ function AppContent() {
   };
 
   // Helper to get ID from URL
-  const pathParts = location.pathname.split('/');
+  const pathParts = location.pathname.split("/");
   const currentId = pathParts[2] || null;
-  const successTypeParam = new URLSearchParams(location.search).get("successType");
-  const currentSuccessType = successTypeParam === "service" ? "service" : successTypeParam === "product" ? "product" : null;
+  const successTypeParam = new URLSearchParams(location.search).get(
+    "successType",
+  );
+  const currentSuccessType =
+    successTypeParam === "service"
+      ? "service"
+      : successTypeParam === "product"
+        ? "product"
+        : null;
+  const categoryParam = new URLSearchParams(location.search).get("category");
 
   // Page Logic
   // Pages that don't need footer n navbar
@@ -216,20 +233,52 @@ function AppContent() {
     "404",
     "no-access",
   ];
-  const hideNavbar = noNavbarPages.some((p) => location.pathname.startsWith(`/${p}`));
-  const isAdminPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/stats");
+  const hideNavbar = noNavbarPages.some((p) =>
+    location.pathname.startsWith(`/${p}`),
+  );
+  const isAdminPage =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/stats");
   const hasSellerProducts = sellerProductCount > 0;
   const isCustomerOnly = !hasSellerProducts;
 
   // Check if current path matches a known route pattern (for 404 pages)
   const knownPagePrefixes = [
-    "login", "register", "forgot-password", "faculty-selection", "email-verification",
-    "catalog", "services", "product", "service", "search",
-    "checkout", "cart", "checkout-success", "payment-success", "booking-success",
-    "dashboard", "my-products", "wallet", "settings", "orders", "favorites", "order-detail", "rating", "chat", "notifications", "profile", "add-product",
-    "admin", "stats", "admin-notifications", "unauthorized",
+    "login",
+    "register",
+    "forgot-password",
+    "faculty-selection",
+    "email-verification",
+    "catalog",
+    "services",
+    "product",
+    "service",
+    "search",
+    "checkout",
+    "cart",
+    "checkout-success",
+    "payment-success",
+    "booking-success",
+    "dashboard",
+    "my-products",
+    "wallet",
+    "settings",
+    "orders",
+    "favorites",
+    "order-detail",
+    "rating",
+    "chat",
+    "notifications",
+    "profile",
+    "add-product",
+    "admin",
+    "stats",
+    "admin-notifications",
+    "unauthorized",
   ];
-  const isKnownRoute = location.pathname === "/" || knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
+  const isKnownRoute =
+    location.pathname === "/" ||
+    knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
   const isNotFoundPage = !isKnownRoute;
 
   if (!authReady) {
@@ -275,6 +324,7 @@ function AppContent() {
           onSellerProductCountChange={setSellerProductCount}
           registeredEmail={registeredEmail}
           currentId={currentId}
+          currentCategory={categoryParam}
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
           currentUser={authUser}
@@ -284,10 +334,13 @@ function AppContent() {
       {/* Footer Logic */}
       {isAdminPage && !isNotFoundPage ? (
         <AdminFooter />
-      ) : !isNotFoundPage && !noFooterPages.some((p) => location.pathname.startsWith(`/${p}`)) && (
-        <Footer onNavigate={handleNavigate} />
+      ) : (
+        !isNotFoundPage &&
+        !noFooterPages.some((p) => location.pathname.startsWith(`/${p}`)) && (
+          <Footer onNavigate={handleNavigate} />
+        )
       )}
-      
+
       <Toaster />
     </div>
   );

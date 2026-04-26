@@ -75,6 +75,7 @@ type AppRoutesProps = {
   isCustomerOnly: boolean;
   registeredEmail: string | null;
   currentId: string | null;
+  currentCategory: string | null;
   googleUserData: { userName?: string; userEmail?: string } | null;
   currentUser: User | null;
   currentSuccessType: "product" | "service" | null;
@@ -168,6 +169,7 @@ export default function AppRoutes({
   isCustomerOnly,
   registeredEmail,
   currentId,
+  currentCategory,
   googleUserData,
   currentUser,
   currentSuccessType,
@@ -292,12 +294,17 @@ export default function AppRoutes({
         <Route
           path="/catalog"
           element={
-            <CatalogPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
+            <CatalogPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} initialCategory={currentCategory || undefined} />
           }
         />
         <Route
           path="/services"
-          element={<ServicesPage onNavigate={onNavigate} />}
+          element={
+            <ServicesPage
+              onNavigate={onNavigate}
+              initialCategory={currentCategory || undefined}
+            />
+          }
         />
         <Route
           path="/product/:id"

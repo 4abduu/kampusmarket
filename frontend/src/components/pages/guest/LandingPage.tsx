@@ -37,7 +37,6 @@ export default function LandingPage({
     Array<{ id: string; label: string }>
   >([]);
   const [barangProducts, setBarangProducts] = useState<any>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [jasaProducts, setJasaProducts] = useState<any>([]);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [heroLoading, setHeroLoading] = useState<boolean>(true);
@@ -81,16 +80,18 @@ export default function LandingPage({
         if (barangCatsResponse?.length) {
           setBarangCategories(
             barangCatsResponse.map((cat: any) => ({
-              id: cat.id,
+              id: cat.slug,
               label: cat.name,
+              slug: cat.slug,
             })),
           );
         }
         if (jasaCatsResponse?.length) {
           setJasaCategories(
             jasaCatsResponse.map((cat: any) => ({
-              id: cat.id,
+              id: cat.slug,
               label: cat.name,
+              slug: cat.slug,
             })),
           );
         }
@@ -112,47 +113,6 @@ export default function LandingPage({
 
   const currentCategories =
     categoryType === "barang" ? barangCategories : jasaCategories;
-
-  const getCategorySlug = (categoryId: string) => {
-    const cat =
-      barangCategories.find((c) => c.id === categoryId) ||
-      jasaCategories.find((c) => c.id === categoryId);
-    return cat && ((cat as any).slug || cat.label)
-      ? (cat as any).slug || cat.label.toLowerCase().replace(/\s+/g, "-")
-      : undefined;
-  };
-
-  const handleCategoryClick = (categoryId: string) => {
-    // Set selected category and fetch products in-place — do not navigate immediately
-    setSelectedCategory(categoryId);
-  };
-
-  // Refetch barang products when selectedCategory changes
-  useEffect(() => {
-    const fetchFilteredBarang = async () => {
-      try {
-        setFetchError(null);
-        setHeroLoading(true);
-        const params: any = { type: "barang", per_page: 8 };
-        if (selectedCategory) {
-          const slug = getCategorySlug(selectedCategory);
-          if (slug) params.category = slug;
-        }
-        const res = await productsApi.getProducts(params);
-        setBarangProducts(res?.data ?? res ?? []);
-      } catch (err) {
-        console.error("[LandingPage] Error fetching filtered barang:", err);
-        setFetchError("Gagal memuat produk kategori.");
-      } finally {
-        setHeroLoading(false);
-      }
-    };
-
-    // Only run after initial load (so it doesn't duplicate if no selection)
-    if (hasFetchedRef.current) {
-      fetchFilteredBarang();
-    }
-  }, [selectedCategory]);
 
   return (
     <>
@@ -195,17 +155,7 @@ export default function LandingPage({
             categoryType={categoryType}
             onCategoryTypeChange={setCategoryType}
             currentCategories={currentCategories}
-            onCategoryClick={handleCategoryClick}
-            onNavigate={(page: string) => {
-              // If user clicks "Lihat Semua" for catalog, include selectedCategory if present
-              if (page === "catalog") {
-                if (selectedCategory) {
-                  onNavigate("catalog", { category: selectedCategory });
-                  return;
-                }
-              }
-              onNavigate(page as any);
-            }}
+            onNavigate={onNavigate}
           />
         )}
 
