@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CancelRequestController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,10 @@ use App\Http\Controllers\Api\PaymentController;
 | Format response konsisten: { success, message?, data, meta? }
 |
 */
+
+// Laravel Echo + Reverb: daftarkan route untuk otentikasi channel private
+// Middleware 'auth:sanctum' memastikan hanya user yang login bisa subscribe ke channel private.
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // ============================================
 // HEALTH CHECK
@@ -161,6 +166,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/chats/{chatId}/messages/{messageId}/attachments', [ChatController::class, 'attachments']);
     Route::post('/chats/{id}/messages', [ChatController::class, 'sendMessage']);
     Route::post('/chats/{id}/read', [ChatController::class, 'markAsRead']);
+    Route::post('/chats/{id}/typing', [ChatController::class, 'typing']); // [BARU] typing indicator
     Route::post('/chats/{chatId}/messages/{messageId}/accept-offer', [ChatController::class, 'acceptOffer']);
     Route::post('/chats/{chatId}/messages/{messageId}/reject-offer', [ChatController::class, 'rejectOffer']);
 

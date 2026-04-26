@@ -5,7 +5,6 @@ import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
 import type { User } from "@/lib/mock-data";
-// import AuthLoadingSkeleton from "@/components/pages/guest/AuthLoadingSkeleton";
 
 // Layout
 import Navbar from "@/components/layout/Navbar";
@@ -14,7 +13,6 @@ import AdminFooter from "@/components/layout/AdminFooter";
 import SellerWelcomeModal from "@/components/layout/SellerWelcomeModal";
 import { getInitialSellerProductCount } from "@/components/pages/user/dashboard/seller-products";
 
-// Komponen Utama Aplikasi (Isi)
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,28 +36,17 @@ function AppContent() {
 
   const syncAuthUser = async () => {
     try {
-      console.debug("[App] Checking auth status via /auth/me");
       const user = await userApi.me();
-
       if (user) {
-        console.debug("[App] User authenticated:", {
-          userId: user.id,
-          email: user.email,
-          role: user.role,
-        });
         setAuthUser(user);
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
       } else {
-        console.debug("[App] No authenticated user found");
         setAuthUser(null);
         setIsLoggedIn(false);
         setUserRole(null);
       }
-    } catch (error) {
-      console.debug("[App] Auth check failed:", {
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    } catch {
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
@@ -68,41 +55,31 @@ function AppContent() {
     }
   };
 
-  // Check auth status on app load
   useEffect(() => {
     void syncAuthUser();
   }, []);
 
-  // Handle unauthorized event (when API returns true 401)
   useEffect(() => {
     const handleUnauthorized = () => {
-      console.warn("[App] Unauthorized event - User session expired");
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
-      // Don't navigate here, let the app naturally show unauthorized page
-      // or user can click login manually
     };
-
     window.addEventListener("unauthorized", handleUnauthorized);
     return () => window.removeEventListener("unauthorized", handleUnauthorized);
   }, []);
 
-  // Handle Navigation
+  // ── Handle Navigation ──
+  // Gabungan: format rapi dari main + chat support dari dev-abdu
   const handleNavigate = (page: string, data?: string | NavigationData) => {
     let url = `/${page === "landing" ? "" : page}`;
 
-    // Handle simple string ID (e.g. "product", "p1")
+    // Handle simple string ID
     if (typeof data === "string") {
-      // Jika page sudah mengandung id (misal profile/p1), jangan tambahkan /id lagi
       if (!page.includes("/")) {
         url = `/${page}/${data}`;
-      } else {
-        url = `/${page}`;
       }
-    }
-    // Handle object data
-    else if (data) {
+    } else if (data) {
       const params = new URLSearchParams();
 
       if ("category" in data && data.category) {
@@ -110,16 +87,27 @@ function AppContent() {
       }
       if ("searchQuery" in data && data.searchQuery) {
         params.set("q", data.searchQuery);
-        url = "/search"; // Override ke halaman search
+        url = "/search";
       }
       if ("successType" in data && data.successType) {
         params.set("successType", data.successType);
       }
 
-      // Handle specific ID overrides
-      if ("userId" in data && data.userId) url = `/profile/${data.userId}`;
-      if ("productId" in data && data.productId)
-        url = `/product/${data.productId}`;
+      // ✅ Chat support dari dev-abdu: gunakan query params
+      if (page === "chat") {
+        url = "/chat";
+        if ("productId" in data && data.productId) {
+          params.set("productId", data.productId);
+        }
+        if ("chatAction" in data && data.chatAction) {
+          params.set("action", data.chatAction);
+        }
+      } else {
+        // Untuk halaman lain, handle ID overrides seperti biasa
+        if ("userId" in data && data.userId) url = `/profile/${data.userId}`;
+        if ("productId" in data && data.productId)
+          url = `/product/${data.productId}`;
+      }
 
       // Store misc data in state
       if ("userName" in data || "userEmail" in data) {
@@ -146,22 +134,13 @@ function AppContent() {
     setIsLoggedIn(true);
     setUserRole(role);
     void syncAuthUser();
-    if (role === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/");
-    }
+    navigate(role === "admin" ? "/admin" : "/");
   };
 
   const handleLogout = async () => {
     try {
       await userApi.logout();
-    } catch (error) {
-      console.debug("[App] Logout API failed, continuing local cleanup", {
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-
+    } catch {}
     setGoogleUserData(null);
     setAuthUser(null);
     setIsLoggedIn(false);
@@ -174,6 +153,7 @@ function AppContent() {
     setShowSellerWelcome(true);
   };
 
+  // ✅ Google auth flow dari main (bukan () => {})
   const handleGooglePendingSelection = (session: GoogleAuthSession) => {
     setGoogleUserData({
       userName: session.userName,
@@ -197,8 +177,7 @@ function AppContent() {
         : null;
   const categoryParam = new URLSearchParams(location.search).get("category");
 
-  // Page Logic
-  // Pages that don't need footer n navbar
+  // ✅ Page visibility logic dari main
   const noNavbarPages = [
     "login",
     "register",
@@ -233,6 +212,7 @@ function AppContent() {
     "404",
     "no-access",
   ];
+
   const hideNavbar = noNavbarPages.some((p) =>
     location.pathname.startsWith(`/${p}`),
   );
@@ -242,7 +222,6 @@ function AppContent() {
   const hasSellerProducts = sellerProductCount > 0;
   const isCustomerOnly = !hasSellerProducts;
 
-  // Check if current path matches a known route pattern (for 404 pages)
   const knownPagePrefixes = [
     "login",
     "register",
@@ -346,7 +325,6 @@ function AppContent() {
   );
 }
 
-// Pembungkus Router (Jangan ubah bagian ini)
 export default function App() {
   return (
     <BrowserRouter>

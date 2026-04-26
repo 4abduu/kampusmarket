@@ -273,7 +273,11 @@ export default function CatalogPage({
 
   console.log("PRODUCTS STATE:", products);
 
-  const paginatedProducts = products;
+  // FIX #1: Filter produk stok 0 dari catalog — jasa tidak punya stok, selalu tampil
+  const paginatedProducts = products.filter((p: any) => {
+    if (p.type === 'jasa') return true;
+    return p.stock === undefined || p.stock > 0;
+  });
 
   console.log("CATEGORY:", selectedCategory);
   console.log("ITEM COUNT:", products.length);

@@ -52,6 +52,7 @@ interface ProductDetailSidebarProps {
   setQuantity: (value: number) => void;
   formatPrice: (price: number) => string;
   onAction: (action: () => void) => void;
+  // [REVISI] onNavigate menerima NavigationData object yang berisi productId + chatAction
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
   onOpenReport: () => void;
 }
@@ -80,6 +81,16 @@ export default function ProductDetailSidebar({
     } catch {
       setIsCopied(false);
     }
+  };
+
+  // [REVISI] Helper: navigate ke chat dengan context produk
+  // Menggunakan key "chatAction" (bukan "action") — NavigationData di types.ts pakai chatAction
+  const handleChatWithSeller = () => {
+    onNavigate("chat", { productId: product.id, chatAction: "chat" });
+  };
+
+  const handleNegoWithSeller = () => {
+    onNavigate("chat", { productId: product.id, chatAction: "nego" });
   };
 
   return (
@@ -154,11 +165,12 @@ export default function ProductDetailSidebar({
             <Button variant="outline" onClick={() => onAction(() => onNavigate("cart"))}>+ Keranjang</Button>
           </div>
 
+          {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}
           {product.canNego && (
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => onAction(() => onNavigate("chat", { productId: product.id, chatAction: "nego" }))}
+              onClick={() => onAction(handleNegoWithSeller)}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Ajukan Nego
@@ -222,7 +234,8 @@ export default function ProductDetailSidebar({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={() => onAction(() => onNavigate("chat", { productId: product.id, chatAction: "chat" }))}>
+            {/* [REVISI] Tombol Chat — gunakan handleChatWithSeller */}
+            <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat
             </Button>

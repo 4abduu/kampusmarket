@@ -1,11 +1,35 @@
+/**
+ * AppRoutes.tsx [REVISI]
+ *
+ * Perubahan:
+ * - Tambah ChatPageWrapper yang baca query params (?productId=&action=) 
+ *   lalu teruskan ke ChatPage sebagai initialContextId + initialChatAction.
+ *   Ini yang menjembatani handleNavigate("chat", { productId, chatAction })
+ *   dengan props yang dibutuhkan ChatPage.
+ */
+/**
+ * AppRoutes.tsx
+ *
+ * Merge dari main + dev-abdu:
+ * - Semua route dari main dipertahankan
+ * - ChatPageWrapper dari dev-abdu ditambahkan untuk support chat via query params
+ */
 import { lazy, Suspense, useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 
 import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
 import { UnauthorizedPage, NotFoundPage } from "@/components/pages/guest";
 import type { User } from "@/lib/mock-data";
 
-const LandingPage = lazy(() => import("@/components/pages/guest/LandingPage"));
+const LandingPage = lazy(
+  () => import("@/components/pages/guest/LandingPage"),
+);
 const LoginPage = lazy(() => import("@/components/pages/guest/LoginPage"));
 const RegisterPage = lazy(
   () => import("@/components/pages/guest/RegisterPage"),
@@ -16,7 +40,9 @@ const ForgotPasswordPage = lazy(
 const FacultySelectionPage = lazy(
   () => import("@/components/pages/guest/FacultySelectionPage"),
 );
-const CatalogPage = lazy(() => import("@/components/pages/guest/CatalogPage"));
+const CatalogPage = lazy(
+  () => import("@/components/pages/guest/CatalogPage"),
+);
 const ServicesPage = lazy(
   () => import("@/components/pages/guest/ServicesPage"),
 );
@@ -26,7 +52,9 @@ const ServiceDetailPage = lazy(
 const ProductDetailPage = lazy(
   () => import("@/components/pages/guest/ProductDetailPage"),
 );
-const CheckoutPage = lazy(() => import("@/components/pages/user/CheckoutPage"));
+const CheckoutPage = lazy(
+  () => import("@/components/pages/user/CheckoutPage"),
+);
 const UserDashboardPage = lazy(
   () => import("@/components/pages/user/UserDashboardPage"),
 );
@@ -60,7 +88,9 @@ const EmailVerificationPage = lazy(
 const SearchResultsPage = lazy(
   () => import("@/components/pages/guest/SearchResultsPage"),
 );
-const ProfilePage = lazy(() => import("@/components/pages/user/ProfilePage"));
+const ProfilePage = lazy(
+  () => import("@/components/pages/user/ProfilePage"),
+);
 const FavoritesPage = lazy(
   () => import("@/components/pages/user/FavoritesPage"),
 );
@@ -81,6 +111,34 @@ type AppRoutesProps = {
   currentSuccessType: "product" | "service" | null;
 };
 
+// ✅ Dari dev-abdu: Wrapper untuk ChatPage dengan query params support
+function ChatPageWrapper({
+  onNavigate,
+  currentUser,
+}: {
+  onNavigate: NavigateHandler;
+  currentUser: User | null;
+}) {
+  const [searchParams] = useSearchParams();
+  const initialContextId = searchParams.get("productId") ?? undefined;
+  const actionParam = searchParams.get("action");
+  const initialChatAction: "chat" | "nego" | undefined =
+    actionParam === "nego"
+      ? "nego"
+      : actionParam === "chat"
+        ? "chat"
+        : undefined;
+
+  return (
+    <ChatPage
+      onNavigate={onNavigate}
+      initialContextId={initialContextId}
+      initialChatAction={initialChatAction}
+      currentUser={currentUser}
+    />
+  );
+}
+
 function ProtectedRoute({
   isLoggedIn,
   element,
@@ -89,7 +147,6 @@ function ProtectedRoute({
   element: React.ReactElement;
 }): React.ReactElement {
   const location = useLocation();
-
   if (!isLoggedIn) {
     return (
       <Navigate
@@ -99,7 +156,6 @@ function ProtectedRoute({
       />
     );
   }
-
   return element;
 }
 
@@ -113,7 +169,6 @@ function RoleProtectedRoute({
   element: React.ReactElement;
 }): React.ReactElement {
   const location = useLocation();
-
   if (!isLoggedIn) {
     return (
       <Navigate
@@ -123,7 +178,6 @@ function RoleProtectedRoute({
       />
     );
   }
-
   if (!isAdmin) {
     return (
       <Navigate
@@ -133,7 +187,6 @@ function RoleProtectedRoute({
       />
     );
   }
-
   return element;
 }
 
@@ -147,15 +200,12 @@ function PublicRoute({
   allowLoggedIn?: boolean;
 }): React.ReactElement {
   const location = useLocation();
-
-  // If already logged in and this is a public route (like login/register), redirect to home
   if (isLoggedIn && !allowLoggedIn) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
     const previousPath =
       stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
     return <Navigate to={previousPath} replace />;
   }
-
   return element;
 }
 
@@ -202,6 +252,7 @@ export default function AppRoutes({
       }
     >
       <Routes>
+        {/* ── PUBLIC AUTH ── */}
         <Route
           path="/login"
           element={
@@ -223,7 +274,10 @@ export default function AppRoutes({
             <PublicRoute
               isLoggedIn={isLoggedIn}
               element={
-                <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />
+                <RegisterPage
+                  onNavigate={onNavigate}
+                  onLogin={onLogin}
+                />
               }
             />
           }
@@ -233,7 +287,9 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
-              element={<ForgotPasswordPage onNavigate={onNavigate} />}
+              element={
+                <ForgotPasswordPage onNavigate={onNavigate} />
+              }
             />
           }
         />
@@ -280,6 +336,7 @@ export default function AppRoutes({
           }
         />
 
+        {/* ── PUBLIC PAGES ── */}
         <Route
           path="/"
           element={
@@ -294,7 +351,11 @@ export default function AppRoutes({
         <Route
           path="/catalog"
           element={
-            <CatalogPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} initialCategory={currentCategory || undefined} />
+            <CatalogPage
+              onNavigate={onNavigate}
+              isLoggedIn={isLoggedIn}
+              initialCategory={currentCategory || undefined}
+            />
           }
         />
         <Route
@@ -326,7 +387,12 @@ export default function AppRoutes({
             />
           }
         />
+        <Route
+          path="/search"
+          element={<SearchResultsPage onNavigate={onNavigate} />}
+        />
 
+        {/* ── CHECKOUT & PAYMENT ── */}
         <Route
           path="/checkout"
           element={
@@ -420,6 +486,7 @@ export default function AppRoutes({
           }
         />
 
+        {/* ── USER DASHBOARD ── */}
         <Route
           path="/dashboard"
           element={
@@ -429,7 +496,9 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="dashboard"
-                  onSellerProductCountChange={onSellerProductCountChange}
+                  onSellerProductCountChange={
+                    onSellerProductCountChange
+                  }
                   currentUser={currentUser}
                 />
               }
@@ -445,7 +514,9 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="my-products"
-                  onSellerProductCountChange={onSellerProductCountChange}
+                  onSellerProductCountChange={
+                    onSellerProductCountChange
+                  }
                   currentUser={currentUser}
                 />
               }
@@ -461,7 +532,9 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="wallet"
-                  onSellerProductCountChange={onSellerProductCountChange}
+                  onSellerProductCountChange={
+                    onSellerProductCountChange
+                  }
                   currentUser={currentUser}
                 />
               }
@@ -477,13 +550,17 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="settings"
-                  onSellerProductCountChange={onSellerProductCountChange}
+                  onSellerProductCountChange={
+                    onSellerProductCountChange
+                  }
                   currentUser={currentUser}
                 />
               }
             />
           }
         />
+
+        {/* ── USER PAGES ── */}
         <Route
           path="/orders"
           element={
@@ -525,21 +602,31 @@ export default function AppRoutes({
             />
           }
         />
+
+        {/* ── CHAT (dari dev-abdu: pakai ChatPageWrapper) ── */}
         <Route
           path="/chat"
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
-              element={<ChatPage onNavigate={onNavigate} />}
+              element={
+                <ChatPageWrapper
+                  onNavigate={onNavigate}
+                  currentUser={currentUser}
+                />
+              }
             />
           }
         />
+
         <Route
           path="/notifications"
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
-              element={<UserNotificationsPage onNavigate={onNavigate} />}
+              element={
+                <UserNotificationsPage onNavigate={onNavigate} />
+              }
             />
           }
         />
@@ -567,17 +654,16 @@ export default function AppRoutes({
           }
         />
 
-        <Route
-          path="/search"
-          element={<SearchResultsPage onNavigate={onNavigate} />}
-        />
+        {/* ── ADMIN ── */}
         <Route
           path="/admin"
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={<AdminDashboardPage onNavigate={onNavigate} />}
+              element={
+                <AdminDashboardPage onNavigate={onNavigate} />
+              }
             />
           }
         />
@@ -587,7 +673,9 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={<AdminDashboardPage onNavigate={onNavigate} />}
+              element={
+                <AdminDashboardPage onNavigate={onNavigate} />
+              }
             />
           }
         />
@@ -597,11 +685,18 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={<AdminNotificationsPage onNavigate={onNavigate} />}
+              element={
+                <AdminNotificationsPage onNavigate={onNavigate} />
+              }
             />
           }
         />
-        <Route path="*" element={<NotFoundPage onNavigate={onNavigate} />} />
+
+        {/* ── FALLBACK ── */}
+        <Route
+          path="*"
+          element={<NotFoundPage onNavigate={onNavigate} />}
+        />
       </Routes>
     </Suspense>
   );
