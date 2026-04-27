@@ -24,7 +24,6 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  Briefcase,
   Grid,
   List,
   X,
@@ -123,7 +122,7 @@ export default function ServicesPage({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     () => initialCategory ?? null,
   );
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+  const [selectedConditions] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [currentPage, setCurrentPage] = useState(1);

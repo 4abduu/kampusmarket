@@ -14,7 +14,6 @@
  *   php artisan storage:link  ← jalankan sekali setelah clone project
  */
 
-import apiClient from './client';
 import { API_BASE_URL } from '@/lib/config';
 
 const MAX_SIZE_MB = 2;

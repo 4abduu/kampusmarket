@@ -16,7 +16,7 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false)
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
   const [productFilter, setProductFilter] = useState<ProductFilter>("semua")
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
+  const [, setIsLoadingProducts] = useState(true)
 
   // Fetch products from API on mount
   useEffect(() => {

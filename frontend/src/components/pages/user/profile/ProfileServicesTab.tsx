@@ -35,6 +35,8 @@ interface ServiceItem {
   rating?: number;
   soldCount?: number;
   orderCount?: number;
+  availability_status?: string;
+  availabilityStatus?: string;
 }
 
 interface ProfileServicesTabProps {
@@ -216,8 +218,12 @@ export default function ProfileServicesTab({
             const priceMin = service.priceMin ?? basePrice;
             const priceMax = service.priceMax ?? basePrice;
             const soldCount = service.soldCount ?? service.orderCount ?? 0;
-            const isFull = service.availability_status === "full" || service.availabilityStatus === "full";
-            const isBusy = service.availability_status === "busy" || service.availabilityStatus === "busy";
+            const isFull =
+              service.availability_status === "full" ||
+              service.availabilityStatus === "full";
+            const isBusy =
+              service.availability_status === "busy" ||
+              service.availabilityStatus === "busy";
 
             return (
               <Card
@@ -234,12 +240,16 @@ export default function ProfileServicesTab({
                   )}
                 </div>
                 <CardContent className="p-4">
+                  {/* ✅ Dari dev-abdu: badge sibuk */}
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">
                       {service.category}
                     </Badge>
                     {isBusy && (
-                      <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30"
+                      >
                         Sibuk
                       </Badge>
                     )}
@@ -248,7 +258,13 @@ export default function ProfileServicesTab({
                     {service.title}
                   </h3>
                   <div className="flex items-center justify-between mb-2">
-                    <p className={`font-bold text-sm ${isFull ? "text-muted-foreground line-through" : "text-primary-600"}`}>
+                    <p
+                      className={`font-bold text-sm ${
+                        isFull
+                          ? "text-muted-foreground line-through"
+                          : "text-primary-600"
+                      }`}
+                    >
                       {priceMin === priceMax || !priceMax
                         ? formatPrice(priceMin)
                         : `${formatPrice(priceMin)} - ${formatPrice(priceMax)}`}

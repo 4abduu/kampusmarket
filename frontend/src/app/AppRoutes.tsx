@@ -1,18 +1,11 @@
 /**
- * AppRoutes.tsx [REVISI]
- *
- * Perubahan:
- * - Tambah ChatPageWrapper yang baca query params (?productId=&action=) 
- *   lalu teruskan ke ChatPage sebagai initialContextId + initialChatAction.
- *   Ini yang menjembatani handleNavigate("chat", { productId, chatAction })
- *   dengan props yang dibutuhkan ChatPage.
- */
-/**
  * AppRoutes.tsx
  *
  * Merge dari main + dev-abdu:
- * - Semua route dari main dipertahankan
- * - ChatPageWrapper dari dev-abdu ditambahkan untuk support chat via query params
+ * - Semua route dari main dipertahankan (termasuk ProtectedRoute wrapper)
+ * - ChatPageWrapper dari dev-abdu untuk support chat via query params
+ * - Protected route redirect fix dari dev-abdu
+ * - Scroll restoration dari dev-abdu
  */
 import { lazy, Suspense, useEffect } from "react";
 import {
@@ -27,73 +20,31 @@ import type { GoogleAuthSession, NavigateHandler } from "@/app/navigation";
 import { UnauthorizedPage, NotFoundPage } from "@/components/pages/guest";
 import type { User } from "@/lib/mock-data";
 
-const LandingPage = lazy(
-  () => import("@/components/pages/guest/LandingPage"),
-);
+const LandingPage = lazy(() => import("@/components/pages/guest/LandingPage"));
 const LoginPage = lazy(() => import("@/components/pages/guest/LoginPage"));
-const RegisterPage = lazy(
-  () => import("@/components/pages/guest/RegisterPage"),
-);
-const ForgotPasswordPage = lazy(
-  () => import("@/components/pages/guest/ForgotPasswordPage"),
-);
-const FacultySelectionPage = lazy(
-  () => import("@/components/pages/guest/FacultySelectionPage"),
-);
-const CatalogPage = lazy(
-  () => import("@/components/pages/guest/CatalogPage"),
-);
-const ServicesPage = lazy(
-  () => import("@/components/pages/guest/ServicesPage"),
-);
-const ServiceDetailPage = lazy(
-  () => import("@/components/pages/guest/ServiceDetailPage"),
-);
-const ProductDetailPage = lazy(
-  () => import("@/components/pages/guest/ProductDetailPage"),
-);
-const CheckoutPage = lazy(
-  () => import("@/components/pages/user/CheckoutPage"),
-);
-const UserDashboardPage = lazy(
-  () => import("@/components/pages/user/UserDashboardPage"),
-);
+const RegisterPage = lazy(() => import("@/components/pages/guest/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("@/components/pages/guest/ForgotPasswordPage"));
+const FacultySelectionPage = lazy(() => import("@/components/pages/guest/FacultySelectionPage"));
+const CatalogPage = lazy(() => import("@/components/pages/guest/CatalogPage"));
+const ServicesPage = lazy(() => import("@/components/pages/guest/ServicesPage"));
+const ServiceDetailPage = lazy(() => import("@/components/pages/guest/ServiceDetailPage"));
+const ProductDetailPage = lazy(() => import("@/components/pages/guest/ProductDetailPage"));
+const CheckoutPage = lazy(() => import("@/components/pages/user/CheckoutPage"));
+const UserDashboardPage = lazy(() => import("@/components/pages/user/UserDashboardPage"));
 const ChatPage = lazy(() => import("@/components/pages/user/ChatPage"));
-const AdminDashboardPage = lazy(
-  () => import("@/components/pages/admin/AdminDashboardPage"),
-);
-const AddProductPage = lazy(
-  () => import("@/components/pages/user/AddProductPage"),
-);
+const AdminDashboardPage = lazy(() => import("@/components/pages/admin/AdminDashboardPage"));
+const AddProductPage = lazy(() => import("@/components/pages/user/AddProductPage"));
 const CartPage = lazy(() => import("@/components/pages/user/CartPage"));
-const OrdersListPage = lazy(
-  () => import("@/components/pages/user/OrdersListPage"),
-);
-const OrderDetailPage = lazy(
-  () => import("@/components/pages/user/OrderDetailPage"),
-);
+const OrdersListPage = lazy(() => import("@/components/pages/user/OrdersListPage"));
+const OrderDetailPage = lazy(() => import("@/components/pages/user/OrderDetailPage"));
 const RatingPage = lazy(() => import("@/components/pages/user/RatingPage"));
-const UserNotificationsPage = lazy(
-  () => import("@/components/pages/user/UserNotificationsPage"),
-);
-const AdminNotificationsPage = lazy(
-  () => import("@/components/pages/admin/AdminNotificationsPage"),
-);
-const CheckoutSuccessPage = lazy(
-  () => import("@/components/pages/user/CheckoutSuccessPage"),
-);
-const EmailVerificationPage = lazy(
-  () => import("@/components/pages/guest/EmailVerificationPage"),
-);
-const SearchResultsPage = lazy(
-  () => import("@/components/pages/guest/SearchResultsPage"),
-);
-const ProfilePage = lazy(
-  () => import("@/components/pages/user/ProfilePage"),
-);
-const FavoritesPage = lazy(
-  () => import("@/components/pages/user/FavoritesPage"),
-);
+const UserNotificationsPage = lazy(() => import("@/components/pages/user/UserNotificationsPage"));
+const AdminNotificationsPage = lazy(() => import("@/components/pages/admin/AdminNotificationsPage"));
+const CheckoutSuccessPage = lazy(() => import("@/components/pages/user/CheckoutSuccessPage"));
+const EmailVerificationPage = lazy(() => import("@/components/pages/guest/EmailVerificationPage"));
+const SearchResultsPage = lazy(() => import("@/components/pages/guest/SearchResultsPage"));
+const ProfilePage = lazy(() => import("@/components/pages/user/ProfilePage"));
+const FavoritesPage = lazy(() => import("@/components/pages/user/FavoritesPage"));
 
 type AppRoutesProps = {
   onNavigate: NavigateHandler;
@@ -202,10 +153,10 @@ function PublicRoute({
   const location = useLocation();
   if (isLoggedIn && !allowLoggedIn) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
+    // ✅ Dari dev-abdu: cegah redirect ke protected route setelah login
     let previousPath =
       stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
-    
-    // If previousPath is a protected route (auth page), redirect to landing instead
+
     const protectedRoutes = new Set([
       "/add-product",
       "/my-products",
@@ -221,11 +172,15 @@ function PublicRoute({
       "/admin",
       "/admin-notifications",
     ]);
-    
-    if (protectedRoutes.has(previousPath) || previousPath.startsWith("/add-product") || previousPath.startsWith("/edit-product")) {
+
+    if (
+      protectedRoutes.has(previousPath) ||
+      previousPath.startsWith("/add-product") ||
+      previousPath.startsWith("/edit-product")
+    ) {
       previousPath = "/";
     }
-    
+
     return <Navigate to={previousPath} replace />;
   }
   return element;
@@ -265,8 +220,7 @@ export default function AppRoutes({
     }
   }, [location.pathname, location.search]);
 
-  // Scroll to top when route changes (ensures smooth page transition without flash)
-  // Disable browser automatic scroll restoration and handle manually for consistent behavior
+  // ✅ Dari dev-abdu: scroll restoration
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -274,7 +228,6 @@ export default function AppRoutes({
   }, []);
 
   useEffect(() => {
-    // Use requestAnimationFrame to ensure scroll happens after browser repaint
     const frame = requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
@@ -312,10 +265,7 @@ export default function AppRoutes({
             <PublicRoute
               isLoggedIn={isLoggedIn}
               element={
-                <RegisterPage
-                  onNavigate={onNavigate}
-                  onLogin={onLogin}
-                />
+                <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />
               }
             />
           }
@@ -325,9 +275,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
-              element={
-                <ForgotPasswordPage onNavigate={onNavigate} />
-              }
+              element={<ForgotPasswordPage onNavigate={onNavigate} />}
             />
           }
         />
@@ -370,6 +318,15 @@ export default function AppRoutes({
                   email={registeredEmail || undefined}
                 />
               }
+            />
+          }
+        />
+        <Route
+          path="/profile/:id?"
+          element={
+            <ProfilePage
+              onNavigate={onNavigate}
+              userId={currentId || undefined}
             />
           }
         />
@@ -534,9 +491,7 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="dashboard"
-                  onSellerProductCountChange={
-                    onSellerProductCountChange
-                  }
+                  onSellerProductCountChange={onSellerProductCountChange}
                   currentUser={currentUser}
                 />
               }
@@ -552,9 +507,7 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="my-products"
-                  onSellerProductCountChange={
-                    onSellerProductCountChange
-                  }
+                  onSellerProductCountChange={onSellerProductCountChange}
                   currentUser={currentUser}
                 />
               }
@@ -570,9 +523,7 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="wallet"
-                  onSellerProductCountChange={
-                    onSellerProductCountChange
-                  }
+                  onSellerProductCountChange={onSellerProductCountChange}
                   currentUser={currentUser}
                 />
               }
@@ -588,9 +539,7 @@ export default function AppRoutes({
                 <UserDashboardPage
                   onNavigate={onNavigate}
                   currentPage="settings"
-                  onSellerProductCountChange={
-                    onSellerProductCountChange
-                  }
+                  onSellerProductCountChange={onSellerProductCountChange}
                   currentUser={currentUser}
                 />
               }
@@ -662,18 +611,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
-              element={
-                <UserNotificationsPage onNavigate={onNavigate} />
-              }
-            />
-          }
-        />
-        <Route
-          path="/profile/:id?"
-          element={
-            <ProfilePage
-              onNavigate={onNavigate}
-              userId={currentId || undefined}
+              element={<UserNotificationsPage onNavigate={onNavigate} />}
             />
           }
         />
@@ -694,9 +632,7 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={
-                <AdminDashboardPage onNavigate={onNavigate} />
-              }
+              element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
           }
         />
@@ -706,9 +642,7 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={
-                <AdminDashboardPage onNavigate={onNavigate} />
-              }
+              element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
           }
         />
@@ -718,18 +652,13 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isAdmin={currentUser?.role === "admin"}
-              element={
-                <AdminNotificationsPage onNavigate={onNavigate} />
-              }
+              element={<AdminNotificationsPage onNavigate={onNavigate} />}
             />
           }
         />
 
         {/* ── FALLBACK ── */}
-        <Route
-          path="*"
-          element={<NotFoundPage onNavigate={onNavigate} />}
-        />
+        <Route path="*" element={<NotFoundPage onNavigate={onNavigate} />} />
       </Routes>
     </Suspense>
   );

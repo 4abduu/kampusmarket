@@ -10,7 +10,6 @@ import {
   CatalogPage,
   ServicesPage,
   ServiceDetailPage,
-  ProductDetailPage,
   SearchResultsPage,
 } from "@/components/pages/guest";
 import {
@@ -92,22 +91,15 @@ export function renderPage(params: RenderPageParams) {
       );
     case "email-verification":
       if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
-      return <EmailVerificationPage onNavigate={onNavigate} email={registeredEmail || undefined} />;
+      return <EmailVerificationPage onNavigate={onNavigate} email={registeredEmail ?? undefined} />;
     case "catalog":
-      return <CatalogPage onNavigate={onNavigate} initialCategory={selectedCategory} />;
+      return <CatalogPage onNavigate={onNavigate} initialCategory={selectedCategory ?? undefined} />;
     case "services":
-      return <ServicesPage onNavigate={onNavigate} initialCategory={selectedCategory} />;
+      return <ServicesPage onNavigate={onNavigate} initialCategory={selectedCategory ?? undefined} />;
     case "product":
-      return (
-        <ProductDetailPage
-          onNavigate={onNavigate}
-          productId={selectedProductId || "p1"}
-          isLoggedIn={isLoggedIn}
-          onLogin={onLogin}
-        />
-      );
+      return <div>Legacy renderPage not supported - use AppRoutes</div>;
     case "service":
-      return <ServiceDetailPage onNavigate={onNavigate} serviceId={selectedProductId || "s1"} isLoggedIn={isLoggedIn} />;
+      return <ServiceDetailPage onNavigate={onNavigate} serviceId={(selectedProductId || "s1") as string} isLoggedIn={isLoggedIn} />;
     case "checkout":
       return <CheckoutPage onNavigate={onNavigate} productId={selectedProductId || undefined} />;
     case "checkout-success":

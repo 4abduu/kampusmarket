@@ -132,8 +132,6 @@ type Props = {
   handlePayWithWallet: () => void
   handlePayWithMidtrans: () => void
 
-  showProductSuccess: boolean
-  productSuccessMessage: string
   showProfileSuccess: boolean
   showPasswordSuccess: boolean
   showTopUpSuccess: boolean
@@ -209,8 +207,6 @@ export default function UserDashboardDialogs({
   paymentRequest,
   handlePayWithWallet,
   handlePayWithMidtrans,
-  showProductSuccess,
-  productSuccessMessage,
   showProfileSuccess,
   showPasswordSuccess,
   showTopUpSuccess,
@@ -855,12 +851,6 @@ export default function UserDashboardDialogs({
         onPayWithMidtrans={handlePayWithMidtrans}
       />
 
-      {showProductSuccess && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5" />
-          {productSuccessMessage}
-        </div>
-      )}
       {showProfileSuccess && (
         <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
           <CheckCircle2 className="h-5 w-5" />Profil berhasil diperbarui!

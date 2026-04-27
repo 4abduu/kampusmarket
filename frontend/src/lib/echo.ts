@@ -72,6 +72,7 @@ export function getEcho(): Echo<'reverb'> {
     // FIX: Hapus authEndpoint (mengarah ke Vite, bukan Laravel).
     // Custom authorizer pakai axios → request ke http://localhost:8000/api/broadcasting/auth
     // dengan credentials yang benar (cookie + Authorization header).
+    // @ts-expect-error Callback signature mismatch between Reverb and Pusher.js types
     authorizer: makeAuthorizer,
   });
 

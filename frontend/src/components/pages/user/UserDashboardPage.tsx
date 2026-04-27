@@ -278,8 +278,6 @@ export default function UserDashboardPage({
         paymentRequest={orderActions.paymentRequest}
         handlePayWithWallet={orderActions.handlePayWithWallet}
         handlePayWithMidtrans={orderActions.handlePayWithMidtrans}
-        showProductSuccess={products.showProductSuccess}
-        productSuccessMessage={products.productSuccessMessage}
         showProfileSuccess={settings.showProfileSuccess}
         showPasswordSuccess={settings.showPasswordSuccess}
         showTopUpSuccess={wallet.showTopUpSuccess}

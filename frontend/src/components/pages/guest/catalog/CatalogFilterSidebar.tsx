@@ -13,7 +13,6 @@ export default function CatalogFilterSidebar({
   handleConditionChange,
   tempPrice,
   setTempPrice,
-  priceRange,
   setPriceRange,
   onResetFilters,
   categories,

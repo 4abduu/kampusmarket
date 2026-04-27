@@ -5,8 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, Package } from "lucide-react";
 import {
   categories,
-  mockProducts,
-  mockServices,
   mockUsers,
   serviceCategories,
   type User,
@@ -30,10 +28,6 @@ type ProductSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
 type ServiceSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
 type ActiveTab = "products" | "services" | "reviews";
 
-type ProductItem = (typeof mockProducts)[number];
-type ServiceItem = (typeof mockServices)[number];
-type UserServiceItem = ProductItem | ServiceItem;
-
 export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -43,14 +37,12 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
   useEffect(() => {
     setLoading(true);
     if (userId) {
-      // Fetch public user profile and their products
       const loadPublicProfile = async () => {
         try {
           const user = await userApi.getPublicProfile(userId);
           setProfileUser(user);
           setAuthUser(null);
 
-          // Fetch user's products
           try {
             const productsResponse = await getProductsBySeller(userId);
             setUserProducts(productsResponse?.data || []);
@@ -68,7 +60,6 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
       };
       void loadPublicProfile();
     } else {
-      // Fetch current user profile
       const loadAuthUser = async () => {
         try {
           const user = await userApi.me();
@@ -87,6 +78,7 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
     }
   }, [userId]);
 
+  // ✅ Dari dev-abdu: pakai data API, bukan mock
   const user = profileUser || authUser || mockUsers[0];
   const isOwnProfile = !userId && !!authUser;
 
@@ -103,7 +95,7 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
   ]);
   const [serviceSortBy, setServiceSortBy] = useState<ServiceSortBy>("terbaru");
 
-  // Use fetched products instead of mock data
+  // ✅ Dari dev-abdu: pakai fetched products, bukan mock filter
   const barangProducts = useMemo(() => {
     return userProducts.filter((p) => p.type === "barang");
   }, [userProducts]);
@@ -113,23 +105,22 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
   }, [userProducts]);
 
   const userServices = useMemo(() => {
-    // Combine fetched jasa products with mock services for now
     return [...jasaProducts] as any[];
   }, [jasaProducts]);
 
   const totalSold = barangProducts.reduce(
-    (acc, p) => acc + (p.sold_count || p.soldCount || 0),
+    (acc, p) => acc + (p.soldCount || 0),
     0,
   );
   const avgRating = user.rating ?? 0;
-  const totalReviews = user.review_count || user.reviewCount || 0;
-  const memberSince = user.created_at || user.createdAt || "September 2024";
+  const totalReviews = user.reviewCount || 0;
+  const memberSince = user.createdAt || "September 2024";
 
   const filteredProducts = useMemo(() => {
     const filtered = [...barangProducts]
       .filter((p) => {
         if (!productCategory) return true;
-        const catId = p.category_id || p.categoryId || p.category?.toLowerCase();
+        const catId = p.categoryId || p.category?.toLowerCase();
         return (
           catId === productCategory ||
           p.category?.toLowerCase() === productCategory.toLowerCase()
@@ -144,13 +135,15 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
       case "terbaru":
         filtered.sort(
           (a, b) =>
-            new Date(b.created_at || b.createdAt).getTime() -
-            new Date(a.created_at || a.createdAt).getTime(),
+            new Date(b.createdAt || "").getTime() -
+            new Date(a.createdAt || "").getTime(),
         );
         break;
       case "terpopuler":
         filtered.sort(
-          (a, b) => (b.sold_count || b.soldCount || 0) - (a.sold_count || a.soldCount || 0),
+          (a, b) =>
+            (b.soldCount || 0) -
+            (a.soldCount || 0),
         );
         break;
       case "termurah":
