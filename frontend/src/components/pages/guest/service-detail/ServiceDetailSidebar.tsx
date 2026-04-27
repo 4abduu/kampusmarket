@@ -188,7 +188,17 @@ export default function ServiceDetailSidebar({
 
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-4">
+          <div 
+            className="flex items-center gap-3 mb-4 cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={() => service.seller?.id && onNavigate("profile", service.seller.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if ((e.key === "Enter" || e.key === " ") && service.seller?.id) {
+                onNavigate("profile", service.seller.id);
+              }
+            }}
+          >
             <Avatar className="h-12 w-12">
               <AvatarFallback className="bg-primary-100 text-primary-700">
                 {service.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "U"}

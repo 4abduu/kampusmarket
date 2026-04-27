@@ -216,25 +216,39 @@ export default function ProfileServicesTab({
             const priceMin = service.priceMin ?? basePrice;
             const priceMax = service.priceMax ?? basePrice;
             const soldCount = service.soldCount ?? service.orderCount ?? 0;
+            const isFull = service.availability_status === "full" || service.availabilityStatus === "full";
+            const isBusy = service.availability_status === "busy" || service.availabilityStatus === "busy";
 
             return (
               <Card
                 key={service.id}
-                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isFull ? "opacity-75" : ""}`}
                 onClick={() => onNavigate("service", service.id)}
               >
-                <div className="aspect-video bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 flex items-center justify-center">
+                <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 flex items-center justify-center">
                   <Briefcase className="h-16 w-16 text-primary-600/30" />
+                  {isFull && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <Badge className="bg-orange-600 text-lg px-4 py-2">PENUH</Badge>
+                    </div>
+                  )}
                 </div>
                 <CardContent className="p-4">
-                  <Badge variant="outline" className="mb-2 text-xs">
-                    {service.category}
-                  </Badge>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-xs">
+                      {service.category}
+                    </Badge>
+                    {isBusy && (
+                      <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30">
+                        Sibuk
+                      </Badge>
+                    )}
+                  </div>
                   <h3 className="font-medium line-clamp-2 mb-2">
                     {service.title}
                   </h3>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-primary-600 text-sm">
+                    <p className={`font-bold text-sm ${isFull ? "text-muted-foreground line-through" : "text-primary-600"}`}>
                       {priceMin === priceMax || !priceMax
                         ? formatPrice(priceMin)
                         : `${formatPrice(priceMin)} - ${formatPrice(priceMax)}`}

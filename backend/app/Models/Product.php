@@ -225,12 +225,12 @@ class Product extends Model
     public function getFormattedPrice(): string
     {
         if ($this->price_type === PriceType::RANGE) {
-            return 'Rp ' . number_format($this->price_min / 100, 0, ',', '.') 
-                . ' - Rp ' . number_format($this->price_max / 100, 0, ',', '.');
+            return 'Rp ' . number_format($this->price_min ?? 0, 0, ',', '.') 
+                . ' - Rp ' . number_format($this->price_max ?? 0, 0, ',', '.');
         } elseif ($this->price_type === PriceType::STARTING) {
-            return 'Mulai Rp ' . number_format($this->price / 100, 0, ',', '.');
+            return 'Mulai Rp ' . number_format($this->price, 0, ',', '.');
         }
-        return 'Rp ' . number_format($this->price / 100, 0, ',', '.');
+        return 'Rp ' . number_format($this->price, 0, ',', '.');
     }
 
     /**

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star } from "lucide-react";
+import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star, Settings, Edit } from "lucide-react";
 
 interface ProfileUserInfo {
   id: string;
@@ -15,6 +15,7 @@ interface ProfileUserInfo {
 
 interface ProfileSidebarProps {
   user: ProfileUserInfo;
+  isOwnProfile?: boolean;
   totalSold: number;
   avgRating: number;
   totalReviews: number;
@@ -25,6 +26,7 @@ interface ProfileSidebarProps {
 
 export default function ProfileSidebar({
   user,
+  isOwnProfile = false,
   totalSold,
   avgRating,
   totalReviews,
@@ -77,11 +79,32 @@ export default function ProfileSidebar({
           </div>
 
           <div className="space-y-2">
-            <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("chat", { userId: user.id })}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Hubungi Penjual
-            </Button>
-            <Button variant="outline" className="w-full" onClick={() => onNavigate("catalog")}>Lihat Semua Produk</Button>
+            {isOwnProfile ? (
+              <>
+                <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("edit-profile")}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profil
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => onNavigate("dashboard")}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => onNavigate("settings")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Pengaturan
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("chat", { userId: user.id })}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Hubungi Penjual
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => onNavigate("catalog")}>
+                  Lihat Semua Produk
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

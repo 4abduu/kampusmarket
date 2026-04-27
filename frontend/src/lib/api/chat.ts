@@ -17,7 +17,7 @@ export interface StartChatPayload {
 export interface SendMessagePayload {
   content?: string;
   type: 'text' | 'offer' | 'image' | 'file';
-  offerPrice?: number;    // dalam Rupiah (bukan cent) — backend akan *100
+  offerPrice?: number;    // dalam Rupiah (direct IDR, bukan cent)
   imageUrls?: string[];
   fileUrl?: string;
 }

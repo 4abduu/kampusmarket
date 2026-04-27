@@ -202,8 +202,30 @@ function PublicRoute({
   const location = useLocation();
   if (isLoggedIn && !allowLoggedIn) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
-    const previousPath =
+    let previousPath =
       stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
+    
+    // If previousPath is a protected route (auth page), redirect to landing instead
+    const protectedRoutes = new Set([
+      "/add-product",
+      "/my-products",
+      "/dashboard",
+      "/chat",
+      "/cart",
+      "/orders",
+      "/notifications",
+      "/wallet",
+      "/settings",
+      "/profile",
+      "/favorites",
+      "/admin",
+      "/admin-notifications",
+    ]);
+    
+    if (protectedRoutes.has(previousPath) || previousPath.startsWith("/add-product") || previousPath.startsWith("/edit-product")) {
+      previousPath = "/";
+    }
+    
     return <Navigate to={previousPath} replace />;
   }
   return element;
@@ -241,6 +263,22 @@ export default function AppRoutes({
         location.pathname + location.search,
       );
     }
+  }, [location.pathname, location.search]);
+
+  // Scroll to top when route changes (ensures smooth page transition without flash)
+  // Disable browser automatic scroll restoration and handle manually for consistent behavior
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure scroll happens after browser repaint
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [location.pathname, location.search]);
 
   return (
@@ -633,14 +671,9 @@ export default function AppRoutes({
         <Route
           path="/profile/:id?"
           element={
-            <ProtectedRoute
-              isLoggedIn={isLoggedIn}
-              element={
-                <ProfilePage
-                  onNavigate={onNavigate}
-                  userId={currentId || undefined}
-                />
-              }
+            <ProfilePage
+              onNavigate={onNavigate}
+              userId={currentId || undefined}
             />
           }
         />

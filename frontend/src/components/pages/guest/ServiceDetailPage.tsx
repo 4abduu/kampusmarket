@@ -135,7 +135,7 @@ export default function ServiceDetailPage({
         </div>
       )}
 
-      <ServiceDetailTabsPanel description={service.description} />
+      <ServiceDetailTabsPanel description={service.description} service={service} />
     </>
   );
 

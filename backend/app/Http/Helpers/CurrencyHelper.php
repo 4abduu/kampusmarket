@@ -5,31 +5,32 @@ namespace App\Http\Helpers;
 /**
  * Helper untuk konversi mata uang
  * 
- * Semua harga di database disimpan dalam CENT (Rupiah * 100)
- * untuk menghindari floating point errors.
+ * Semua harga di database disimpan dalam IDR langsung (bukan cent).
  * 
  * Contoh:
- * - Rp 100.000 = 10.000.000 cent
- * - Rp 1.500 = 150.000 cent
+ * - Rp 100.000 = 100000 IDR
+ * - Rp 1.500 = 1500 IDR
  */
 class CurrencyHelper
 {
     /**
-     * Konversi Rupiah ke Cent
-     * Contoh: 100000 Rupiah → 10000000 Cent
+     * Convert Rupiah (tidak ada konversi, hanya untuk kompatibilitas)
+     * Contoh: 100000 Rupiah → 100000 IDR
      */
     public static function toCent(int $rupiah): int
     {
-        return $rupiah * 100;
+        // DEPRECATED: Harga sudah disimpan langsung dalam IDR, tidak perlu dikali 100
+        return $rupiah;
     }
 
     /**
-     * Konversi Cent ke Rupiah
-     * Contoh: 10000000 Cent → 100000 Rupiah
+     * Convert dari database value (tidak ada konversi, hanya untuk kompatibilitas)
+     * Contoh: 100000 IDR → 100000 Rupiah
      */
-    public static function toRupiah(int $cent): int
+    public static function toRupiah(int $idr): int
     {
-        return (int) ($cent / 100);
+        // DEPRECATED: Harga sudah dalam IDR, tidak perlu dibagi 100
+        return $idr;
     }
 
     /**
@@ -42,12 +43,12 @@ class CurrencyHelper
     }
 
     /**
-     * Format dari Cent ke string Rupiah
-     * Contoh: 10000000 Cent → "Rp 100.000"
+     * Format dari database (tidak ada konversi)
+     * Contoh: 100000 IDR → "Rp 100.000"
      */
-    public static function formatFromCent(int $cent): string
+    public static function formatFromCent(int $idr): string
     {
-        return self::format(self::toRupiah($cent));
+        return self::format($idr);
     }
 
     /**

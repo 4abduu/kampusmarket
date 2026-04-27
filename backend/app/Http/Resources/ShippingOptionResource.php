@@ -20,8 +20,8 @@ class ShippingOptionResource extends JsonResource
         return [
             'type' => $this->type->value ?? $this->type,
             'label' => $this->label,
-            'price' => (int) ($this->price / 100), // Convert from cent to Rupiah
-            'priceMax' => $this->price_max ? (int) ($this->price_max / 100) : null,
+            'price' => $this->price,  // Already in IDR
+            'priceMax' => $this->price_max,
         ];
     }
 }
