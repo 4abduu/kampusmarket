@@ -152,17 +152,24 @@ export default function ProductDetailSidebar({
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
                 className="w-20 text-center"
+                disabled={product.stock === 0}
               />
-              <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}>+</Button>
-              <span className="text-sm text-muted-foreground">Stok: {product.stock}</span>
+              <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={product.stock === 0}>+</Button>
+              <span className={`text-sm ${product.stock === 0 ? "text-red-600 font-bold" : "text-muted-foreground"}`}>
+                {product.stock === 0 ? "HABIS" : `Stok: ${product.stock}`}
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button className="bg-primary-600 hover:bg-primary-700" onClick={() => onAction(() => onNavigate("checkout", product.id))}>
-              Beli Sekarang
+            <Button 
+              className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+              onClick={() => onAction(() => onNavigate("checkout", product.id))}
+              disabled={product.stock === 0}
+            >
+              {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
             </Button>
-            <Button variant="outline" onClick={() => onAction(() => onNavigate("cart"))}>+ Keranjang</Button>
+            <Button variant="outline" onClick={() => onAction(() => onNavigate("cart"))} disabled={product.stock === 0}>+ Keranjang</Button>
           </div>
 
           {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}

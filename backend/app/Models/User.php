@@ -126,4 +126,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(Withdrawal::class);
     }
+
+    // ── Methods ────────────────────────────────────────────────────────────
+
+    /**
+     * Check if user is allowed to sell products/services.
+     * Users must be verified and not banned to sell.
+     */
+    public function canSell(): bool
+    {
+        return $this->is_verified && !$this->is_banned;
+    }
 }

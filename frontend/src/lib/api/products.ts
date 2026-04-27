@@ -199,7 +199,7 @@ export const productsApi = {
   /**
    * Create a new product (authenticated).
    */
-  async createProduct(data: Partial<Product>): Promise<Product> {
+  async createProduct(data: Partial<Product> & { images?: string[] }): Promise<Product> {
     return request<Product>(`${API_BASE_URL}/products`, {
       method: "POST",
       body: JSON.stringify(data),
@@ -209,7 +209,7 @@ export const productsApi = {
   /**
    * Update product (authenticated).
    */
-  async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+  async updateProduct(id: string, data: Partial<Product> & { images?: string[] }): Promise<Product> {
     return request<Product>(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
@@ -249,3 +249,5 @@ export const searchProducts = (query: string, page?: number) => productsApi.sear
 export const getProductsByCategory = (category: string, page?: number) => productsApi.getProductsByCategory(category, page);
 export const getProductsBySeller = (sellerId: string, page?: number) => productsApi.getProductsBySeller(sellerId, page);
 export const getMyProducts = (params?: any) => productsApi.getMyProducts(params);
+
+export const uploadProductImages = (files: File[]) => import('@/lib/api/images').then(m => m.uploadImages(files));

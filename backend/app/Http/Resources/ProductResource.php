@@ -24,11 +24,7 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Convert price from cent to Rupiah
-        $priceInRupiah = (int) ($this->price / 100);
-        $originalPriceInRupiah = $this->original_price ? (int) ($this->original_price / 100) : null;
-        $priceMinInRupiah = $this->price_min ? (int) ($this->price_min / 100) : null;
-        $priceMaxInRupiah = $this->price_max ? (int) ($this->price_max / 100) : null;
+        // Prices are now stored directly in IDR (no conversion needed)
         $shippingOptions = $this->relationLoaded('shippingOptions') ? $this->shippingOptions : collect();
 
         $isOnline = $shippingOptions->contains(fn ($opt) => ($opt->type->value ?? $opt->type) === 'online');
@@ -39,8 +35,8 @@ class ProductResource extends JsonResource
         $isPickup = $shippingOptions->contains(fn ($opt) => in_array(($opt->type->value ?? $opt->type), ['pickup', 'gratis'], true));
         $deliveryOption = $shippingOptions->first(fn ($opt) => ($opt->type->value ?? $opt->type) === 'delivery');
         $isDelivery = !is_null($deliveryOption);
-        $deliveryFeeMin = $deliveryOption?->price ? (int) ($deliveryOption->price / 100) : null;
-        $deliveryFeeMax = $deliveryOption?->price_max ? (int) ($deliveryOption->price_max / 100) : null;
+        $deliveryFeeMin = $deliveryOption?->price;
+        $deliveryFeeMax = $deliveryOption?->price_max;
 
         return [
             // Primary identifier
@@ -51,11 +47,11 @@ class ProductResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             
-            // Pricing (convert from cent to Rupiah)
-            'price' => $priceInRupiah,
-            'originalPrice' => $originalPriceInRupiah,
-            'priceMin' => $priceMinInRupiah,
-            'priceMax' => $priceMaxInRupiah,
+            // Pricing (stored directly in IDR)
+            'price' => $this->price,
+            'originalPrice' => $this->original_price,
+            'priceMin' => $this->price_min,
+            'priceMax' => $this->price_max,
             'priceType' => $this->price_type->value ?? 'fixed',
             
             // Product type

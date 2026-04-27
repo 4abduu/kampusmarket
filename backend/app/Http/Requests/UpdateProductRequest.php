@@ -141,35 +141,52 @@ class UpdateProductRequest extends FormRequest
             $this->merge($normalized);
         }
 
-        // Convert price from Rupiah to cent
-        if ($this->has('price')) {
-            $this->merge([
-                'price' => $this->price * 100,
-            ]);
-        }
-
-        if ($this->has('originalPrice') && $this->originalPrice) {
-            $this->merge([
-                'original_price' => $this->originalPrice * 100,
-            ]);
-        }
-
-        if ($this->has('priceMin')) {
-            $this->merge([
-                'price_min' => $this->priceMin * 100,
-            ]);
-        }
-
-        if ($this->has('priceMax')) {
-            $this->merge([
-                'price_max' => $this->priceMax * 100,
-            ]);
-        }
-
         if ($this->has('categoryId')) {
             $this->merge([
                 'category_id' => $this->categoryId,
             ]);
         }
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            // Get product type
+            $productType = $this->product?->type ?? $this->type;
+            $stock = $this->has('stock') ? $this->stock : ($this->product?->stock ?? null);
+            $status = $this->has('status') ? $this->status : null;
+
+            // Only validate if status or stock is being updated
+            if ($status || $this->has('stock')) {
+                // For barang products
+                if ($productType === 'barang') {
+                    // Rule 1: Status 'sold_out' must have stock = 0
+                    if ($status === 'sold_out' && $stock !== 0 && $stock !== '0') {
+                        $validator->errors()->add('status', 'Status "Terjual" hanya bisa digunakan ketika stok = 0. Silakan kurangi stok menjadi 0 terlebih dahulu.');
+                    }
+
+                    // Rule 2: Status 'active' must have stock > 0
+                    if ($status === 'active' && ($stock === 0 || $stock === '0')) {
+                        $validator->errors()->add('status', 'Status "Aktif" hanya bisa digunakan ketika stok > 0.');
+                    }
+
+                    // Rule 3: If stock is 0 but status is active, reject
+                    if ($this->has('stock') && $stock === 0 && (!$status || $status === 'active')) {
+                        $validator->errors()->add('stock', 'Ketika stok = 0, status harus diubah menjadi "Terjual" (sold_out).');
+                    }
+
+                    // Rule 4: Allow stock > 0 with status = draft or archived (not public)
+                    if ($status && in_array($status, ['draft', 'archived'])) {
+                        // These statuses are allowed regardless of stock
+                        return;
+                    }
+                }
+            }
+        });
+
+        return $validator;
     }
 }

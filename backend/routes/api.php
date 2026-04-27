@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ImageController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\WalletController;
@@ -117,6 +118,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/my/products', [ProductController::class, 'myProducts']);
     Route::post('/products', [ProductController::class, 'store']);
+
+    // Image upload (untuk produk baru maupun edit)
+    // Simpan lokal di storage/app/public/products/ (jalankan: php artisan storage:link)
+    Route::post('/images/upload', [ImageController::class, 'upload']);
+    Route::delete('/images', [ImageController::class, 'delete']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::put('/products/{id}/status', [ProductController::class, 'updateStatus']);

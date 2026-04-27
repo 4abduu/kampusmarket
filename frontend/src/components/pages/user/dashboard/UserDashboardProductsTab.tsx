@@ -51,6 +51,35 @@ export default function UserDashboardProductsTab({
           </TabsList>
         </Tabs>
 
+        {filteredProducts.length === 0 ? (
+          <div className="rounded-md border p-12 text-center">
+            <div className="flex justify-center mb-4">
+              {productFilter === "jasa" ? (
+                <Briefcase className="h-12 w-12 text-muted-foreground/40" />
+              ) : (
+                <Package className="h-12 w-12 text-muted-foreground/40" />
+              )}
+            </div>
+            <h3 className="font-semibold text-lg mb-2">
+              {productFilter === "jasa" 
+                ? "Belum ada layanan jasa" 
+                : productFilter === "barang" 
+                ? "Belum ada produk" 
+                : "Belum ada produk atau jasa"}
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              {productFilter === "jasa"
+                ? "Mulai tambahkan layanan jasa yang kamu tawarkan untuk menjangkau lebih banyak pelanggan."
+                : productFilter === "barang"
+                ? "Mulai tambahkan produk yang kamu jual untuk menjangkau lebih banyak pembeli."
+                : "Mulai tambahkan produk atau jasa untuk memulai penjualan."}
+            </p>
+            <Button className="bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("add-product")}>
+              <Plus className="h-4 w-4 mr-2" />
+              {productFilter === "jasa" ? "Tambah Jasa" : "Tambah Produk"}
+            </Button>
+          </div>
+        ) : (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -64,19 +93,28 @@ export default function UserDashboardProductsTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {productFilter === "jasa" ? "Belum ada jasa" : productFilter === "barang" ? "Belum ada produk" : "Belum ada produk atau jasa"}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
+              {filteredProducts.map((product) => (
+                <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded flex items-center justify-center ${product.type === "jasa" ? "bg-secondary-100 dark:bg-secondary-900/30" : "bg-slate-100 dark:bg-slate-800"}`}>
-                          {product.type === "jasa" ? <Briefcase className="h-6 w-6 text-secondary-600" /> : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                        <div className="w-12 h-12 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                          {(() => {
+                            // Ambil URL gambar pertama dari berbagai format
+                            const imgs = (product as any).images
+                            const firstImg = Array.isArray(imgs)
+                              ? (typeof imgs[0] === "string" ? imgs[0] : imgs[0]?.url)
+                              : undefined
+                            return firstImg ? (
+                              <img src={firstImg} alt={product.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {product.type === "jasa"
+                                  ? <Briefcase className="h-6 w-6 text-secondary-600" />
+                                  : <Package className="h-6 w-6 text-muted-foreground/30" />
+                                }
+                              </div>
+                            )
+                          })()}
                         </div>
                         <div>
                           <p className="font-medium line-clamp-1">{product.title}</p>
@@ -138,11 +176,11 @@ export default function UserDashboardProductsTab({
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ))}
             </TableBody>
           </Table>
         </div>
+        )}
       </CardContent>
     </Card>
   )

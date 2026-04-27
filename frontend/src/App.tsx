@@ -170,6 +170,8 @@ function AppContent() {
     setIsLoggedIn(false);
     setUserRole(null);
     setShowSellerWelcome(false);
+    // Clear lastNonAuthPath to prevent redirect to protected pages
+    sessionStorage.removeItem("lastNonAuthPath");
     navigate("/");
   };
 

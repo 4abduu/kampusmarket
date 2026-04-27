@@ -138,4 +138,11 @@ export const userApi = {
       body: JSON.stringify(addressData),
     });
   },
+
+  /**
+   * Get public user profile by ID.
+   */
+  async getPublicProfile(userId: string): Promise<User> {
+    return request(`/api/users/${userId}`);
+  },
 };

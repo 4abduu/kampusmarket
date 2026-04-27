@@ -416,6 +416,11 @@ export default function Navbar({
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Pengaturan</span>
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => currentUser?.id && onNavigate("profile", currentUser.id)}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Lihat Profil Saya</span>
+                      </DropdownMenuItem>
                     </>
                   )}
                   

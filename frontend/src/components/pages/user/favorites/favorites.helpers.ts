@@ -1,11 +1,11 @@
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 
-export const centToRupiah = (cent: number) =>
+export const centToRupiah = (price: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
-  }).format(cent / 100);
+  }).format(price);  // No more division - prices are already in IDR
 
 export const getPriceLabel = (product: Product): string => {
   if (product.price_type === "range" && product.price_min && product.price_max) {

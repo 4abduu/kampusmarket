@@ -51,11 +51,11 @@ class ShippingOption extends Model
         }
 
         if ($this->price_max && $this->price_max !== $this->price) {
-            return 'Rp ' . number_format($this->price / 100, 0, ',', '.') 
-                . ' - Rp ' . number_format($this->price_max / 100, 0, ',', '.');
+            return 'Rp ' . number_format($this->price, 0, ',', '.') 
+                . ' - Rp ' . number_format($this->price_max, 0, ',', '.');
         }
 
-        return 'Rp ' . number_format($this->price / 100, 0, ',', '.');
+        return 'Rp ' . number_format($this->price, 0, ',', '.');
     }
 
     /**
@@ -66,8 +66,8 @@ class ShippingOption extends Model
         return [
             'type' => $this->type->value,
             'label' => $this->label,
-            'price' => (int) ($this->price / 100), // Convert cent to Rupiah
-            'priceMax' => $this->price_max ? (int) ($this->price_max / 100) : null,
+            'price' => $this->price,  // Already in IDR
+            'priceMax' => $this->price_max,
         ];
     }
 }

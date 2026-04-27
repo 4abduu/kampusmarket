@@ -126,7 +126,7 @@ export default function ServiceDetailPage({ onNavigate, serviceId, isLoggedIn }:
         </div>
       )}
 
-      <ServiceDetailTabsPanel description={service.description} />
+      <ServiceDetailTabsPanel description={service.description} service={service} />
     </>
   );
 

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Package, SlidersHorizontal, Star, X } from "lucide-react";
+import ProductImage from "@/components/common/ProductImage";
 
 interface CategoryItem {
   id: string;
@@ -43,8 +44,13 @@ interface ProfileProductsTabProps {
   productPriceRange: number[];
   setProductPriceRange: (value: number[]) => void;
   productSortBy: "terbaru" | "terpopuler" | "termurah" | "termahal";
-  setProductSortBy: (value: "terbaru" | "terpopuler" | "termurah" | "termahal") => void;
-  onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
+  setProductSortBy: (
+    value: "terbaru" | "terpopuler" | "termurah" | "termahal",
+  ) => void;
+  onNavigate: (
+    page: string,
+    data?: string | { userId?: string; productId?: string },
+  ) => void;
   formatPrice: (price: number) => string;
 }
 
@@ -63,7 +69,7 @@ export default function ProfileProductsTab({
 }: ProfileProductsTabProps) {
   const resetFilters = () => {
     setProductCategory(null);
-    setProductPriceRange([0, 1000000]);
+    setProductPriceRange([0, 20000000]);
     setProductSortBy("terbaru");
   };
 
@@ -80,7 +86,9 @@ export default function ProfileProductsTab({
           <SheetContent side="left" className="w-80 overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Filter Produk</SheetTitle>
-              <SheetDescription>Filter produk sesuai kebutuhanmu</SheetDescription>
+              <SheetDescription>
+                Filter produk sesuai kebutuhanmu
+              </SheetDescription>
             </SheetHeader>
             <div className="mt-6 space-y-6">
               <div>
@@ -115,16 +123,38 @@ export default function ProfileProductsTab({
               <div>
                 <h3 className="font-semibold mb-3">Rentang Harga</h3>
                 <div className="space-y-4">
-                  <Slider value={productPriceRange} onValueChange={setProductPriceRange} max={1000000} step={10000} className="w-full" />
+                  <Slider
+                    value={productPriceRange}
+                    onValueChange={setProductPriceRange}
+                    max={20000000}
+                    step={10000}
+                    className="w-full"
+                  />
                   <div className="flex items-center gap-2">
-                    <Input type="text" value={`Rp ${productPriceRange[0].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+                    <Input
+                      type="text"
+                      value={`Rp ${productPriceRange[0].toLocaleString("id-ID")}`}
+                      readOnly
+                      className="text-xs"
+                    />
                     <span>-</span>
-                    <Input type="text" value={`Rp ${productPriceRange[1].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+                    <Input
+                      type="text"
+                      value={`Rp ${productPriceRange[1].toLocaleString("id-ID")}`}
+                      readOnly
+                      className="text-xs"
+                    />
                   </div>
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" onClick={resetFilters}>Reset Filter</Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={resetFilters}
+              >
+                Reset Filter
+              </Button>
             </div>
           </SheetContent>
         </Sheet>
@@ -146,46 +176,74 @@ export default function ProfileProductsTab({
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge variant="secondary" className="gap-1">
             {categories.find((c) => c.id === productCategory)?.label}
-            <button onClick={() => setProductCategory(null)} aria-label="Hapus filter kategori" title="Hapus filter kategori">
+            <button
+              onClick={() => setProductCategory(null)}
+              aria-label="Hapus filter kategori"
+              title="Hapus filter kategori"
+            >
               <X className="h-3 w-3" />
             </button>
           </Badge>
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground mb-4">Menampilkan {filteredProducts.length} dari {totalProducts} produk</p>
+      <p className="text-sm text-muted-foreground mb-4">
+        Menampilkan {filteredProducts.length} dari {totalProducts} produk
+      </p>
 
       {filteredProducts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">
-              {totalProducts === 0 ? "User ini belum upload barang" : "Tidak ada produk ditemukan"}
+              {totalProducts === 0
+                ? "User ini belum upload barang"
+                : "Tidak ada produk ditemukan"}
             </p>
             {totalProducts > 0 && (
-              <Button variant="outline" className="mt-4" onClick={resetFilters}>Reset Filter</Button>
+              <Button variant="outline" className="mt-4" onClick={resetFilters}>
+                Reset Filter
+              </Button>
             )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product) => {
+            const isOutOfStock = product.stock === 0;
+            return (
             <Card
               key={product.id}
-              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isOutOfStock ? "opacity-75" : ""}`}
               onClick={() => onNavigate("product", product.id)}
             >
-              <div className="aspect-square bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground/30" />
+              <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                <ProductImage
+                  src={product.images?.[0]}
+                  alt={product.title}
+                  className="w-full h-full"
+                  imageClassName="w-full h-full object-cover"
+                />
+                {isOutOfStock && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Badge className="bg-red-600 text-lg px-4 py-2">HABIS</Badge>
+                  </div>
+                )}
               </div>
               <CardContent className="p-4">
-                <h3 className="font-medium line-clamp-2 mb-2">{product.title}</h3>
+                <h3 className="font-medium line-clamp-2 mb-2">
+                  {product.title}
+                </h3>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-bold text-primary-600">{formatPrice(product.price)}</p>
+                  <p className={`font-bold ${isOutOfStock ? "text-muted-foreground line-through" : "text-primary-600"}`}>
+                    {formatPrice(product.price)}
+                  </p>
                   {product.condition === "baru" ? (
                     <Badge className="bg-primary-500 text-xs">Baru</Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-xs">Bekas</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      Bekas
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -198,7 +256,8 @@ export default function ProfileProductsTab({
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </>

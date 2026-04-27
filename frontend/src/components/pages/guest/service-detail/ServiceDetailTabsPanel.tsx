@@ -1,20 +1,37 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star } from "lucide-react";
+import { Star, MapPin, Smartphone, Home } from "lucide-react";
 
 interface ServiceDetailTabsPanelProps {
   description?: string;
+  service?: any;
 }
 
-export default function ServiceDetailTabsPanel({ description }: ServiceDetailTabsPanelProps) {
+export default function ServiceDetailTabsPanel({ description, service }: ServiceDetailTabsPanelProps) {
+  const shippingOptions = service?.shippingOptions || [];
+
+  const getServiceIcon = (type: string) => {
+    switch (type) {
+      case "online":
+        return <Smartphone className="h-5 w-5 text-muted-foreground" />;
+      case "onsite":
+        return <MapPin className="h-5 w-5 text-muted-foreground" />;
+      case "home_service":
+        return <Home className="h-5 w-5 text-muted-foreground" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card>
       <Tabs defaultValue="description">
         <CardHeader className="pb-0">
           <TabsList className="w-full">
             <TabsTrigger value="description" className="flex-1">Deskripsi</TabsTrigger>
-            <TabsTrigger value="terms" className="flex-1">Syarat & Ketentuan</TabsTrigger>
+            <TabsTrigger value="methods" className="flex-1">Metode Layanan</TabsTrigger>
             <TabsTrigger value="reviews" className="flex-1">Ulasan</TabsTrigger>
           </TabsList>
         </CardHeader>
@@ -25,22 +42,36 @@ export default function ServiceDetailTabsPanel({ description }: ServiceDetailTab
             </div>
           </TabsContent>
 
-          <TabsContent value="terms" className="mt-0">
+          <TabsContent value="methods" className="mt-0">
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
-                <h4 className="font-medium mb-2">Syarat Pemesanan</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Bayar di muka atau via escrow</li>
-                  <li>Komunikasi via chat untuk detail</li>
-                  <li>Revisi sesuai kesepakatan</li>
-                </ul>
-              </div>
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
-                <h4 className="font-medium mb-2">Kebijakan Pembatalan</h4>
-                <p className="text-sm text-muted-foreground">
-                  Pembatalan dapat dilakukan sebelum pengerjaan dimulai dengan pengembalian dana penuh.
-                </p>
-              </div>
+              {shippingOptions && shippingOptions.length > 0 ? (
+                shippingOptions.map((option: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                    <div className="flex items-center gap-3">
+                      {option.type === "online" ? (
+                        <Badge className="bg-primary-500">GRATIS</Badge>
+                      ) : (
+                        getServiceIcon(option.type)
+                      )}
+                      <div>
+                        <p className="font-medium">{option.label}</p>
+                        {option.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {option.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="font-medium">
+                      {option.type === "online" || option.price === 0 ? "Gratis" : `Rp ${option.price.toLocaleString("id-ID")}`}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800 text-center">
+                  <p className="text-sm text-muted-foreground">Belum ada metode layanan tersedia</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

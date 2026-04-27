@@ -46,8 +46,13 @@ interface ProfileServicesTabProps {
   servicePriceRange: number[];
   setServicePriceRange: (value: number[]) => void;
   serviceSortBy: "terbaru" | "terpopuler" | "termurah" | "termahal";
-  setServiceSortBy: (value: "terbaru" | "terpopuler" | "termurah" | "termahal") => void;
-  onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
+  setServiceSortBy: (
+    value: "terbaru" | "terpopuler" | "termurah" | "termahal",
+  ) => void;
+  onNavigate: (
+    page: string,
+    data?: string | { userId?: string; productId?: string },
+  ) => void;
   formatPrice: (price: number) => string;
 }
 
@@ -66,7 +71,7 @@ export default function ProfileServicesTab({
 }: ProfileServicesTabProps) {
   const resetFilters = () => {
     setServiceCategory(null);
-    setServicePriceRange([0, 1000000]);
+    setServicePriceRange([0, 20000000]);
     setServiceSortBy("terbaru");
   };
 
@@ -83,7 +88,9 @@ export default function ProfileServicesTab({
           <SheetContent side="left" className="w-80 overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Filter Jasa</SheetTitle>
-              <SheetDescription>Filter jasa sesuai kebutuhanmu</SheetDescription>
+              <SheetDescription>
+                Filter jasa sesuai kebutuhanmu
+              </SheetDescription>
             </SheetHeader>
             <div className="mt-6 space-y-6">
               <div>
@@ -118,16 +125,38 @@ export default function ProfileServicesTab({
               <div>
                 <h3 className="font-semibold mb-3">Rentang Harga</h3>
                 <div className="space-y-4">
-                  <Slider value={servicePriceRange} onValueChange={setServicePriceRange} max={1000000} step={10000} className="w-full" />
+                  <Slider
+                    value={servicePriceRange}
+                    onValueChange={setServicePriceRange}
+                    max={20000000}
+                    step={10000}
+                    className="w-full"
+                  />
                   <div className="flex items-center gap-2">
-                    <Input type="text" value={`Rp ${servicePriceRange[0].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+                    <Input
+                      type="text"
+                      value={`Rp ${servicePriceRange[0].toLocaleString("id-ID")}`}
+                      readOnly
+                      className="text-xs"
+                    />
                     <span>-</span>
-                    <Input type="text" value={`Rp ${servicePriceRange[1].toLocaleString("id-ID")}`} readOnly className="text-xs" />
+                    <Input
+                      type="text"
+                      value={`Rp ${servicePriceRange[1].toLocaleString("id-ID")}`}
+                      readOnly
+                      className="text-xs"
+                    />
                   </div>
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" onClick={resetFilters}>Reset Filter</Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={resetFilters}
+              >
+                Reset Filter
+              </Button>
             </div>
           </SheetContent>
         </Sheet>
@@ -149,24 +178,34 @@ export default function ProfileServicesTab({
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge variant="secondary" className="gap-1">
             {serviceCategories.find((c) => c.id === serviceCategory)?.label}
-            <button onClick={() => setServiceCategory(null)} aria-label="Hapus filter kategori jasa" title="Hapus filter kategori jasa">
+            <button
+              onClick={() => setServiceCategory(null)}
+              aria-label="Hapus filter kategori jasa"
+              title="Hapus filter kategori jasa"
+            >
               <X className="h-3 w-3" />
             </button>
           </Badge>
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground mb-4">Menampilkan {filteredServices.length} dari {totalServices} jasa</p>
+      <p className="text-sm text-muted-foreground mb-4">
+        Menampilkan {filteredServices.length} dari {totalServices} jasa
+      </p>
 
       {filteredServices.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Briefcase className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">
-              {totalServices === 0 ? "User ini belum upload jasa" : "Tidak ada jasa ditemukan"}
+              {totalServices === 0
+                ? "User ini belum upload jasa"
+                : "Tidak ada jasa ditemukan"}
             </p>
             {totalServices > 0 && (
-              <Button variant="outline" className="mt-4" onClick={resetFilters}>Reset Filter</Button>
+              <Button variant="outline" className="mt-4" onClick={resetFilters}>
+                Reset Filter
+              </Button>
             )}
           </CardContent>
         </Card>
@@ -177,21 +216,39 @@ export default function ProfileServicesTab({
             const priceMin = service.priceMin ?? basePrice;
             const priceMax = service.priceMax ?? basePrice;
             const soldCount = service.soldCount ?? service.orderCount ?? 0;
+            const isFull = service.availability_status === "full" || service.availabilityStatus === "full";
+            const isBusy = service.availability_status === "busy" || service.availabilityStatus === "busy";
 
             return (
               <Card
                 key={service.id}
-                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isFull ? "opacity-75" : ""}`}
                 onClick={() => onNavigate("service", service.id)}
               >
-                <div className="aspect-video bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 flex items-center justify-center">
+                <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 flex items-center justify-center">
                   <Briefcase className="h-16 w-16 text-primary-600/30" />
+                  {isFull && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <Badge className="bg-orange-600 text-lg px-4 py-2">PENUH</Badge>
+                    </div>
+                  )}
                 </div>
                 <CardContent className="p-4">
-                  <Badge variant="outline" className="mb-2 text-xs">{service.category}</Badge>
-                  <h3 className="font-medium line-clamp-2 mb-2">{service.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-xs">
+                      {service.category}
+                    </Badge>
+                    {isBusy && (
+                      <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30">
+                        Sibuk
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className="font-medium line-clamp-2 mb-2">
+                    {service.title}
+                  </h3>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-primary-600 text-sm">
+                    <p className={`font-bold text-sm ${isFull ? "text-muted-foreground line-through" : "text-primary-600"}`}>
                       {priceMin === priceMax || !priceMax
                         ? formatPrice(priceMin)
                         : `${formatPrice(priceMin)} - ${formatPrice(priceMax)}`}

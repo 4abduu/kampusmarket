@@ -61,10 +61,10 @@ class ProductController extends Controller
 
         // Filter by price range
         if ($request->has('price_min')) {
-            $query->where('price', '>=', CurrencyHelper::toCent($request->price_min));
+            $query->where('price', '>=', $request->price_min);
         }
         if ($request->has('price_max')) {
-            $query->where('price', '<=', CurrencyHelper::toCent($request->price_max));
+            $query->where('price', '<=', $request->price_max);
         }
 
         // Filter by location
@@ -141,14 +141,37 @@ class ProductController extends Controller
             ], 403);
         }
 
+        // Find category by UUID and get its ID
+        $category = Category::where('uuid', $request->category_id)->first();
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kategori tidak ditemukan',
+            ], 404);
+        }
+
         // Generate slug
         $slug = NumberGenerator::uniqueSlug($request->title, Product::class);
+
+        // Determine initial status (auto-correct for barang)
+        $initialStatus = $request->status ?? 'active';
+        if ($request->type === 'barang') {
+            $stock = $request->stock ?? 1;
+            // If stock is 0, force status to sold_out
+            if ($stock === 0) {
+                $initialStatus = 'sold_out';
+            }
+            // If status is sold_out but stock > 0, correct to active
+            elseif ($initialStatus === 'sold_out' && $stock > 0) {
+                $initialStatus = 'active';
+            }
+        }
 
         // Create product
         $product = Product::create([
             'uuid' => NumberGenerator::uuid(),
             'seller_id' => $user->id,
-            'category_id' => $request->category_id,
+            'category_id' => $category->id,
             'title' => $request->title,
             'slug' => $slug,
             'description' => $request->description,
@@ -168,7 +191,7 @@ class ProductController extends Controller
             'availability_status' => $request->availabilityStatus,
             'can_nego' => $request->canNego ?? true,
             'location' => $request->location,
-            'status' => $request->status ?? 'active',
+            'status' => $initialStatus,
         ]);
 
         // Save images
@@ -223,8 +246,8 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'type' => $option['type'],
                 'label' => $option['label'] ?? $option['type'],
-                'price' => CurrencyHelper::toCent((int) ($option['price'] ?? 0)),
-                'price_max' => isset($option['priceMax']) ? CurrencyHelper::toCent((int) $option['priceMax']) : null,
+                'price' => (int) ($option['price'] ?? 0),
+                'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : null,
             ]);
         }
 
@@ -278,19 +301,23 @@ class ProductController extends Controller
             $updateData['description'] = $request->description;
         }
         if ($request->has('categoryId')) {
-            $updateData['category_id'] = $request->categoryId;
+            // Convert category UUID to numeric ID
+            $category = Category::where('uuid', $request->categoryId)->first();
+            if ($category) {
+                $updateData['category_id'] = $category->id;
+            }
         }
         if ($request->has('price')) {
             $updateData['price'] = $request->price;
         }
         if ($request->has('originalPrice')) {
-            $updateData['original_price'] = $request->originalPrice ? CurrencyHelper::toCent($request->originalPrice) : null;
+            $updateData['original_price'] = $request->originalPrice ?: null;
         }
         if ($request->has('priceMin')) {
-            $updateData['price_min'] = $request->priceMin ? CurrencyHelper::toCent($request->priceMin) : null;
+            $updateData['price_min'] = $request->priceMin ?: null;
         }
         if ($request->has('priceMax')) {
-            $updateData['price_max'] = $request->priceMax ? CurrencyHelper::toCent($request->priceMax) : null;
+            $updateData['price_max'] = $request->priceMax ?: null;
         }
         if ($request->has('priceType')) {
             $updateData['price_type'] = $request->priceType;
@@ -329,6 +356,22 @@ class ProductController extends Controller
             $updateData['status'] = $request->status;
         }
 
+        // Auto-correct status based on stock (for barang only)
+        if ($product->type === 'barang') {
+            $newStock = $updateData['stock'] ?? $product->stock;
+            $newStatus = $updateData['status'] ?? $product->status;
+
+            // If stock becomes 0, auto-set status to sold_out
+            if ($newStock === 0 && $newStatus === 'active') {
+                $updateData['status'] = 'sold_out';
+            }
+
+            // If stock becomes > 0 and status is sold_out, auto-set to active
+            if ($newStock > 0 && $newStatus === 'sold_out') {
+                $updateData['status'] = 'active';
+            }
+        }
+
         if (!empty($updateData)) {
             $product->update($updateData);
         }
@@ -355,8 +398,8 @@ class ProductController extends Controller
                     'product_id' => $product->id,
                     'type' => $option['type'],
                     'label' => $option['label'] ?? $option['type'],
-                    'price' => CurrencyHelper::toCent((int) ($option['price'] ?? 0)),
-                    'price_max' => isset($option['priceMax']) ? CurrencyHelper::toCent((int) $option['priceMax']) : null,
+                    'price' => (int) ($option['price'] ?? 0),
+                    'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : null,
                 ]);
             }
         }
@@ -410,6 +453,23 @@ class ProductController extends Controller
             ], 403);
         }
 
+        // Validate status change for barang products
+        if ($product->type === 'barang') {
+            if ($request->status === 'sold_out' && $product->stock > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status "Terjual" hanya bisa digunakan ketika stok = 0. Silakan kurangi stok menjadi 0 terlebih dahulu.',
+                ], 422);
+            }
+
+            if ($request->status === 'active' && $product->stock === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status "Aktif" hanya bisa digunakan ketika stok > 0.',
+                ], 422);
+            }
+        }
+
         $product->update(['status' => $request->status]);
 
         return response()->json([
@@ -454,7 +514,7 @@ class ProductController extends Controller
 
         $query = Product::with(['category', 'images'])
             ->where('seller_id', $seller->id)
-            ->where('status', 'active');
+            ->whereIn('status', ['active', 'sold_out']);
 
         $perPage = $request->get('per_page', 12);
         $products = $query->latest()->paginate($perPage);

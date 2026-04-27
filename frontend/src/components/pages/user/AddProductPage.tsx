@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { categories, serviceCategories } from "@/lib/mock-data";
 import { createProduct } from "@/lib/api/products";
+import { categoriesApi } from "@/lib/api/categories";
 import AddProductTypeSelector from "@/components/pages/user/add-product/AddProductTypeSelector";
 import AddProductBasicInfoSection from "@/components/pages/user/add-product/AddProductBasicInfoSection";
 import AddProductPricingSection from "@/components/pages/user/add-product/AddProductPricingSection";
@@ -66,6 +67,37 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [barangCategories, setBarangCategories] = useState<Array<{ id: string; label: string }>>([]);
+  const [jasaCategories, setJasaCategories] = useState<Array<{ id: string; label: string }>>([]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const [barangCats, jasaCats] = await Promise.all([
+          categoriesApi.getCategoriesByType("barang"),
+          categoriesApi.getCategoriesByType("jasa"),
+        ]);
+        
+        setBarangCategories(
+          (barangCats || []).map((cat: any) => ({
+            id: cat.uuid || cat.id,
+            label: cat.name,
+          }))
+        );
+        setJasaCategories(
+          (jasaCats || []).map((cat: any) => ({
+            id: cat.uuid || cat.id,
+            label: cat.name,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        toast.error("Gagal memuat kategori");
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (productType === "jasa" && formData.canNego) {
@@ -141,8 +173,32 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
       }
     }
 
-    if (!formData.title || !formData.category) {
-      setSubmitError("Judul dan kategori tidak boleh kosong!");
+    // Comprehensive field validation
+    if (!formData.title?.trim()) {
+      setSubmitError("Judul harus diisi!");
+      return;
+    }
+    if (!formData.category) {
+      setSubmitError("Kategori harus dipilih!");
+      return;
+    }
+    if (!formData.description?.trim()) {
+      setSubmitError("Deskripsi harus diisi!");
+      return;
+    }
+    if (!formData.location?.trim()) {
+      setSubmitError("Lokasi harus diisi!");
+      return;
+    }
+    if (productType === "barang") {
+      if (!formData.price || parseInt(formData.price) <= 0) {
+        setSubmitError("Harga harus lebih dari 0!");
+        return;
+      }
+    }
+
+    if (images.length === 0) {
+      setSubmitError("Upload minimal 1 foto produk!");
       return;
     }
 
@@ -158,17 +214,23 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
         shippingOptions,
       );
 
-      // Normalize prices from Rupiah string to cent (number)
+      // Prices are now sent directly as Rupiah (not in cents)
       const normalizedPayload = {
         ...payload,
-        price: formData.price ? parseInt(formData.price.replace(/\./g, '')) * 100 : undefined,
-        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice.replace(/\./g, '')) * 100 : undefined,
-        priceMin: formData.priceMin ? parseInt(formData.priceMin.replace(/\./g, '')) * 100 : undefined,
-        priceMax: formData.priceMax ? parseInt(formData.priceMax.replace(/\./g, '')) * 100 : undefined,
+        price: formData.price ? parseInt(formData.price.replace(/\./g, '')) : undefined,
+        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice.replace(/\./g, '')) : undefined,
+        priceMin: formData.priceMin ? parseInt(formData.priceMin.replace(/\./g, '')) : undefined,
+        priceMax: formData.priceMax ? parseInt(formData.priceMax.replace(/\./g, '')) : undefined,
       };
 
-      await createProduct(normalizedPayload);
-      alert("Produk berhasil disimpan!");
+      // Kirim images (sudah berupa URL dari uploadImage()) ke backend
+      const finalPayload = {
+        ...normalizedPayload,
+        images, // array URL string
+      };
+
+      await createProduct(finalPayload);
+      toast.success(productType === "jasa" ? "Jasa berhasil dibuat!" : "Produk berhasil disimpan!");
       onNavigate("dashboard");
     } catch (err: any) {
       console.error('Failed to create product:', err);
@@ -178,7 +240,7 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
     }
   };
 
-  const currentCategories = productType === "barang" ? categories : serviceCategories;
+  const currentCategories = productType === "barang" ? barangCategories : jasaCategories;
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
