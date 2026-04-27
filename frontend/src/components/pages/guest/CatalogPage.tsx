@@ -146,12 +146,12 @@ export default function CatalogPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(() =>
-    initialCategory || null,
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    () => initialCategory || null,
   );
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<number[]>([0, 20000000]);
-  const [tempPrice, setTempPrice] = useState<number[]>([0, 20000000]);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 5000000]);
+  const [tempPrice, setTempPrice] = useState<number[]>([0, 5000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
@@ -221,19 +221,6 @@ export default function CatalogPage({
               slug: cat.slug,
             }));
 
-          // Ensure "kecantikan" category exists (add if missing)
-          const hasKecantikan = mappedCategories.some(
-            (cat) => cat.slug === "kecantikan",
-          );
-
-          if (!hasKecantikan) {
-            mappedCategories.push({
-              id: "kecantikan",
-              label: "Kecantikan",
-              slug: "kecantikan",
-            });
-          }
-
           // Sort categories by consistent order
           const order = [
             "elektronik",
@@ -275,7 +262,7 @@ export default function CatalogPage({
 
   // FIX #1: Filter produk stok 0 dari catalog — jasa tidak punya stok, selalu tampil
   const paginatedProducts = products.filter((p: any) => {
-    if (p.type === 'jasa') return true;
+    if (p.type === "jasa") return true;
     return p.stock === undefined || p.stock > 0;
   });
 
@@ -482,8 +469,8 @@ export default function CatalogPage({
             {/* Products Loading/Error/Empty */}
             {loading ? (
               <CatalogPageSkeleton
-              itemCount={ITEMS_PER_PAGE}
-              hideSidebar={true}
+                itemCount={ITEMS_PER_PAGE}
+                hideSidebar={true}
               />
             ) : error ? (
               <div className="space-y-4">
@@ -513,19 +500,106 @@ export default function CatalogPage({
               />
             ) : (
               <>
-                  {/* Product Grid */}
-                  {viewMode === "grid" ? (
-                    <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                      {paginatedProducts.map((product) => (
-                        <Card
-                          key={product.uuid}
-                          className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                          onClick={() => {
-                            console.log("Product clicked:", product);
-                            onNavigate("product", product.id || product.uuid);
-                          }}
-                        >
-                          <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
+                {/* Product Grid */}
+                {viewMode === "grid" ? (
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                    {paginatedProducts.map((product) => (
+                      <Card
+                        key={product.uuid}
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        onClick={() => {
+                          console.log("Product clicked:", product);
+                          onNavigate("product", product.id || product.uuid);
+                        }}
+                      >
+                        <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
+                          <ProductImage
+                            src={getProductImageUrl(product.images?.[0])}
+                            alt={product.title}
+                            className="w-full h-full bg-muted flex items-center justify-center"
+                            imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            fallbackImageUrl="https://placehold.net/default.svg"
+                          />
+                          {product.originalPrice && (
+                            <Badge className="absolute top-2 left-2 bg-red-500">
+                              -
+                              {Math.round(
+                                (1 - product.price / product.originalPrice) *
+                                  100,
+                              )}
+                              %
+                            </Badge>
+                          )}
+                          {product.condition === "baru" && (
+                            <Badge className="absolute top-2 right-2 bg-primary-500">
+                              Baru
+                            </Badge>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                            {product.title}
+                          </p>
+                          <div className="flex items-center gap-1 mb-2">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm font-medium">
+                              {product.rating}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              ({product.reviewCount || 0} ulasan)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg font-bold text-primary">
+                              {formatPrice(product.price)}
+                            </span>
+                            {product.originalPrice && (
+                              <span className="text-sm text-muted-foreground line-through">
+                                {formatPrice(product.originalPrice)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-xs">
+                                  {product.seller.name
+                                    .substring(0, 2)
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs font-medium truncate">
+                                {product.seller.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              {product.location}
+                            </div>
+                          </div>
+                          {product.canNego && (
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Bisa Nego
+                            </Badge>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  // List View
+                  <div className="space-y-4">
+                    {paginatedProducts.map((product) => (
+                      <Card
+                        key={product.uuid}
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        onClick={() => {
+                          console.log("Product clicked:", product);
+                          onNavigate("product", product.id || product.uuid);
+                        }}
+                      >
+                        <div className="flex">
+                          <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
                             <ProductImage
                               src={getProductImageUrl(product.images?.[0])}
                               alt={product.title}
@@ -533,140 +607,53 @@ export default function CatalogPage({
                               imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               fallbackImageUrl="https://placehold.net/default.svg"
                             />
-                            {product.originalPrice && (
-                              <Badge className="absolute top-2 left-2 bg-red-500">
-                                -
-                                {Math.round(
-                                  (1 - product.price / product.originalPrice) *
-                                    100,
-                                )}
-                                %
-                              </Badge>
-                            )}
                             {product.condition === "baru" && (
-                              <Badge className="absolute top-2 right-2 bg-primary-500">
+                              <Badge className="absolute top-2 left-2 bg-primary">
                                 Baru
                               </Badge>
                             )}
                           </div>
-                          <CardContent className="p-4">
-                            <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
-                              {product.title}
-                            </p>
-                            <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-medium">
-                                {product.rating}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                ({product.reviewCount || 0} ulasan)
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg font-bold text-primary">
-                                {formatPrice(product.price)}
-                              </span>
-                              {product.originalPrice && (
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {formatPrice(product.originalPrice)}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between pt-2 border-t">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-5 w-5">
-                                  <AvatarFallback className="text-xs">
-                                    {product.seller.name
-                                      .substring(0, 2)
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs font-medium truncate">
-                                  {product.seller.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                {product.location}
-                              </div>
-                            </div>
-                            {product.canNego && (
-                              <Badge variant="outline" className="mt-2 text-xs">
-                                Bisa Nego
-                              </Badge>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    // List View
-                    <div className="space-y-4">
-                      {paginatedProducts.map((product) => (
-                        <Card
-                          key={product.uuid}
-                          className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                          onClick={() => {
-                            console.log("Product clicked:", product);
-                            onNavigate("product", product.id || product.uuid);
-                          }}
-                        >
-                          <div className="flex">
-                            <div className="relative bg-muted w-48 shrink-0 flex items-center justify-center overflow-hidden">
-                              <ProductImage
-                                src={getProductImageUrl(product.images?.[0])}
-                                alt={product.title}
-                                className="w-full h-full bg-muted flex items-center justify-center"
-                                imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                fallbackImageUrl="https://placehold.net/default.svg"
-                              />
-                              {product.condition === "baru" && (
-                                <Badge className="absolute top-2 left-2 bg-primary">
-                                  Baru
-                                </Badge>
-                              )}
-                            </div>
-                            <CardContent className="flex-1 p-4">
-                              <div className="flex justify-between">
-                                <div className="flex-1">
-                                  <p className="font-medium mb-1 group-hover:text-primary transition-colors">
-                                    {product.title}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                                    {product.description ||
-                                      `${product.type === "jasa" ? "Layanan" : "Produk"} dari ${product.seller?.name || "Penjual"}`}
-                                  </p>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                      <span>{product.rating}</span>
-                                    </div>
-                                    <span>
-                                      ({product.reviewCount || 0} ulasan)
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {product.location}
-                                    </div>
+                          <CardContent className="flex-1 p-4">
+                            <div className="flex justify-between">
+                              <div className="flex-1">
+                                <p className="font-medium mb-1 group-hover:text-primary transition-colors">
+                                  {product.title}
+                                </p>
+                                <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                                  {product.description ||
+                                    `${product.type === "jasa" ? "Layanan" : "Produk"} dari ${product.seller?.name || "Penjual"}`}
+                                </p>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    <span>{product.rating}</span>
+                                  </div>
+                                  <span>
+                                    ({product.reviewCount || 0} ulasan)
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {product.location}
                                   </div>
                                 </div>
-                                <div className="text-right ml-4">
-                                  <p className="text-xl font-bold text-primary">
-                                    {formatPrice(product.price)}
-                                  </p>
-                                  {product.originalPrice && (
-                                    <p className="text-sm text-muted-foreground line-through">
-                                      {formatPrice(product.originalPrice)}
-                                    </p>
-                                  )}
-                                </div>
                               </div>
-                            </CardContent>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+                              <div className="text-right ml-4">
+                                <p className="text-xl font-bold text-primary">
+                                  {formatPrice(product.price)}
+                                </p>
+                                {product.originalPrice && (
+                                  <p className="text-sm text-muted-foreground line-through">
+                                    {formatPrice(product.originalPrice)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-8">

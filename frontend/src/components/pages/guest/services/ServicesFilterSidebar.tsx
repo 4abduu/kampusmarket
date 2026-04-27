@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -12,6 +13,8 @@ export default function ServicesFilterSidebar({
   onResetFilters,
   categories,
 }: ServicesFilterSidebarProps) {
+  const [tempPrice, setTempPrice] = useState(priceRange);
+
   return (
     <div className="space-y-6">
       <CategorySection
@@ -24,23 +27,24 @@ export default function ServicesFilterSidebar({
         <h3 className="font-semibold mb-3">Rentang Harga</h3>
         <div className="space-y-4">
           <Slider
-            value={priceRange}
-            onValueChange={setPriceRange}
-            max={20000000}
+            value={tempPrice}
+            onValueChange={setTempPrice}
+            onValueCommit={(val) => setPriceRange(val)}
+            max={5000000}
             step={10000}
             className="w-full"
           />
           <div className="flex items-center gap-2">
             <Input
               type="text"
-              value={`Rp ${priceRange[0].toLocaleString("id-ID")}`}
+              value={`Rp ${tempPrice[0].toLocaleString("id-ID")}`}
               readOnly
               className="text-xs"
             />
             <span>-</span>
             <Input
               type="text"
-              value={`Rp ${priceRange[1].toLocaleString("id-ID")}`}
+              value={`Rp ${tempPrice[1].toLocaleString("id-ID")}`}
               readOnly
               className="text-xs"
             />

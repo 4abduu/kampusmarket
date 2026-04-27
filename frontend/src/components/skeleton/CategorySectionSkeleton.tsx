@@ -23,12 +23,11 @@ export default function CategorySectionSkeleton() {
 
           {/* Category pills */}
           <div className="px-10 flex gap-2 overflow-hidden">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton 
-                key={i} 
-                className="h-10 w-32 rounded-full shrink-0"
-              />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-24 rounded-full shrink-0" />
             ))}
+            {/* Lihat Semua */}
+            <Skeleton className="h-9 w-28 rounded-full shrink-0" />
           </div>
         </div>
       </div>

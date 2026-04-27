@@ -40,13 +40,14 @@ export default function LandingProductsSection({ products, onNavigate }: Landing
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {availableProducts.slice(0, 8).map((product) => (
             <Card
-              key={product.id}
-              className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-              onClick={() => onNavigate("product", product.id)}
+              key={(product as any).uuid ?? product.id}
+              className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"    
+              onClick={() => onNavigate("product", (product as any).uuid ?? product.id)}
+              
             >
               <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
                 <ProductImage
-                  src={product.images?.[0]}
+                  src={(product as any).images?.[0]?.url ?? (product as any).images?.[0]}
                   alt={product.title}
                   className="w-full h-full"
                   imageClassName="w-full h-full object-cover"

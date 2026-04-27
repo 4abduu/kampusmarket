@@ -88,11 +88,13 @@ export default function LandingPage({
         }
         if (jasaCatsResponse?.length) {
           setJasaCategories(
-            jasaCatsResponse.map((cat: any) => ({
-              id: cat.slug,
-              label: cat.name,
-              slug: cat.slug,
-            })),
+            jasaCatsResponse
+              .filter((cat: any) => cat.slug !== "les-privat")
+              .map((cat: any) => ({
+                id: cat.slug,
+                label: cat.name,
+                slug: cat.slug,
+              })),
           );
         }
         setCategoriesLoading(false);

@@ -124,7 +124,7 @@ export default function ServicesPage({
     () => initialCategory ?? null,
   );
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 20000000]);
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -240,11 +240,13 @@ export default function ServicesPage({
     },
     onResetFilters: () => {
       setSelectedCategory(null);
-      setPriceRange([0, 20000000]);
+      setPriceRange([0, 5000000]);
       setSearchQuery("");
       setCurrentPage(1);
     },
-    categories,
+    categories: categories.filter(
+      (c) => c.id !== "les-privat" && c.slug !== "les-privat",
+    ),
   };
 
   return (
@@ -374,12 +376,12 @@ export default function ServicesPage({
             {/* Results Count */}
             {!loading && !error && (
               <p className="text-sm text-muted-foreground mb-4">
-                Menampilkan {services.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
-                {Math.min(
-                  currentPage * ITEMS_PER_PAGE,
-                  services.length,
-                )}{" "}
-                dari {services.length} jasa
+                Menampilkan{" "}
+                {services.length === 0
+                  ? 0
+                  : (currentPage - 1) * ITEMS_PER_PAGE + 1}
+                -{Math.min(currentPage * ITEMS_PER_PAGE, services.length)} dari{" "}
+                {services.length} jasa
               </p>
             )}
 

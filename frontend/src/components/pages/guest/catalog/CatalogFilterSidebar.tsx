@@ -72,7 +72,7 @@ export default function CatalogFilterSidebar({
             onValueCommit={(val: number[]) => {
               setPriceRange(val);
             }}
-            max={20000000}
+            max={5000000}
             step={10000}
             className="w-full"
           />
