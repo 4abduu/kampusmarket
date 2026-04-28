@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   type User,
   mockUsers,
@@ -12,27 +12,35 @@ import {
   calculateNetIncome,
   categories,
   serviceCategories,
-} from "@/lib/mock-data"
-import { getDashboardTabFromPage } from "@/components/pages/user/dashboard/constants"
-import { getInitialSellerProducts } from "@/components/pages/user/dashboard/seller-products"
-import { formatTransactionDate, getTransactionIcon, getTransactionStatusBadge } from "@/components/pages/user/dashboard/transaction-ui"
-import UserDashboardDialogs from "@/components/pages/user/dashboard/UserDashboardDialogs"
-import UserDashboardOrdersTab from "@/components/pages/user/dashboard/UserDashboardOrdersTab"
-import UserDashboardSettingsTab from "@/components/pages/user/dashboard/UserDashboardSettingsTab"
-import UserDashboardOverviewTab from "@/components/pages/user/dashboard/UserDashboardOverviewTab"
-import UserDashboardProductsTab from "@/components/pages/user/dashboard/UserDashboardProductsTab"
-import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashboardWalletTab"
-import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar"
-import { useDashboardProducts } from "@/components/pages/user/dashboard/useDashboardProducts"
-import { useDashboardWallet } from "@/components/pages/user/dashboard/useDashboardWallet"
-import { useDashboardSettings } from "@/components/pages/user/dashboard/useDashboardSettings"
-import { useDashboardOrderActions } from "@/components/pages/user/dashboard/useDashboardOrderActions"
+} from "@/lib/mock-data";
+import { getDashboardTabFromPage } from "@/components/pages/user/dashboard/constants";
+import { getInitialSellerProducts } from "@/components/pages/user/dashboard/seller-products";
+import {
+  formatTransactionDate,
+  getTransactionIcon,
+  getTransactionStatusBadge,
+} from "@/components/pages/user/dashboard/transaction-ui";
+import UserDashboardDialogs from "@/components/pages/user/dashboard/UserDashboardDialogs";
+import UserDashboardOrdersTab from "@/components/pages/user/dashboard/UserDashboardOrdersTab";
+import UserDashboardSettingsTab from "@/components/pages/user/dashboard/UserDashboardSettingsTab";
+import UserDashboardOverviewTab from "@/components/pages/user/dashboard/UserDashboardOverviewTab";
+import UserDashboardProductsTab from "@/components/pages/user/dashboard/UserDashboardProductsTab";
+import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashboardWalletTab";
+import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar";
+import UserDashboardOverviewSkeleton from "@/components/skeleton/UserDashboardOverviewSkeleton";
+import UserDashboardProductsTabSkeleton from "@/components/skeleton/UserDashboardProductsTabSkeleton";
+import UserDashboardSettingsSkeleton from "@/components/skeleton/UserDashboardSettingsSkeleton";
+import UserDashboardWalletSkeleton from "@/components/skeleton/UserDashboardWalletSkeleton";
+import { useDashboardProducts } from "@/components/pages/user/dashboard/useDashboardProducts";
+import { useDashboardWallet } from "@/components/pages/user/dashboard/useDashboardWallet";
+import { useDashboardSettings } from "@/components/pages/user/dashboard/useDashboardSettings";
+import { useDashboardOrderActions } from "@/components/pages/user/dashboard/useDashboardOrderActions";
 
 interface UserDashboardPageProps {
-  onNavigate: (page: string, productId?: string) => void
-  currentPage?: string
-  onSellerProductCountChange?: (count: number) => void
-  currentUser?: User | null
+  onNavigate: (page: string, productId?: string) => void;
+  currentPage?: string;
+  onSellerProductCountChange?: (count: number) => void;
+  currentUser?: User | null;
 }
 
 export default function UserDashboardPage({
@@ -41,59 +49,96 @@ export default function UserDashboardPage({
   onSellerProductCountChange,
   currentUser: authUser,
 }: UserDashboardPageProps) {
-  const [activeTab, setActiveTab] = useState(() => getDashboardTabFromPage(currentPage))
+  const [activeTab, setActiveTab] = useState(() =>
+    getDashboardTabFromPage(currentPage),
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setActiveTab(getDashboardTabFromPage(currentPage))
-  }, [currentPage])
+    setActiveTab(getDashboardTabFromPage(currentPage));
+  }, [currentPage]);
 
-  const currentUser = authUser || mockUsers[0]
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = window.setTimeout(() => setIsLoading(false), 300);
+    return () => window.clearTimeout(timer);
+  }, [activeTab]);
+
+  const currentUser = authUser || mockUsers[0];
 
   const products = useDashboardProducts({
     initialProducts: getInitialSellerProducts(),
-  })
+  });
 
   const wallet = useDashboardWallet({
     userId: currentUser.id,
-  })
+  });
 
   const settings = useDashboardSettings({
     currentUser,
     initialAddresses: mockAddresses,
-  })
+  });
 
-  const orderActions = useDashboardOrderActions()
+  const orderActions = useDashboardOrderActions();
 
   useEffect(() => {
-    onSellerProductCountChange?.(products.userProducts.length)
-  }, [onSellerProductCountChange, products.userProducts.length])
+    onSellerProductCountChange?.(products.userProducts.length);
+  }, [onSellerProductCountChange, products.userProducts.length]);
 
   const stats = {
     totalSales: 2450000,
     netIncome: calculateNetIncome(2450000),
     adminFeeDeducted: calculateAdminFee(2450000),
     pendingOrders: 3,
-    activeProducts: products.userProducts.filter((product) => product.stock > 0 && product.type === "barang").length,
-    activeServices: products.userProducts.filter((product) => product.type === "jasa").length,
+    activeProducts: products.userProducts.filter(
+      (product) => product.stock > 0 && product.type === "barang",
+    ).length,
+    activeServices: products.userProducts.filter(
+      (product) => product.type === "jasa",
+    ).length,
     walletBalance: 250000,
     totalSold: 28,
     rating: 4.8,
-  }
+  };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+    const statusConfig: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+      }
+    > = {
       pending_payment: { variant: "outline", label: "Menunggu Pembayaran" },
       pending_meetup: { variant: "secondary", label: "Menunggu Ketemuan" },
       waiting_shipping_fee: { variant: "outline", label: "Menunggu Ongkir" },
       waiting_price: { variant: "outline", label: "Menunggu Harga" },
-      waiting_confirmation: { variant: "outline", label: "Menunggu Konfirmasi" },
+      waiting_confirmation: {
+        variant: "outline",
+        label: "Menunggu Konfirmasi",
+      },
       processing: { variant: "default", label: "Diproses" },
       in_delivery: { variant: "default", label: "Dalam Pengiriman" },
       completed: { variant: "default", label: "Selesai" },
       cancelled: { variant: "destructive", label: "Dibatalkan" },
-    }
-    const config = statusConfig[status] || { variant: "outline", label: status }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+    };
+    const config = statusConfig[status] || {
+      variant: "outline",
+      label: status,
+    };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  if (activeTab === "overview" && isLoading) {
+    return <UserDashboardOverviewSkeleton />
+  }
+
+  if (activeTab === "settings" && isLoading) {
+    return <UserDashboardSettingsSkeleton />
+  }
+
+  if (activeTab === "wallet" && isLoading) {
+    return <UserDashboardWalletSkeleton />
   }
 
   return (
@@ -123,20 +168,25 @@ export default function UserDashboardPage({
               />
             )}
 
-            {activeTab === "products" && (
-              <UserDashboardProductsTab
-                onNavigate={onNavigate}
-                productFilter={products.productFilter}
-                setProductFilter={products.setProductFilter}
-                userProducts={products.userProducts}
-                filteredProducts={products.filteredProducts}
-                formatPriceRange={products.formatPriceRange}
-                formatPrice={products.formatPrice}
-                handleEditProduct={products.handleEditProduct}
-                setProductToDelete={products.setProductToDelete}
-                setShowDeleteProductDialog={products.setShowDeleteProductDialog}
-              />
-            )}
+            {activeTab === "products" &&
+              (isLoading ? (
+                <UserDashboardProductsTabSkeleton />
+              ) : (
+                <UserDashboardProductsTab
+                  onNavigate={onNavigate}
+                  productFilter={products.productFilter}
+                  setProductFilter={products.setProductFilter}
+                  userProducts={products.userProducts}
+                  filteredProducts={products.filteredProducts}
+                  formatPriceRange={products.formatPriceRange}
+                  formatPrice={products.formatPrice}
+                  handleEditProduct={products.handleEditProduct}
+                  setProductToDelete={products.setProductToDelete}
+                  setShowDeleteProductDialog={
+                    products.setShowDeleteProductDialog
+                  }
+                />
+              ))}
 
             {activeTab === "orders" && (
               <UserDashboardOrdersTab
@@ -144,8 +194,12 @@ export default function UserDashboardPage({
                 formatPrice={products.formatPrice}
                 getStatusBadge={getStatusBadge}
                 setShowShippingDialog={orderActions.setShowShippingDialog}
-                handleOpenServicePriceDialog={orderActions.handleOpenServicePriceDialog}
-                setShowOrderConfirmDialog={orderActions.setShowOrderConfirmDialog}
+                handleOpenServicePriceDialog={
+                  orderActions.handleOpenServicePriceDialog
+                }
+                setShowOrderConfirmDialog={
+                  orderActions.setShowOrderConfirmDialog
+                }
                 handleRejectPrice={orderActions.handleRejectPrice}
                 handleAcceptPrice={orderActions.handleAcceptPrice}
               />
@@ -201,7 +255,9 @@ export default function UserDashboardPage({
                 addresses={settings.addresses}
                 handleEditAddress={settings.handleEditAddress}
                 setAddressToDelete={settings.setAddressToDelete}
-                setShowDeleteAddressDialog={settings.setShowDeleteAddressDialog}
+                setShowDeleteAddressDialog={
+                  settings.setShowDeleteAddressDialog
+                }
                 getFacultyName={getFacultyName}
               />
             )}
@@ -284,5 +340,5 @@ export default function UserDashboardPage({
         showWithdrawSuccess={wallet.showWithdrawSuccess}
       />
     </div>
-  )
+  );
 }
