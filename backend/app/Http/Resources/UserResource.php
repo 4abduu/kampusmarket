@@ -22,15 +22,11 @@ class UserResource extends JsonResource
             'bio'      => $this->bio,
             'location' => $this->location,
 
-            'faculty' => $this->when($this->faculty, function () {
-                return $this->faculty ? $this->faculty->code : null;
-            }),
-            'facultyDetails' => $this->when($this->faculty, function () {
-                return $this->faculty ? [
-                    'id'   => $this->faculty->code,
-                    'name' => $this->faculty->name,
-                ] : null;
-            }),
+            'faculty' => $this->faculty?->code,
+            'facultyDetails' => $this->faculty ? [
+                'id'   => $this->faculty->code,
+                'name' => $this->faculty->name,
+            ] : null,
 
             'isVerified'  => $this->is_verified,
             'isBanned'    => $this->is_banned,

@@ -17,7 +17,7 @@ class FacultyController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Faculty::query();
+        $query = Faculty::visible();
 
         if ($request->has('active')) {
             $query->where('is_active', $request->boolean('active'));
@@ -38,7 +38,7 @@ class FacultyController extends Controller
      */
     public function adminIndex(Request $request): JsonResponse
     {
-        $query = Faculty::query();
+        $query = Faculty::managed();
 
         if ($request->has('active')) {
             $query->where('is_active', $request->boolean('active'));
@@ -57,8 +57,8 @@ class FacultyController extends Controller
      */
     public function show(string $code): JsonResponse
     {
-        $faculty = Faculty::where('code', $code)
-            ->orWhere('id', $code)
+        $faculty = Faculty::visible()
+            ->where('code', $code)
             ->firstOrFail();
 
         return response()->json([
@@ -73,7 +73,7 @@ class FacultyController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'unique:faculties,code'],
+            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'not_in:admin', 'unique:faculties,code'],
             'name' => ['required', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
@@ -98,12 +98,12 @@ class FacultyController extends Controller
      */
     public function update(Request $request, string $code): JsonResponse
     {
-        $faculty = Faculty::where('code', $code)
-            ->orWhere('id', $code)
+        $faculty = Faculty::managed()
+            ->where('code', $code)
             ->firstOrFail();
 
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', Rule::unique('faculties', 'code')->ignore($faculty->id)],
+            'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'not_in:admin', Rule::unique('faculties', 'code')->ignore($faculty->id)],
             'name' => ['required', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
@@ -128,8 +128,8 @@ class FacultyController extends Controller
      */
     public function updateStatus(Request $request, string $code): JsonResponse
     {
-        $faculty = Faculty::where('code', $code)
-            ->orWhere('id', $code)
+        $faculty = Faculty::managed()
+            ->where('code', $code)
             ->firstOrFail();
 
         $validated = $request->validate([
@@ -152,8 +152,8 @@ class FacultyController extends Controller
      */
     public function destroy(string $code): JsonResponse
     {
-        $faculty = Faculty::where('code', $code)
-            ->orWhere('id', $code)
+        $faculty = Faculty::managed()
+            ->where('code', $code)
             ->firstOrFail();
 
         $faculty->delete();
@@ -169,8 +169,8 @@ class FacultyController extends Controller
      */
     public function withUserCount(): JsonResponse
     {
-        $faculties = Faculty::withCount('users')
-            ->where('is_active', true)
+        $faculties = Faculty::visible()
+            ->withCount('users')
             ->ordered()
             ->get();
 
@@ -191,7 +191,7 @@ class FacultyController extends Controller
      */
     public function dropdown(): JsonResponse
     {
-        $faculties = Faculty::where('is_active', true)
+        $faculties = Faculty::visible()
             ->ordered()
             ->get();
 

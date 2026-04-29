@@ -37,7 +37,7 @@ class UserController extends Controller
 
         // Filter by faculty
         if ($request->has('faculty')) {
-            $faculty = Faculty::where('code', $request->faculty)->first();
+            $faculty = Faculty::visible()->where('code', $request->faculty)->first();
             if ($faculty) {
                 $query->where('faculty_id', $faculty->id);
             }
@@ -111,9 +111,11 @@ class UserController extends Controller
         $data = $request->validated();
 
         // Handle faculty_id conversion
-        if ($request->has('facultyId')) {
-            $faculty = Faculty::where('code', $request->facultyId)->first();
-            $data['faculty_id'] = $faculty?->id;
+        if ($user->role?->value === 'admin') {
+            $data['faculty_id'] = null;
+        } elseif ($request->has('facultyId')) {
+            $faculty = Faculty::visible()->where('code', $request->facultyId)->firstOrFail();
+            $data['faculty_id'] = $faculty->id;
         }
 
         $user->update($data);

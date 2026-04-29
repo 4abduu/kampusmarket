@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -16,7 +18,7 @@ class RegisterRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules that apply to this request.
      */
     public function rules(): array
     {
@@ -25,7 +27,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:20'],
-            'facultyId' => ['nullable', 'string', 'exists:faculties,code'],
+            'facultyId' => User::facultyIdRules(UserRole::USER->value, true),
         ];
     }
 
@@ -41,7 +43,8 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'Email sudah terdaftar',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
-            'facultyId.exists' => 'Fakultas tidak ditemukan',
+            'facultyId.required' => 'Fakultas wajib dipilih',
+            'facultyId.exists' => 'Fakultas tidak ditemukan atau tidak aktif',
         ];
     }
 
@@ -55,6 +58,5 @@ class RegisterRequest extends FormRequest
                 'faculty_id' => $this->facultyId,
             ]);
         }
-
     }
 }
