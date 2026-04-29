@@ -11,11 +11,10 @@ const apiClient = axios.create({
 });
 
 // Add token to requests if available
+// REVISI: Hapus localStorage.getItem('auth_token') karena auth pakai HttpOnly cookie,
+// bukan localStorage. localStorage tidak aman dan token tidak akan ada di sana.
+// Cookie authToken otomatis dikirim oleh browser karena withCredentials: true.
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -37,8 +36,7 @@ apiClient.interceptors.response.use(
     // Don't redirect on connection errors or other 4xx/5xx errors
     if (status === 401 && errorData?.message?.includes('Unauthenticated')) {
       console.warn('[API] 401 Unauthenticated - User token expired or invalid');
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      // REVISI: Hapus localStorage.removeItem karena tidak lagi dipakai
       // Emit custom event for App to handle logout
       window.dispatchEvent(new Event('unauthorized'));
     }

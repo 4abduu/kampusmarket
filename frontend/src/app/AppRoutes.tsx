@@ -6,8 +6,10 @@
  * - ChatPageWrapper dari dev-abdu untuk support chat via query params
  * - Protected route redirect fix dari dev-abdu
  * - Scroll restoration dari dev-abdu
+ * REVISI: Fix bug logout - ProtectedRoute sekarang pakai isLoggingOut ref
+ * agar tidak redirect ke /unauthorized saat proses logout berlangsung.
  */
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type RefObject } from "react";
 import {
   Navigate,
   Route,
@@ -60,6 +62,8 @@ type AppRoutesProps = {
   googleUserData: { userName?: string; userEmail?: string } | null;
   currentUser: User | null;
   currentSuccessType: "product" | "service" | null;
+  // REVISI: Ref untuk flag saat proses logout, mencegah redirect ke /unauthorized
+  isLoggingOut?: RefObject<boolean>;
 };
 
 // ✅ Dari dev-abdu: Wrapper untuk ChatPage dengan query params support
@@ -93,12 +97,16 @@ function ChatPageWrapper({
 function ProtectedRoute({
   isLoggedIn,
   element,
+  isLoggingOut,
 }: {
   isLoggedIn: boolean;
   element: React.ReactElement;
+  // REVISI: Ref untuk flag logout — kalau sedang logout, jangan redirect ke /unauthorized
+  isLoggingOut?: RefObject<boolean>;
 }): React.ReactElement {
   const location = useLocation();
-  if (!isLoggedIn) {
+  // REVISI: Jika sedang proses logout, render null sementara daripada redirect ke /unauthorized
+  if (!isLoggedIn && !isLoggingOut?.current) {
     return (
       <Navigate
         to="/unauthorized"
@@ -107,6 +115,10 @@ function ProtectedRoute({
       />
     );
   }
+  if (!isLoggedIn && isLoggingOut?.current) {
+    // Sedang logout — render kosong sementara, navigasi ke "/" sudah dilakukan App.tsx
+    return <></>;
+  }
   return element;
 }
 
@@ -114,12 +126,19 @@ function RoleProtectedRoute({
   isLoggedIn,
   isAdmin,
   element,
+  isLoggingOut,
 }: {
   isLoggedIn: boolean;
   isAdmin: boolean;
   element: React.ReactElement;
+  // REVISI: Ref untuk flag logout — kalau sedang logout, jangan redirect ke /unauthorized
+  isLoggingOut?: RefObject<boolean>;
 }): React.ReactElement {
   const location = useLocation();
+  // REVISI: Jika sedang proses logout, render kosong sementara
+  if (!isLoggedIn && isLoggingOut?.current) {
+    return <></>;
+  }
   if (!isLoggedIn) {
     return (
       <Navigate
@@ -200,6 +219,7 @@ export default function AppRoutes({
   googleUserData,
   currentUser,
   currentSuccessType,
+  isLoggingOut,
 }: AppRoutesProps) {
   const location = useLocation();
   const unauthorizedState = location.state as { reason?: string } | null;
@@ -393,6 +413,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<CheckoutPage onNavigate={onNavigate} />}
             />
           }
@@ -402,6 +423,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <CheckoutPage
                   onNavigate={onNavigate}
@@ -416,6 +438,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<CartPage onNavigate={onNavigate} />}
             />
           }
@@ -487,6 +510,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <UserDashboardPage
                   onNavigate={onNavigate}
@@ -503,6 +527,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <UserDashboardPage
                   onNavigate={onNavigate}
@@ -519,6 +544,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <UserDashboardPage
                   onNavigate={onNavigate}
@@ -535,6 +561,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <UserDashboardPage
                   onNavigate={onNavigate}
@@ -553,6 +580,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<OrdersListPage onNavigate={onNavigate} />}
             />
           }
@@ -562,6 +590,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<FavoritesPage onNavigate={onNavigate} />}
             />
           }
@@ -571,6 +600,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <OrderDetailPage
                   onNavigate={onNavigate}
@@ -585,6 +615,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<RatingPage onNavigate={onNavigate} />}
             />
           }
@@ -596,6 +627,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={
                 <ChatPageWrapper
                   onNavigate={onNavigate}
@@ -611,6 +643,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<UserNotificationsPage onNavigate={onNavigate} />}
             />
           }
@@ -620,6 +653,7 @@ export default function AppRoutes({
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               element={<AddProductPage onNavigate={onNavigate} />}
             />
           }
@@ -631,6 +665,7 @@ export default function AppRoutes({
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               isAdmin={currentUser?.role === "admin"}
               element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
@@ -641,6 +676,7 @@ export default function AppRoutes({
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               isAdmin={currentUser?.role === "admin"}
               element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
@@ -651,6 +687,7 @@ export default function AppRoutes({
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
               isAdmin={currentUser?.role === "admin"}
               element={<AdminNotificationsPage onNavigate={onNavigate} />}
             />

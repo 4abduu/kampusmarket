@@ -67,11 +67,18 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>([]);
   const [selectedOfferProduct, setSelectedOfferProduct] = useState<SellerProduct | null>(null);
 
+  // [REVISI] Set userId yang sedang online dari presence channel
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastContextRef = useRef<string | null>(null);
   const echoChannelRef = useRef<ReturnType<ReturnType<typeof getEcho>['private']> | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // [REVISI] Ref untuk channel users.{id} — notifikasi pesan dari semua chat
+  const userChannelRef = useRef<ReturnType<ReturnType<typeof getEcho>['private']> | null>(null);
+  // [REVISI] Ref untuk presence channel — status online/offline realtime
+  const presenceChannelRef = useRef<ReturnType<ReturnType<typeof getEcho>['join']> | null>(null);
 
   // ── Load list chat ─────────────────────────────────────────────────────────
 
@@ -87,10 +94,170 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     }
   }, []);
 
+  // [REVISI] Reset semua state chat saat user berganti (logout/login ulang).
+  // Ini yang menyebabkan riwayat chat hilang — state lama tidak dibersihkan
+  // saat currentUserId berubah dari ada ke '' (logout) atau sebaliknya (login).
   useEffect(() => {
-    if (currentUserId) void loadChats();
-    else setChatsLoading(false); // jangan biarkan skeleton forever jika tidak login
+    if (!currentUserId) {
+      // User logout — bersihkan semua state chat
+      setChats([]);
+      setActiveChatId(null);
+      setChatDetail(null);
+      setMessages([]);
+      setChatsLoading(false);
+      setOnlineUserIds(new Set());
+      lastContextRef.current = null;
+
+      // Bersihkan semua koneksi realtime
+      if (echoChannelRef.current) {
+        echoChannelRef.current.stopListening('.MessageSent');
+        echoChannelRef.current = null;
+      }
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      // [REVISI] Lepas user channel dan presence channel
+      if (userChannelRef.current) {
+        userChannelRef.current.stopListening('.NewMessageNotification');
+        userChannelRef.current = null;
+      }
+      if (presenceChannelRef.current) {
+        presenceChannelRef.current = null;
+      }
+    } else {
+      // User login — muat ulang chat dari server
+      void loadChats();
+    }
   }, [currentUserId, loadChats]);
+
+  // ── [REVISI] Subscribe ke private channel users.{id} ──────────────────────
+  // Menerima NewMessageNotification dari semua chat milik user ini,
+  // termasuk chat yang tidak sedang dibuka. Ini yang membuat list chat
+  // dan unread count update realtime tanpa refresh.
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    let channelOk = false;
+    try {
+      const echo = getEcho();
+      const channel = echo.private(`users.${currentUserId}`);
+
+      channel.listen('.NewMessageNotification', (event: {
+        message: ApiMessage;
+        chatId: string;
+        chatInfo: { lastMessage: string | null; lastMessageAt: string | null };
+      }) => {
+        const { message: incoming, chatId, chatInfo } = event;
+
+        // Update list chat: naikkan unreadCount dan update lastMessage
+        // kecuali kalau chat tersebut sedang aktif dibuka (sudah terbaca)
+        setChats(prev => prev.map(c => {
+          if (c.id !== chatId) return c;
+          const isActiveChat = c.id === activeChatIdRef.current;
+          return {
+            ...c,
+            lastMessage: chatInfo.lastMessage ?? c.lastMessage,
+            lastMessageAt: chatInfo.lastMessageAt ?? c.lastMessageAt,
+            unreadCount: isActiveChat ? 0 : c.unreadCount + 1,
+          };
+        }));
+
+        // Kalau chat ini sedang dibuka tapi Echo chat.{uuid} tidak aktif
+        // (misal fallback polling sedang jalan), tambah pesan ke messages juga
+        if (chatId === activeChatIdRef.current && !echoChannelRef.current) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === incoming.id)) return prev;
+            return [...prev, incoming];
+          });
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
+      });
+
+      userChannelRef.current = channel;
+      channelOk = true;
+    } catch {
+      console.info('[Chat] Reverb users channel tidak aktif — online status dari REST saja');
+    }
+
+    return () => {
+      if (channelOk && userChannelRef.current) {
+        userChannelRef.current.stopListening('.NewMessageNotification');
+        userChannelRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
+
+  // ── [REVISI] Subscribe ke presence channel "online" ───────────────────────
+  // Untuk status online/offline realtime semua user.
+  // Saat user join/leave, set onlineUserIds diupdate sehingga dot hijau
+  // di ChatListPanel langsung berubah tanpa refresh.
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    let joined = false;
+    try {
+      const echo = getEcho();
+      const presence = echo.join('online');
+
+      presence
+        .here((users: { id: string; name: string }[]) => {
+          // Initial list: semua yang sedang online saat ini
+          setOnlineUserIds(new Set(users.map(u => u.id)));
+        })
+        .joining((user: { id: string; name: string }) => {
+          // Ada user baru online
+          setOnlineUserIds(prev => new Set([...prev, user.id]));
+        })
+        .leaving((user: { id: string; name: string }) => {
+          // Ada user yang offline
+          setOnlineUserIds(prev => {
+            const next = new Set(prev);
+            next.delete(user.id);
+            return next;
+          });
+        })
+        .error((err: unknown) => {
+          console.info('[Chat] Presence channel error:', err);
+        });
+
+      presenceChannelRef.current = presence;
+      joined = true;
+    } catch {
+      console.info('[Chat] Reverb presence channel tidak aktif');
+    }
+
+    return () => {
+      if (joined) {
+        try {
+          getEcho().leave('online');
+        } catch { /* silent */ }
+        presenceChannelRef.current = null;
+      }
+    };
+  }, [currentUserId]);
+
+  // Ref untuk activeChatId agar bisa diakses dari dalam closure listener
+  // tanpa perlu re-subscribe setiap kali activeChatId berubah
+  const activeChatIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeChatIdRef.current = activeChatId;
+  }, [activeChatId]);
+
+  // ── [REVISI] Terapkan onlineUserIds ke chats list ─────────────────────────
+  // Setiap kali onlineUserIds berubah (dari presence channel), update
+  // isOnline di setiap chat.otherUser di list panel secara realtime.
+  useEffect(() => {
+    if (onlineUserIds.size === 0) return;
+    setChats(prev => prev.map(c => ({
+      ...c,
+      otherUser: {
+        ...c.otherUser,
+        isOnline: onlineUserIds.has(c.otherUser.id),
+      },
+    })));
+  }, [onlineUserIds]);
 
   // ── Open chat ──────────────────────────────────────────────────────────────
 
@@ -119,6 +286,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       setChatDetail(detail);
       setMessages(detail.messages ?? []);
       setChats(prev => prev.map(c => c.id === chatUuid ? { ...c, unreadCount: 0 } : c));
+
+      // [REVISI] Terapkan status online dari presence channel ke chatDetail juga
+      if (detail.seller) {
+        detail.seller.isOnline = onlineUserIds.has(detail.seller.id) || detail.seller.isOnline;
+      }
+      if (detail.buyer) {
+        detail.buyer.isOnline = onlineUserIds.has(detail.buyer.id) || detail.buyer.isOnline;
+      }
 
       // Coba Reverb dulu — kalau gagal, fallback ke polling 5 detik
       let realtimeOk = false;
@@ -176,7 +351,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     } finally {
       setChatLoading(false);
     }
-  }, [activeChatId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChatId, onlineUserIds]);
 
   // ── Trigger dari detail produk ─────────────────────────────────────────────
 
@@ -229,6 +405,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     return () => {
       if (echoChannelRef.current) echoChannelRef.current.stopListening('.MessageSent');
       if (pollingRef.current) clearInterval(pollingRef.current);
+      // [REVISI] Cleanup user channel dan presence channel saat unmount
+      if (userChannelRef.current) userChannelRef.current.stopListening('.NewMessageNotification');
+      try { getEcho().leave('online'); } catch { /* silent */ }
     };
   }, []);
 
@@ -420,77 +599,78 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       }
     : null;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const otherUser = chatDetail
+    ? (isSeller ? chatDetail.buyer : chatDetail.seller)
+    : null;
+
+  // [REVISI] Terapkan status online realtime dari presence channel ke otherUser
+  const otherUserWithOnline = otherUser
+    ? { ...otherUser, isOnline: onlineUserIds.has(otherUser.id) || otherUser.isOnline }
+    : null;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-100 via-slate-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)]">
-          <ChatListPanel
-            chats={chats}
-            selectedChatId={activeChatId}
-            showChatList={showChatList}
-            isSellerView={isSeller}
-            isLoading={chatsLoading}
-            onSelectChat={handleSelectChat}
-          />
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
+        <ChatListPanel
+          chats={chats}
+          selectedChatId={activeChatId}
+          showChatList={showChatList}
+          isSellerView={isSeller}
+          isLoading={chatsLoading}
+          onSelectChat={handleSelectChat}
+        />
 
-          <ChatConversationPanel
-            chat={chatDetail}
-            currentUserId={currentUserId}
-            showChatList={showChatList}
-            messages={messages}
-            isLoading={chatLoading}
-            isSending={isSending}
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            showEmojiPicker={showEmojiPicker}
-            setShowEmojiPicker={setShowEmojiPicker}
-            attachedImage={attachedImage}
-            fileInputRef={fileInputRef}
-            messagesEndRef={messagesEndRef}
-            showContextCard={showContextCard}
-            onNavigate={onNavigate as (page: string, productId?: string) => void}
-            onOpenProfile={() => {
-              const other = chatDetail ? (isSeller ? chatDetail.buyer : chatDetail.seller) : null;
-              if (other) onNavigate('profile', other.id);
-            }}
-            setShowNegoModal={setShowNegoModal}
-            setShowOfferModal={() => void handleOpenOfferModal()}
-            onBackToList={handleBackToList}
-            onHandleImageUpload={handleImageUpload}
-            onRemoveImage={() => { setAttachedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-            onAddEmoji={emoji => { setNewMessage(prev => prev + emoji); setShowEmojiPicker(false); }}
-            onSendMessage={() => void handleSendMessage()}
-            onKeyPress={handleKeyPress}
-            onAcceptOffer={handleAcceptOffer}
-            onRejectOffer={handleRejectOffer}
-            onOpenPaymentDialog={handleBayarSekarang}
-            formatPrice={formatPrice}
-          />
-        </div>
+        <ChatConversationPanel
+          chatDetail={chatDetail}
+          messages={messages}
+          currentUserId={currentUserId}
+          otherUser={otherUserWithOnline}
+          chatProduct={chatProduct}
+          isSeller={isSeller}
+          isLoading={chatLoading}
+          isSending={isSending}
+          showChatList={showChatList}
+          showContextCard={showContextCard}
+          showEmojiPicker={showEmojiPicker}
+          newMessage={newMessage}
+          attachedImage={attachedImage}
+          fileInputRef={fileInputRef}
+          messagesEndRef={messagesEndRef}
+          onBack={handleBackToList}
+          onSend={handleSendMessage}
+          onKeyPress={handleKeyPress}
+          onMessageChange={e => setNewMessage(e.target.value)}
+          onImageUpload={handleImageUpload}
+          onToggleEmoji={() => setShowEmojiPicker(p => !p)}
+          onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
+          onRemoveImage={() => { setAttachedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+          onToggleContextCard={() => setShowContextCard(p => !p)}
+          onAcceptOffer={handleAcceptOffer}
+          onRejectOffer={handleRejectOffer}
+          onBayarSekarang={handleBayarSekarang}
+          onOpenNego={() => setShowNegoModal(true)}
+          onOpenOffer={handleOpenOfferModal}
+          formatPrice={formatPrice}
+        />
       </div>
 
       <ChatActionModals
         showNegoModal={showNegoModal}
-        setShowNegoModal={setShowNegoModal}
-        chatProduct={chatProduct}
         showOfferModal={showOfferModal}
-        setShowOfferModal={setShowOfferModal}
+        negoPrice={negoPrice}
+        offerPrice={offerPrice}
         sellerProducts={sellerProducts}
         selectedOfferProduct={selectedOfferProduct}
-        setSelectedOfferProduct={setSelectedOfferProduct}
-        negoPrice={negoPrice}
-        setNegoPrice={setNegoPrice}
-        offerPrice={offerPrice}
-        setOfferPrice={setOfferPrice}
+        chatProduct={chatProduct}
+        isSending={isSending}
+        onCloseNego={() => setShowNegoModal(false)}
+        onCloseOffer={() => setShowOfferModal(false)}
+        onNegoPriceChange={e => setNegoPrice(formatPriceInput(e.target.value))}
+        onOfferPriceChange={e => setOfferPrice(formatPriceInput(e.target.value))}
+        onSelectOfferProduct={setSelectedOfferProduct}
+        onSubmitNego={handleSubmitNego}
+        onSubmitOffer={handleSubmitOffer}
         formatPrice={formatPrice}
-        formatPriceInput={formatPriceInput}
-        handleSubmitNego={() => void handleSubmitNego()}
-        handleSubmitOffer={() => void handleSubmitOffer()}
-        isSubmitting={isSending}
-        isSeller={isSeller}
-        onNavigateToDashboard={() => onNavigate('my-products')}
       />
     </div>
   );

@@ -1,5 +1,7 @@
+// REVISI: Tambah useRef untuk isLoggingOut flag agar ProtectedRoute tidak redirect
+// ke /unauthorized saat proses logout berlangsung (race condition fix)
 import { BrowserRouter, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
@@ -22,6 +24,8 @@ function AppContent() {
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  // REVISI: Flag untuk mencegah ProtectedRoute redirect ke /unauthorized saat logout berlangsung
+  const isLoggingOutRef = useRef(false);
   const [sellerProductCount, setSellerProductCount] = useState(
     getInitialSellerProductCount(),
   );
@@ -60,14 +64,19 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    // REVISI: Saat token expired/invalid dari server, navigate ke home dulu
+    // baru clear state, supaya tidak terlihat halaman /unauthorized sekilas
     const handleUnauthorized = () => {
+      if (!isLoggingOutRef.current) {
+        navigate("/");
+      }
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
     };
     window.addEventListener("unauthorized", handleUnauthorized);
     return () => window.removeEventListener("unauthorized", handleUnauthorized);
-  }, []);
+  }, [navigate]);
 
   // ── Handle Navigation ──
   // Gabungan: format rapi dari main + chat support dari dev-abdu
@@ -138,6 +147,12 @@ function AppContent() {
   };
 
   const handleLogout = async () => {
+    // REVISI: Set flag isLoggingOut SEBELUM apapun agar ProtectedRoute tidak
+    // mendeteksi isLoggedIn=false lalu redirect ke /unauthorized.
+    // Navigasi ke "/" dilakukan LEBIH DULU sebelum state di-clear.
+    isLoggingOutRef.current = true;
+    // Navigasi ke landing dulu sebelum clear state
+    navigate("/");
     try {
       await userApi.logout();
     } catch {}
@@ -148,7 +163,8 @@ function AppContent() {
     setShowSellerWelcome(false);
     // Clear lastNonAuthPath to prevent redirect to protected pages
     sessionStorage.removeItem("lastNonAuthPath");
-    navigate("/");
+    // REVISI: Reset flag setelah semua state bersih
+    isLoggingOutRef.current = false;
   };
 
   const handleStartSelling = () => {
@@ -309,6 +325,7 @@ function AppContent() {
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
           currentUser={authUser}
+          isLoggingOut={isLoggingOutRef}
         />
       </main>
 
