@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MessageSent;
+use App\Events\NewMessageNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Message;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\DB;
  * - sendMessage support tipe 'offer' dengan offer_product_id (untuk nego)
  * - acceptOffer / rejectOffer juga broadcast notifikasi
  * - index / messages sertakan data isOnline dari otherUser
+ * [REVISI] Tambah broadcast NewMessageNotification ke channel users.{receiverId}
+ *   agar penerima mendapat update realtime meski tidak sedang membuka chat tersebut.
  */
 class ChatController extends Controller
 {
@@ -163,6 +166,8 @@ class ChatController extends Controller
      * POST /chats/{uuid}/messages
      * Kirim pesan (text / offer / image / file).
      * [REVISI] Setelah simpan, fire event MessageSent untuk broadcast Reverb.
+     * [REVISI] Tambah broadcast NewMessageNotification ke channel users.{receiverId}
+     *   agar penerima update list chat secara realtime tanpa refresh.
      */
     public function sendMessage(string $id, SendMessageRequest $request): JsonResponse
     {
@@ -223,8 +228,13 @@ class ChatController extends Controller
 
         $message->loadMissing(['sender', 'chat', 'attachments']);
 
-        // [BARU] Broadcast ke private channel via Reverb
+        // Broadcast ke private channel chat — untuk penerima yang sedang membuka chat ini
         broadcast(new MessageSent($message));
+
+        // [REVISI] Broadcast ke private channel user penerima — untuk update list chat
+        // dan notifikasi realtime meski penerima tidak sedang membuka chat ini.
+        $receiverId = $chat->buyer_id === $userId ? $chat->seller_id : $chat->buyer_id;
+        broadcast(new NewMessageNotification($message, $receiverId));
 
         return response()->json([
             'success' => true,
@@ -298,7 +308,7 @@ class ChatController extends Controller
 
     /**
      * POST /chats/{chatUuid}/messages/{messageUuid}/accept-offer
-     * [REVISI] Setelah accept, broadcast system message.
+     * [REVISI] Setelah accept, broadcast system message + notifikasi ke buyer.
      */
     public function acceptOffer(string $chatId, string $messageId, Request $request): JsonResponse
     {
@@ -327,6 +337,9 @@ class ChatController extends Controller
 
             $sysMsg->loadMissing(['sender', 'chat', 'attachments']);
             broadcast(new MessageSent($sysMsg));
+
+            // [REVISI] Broadcast ke buyer agar list chatnya update realtime
+            broadcast(new NewMessageNotification($sysMsg, $chat->buyer_id));
         });
 
         return response()->json([
@@ -366,6 +379,9 @@ class ChatController extends Controller
 
             $sysMsg->loadMissing(['sender', 'chat', 'attachments']);
             broadcast(new MessageSent($sysMsg));
+
+            // [REVISI] Broadcast ke buyer agar list chatnya update realtime
+            broadcast(new NewMessageNotification($sysMsg, $chat->buyer_id));
         });
 
         return response()->json([
