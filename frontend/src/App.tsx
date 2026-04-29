@@ -325,7 +325,7 @@ function AppContent() {
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
           currentUser={authUser}
-          isLoggingOut={isLoggingOutRef}
+          userRole={userRole}
         />
       </main>
 

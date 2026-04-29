@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
-use App\Enums\UserRole;
 
 class StoreUserRequest extends FormRequest
 {
@@ -17,9 +18,7 @@ class StoreUserRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Get the validation rules that apply to this request.
      */
     public function rules(): array
     {
@@ -28,7 +27,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:20'],
-            'facultyId' => ['nullable', 'string', 'exists:faculties,code'],
+            'facultyId' => User::facultyIdRules(UserRole::USER->value, true),
             'location' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:500'],
         ];
@@ -46,7 +45,8 @@ class StoreUserRequest extends FormRequest
             'email.unique' => 'Email sudah terdaftar',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
-            'facultyId.exists' => 'Fakultas tidak ditemukan',
+            'facultyId.required' => 'Fakultas wajib dipilih',
+            'facultyId.exists' => 'Fakultas tidak ditemukan atau tidak aktif',
         ];
     }
 
@@ -55,8 +55,10 @@ class StoreUserRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'faculty_id' => $this->facultyId,
-        ]);
+        if ($this->has('facultyId')) {
+            $this->merge([
+                'faculty_id' => $this->facultyId,
+            ]);
+        }
     }
 }
