@@ -25,3 +25,20 @@ Broadcast::channel('chat.{uuid}', function ($user, string $uuid) {
 
     return $chat->buyer_id === $user->id || $chat->seller_id === $user->id;
 });
+
+/**
+ * Private channel per user (pakai UUID user, sesuai payload API frontend).
+ */
+Broadcast::channel('users.{uuid}', function ($user, string $uuid) {
+    return $user->uuid === $uuid;
+});
+
+/**
+ * Presence channel global untuk status online/offline realtime.
+ */
+Broadcast::channel('online', function ($user) {
+    return [
+        'id' => $user->uuid,
+        'name' => $user->name,
+    ];
+});

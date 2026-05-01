@@ -114,8 +114,17 @@ function AppContent() {
       } else {
         // Untuk halaman lain, handle ID overrides seperti biasa
         if ("userId" in data && data.userId) url = `/profile/${data.userId}`;
-        if ("productId" in data && data.productId)
-          url = `/product/${data.productId}`;
+        if ("productId" in data && data.productId) {
+          // Support checkout dengan negotiated price dari offer/nego
+          if (page === "checkout") {
+            url = `/checkout/${data.productId}`;
+            if ("negoPrice" in data && data.negoPrice) {
+              params.set("price", String(data.negoPrice));
+            }
+          } else {
+            url = `/product/${data.productId}`;
+          }
+        }
       }
 
       // Store misc data in state

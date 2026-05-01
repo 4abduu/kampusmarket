@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChevronRight, Truck, Home, Store, Monitor, Clock } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
 import { createOrder } from "@/lib/api/orders";
@@ -26,11 +27,14 @@ import type {
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProps) {
+  const [searchParams] = useSearchParams();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // [NEW] negotiated price dari offer/nego dalam chat
+  const negotiatedPrice = searchParams.get("price") ? parseInt(searchParams.get("price") || "0", 10) : null;
 
   // State for form fields
   const quantity = 1; // Fixed quantity for now
@@ -135,9 +139,12 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const selectedShipping = shippingOptions.find((option) => option.id === shippingMethod);
 
   const displayPrice = product ? getDisplayPrice(product, isService) : "Rp 0";
-  const basePrice = product
-    ? (isService ? (product?.priceMin || product?.price_min || product?.price || 0) : (product?.price || 0))
-    : 0;
+  // [NEW] Use negotiated price if available (from offer/nego in chat), otherwise use product price
+  const basePrice = negotiatedPrice !== null 
+    ? negotiatedPrice
+    : product
+      ? (isService ? (product?.priceMin || product?.price_min || product?.price || 0) : (product?.price || 0))
+      : 0;
   const shippingFeeAmount = selectedShipping?.price || 0;
   const totalPayment = basePrice + shippingFeeAmount;
 
@@ -243,6 +250,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
       const orderPayload: any = {
         productId: productDbId,
         quantity,
+        negoPrice: negotiatedPrice ?? undefined,
         shippingType: selectedShipping.id,
         shippingNotes: "",
         selectedAddressId: requiresAddress ? selectedAddressId : undefined,
@@ -431,6 +439,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
               selectedAddressId={selectedAddressId}
               addresses={addresses}
               isSubmitting={isSubmitting}
+              negotiatedPrice={negotiatedPrice}
             />
           </div>
         )}
