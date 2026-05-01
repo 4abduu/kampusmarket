@@ -26,6 +26,9 @@ export default function ChatMessageItem({
   // FIX #4 & #5: tentukan siapa yang kirim pesan ini
   const senderIsSeller = message.senderId === chat.seller?.id;
   const senderIsBuyer = message.senderId === chat.buyer?.id;
+  const canRespondToOffer = !isMe
+    && message.offerStatus === 'pending'
+    && ((isSeller && senderIsBuyer) || (!isSeller && senderIsSeller));
 
   if (message.type === 'system') {
     return (
@@ -97,7 +100,7 @@ export default function ChatMessageItem({
             </div>
 
             {/* Tombol seller: terima/tolak — hanya jika buyer yang kirim nego, dan seller belum reply */}
-            {isSeller && senderIsBuyer && message.offerStatus === 'pending' && (
+            {canRespondToOffer && (
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAcceptOffer(message)}>
                   Terima

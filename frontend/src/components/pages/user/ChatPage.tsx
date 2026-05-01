@@ -167,7 +167,17 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         // (misal fallback polling sedang jalan), tambah pesan ke messages juga
         if (chatId === activeChatIdRef.current && !echoChannelRef.current) {
           setMessages(prev => {
-            if (prev.some(m => m.id === incoming.id)) return prev;
+            const existingIdx = prev.findIndex(m => m.id === incoming.id);
+            if (existingIdx !== -1) {
+              // Update jika offer status berubah
+              const existing = prev[existingIdx];
+              if (existing.offerStatus !== incoming.offerStatus) {
+                const next = [...prev];
+                next[existingIdx] = incoming;
+                return next;
+              }
+              return prev;
+            }
             return [...prev, incoming];
           });
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -303,8 +313,20 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         channel.listen('.MessageSent', (event: { message: ApiMessage }) => {
           const incoming = event.message;
           setMessages(prev => {
-            // Dedup: jika ID sudah ada (real atau temp), jangan tambah
-            if (prev.some(m => m.id === incoming.id)) return prev;
+            // Cek apakah message dengan ID ini sudah ada
+            const existingIdx = prev.findIndex(m => m.id === incoming.id);
+            if (existingIdx !== -1) {
+              // Jika sudah ada tapi offer status berubah (misal: pending → accepted/rejected),
+              // update message tersebut agar UI langsung berubah tanpa refresh
+              const existing = prev[existingIdx];
+              if (existing.offerStatus !== incoming.offerStatus) {
+                const next = [...prev];
+                next[existingIdx] = incoming;
+                return next;
+              }
+              // ID sama dan status sama — skip (dedup normal)
+              return prev;
+            }
             // Race condition guard: jika pengirim adalah diri sendiri dan ada pesan pending
             // yang belum di-replace (tempId), replace sekarang daripada menambah duplikat
             const pendingIdx = prev.findIndex(m => m._pending && m.senderId === incoming.senderId && m.type === incoming.type);
@@ -565,17 +587,19 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     onNavigate('checkout', {
       productId: product.id,
       negoPrice: message.offerPrice ?? product.price,
-    } as Record<string, unknown>);
+    });
   };
 
   const handleOpenOfferModal = async () => {
     setShowOfferModal(true);
     if (sellerProducts.length > 0 || !chatDetail?.seller) return;
     try {
+      // Fetch semua produk (barang + jasa) dari seller — tanpa type filter
+      // Backend akan return both barang dan jasa
       const res = await apiClient.get<
         unknown,
-        { success: boolean; data: { id: string; title: string; price: number; image?: string; canNego: boolean; stock: number }[] }
-      >(`/users/${chatDetail.seller.id}/products?type=barang`);
+        { success: boolean; data: { id: string; title: string; price: number; image?: string; canNego: boolean; stock: number; type?: string }[] }
+      >(`/users/${chatDetail.seller.id}/products`);
       const products = res.data.map(p => ({ ...p, stock: p.stock ?? 0 }));
       setSellerProducts(products);
       // FIX #2: default ke produk pertama yang ada stok dan canNego

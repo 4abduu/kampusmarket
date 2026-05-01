@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MessageSent;
+use App\Events\MessagesRead;
 use App\Events\NewMessageNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
@@ -111,13 +112,34 @@ class ChatController extends Controller
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
+        $readAt = now();
+
         // Tandai pesan sebagai terbaca
         $chat->messages()
             ->where('sender_id', '!=', $userId)
             ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+            ->update(['is_read' => true, 'read_at' => $readAt]);
 
         $chat->markAsReadFor($userId);
+
+        $chat->load([
+            'product.images',
+            'product.seller',
+            'buyer',
+            'seller',
+            'messages' => fn ($q) => $q->with(['sender', 'attachments'])->oldest(),
+        ]);
+
+        $chat->setRelation('messages', $chat->messages->map(function (Message $message) use ($userId) {
+            if ($message->sender_id !== $userId) {
+                $message->is_read = true;
+                $message->read_at = now();
+            }
+
+            return $message;
+        }));
+
+        broadcast(new MessagesRead($chat->uuid, $request->user()->uuid, $readAt->toISOString()));
 
         return response()->json([
             'success' => true,
@@ -143,17 +165,30 @@ class ChatController extends Controller
             ->oldest()
             ->paginate(100);
 
+        $readAt = now();
+
         // Mark as read
         $chat->messages()
             ->where('sender_id', '!=', $userId)
             ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+            ->update(['is_read' => true, 'read_at' => $readAt]);
 
         $chat->markAsReadFor($userId);
 
+        $items = collect($messages->items())->map(function (Message $message) use ($userId) {
+            if ($message->sender_id !== $userId) {
+                $message->is_read = true;
+                $message->read_at = now();
+            }
+
+            return $message;
+        });
+
+        broadcast(new MessagesRead($chat->uuid, $request->user()->uuid, $readAt->toISOString()));
+
         return response()->json([
             'success' => true,
-            'data'    => MessageResource::collection($messages->items()),
+            'data'    => MessageResource::collection($items),
             'meta'    => [
                 'currentPage' => $messages->currentPage(),
                 'lastPage'    => $messages->lastPage(),
@@ -233,8 +268,14 @@ class ChatController extends Controller
 
         // [REVISI] Broadcast ke private channel user penerima — untuk update list chat
         // dan notifikasi realtime meski penerima tidak sedang membuka chat ini.
-        $receiverId = $chat->buyer_id === $userId ? $chat->seller_id : $chat->buyer_id;
-        broadcast(new NewMessageNotification($message, $receiverId));
+        $chat->loadMissing(['buyer', 'seller']);
+        $receiverUuid = $chat->buyer_id === $userId
+            ? $chat->seller?->uuid
+            : $chat->buyer?->uuid;
+
+        if ($receiverUuid) {
+            broadcast(new NewMessageNotification($message, $receiverUuid));
+        }
 
         return response()->json([
             'success' => true,
@@ -261,6 +302,20 @@ class ChatController extends Controller
             ->update(['is_read' => true, 'read_at' => now()]);
 
         $chat->markAsReadFor($userId);
+
+        $readAt = now()->toISOString();
+        $chat->loadMissing(['messages' => fn ($q) => $q->with(['sender', 'attachments'])->oldest()]);
+        $chat->setRelation('messages', $chat->messages->map(function (Message $message) use ($userId, $readAt) {
+            if ($message->sender_id !== $userId) {
+                $message->is_read = true;
+                $message->read_at = now();
+                $message->setAttribute('read_at', now());
+            }
+
+            return $message;
+        }));
+
+        broadcast(new MessagesRead($chat->uuid, $request->user()->uuid, $readAt));
 
         return response()->json(['success' => true, 'message' => 'Chat ditandai sudah dibaca']);
     }
@@ -316,8 +371,12 @@ class ChatController extends Controller
         $message = Message::where('uuid', $messageId)->firstOrFail();
         $userId  = $request->user()->id;
 
-        if ($chat->seller_id !== $userId) {
-            return response()->json(['success' => false, 'message' => 'Hanya penjual yang dapat menerima penawaran'], 403);
+        $expectedResponderId = $message->sender_id === $chat->buyer_id
+            ? $chat->seller_id
+            : $chat->buyer_id;
+
+        if ($expectedResponderId !== $userId) {
+            return response()->json(['success' => false, 'message' => 'Hanya penerima penawaran yang dapat menerima penawaran'], 403);
         }
 
         if ($message->type->value !== 'offer' || $message->offer_status->value !== 'pending') {
@@ -326,6 +385,10 @@ class ChatController extends Controller
 
         DB::transaction(function () use ($chat, $message, $userId) {
             $message->acceptOffer();
+
+            // [FIX] Broadcast the updated offer message first so frontend can update UI immediately
+            $message->loadMissing(['sender', 'chat', 'attachments']);
+            broadcast(new MessageSent($message));
 
             $sysMsg = Message::create([
                 'uuid'      => NumberGenerator::uuid(),
@@ -338,8 +401,15 @@ class ChatController extends Controller
             $sysMsg->loadMissing(['sender', 'chat', 'attachments']);
             broadcast(new MessageSent($sysMsg));
 
-            // [REVISI] Broadcast ke buyer agar list chatnya update realtime
-            broadcast(new NewMessageNotification($sysMsg, $chat->buyer_id));
+            $chat->loadMissing(['buyer', 'seller']);
+            $receiverUuid = $userId === $chat->buyer_id
+                ? $chat->seller?->uuid
+                : $chat->buyer?->uuid;
+
+            // [REVISI] Broadcast ke lawan bicara agar list chatnya update realtime
+            if ($receiverUuid) {
+                broadcast(new NewMessageNotification($sysMsg, $receiverUuid));
+            }
         });
 
         return response()->json([
@@ -358,8 +428,12 @@ class ChatController extends Controller
         $message = Message::where('uuid', $messageId)->firstOrFail();
         $userId  = $request->user()->id;
 
-        if ($chat->seller_id !== $userId) {
-            return response()->json(['success' => false, 'message' => 'Hanya penjual yang dapat menolak penawaran'], 403);
+        $expectedResponderId = $message->sender_id === $chat->buyer_id
+            ? $chat->seller_id
+            : $chat->buyer_id;
+
+        if ($expectedResponderId !== $userId) {
+            return response()->json(['success' => false, 'message' => 'Hanya penerima penawaran yang dapat menolak penawaran'], 403);
         }
 
         if ($message->type->value !== 'offer' || $message->offer_status->value !== 'pending') {
@@ -380,8 +454,15 @@ class ChatController extends Controller
             $sysMsg->loadMissing(['sender', 'chat', 'attachments']);
             broadcast(new MessageSent($sysMsg));
 
-            // [REVISI] Broadcast ke buyer agar list chatnya update realtime
-            broadcast(new NewMessageNotification($sysMsg, $chat->buyer_id));
+            $chat->loadMissing(['buyer', 'seller']);
+            $receiverUuid = $userId === $chat->buyer_id
+                ? $chat->seller?->uuid
+                : $chat->buyer?->uuid;
+
+            // [REVISI] Broadcast ke lawan bicara agar list chatnya update realtime
+            if ($receiverUuid) {
+                broadcast(new NewMessageNotification($sysMsg, $receiverUuid));
+            }
         });
 
         return response()->json([

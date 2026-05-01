@@ -9,6 +9,7 @@ export interface NavigationData {
   orderId?: string;
   chatAction?: "chat" | "nego";
   successType?: "product" | "service";
+  negoPrice?: number;
 }
 
 export type UserRole = "user" | "admin" | null;

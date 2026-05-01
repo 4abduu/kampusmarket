@@ -26,37 +26,45 @@ import {
   ShieldAlert,
   Package,
 } from 'lucide-react';
-import { EMOJIS, type ApiChatDetail, type ApiMessage } from '@/components/pages/user/chat/chat.types';
+import {
+  EMOJIS,
+  type ApiChatDetail,
+  type ApiChatProduct,
+  type ApiMessage,
+  type ApiUser,
+} from '@/components/pages/user/chat/chat.types';
 import ChatMessageItem from '@/components/pages/user/chat/ChatMessageItem';
 
 interface Props {
-  chat: ApiChatDetail | null;
+  chatDetail: ApiChatDetail | null;
   currentUserId: string;
   showChatList: boolean;
   messages: ApiMessage[];
+  otherUser: ApiUser | null;
+  chatProduct: ApiChatProduct | null;
+  isSeller: boolean;
   isLoading: boolean;
   isSending: boolean;
   newMessage: string;
-  setNewMessage: (v: string) => void;
   showEmojiPicker: boolean;
-  setShowEmojiPicker: (v: boolean) => void;
   attachedImage: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   showContextCard: boolean;
-  onNavigate: (page: string, productId?: string) => void;
-  onOpenProfile: () => void;
-  setShowNegoModal: (v: boolean) => void;
-  setShowOfferModal: (v: boolean) => void;
-  onBackToList: () => void;
-  onHandleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onNavigate: (page: string, data?: string | Record<string, unknown>) => void;
+  onBack: () => void;
+  onSend: () => void;
+  onMessageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleEmoji: () => void;
+  onEmojiSelect: (emoji: string) => void;
   onRemoveImage: () => void;
-  onAddEmoji: (emoji: string) => void;
-  onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onAcceptOffer: (message: ApiMessage) => void;
   onRejectOffer: (message: ApiMessage) => void;
-  onOpenPaymentDialog: (message: ApiMessage) => void;
+  onBayarSekarang: (message: ApiMessage) => void;
+  onOpenNego: () => void;
+  onOpenOffer: () => void;
   formatPrice: (price: number) => string;
 }
 
@@ -65,37 +73,41 @@ function getInitials(name: string): string {
 }
 
 export default function ChatConversationPanel({
-  chat,
+  chatDetail,
   currentUserId,
   showChatList,
   messages,
+  otherUser,
+  chatProduct,
+  isSeller,
   isLoading,
   isSending,
   newMessage,
-  setNewMessage,
   showEmojiPicker,
-  setShowEmojiPicker,
   attachedImage,
   fileInputRef,
   messagesEndRef,
   showContextCard,
   onNavigate,
-  onOpenProfile,
-  setShowNegoModal,
-  setShowOfferModal,
-  onBackToList,
-  onHandleImageUpload,
+  onBack,
+  onSend,
+  onMessageChange,
+  onImageUpload,
+  onToggleEmoji,
+  onEmojiSelect,
   onRemoveImage,
-  onAddEmoji,
-  onSendMessage,
   onKeyPress,
   onAcceptOffer,
   onRejectOffer,
-  onOpenPaymentDialog,
+  onBayarSekarang,
+  onOpenNego,
+  onOpenOffer,
   formatPrice,
 }: Props) {
-  const isSeller = chat ? chat.seller?.id === currentUserId : false;
-  const otherUser = chat ? (isSeller ? chat.buyer : chat.seller) : null;
+  const handleOpenProfile = () => {
+    if (!otherUser?.id) return;
+    onNavigate('profile', { userId: otherUser.id });
+  };
 
   return (
     <Card
@@ -103,22 +115,22 @@ export default function ChatConversationPanel({
         lg:col-span-2 flex flex-col overflow-hidden transition-all duration-300
         border-slate-200/80 dark:border-slate-800/80 shadow-sm rounded-2xl
         bg-white/95 dark:bg-slate-900/90 backdrop-blur
-        ${!showChatList || chat ? 'flex' : 'hidden lg:flex'}
+        ${!showChatList || chatDetail ? 'flex' : 'hidden lg:flex'}
       `}
     >
-      {chat ? (
+      {chatDetail ? (
         <>
           {/* ── Header ── */}
           <CardHeader className="border-b border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/70 dark:bg-slate-900/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" onClick={onBackToList}>
+                <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" onClick={onBack}>
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
 
                 <button
                   type="button"
-                  onClick={onOpenProfile}
+                  onClick={handleOpenProfile}
                   className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 >
                   <div className="relative">
@@ -139,7 +151,7 @@ export default function ChatConversationPanel({
 
                 <button
                   type="button"
-                  onClick={onOpenProfile}
+                  onClick={handleOpenProfile}
                   className="min-w-0 text-left rounded-md px-1 -mx-1 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none"
                 >
                   <p className="font-medium text-sm sm:text-base truncate">{otherUser?.name ?? '—'}</p>
@@ -168,11 +180,11 @@ export default function ChatConversationPanel({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem onClick={onOpenProfile}>
+                  <DropdownMenuItem onClick={handleOpenProfile}>
                     <User className="h-4 w-4" />
                     Lihat Profil
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => chat.product && onNavigate('product', chat.product.id)}>
+                  <DropdownMenuItem onClick={() => chatProduct && onNavigate('product', chatProduct.id)}>
                     <Package className="h-4 w-4" />
                     Lihat Produk
                   </DropdownMenuItem>
@@ -204,23 +216,23 @@ export default function ChatConversationPanel({
             ) : (
               <div className="space-y-3 sm:space-y-4">
                 {/* Context card "Sedang Ditanyakan" — tampil saat chat baru dibuka dari produk */}
-                {showContextCard && chat.product && (
+                {showContextCard && chatProduct && (
                   <div className="flex justify-center mb-4">
                     <div
                       className="flex items-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow max-w-xs w-full"
-                      onClick={() => chat.product && onNavigate('product', chat.product.id)}
+                      onClick={() => onNavigate('product', chatProduct.id)}
                     >
                       <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
-                        {chat.product.images?.[0] ? (
-                          <img src={chat.product.images[0]} alt={chat.product.title} className="w-full h-full object-cover rounded-lg" />
+                        {chatDetail.product?.images?.[0] ? (
+                          <img src={chatDetail.product.images[0]} alt={chatProduct.title} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <Package className="h-4 w-4 text-muted-foreground/50" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] text-muted-foreground">Sedang ditanyakan</p>
-                        <p className="text-xs font-medium truncate">{chat.product.title}</p>
-                        <p className="text-xs text-primary-600 font-semibold">{formatPrice(chat.product.price)}</p>
+                        <p className="text-xs font-medium truncate">{chatProduct.title}</p>
+                        <p className="text-xs text-primary-600 font-semibold">{formatPrice(chatProduct.price)}</p>
                       </div>
                     </div>
                   </div>
@@ -237,12 +249,12 @@ export default function ChatConversationPanel({
                     key={msg.id}
                     message={msg}
                     currentUserId={currentUserId}
-                    chat={chat}
+                    chat={chatDetail}
                     formatPrice={formatPrice}
                     onNavigate={onNavigate}
                     onAcceptOffer={onAcceptOffer}
                     onRejectOffer={onRejectOffer}
-                    onOpenPaymentDialog={onOpenPaymentDialog}
+                    onOpenPaymentDialog={onBayarSekarang}
                   />
                 ))}
                 <div ref={messagesEndRef} />
@@ -269,7 +281,7 @@ export default function ChatConversationPanel({
                 {EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
-                    onClick={() => onAddEmoji(emoji)}
+                    onClick={() => onEmojiSelect(emoji)}
                     className="h-8 w-8 flex items-center justify-center text-lg hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                   >
                     {emoji}
@@ -288,7 +300,7 @@ export default function ChatConversationPanel({
                 accept="image/*"
                 title="Unggah gambar"
                 aria-label="Unggah gambar"
-                onChange={onHandleImageUpload}
+                onChange={onImageUpload}
                 className="hidden"
               />
               <Button
@@ -304,21 +316,21 @@ export default function ChatConversationPanel({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                onClick={onToggleEmoji}
               >
                 <Smile className={`h-4 w-4 ${showEmojiPicker ? 'text-primary-600' : 'text-slate-500'}`} />
               </Button>
               <Input
                 placeholder="Ketik pesan..."
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={onMessageChange}
                 onKeyDown={onKeyPress}
                 className="flex-1 text-sm border-slate-300 dark:border-slate-700 focus-visible:ring-primary-500"
               />
               <Button
                 className="bg-primary-600 hover:bg-primary-700 h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                 size="icon"
-                onClick={onSendMessage}
+                onClick={onSend}
                 disabled={(!newMessage.trim() && !attachedImage) || isSending}
               >
                 <Send className="h-4 w-4" />
@@ -327,12 +339,12 @@ export default function ChatConversationPanel({
 
             {/* Tombol aksi nego */}
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
-              {!isSeller && chat.product?.canNego && (
+              {!isSeller && chatProduct?.canNego && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="text-xs sm:text-sm whitespace-nowrap"
-                  onClick={() => setShowNegoModal(true)}
+                  onClick={onOpenNego}
                 >
                   <Handshake className="h-3 w-3 mr-1" />
                   Ajukan Nego
@@ -343,7 +355,7 @@ export default function ChatConversationPanel({
                   variant="outline"
                   size="sm"
                   className="text-xs sm:text-sm whitespace-nowrap"
-                  onClick={() => setShowOfferModal(true)}
+                  onClick={onOpenOffer}
                 >
                   <Receipt className="h-3 w-3 mr-1" />
                   Buat Penawaran
