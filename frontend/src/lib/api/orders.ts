@@ -1,8 +1,11 @@
 import apiClient from './client';
 
 const unwrapApiData = <T>(response: any): T => {
-  // Supports both transformed client responses and raw axios-like responses.
   const payload = response?.data ?? response;
+  // If it's a paginated response (has both data and meta), return the whole payload
+  if (payload?.data && payload.meta) {
+    return payload as T;
+  }
   return (payload?.data ?? payload) as T;
 };
 
@@ -34,19 +37,33 @@ export interface Order {
   paymentStatus: string;
   quantity: number;
   basePrice: number;
+  negoPrice?: number | null;
   finalPrice: number;
   shippingFee: number;
+  adminFeePercent: number;
+  adminFeeDeducted: number;
   totalPrice: number;
   netIncome: number;
   shippingMethod: string;
   shippingType: string;
+  shippingAddress?: string;
+  shippingNotes?: string;
+  paymentMethod?: string;
+  offeredPrice?: number | null;
+  priceOfferNotes?: string | null;
   serviceDate?: string;
   serviceTime?: string;
+  serviceNotes?: string;
+  serviceDeadline?: string;
   trackingNumber?: string;
+  cancelReason?: string;
+  history?: any[];
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
   cancelledAt?: string;
+  sellerConfirmedAt?: string | null;
+  autoConfirmDeadline?: string | null;
 }
 
 export interface PaymentResponse {
@@ -95,7 +112,7 @@ export const getBuyerOrders = async (
   params.append('per_page', perPage.toString());
   params.append('page', page.toString());
 
-  const response = await apiClient.get(`/orders/buyer?${params.toString()}`);
+  const response = await apiClient.get(`/orders/buyer/all?${params.toString()}`);
   return unwrapApiData<{ data: Order[]; meta: any }>(response);
 };
 
@@ -112,7 +129,7 @@ export const getSellerOrders = async (
   params.append('per_page', perPage.toString());
   params.append('page', page.toString());
 
-  const response = await apiClient.get(`/orders/seller?${params.toString()}`);
+  const response = await apiClient.get(`/orders/seller/all?${params.toString()}`);
   return unwrapApiData<{ data: Order[]; meta: any }>(response);
 };
 
@@ -125,15 +142,31 @@ export const getOrderDetail = async (orderId: string): Promise<Order> => {
 };
 
 /**
- * Pay for order (returns snap token for Midtrans)
+ * Pay for order (returns snap token for Midtrans or processes balance payment)
  */
-export const payOrder = async (orderId: string): Promise<PaymentResponse> => {
+export const payOrder = async (orderId: string): Promise<PaymentResponse & { order?: Order }> => {
   const response = await apiClient.post(`/orders/${orderId}/pay`);
-  return unwrapApiData<PaymentResponse>(response);
+  return unwrapApiData<PaymentResponse & { order?: Order }>(response);
 };
 
 /**
- * Complete order
+ * Seller confirm order (pending → processing/waiting_payment)
+ */
+export const confirmOrder = async (orderId: string): Promise<Order> => {
+  const response = await apiClient.post(`/orders/${orderId}/confirm`);
+  return unwrapApiData<Order>(response);
+};
+
+/**
+ * Seller deliver / mark service done
+ */
+export const deliverOrder = async (orderId: string): Promise<Order> => {
+  const response = await apiClient.post(`/orders/${orderId}/deliver`);
+  return unwrapApiData<Order>(response);
+};
+
+/**
+ * Buyer complete order (confirm receipt → escrow release)
  */
 export const completeOrder = async (orderId: string): Promise<Order> => {
   const response = await apiClient.post(`/orders/${orderId}/complete`);
@@ -141,7 +174,7 @@ export const completeOrder = async (orderId: string): Promise<Order> => {
 };
 
 /**
- * Cancel order
+ * Cancel order (before payment — direct cancel)
  */
 export const cancelOrder = async (orderId: string, reason: string): Promise<Order> => {
   const response = await apiClient.post(`/orders/${orderId}/cancel`, {

@@ -10,6 +10,15 @@ use App\Enums\AccountType;
 class Withdrawal extends Model
 {
     use HasFactory;
+    
+    protected static function booted()
+    {
+        static::creating(function ($withdrawal) {
+            if (!$withdrawal->uuid) {
+                $withdrawal->uuid = \App\Http\Helpers\NumberGenerator::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'uuid',
@@ -129,7 +138,7 @@ class Withdrawal extends Model
      */
     public function getAmountInRupiah(): float
     {
-        return $this->amount / 100;
+        return (float) $this->amount;
     }
 
     /**

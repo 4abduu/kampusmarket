@@ -45,14 +45,14 @@ class OrderResource extends JsonResource
             'quantity' => $this->quantity,
             
             // Pricing (convert from cent to Rupiah)
-            'basePrice' => (int) ($this->base_price / 100),
-            'negoPrice' => $this->nego_price ? (int) ($this->nego_price / 100) : null,
-            'finalPrice' => (int) ($this->final_price / 100),
-            'shippingFee' => (int) ($this->shipping_fee / 100),
+            'basePrice' => (int) $this->base_price,
+            'negoPrice' => $this->nego_price ? (int) $this->nego_price : null,
+            'finalPrice' => (int) $this->final_price,
+            'shippingFee' => (int) $this->shipping_fee,
             'adminFeePercent' => (float) $this->admin_fee_percent,
-            'adminFeeDeducted' => (int) ($this->admin_fee_deducted / 100),
-            'totalPrice' => (int) ($this->total_price / 100),
-            'netIncome' => (int) ($this->net_income / 100),
+            'adminFeeDeducted' => (int) $this->admin_fee_deducted,
+            'totalPrice' => (int) $this->total_price,
+            'netIncome' => (int) $this->net_income,
             
             // Shipping
             'shippingMethod' => $this->shipping_method,
@@ -70,7 +70,7 @@ class OrderResource extends JsonResource
             'serviceNotes' => $this->service_notes,
             
             // Variable pricing (for jasa)
-            'offeredPrice' => $this->offered_price ? (int) ($this->offered_price / 100) : null,
+            'offeredPrice' => $this->offered_price ? (int) $this->offered_price : null,
             'priceOfferNotes' => $this->price_offer_notes,
             
             // Payment
@@ -89,6 +89,8 @@ class OrderResource extends JsonResource
             'updatedAt' => $this->updated_at->toISOString(),
             'completedAt' => $this->completed_at?->toISOString(),
             'cancelledAt' => $this->cancelled_at?->toISOString(),
+            'sellerConfirmedAt' => $this->seller_confirmed_at?->toISOString(),
+            'autoConfirmDeadline' => $this->auto_confirm_deadline?->toISOString(),
         ];
     }
 
@@ -103,7 +105,7 @@ class OrderResource extends JsonResource
             'productTitle' => $this->product_title,
             'productType' => $this->product_type->value ?? $this->product_type,
             'status' => $this->status->value ?? $this->status,
-            'totalPrice' => (int) ($this->total_price / 100),
+            'totalPrice' => (int) $this->total_price,
             'createdAt' => $this->created_at->format('Y-m-d H:i'),
         ];
     }
@@ -125,7 +127,7 @@ class OrderResource extends JsonResource
     {
         return array_merge($this->toArray(request()), [
             'buyer' => (new UserResource($this->buyer))->toMinimalArray(),
-            'netIncome' => (int) ($this->net_income / 100),
+            'netIncome' => (int) $this->net_income,
         ]);
     }
 }

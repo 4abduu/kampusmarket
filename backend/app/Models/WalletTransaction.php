@@ -10,6 +10,15 @@ use App\Enums\TransactionStatus;
 class WalletTransaction extends Model
 {
     use HasFactory;
+    
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (!$transaction->uuid) {
+                $transaction->uuid = \App\Http\Helpers\NumberGenerator::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'uuid',
@@ -77,7 +86,7 @@ class WalletTransaction extends Model
      */
     public function getAmountInRupiah(): float
     {
-        return $this->amount / 100;
+        return (float) $this->amount;
     }
 
     /**
@@ -124,8 +133,8 @@ class WalletTransaction extends Model
             'id' => $this->uuid,
             'userId' => $this->user->uuid,
             'type' => $this->type->value,
-            'amount' => (int) ($this->amount / 100), // Convert to Rupiah
-            'balanceAfter' => (int) ($this->balance_after / 100),
+            'amount' => (int) $this->amount, 
+            'balanceAfter' => (int) $this->balance_after,
             'description' => $this->description,
             'referenceId' => $this->related_order_id ?? $this->related_withdrawal_id,
             'status' => $this->status->value,

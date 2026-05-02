@@ -75,16 +75,16 @@ class PaymentController extends Controller
 
     /**
      * Webhook endpoint for Midtrans notifications.
+     * Updates payment record AND order status after successful payment.
      */
     public function webhook(Request $request)
     {
         $payload = $request->all();
 
         $orderId = $payload['order_id'] ?? null;
-        $transactionStatus = $payload['transaction_status'] ?? $payload['status_code'] ?? null;
         $signatureKey = $payload['signature_key'] ?? $request->header('x-notif-signature');
         $statusCode = $payload['status_code'] ?? '';
-        $grossAmount = $payload['gross_amount'] ?? ($payload['gross_amount'] ?? '0');
+        $grossAmount = $payload['gross_amount'] ?? '0';
 
         if (!$orderId) {
             return response()->json(['message' => 'missing order_id'], 400);
@@ -96,28 +96,49 @@ class PaymentController extends Controller
             return response()->json(['message' => 'invalid signature'], 403);
         }
 
-        // Find payment by uuid (we used payment.uuid as order_id sent to midtrans)
         $payment = Payment::where('uuid', $orderId)->first();
 
         if (!$payment) {
             return response()->json(['message' => 'payment not found'], 404);
         }
 
-        // Update payment record
         $payment->raw_response = $payload;
         $payment->transaction_id = $payload['transaction_id'] ?? $payment->transaction_id;
 
-        if (($payload['transaction_status'] ?? '') === 'capture' || ($payload['transaction_status'] ?? '') === 'settlement' || ($payload['status_code'] ?? '') === '200') {
+        $txStatus = $payload['transaction_status'] ?? '';
+
+        if (in_array($txStatus, ['capture', 'settlement']) || $statusCode === '200') {
             $payment->status = 'paid';
             $payment->paid_at = now();
-            // also update order payment_status
+
             $order = $payment->order;
-            if ($order) {
+            if ($order && $order->payment_status !== 'paid') {
                 $order->payment_status = 'paid';
                 $order->paid_at = now();
+
+                // Update order status based on shipping type (escrow - no seller transfer)
+                $shippingType = $order->shipping_type;
+                if (is_string($shippingType)) {
+                    $shippingType = \App\Enums\ShippingType::tryFrom($shippingType);
+                }
+
+                $newStatus = match ($shippingType) {
+                    \App\Enums\ShippingType::PICKUP => \App\Enums\OrderStatus::READY_PICKUP,
+                    default => \App\Enums\OrderStatus::PROCESSING,
+                };
+
+                $order->status = $newStatus;
                 $order->save();
+
+                \App\Models\OrderHistory::create([
+                    'uuid' => \Illuminate\Support\Str::uuid(),
+                    'order_id' => $order->id,
+                    'status' => $newStatus->value,
+                    'notes' => 'Pembayaran Midtrans berhasil — dana ditahan di escrow',
+                    'actor_id' => $order->buyer_id,
+                ]);
             }
-        } elseif (($payload['transaction_status'] ?? '') === 'deny' || ($payload['transaction_status'] ?? '') === 'cancel' || ($payload['transaction_status'] ?? '') === 'expire') {
+        } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
             $payment->status = 'failed';
         }
 

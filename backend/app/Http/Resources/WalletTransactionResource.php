@@ -31,9 +31,9 @@ class WalletTransactionResource extends JsonResource
             'typeColor' => $this->type?->color() ?? 'gray',
             
             // Amount (convert from cent to Rupiah)
-            'amount' => (int) ($this->amount / 100),
-            'balanceBefore' => (int) ($this->balance_before / 100),
-            'balanceAfter' => (int) ($this->balance_after / 100),
+            'amount' => (int) $this->amount,
+            'balanceBefore' => (int) $this->balance_before,
+            'balanceAfter' => (int) $this->balance_after,
             
             // Description
             'description' => $this->description,

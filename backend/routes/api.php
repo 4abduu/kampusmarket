@@ -156,6 +156,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/orders/seller/all', [OrderController::class, 'sellerOrders']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/complete', [OrderController::class, 'complete']);
+    Route::post('/orders/{id}/confirm', [OrderController::class, 'confirm']);
+    Route::post('/orders/{id}/deliver', [OrderController::class, 'deliver']);
     Route::post('/orders/{id}/pay', [OrderController::class, 'pay']);
     Route::post('/orders/{id}/set-shipping-fee', [OrderController::class, 'setShippingFee']);
     Route::post('/orders/{id}/offer-price', [OrderController::class, 'offerPrice']);

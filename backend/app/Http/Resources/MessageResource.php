@@ -44,7 +44,7 @@ class MessageResource extends JsonResource
             'type' => $this->type->value ?? $this->type,
             
             // Offer (if type = 'offer')
-            'offerPrice' => $this->offer_price ? (int) ($this->offer_price / 100) : null,
+            'offerPrice' => $this->offer_price ? (int) $this->offer_price : null,
             'offerStatus' => $this->offer_status?->value ?? $this->offer_status,
             
             // File

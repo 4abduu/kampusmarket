@@ -42,3 +42,18 @@ Broadcast::channel('online', function ($user) {
         'name' => $user->name,
     ];
 });
+
+/**
+ * Private channel: order.{uuid}
+ *
+ * User diizinkan subscribe hanya jika dia adalah buyer atau seller order.
+ */
+Broadcast::channel('order.{uuid}', function ($user, string $uuid) {
+    $order = \App\Models\Order::where('uuid', $uuid)->first();
+
+    if (!$order) {
+        return false;
+    }
+
+    return $order->buyer_id === $user->id || $order->seller_id === $user->id;
+});
