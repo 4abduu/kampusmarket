@@ -32,7 +32,7 @@ export default function UserDashboardProductsTab({
   setShowDeleteProductDialog,
 }: Props) {
   return (
-    <Card>
+    <Card className="w-full overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Produk & Jasa Saya</CardTitle>
@@ -164,13 +164,21 @@ export default function UserDashboardProductsTab({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => onNavigate("product", product.id)}>
-                          <Eye className="h-4 w-4 mr-1" />Lihat
+                        <Button variant="ghost" size="sm" onClick={() => onNavigate("product", product.id)} title="Lihat">
+                          <Eye className="h-4 w-4 md:mr-1" />
+                          <span className="hidden md:inline">Lihat</span>
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)}>
-                          <Edit className="h-4 w-4 mr-1" />Edit
+                        <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)} title="Edit">
+                          <Edit className="h-4 w-4 md:mr-1" />
+                          <span className="hidden md:inline">Edit</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => { setProductToDelete(product.id); setShowDeleteProductDialog(true) }}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500 hover:text-red-600" 
+                          onClick={() => { setProductToDelete(product.id); setShowDeleteProductDialog(true) }}
+                          title="Hapus"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

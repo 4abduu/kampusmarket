@@ -660,6 +660,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           attachedImage={attachedImage}
           fileInputRef={fileInputRef}
           messagesEndRef={messagesEndRef}
+          onNavigate={onNavigate}
           onBack={handleBackToList}
           onSend={handleSendMessage}
           onKeyPress={handleKeyPress}
@@ -668,7 +669,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onToggleEmoji={() => setShowEmojiPicker(p => !p)}
           onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
           onRemoveImage={() => { setAttachedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-          onToggleContextCard={() => setShowContextCard(p => !p)}
           onAcceptOffer={handleAcceptOffer}
           onRejectOffer={handleRejectOffer}
           onBayarSekarang={handleBayarSekarang}
@@ -686,15 +686,18 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         sellerProducts={sellerProducts}
         selectedOfferProduct={selectedOfferProduct}
         chatProduct={chatProduct}
-        isSending={isSending}
-        onCloseNego={() => setShowNegoModal(false)}
-        onCloseOffer={() => setShowOfferModal(false)}
-        onNegoPriceChange={e => setNegoPrice(formatPriceInput(e.target.value))}
-        onOfferPriceChange={e => setOfferPrice(formatPriceInput(e.target.value))}
-        onSelectOfferProduct={setSelectedOfferProduct}
-        onSubmitNego={handleSubmitNego}
-        onSubmitOffer={handleSubmitOffer}
+        isSubmitting={isSending}
+        setShowNegoModal={setShowNegoModal}
+        setShowOfferModal={setShowOfferModal}
+        setNegoPrice={setNegoPrice}
+        setOfferPrice={setOfferPrice}
+        setSelectedOfferProduct={setSelectedOfferProduct}
+        handleSubmitNego={handleSubmitNego}
+        handleSubmitOffer={handleSubmitOffer}
         formatPrice={formatPrice}
+        formatPriceInput={formatPriceInput}
+        isSeller={isSeller}
+        onNavigateToDashboard={() => onNavigate('dashboard')}
       />
     </div>
   );

@@ -605,6 +605,7 @@ export default function AppRoutes({
                 <OrderDetailPage
                   onNavigate={onNavigate}
                   orderId={currentId || undefined}
+                  currentUser={currentUser}
                 />
               }
             />

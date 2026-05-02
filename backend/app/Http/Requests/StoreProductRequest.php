@@ -175,6 +175,29 @@ class StoreProductRequest extends FormRequest
             $stock = $this->stock ?? null;
             $status = $this->status ?? null;
 
+            // Shipping methods validation (at least one must be selected)
+            if ($productType === 'barang') {
+                $hasShipping = 
+                    ($this->has('isCod') && $this->isCod) || 
+                    ($this->has('isPickup') && $this->isPickup) || 
+                    ($this->has('isDelivery') && $this->isDelivery) || 
+                    ($this->has('shippingOptions') && !empty($this->shippingOptions));
+                
+                if (!$hasShipping) {
+                    $validator->errors()->add('shipping_options', 'Minimal harus memilih satu metode pengiriman.');
+                }
+            } else if ($productType === 'jasa') {
+                $hasService = 
+                    ($this->has('isOnline') && $this->isOnline) || 
+                    ($this->has('isOnsite') && $this->isOnsite) || 
+                    ($this->has('isHomeService') && $this->isHomeService) || 
+                    ($this->has('shippingOptions') && !empty($this->shippingOptions));
+                
+                if (!$hasService) {
+                    $validator->errors()->add('shipping_options', 'Minimal harus memilih satu metode layanan.');
+                }
+            }
+
             // For barang products
             if ($productType === 'barang' && $stock) {
                 // Rule 1: Status 'sold_out' must have stock = 0
