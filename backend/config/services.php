@@ -37,4 +37,10 @@ return [
         'redirect_uri' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback'),
     ],
 
+    'midtrans' => [
+        'server_key' => env('MIDTRANS_SERVER_KEY', ''),
+        'client_key' => env('MIDTRANS_CLIENT_KEY', ''),
+        'is_sandbox' => env('MIDTRANS_IS_SANDBOX', true),
+    ],
+
 ];

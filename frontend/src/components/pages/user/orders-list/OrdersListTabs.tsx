@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Package, Truck } from "lucide-react";
+import { CheckCircle2, Clock, Package, Truck, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdersListCard from "@/components/pages/user/orders-list/OrdersListCard";
@@ -23,6 +23,7 @@ const tabs: Array<{ value: OrdersTab; label: string; emptyMessage: string; empty
   { value: "processing", label: "Diproses", emptyMessage: "Tidak ada pesanan yang sedang diproses", emptyIcon: Package },
   { value: "shipping", label: "Dikirim", emptyMessage: "Tidak ada pesanan dalam pengiriman", emptyIcon: Truck },
   { value: "completed", label: "Selesai", emptyMessage: "Belum ada pesanan selesai", emptyIcon: CheckCircle2 },
+  { value: "cancelled", label: "Dibatalkan", emptyMessage: "Tidak ada pesanan dibatalkan", emptyIcon: Ban },
 ];
 
 export default function OrdersListTabs({ orders, viewMode, onNavigate }: OrdersListTabsProps) {

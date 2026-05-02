@@ -13,6 +13,7 @@ interface PaymentMethodDialogProps {
   summaryLabel?: string
   onPayWithWallet: () => void
   onPayWithMidtrans: () => void
+  walletBalance?: number
 }
 
 export default function PaymentMethodDialog({
@@ -25,7 +26,9 @@ export default function PaymentMethodDialog({
   summaryLabel,
   onPayWithWallet,
   onPayWithMidtrans,
+  walletBalance,
 }: PaymentMethodDialogProps) {
+  const isWalletInsufficient = walletBalance !== undefined && walletBalance < totalPayment;
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,19 +47,40 @@ export default function PaymentMethodDialog({
 
           <div className="space-y-3">
             <button
-              className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-primary-700 dark:hover:bg-primary-950/20"
-              onClick={onPayWithWallet}
+              type="button"
+              className={`w-full rounded-2xl border p-4 text-left transition-all duration-200 flex items-center gap-4 ${
+                isWalletInsufficient
+                  ? "border-red-100 bg-red-50/30 opacity-80 cursor-not-allowed dark:border-red-900/30 dark:bg-red-900/10"
+                  : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/20 shadow-sm hover:shadow"
+              }`}
+              onClick={() => {
+                if (isWalletInsufficient) return;
+                onPayWithWallet();
+              }}
+              disabled={isWalletInsufficient}
             >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                  <Wallet className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-slate-900 dark:text-slate-100">Bayar dengan Dompet</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Saldo dipotong otomatis.</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <div className={`rounded-xl p-3 shrink-0 ${isWalletInsufficient ? "bg-red-100 text-red-500 dark:bg-red-900/40" : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"}`}>
+                <Wallet className="h-6 w-6" />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">Dompet KampusMarket</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className={`text-sm font-medium ${isWalletInsufficient ? "text-red-600" : "text-emerald-600 dark:text-emerald-400"}`}>
+                    {walletBalance !== undefined ? formatPrice(walletBalance) : "Memuat saldo..."}
+                  </p>
+                  {isWalletInsufficient && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-red-100 text-[10px] font-bold text-red-600 uppercase tracking-wider">
+                      Kurang
+                    </span>
+                  )}
+                </div>
+                {isWalletInsufficient ? (
+                  <p className="text-xs text-red-500 mt-1 font-medium">Saldo kamu tidak cukup untuk pesanan ini.</p>
+                ) : (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pembayaran instan & aman.</p>
+                )}
+              </div>
+              {!isWalletInsufficient && <ArrowRight className="h-5 w-5 text-emerald-500" />}
             </button>
 
             <button

@@ -14,6 +14,16 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::updated(function ($order) {
+            // Broadcast if status, price, or shipping fee changed
+            if ($order->wasChanged(['status', 'offered_price', 'shipping_fee', 'final_price'])) {
+                broadcast(new \App\Events\OrderUpdated($order));
+            }
+        });
+    }
+
     protected $fillable = [
         'uuid',
         'order_number',
@@ -52,6 +62,8 @@ class Order extends Model
         'cancel_reason',
         'cancelled_at',
         'completed_at',
+        'seller_confirmed_at',
+        'auto_confirm_deadline',
         'notes',
     ];
 
@@ -72,6 +84,8 @@ class Order extends Model
         'service_deadline' => 'datetime',
         'cancelled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'seller_confirmed_at' => 'datetime',
+        'auto_confirm_deadline' => 'datetime',
         'status' => OrderStatus::class,
         'payment_status' => PaymentStatus::class,
         'product_type' => ProductType::class,
@@ -294,6 +308,11 @@ class Order extends Model
         $this->cancelled_by_id = $cancelledById;
         $this->save();
 
+        // Restore product stock
+        if ($this->product) {
+            $this->product->increment('stock', $this->quantity);
+        }
+
         // Add to history
         $this->history()->create([
             'status' => OrderStatus::CANCELLED->value,
@@ -315,7 +334,7 @@ class Order extends Model
      */
     public function getTotalPriceInRupiah(): float
     {
-        return $this->total_price / 100;
+        return (float) $this->total_price;
     }
 
     /**

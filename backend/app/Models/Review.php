@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Review extends Model
 {
     use HasFactory, SoftDeletes;
+    
+    protected static function booted()
+    {
+        static::creating(function ($review) {
+            if (!$review->uuid) {
+                $review->uuid = \App\Http\Helpers\NumberGenerator::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'uuid',

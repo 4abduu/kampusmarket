@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -368,15 +369,58 @@ class ProductController extends Controller
 
             // If stock becomes > 0 and status is sold_out, auto-set to active
             if ($newStock > 0 && $newStatus === 'sold_out') {
-                $updateData['status'] = 'active';
+                $request->merge(['status' => 'active']);
             }
         }
 
+        // 1. Update basic info (camelCase and snake_case support via Request)
+        $updateData = [];
+
+        // Title & Slug
+        if ($request->has('title')) {
+            $updateData['title'] = $request->title;
+            $updateData['slug'] = Str::slug($request->title) . '-' . Str::random(5);
+        }
+
+        // Description, Location, Condition
+        if ($request->has('description')) $updateData['description'] = $request->description;
+        if ($request->has('location')) $updateData['location'] = $request->location;
+        if ($request->has('condition')) $updateData['condition'] = $request->condition;
+        
+        // Category (via categoryId from frontend)
+        if ($request->has('categoryId')) {
+            $category = Category::where('uuid', $request->categoryId)->first();
+            if ($category) $updateData['category_id'] = $category->id;
+        }
+
+        // Pricing
+        if ($request->has('price')) $updateData['price'] = $request->price;
+        if ($request->has('priceMin')) $updateData['price_min'] = $request->priceMin;
+        if ($request->has('priceMax')) $updateData['price_max'] = $request->priceMax;
+        if ($request->has('originalPrice')) $updateData['original_price'] = $request->originalPrice;
+        if ($request->has('priceType')) $updateData['price_type'] = $request->priceType;
+        if ($request->has('canNego')) $updateData['can_nego'] = $request->canNego;
+
+        // Stock & Weight
+        if ($request->has('stock')) $updateData['stock'] = $request->stock;
+        if ($request->has('weight')) $updateData['weight'] = $request->weight;
+
+        // Jasa specific
+        if ($request->has('durationMin')) $updateData['duration_min'] = $request->durationMin;
+        if ($request->has('durationMax')) $updateData['duration_max'] = $request->durationMax;
+        if ($request->has('durationUnit')) $updateData['duration_unit'] = $request->durationUnit;
+        if ($request->has('durationIsPlus')) $updateData['duration_is_plus'] = $request->durationIsPlus;
+        if ($request->has('availabilityStatus')) $updateData['availability_status'] = $request->availabilityStatus;
+
+        // Status
+        if ($request->has('status')) $updateData['status'] = $request->status;
+
+        // Perform basic info update
         if (!empty($updateData)) {
             $product->update($updateData);
         }
 
-        // Update images if provided
+        // 2. Update images
         if ($request->has('images')) {
             $product->images()->delete();
             foreach ($request->images as $index => $imageUrl) {
@@ -389,17 +433,60 @@ class ProductController extends Controller
             }
         }
 
-        if ($request->has('shippingOptions')) {
-            $product->shippingOptions()->delete();
+        // 3. Update shipping/service options
+        $options = $request->input('shippingOptions') ?? $request->input('shipping_options');
 
-            foreach ($request->shippingOptions as $option) {
+        // Fallback to individual fields if shippingOptions not provided
+        if (is_null($options)) {
+            $hasAnyMethod = $request->hasAny([
+                'isCod', 'isPickup', 'isDelivery', 
+                'isOnline', 'isOnsite', 'isHomeService',
+                'is_cod', 'is_pickup', 'is_delivery',
+                'is_online', 'is_onsite', 'is_home_service'
+            ]);
+
+            if ($hasAnyMethod) {
+                $options = [];
+                // Check merged camelCase versions
+                if ($request->isCod) {
+                    $options[] = ['type' => 'cod', 'label' => 'COD (Bayar di Tempat)', 'price' => 0];
+                }
+                if ($request->isPickup) {
+                    $options[] = ['type' => 'pickup', 'label' => 'Ambil di Kampus (Gratis)', 'price' => 0];
+                }
+                if ($request->isDelivery) {
+                    $options[] = [
+                        'type' => 'delivery',
+                        'label' => 'Antar ke Lokasi (Berbayar)',
+                        'price' => $request->deliveryFeeMin ?? 0,
+                        'price_max' => $request->deliveryFeeMax
+                    ];
+                }
+
+                // Check service modes for jasa
+                if ($request->isOnline) {
+                    $options[] = ['type' => 'online', 'label' => 'Layanan Online', 'price' => 0];
+                }
+                if ($request->isOnsite) {
+                    $options[] = ['type' => 'onsite', 'label' => 'Datang ke Lokasi Provider', 'price' => 0];
+                }
+                if ($request->isHomeService) {
+                    $options[] = ['type' => 'home_service', 'label' => 'Provider Datang ke Lokasi Anda', 'price' => 0];
+                }
+            }
+        }
+
+        // Apply shipping options update if they were provided or inferred
+        if (!is_null($options)) {
+            $product->shippingOptions()->delete();
+            foreach ($options as $option) {
                 ShippingOption::create([
                     'uuid' => NumberGenerator::uuid(),
                     'product_id' => $product->id,
                     'type' => $option['type'],
                     'label' => $option['label'] ?? $option['type'],
                     'price' => (int) ($option['price'] ?? 0),
-                    'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : null,
+                    'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : (isset($option['price_max']) ? (int) $option['price_max'] : null),
                 ]);
             }
         }

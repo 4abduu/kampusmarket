@@ -533,6 +533,15 @@ export default function UserDashboardDialogs({
             if ((editingProduct.images?.length ?? 0) === 0) errors.push("Minimal 1 foto harus diupload")
             if (editingProduct.type === "barang" && editingProduct.stock < 0) errors.push("Stok tidak boleh negatif")
             
+            // Shipping/Service validation
+            if (editingProduct.type === "barang") {
+              const hasShipping = editingProduct.isCod || editingProduct.isPickup || editingProduct.isDelivery || (editingProduct.shippingOptions?.length ?? 0) > 0
+              if (!hasShipping) errors.push("Minimal pilih satu metode pengiriman")
+            } else if (editingProduct.type === "jasa") {
+              const hasService = editingProduct.isOnline || editingProduct.isOnsite || editingProduct.isHomeService || (editingProduct.shippingOptions?.length ?? 0) > 0
+              if (!hasService) errors.push("Minimal pilih satu metode pelayanan")
+            }
+            
             return errors.length > 0 ? (
               <div className="p-3 rounded-lg border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
                 <div className="flex gap-2 text-sm text-red-600 dark:text-red-400">

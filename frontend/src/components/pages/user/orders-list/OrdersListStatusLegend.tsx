@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, DollarSign, Truck } from "lucide-react";
+import { AlertCircle, CheckCircle2, DollarSign, Truck, Ban } from "lucide-react";
 
 export default function OrdersListStatusLegend() {
   return (
@@ -18,6 +18,10 @@ export default function OrdersListStatusLegend() {
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <CheckCircle2 className="h-3 w-3 text-primary-600" />
         Selesai
+      </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Ban className="h-3 w-3 text-red-600" />
+        Dibatalkan
       </div>
     </div>
   );

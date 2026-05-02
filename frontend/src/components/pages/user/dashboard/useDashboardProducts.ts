@@ -91,6 +91,19 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
       }
     }
 
+    // Validate shipping/service methods
+    if (editingProduct.type === "barang") {
+      const hasShipping = editingProduct.isCod || editingProduct.isPickup || editingProduct.isDelivery || (editingProduct.shippingOptions?.length ?? 0) > 0
+      if (!hasShipping) {
+        errors.push("Minimal harus memilih satu metode pengiriman")
+      }
+    } else if (editingProduct.type === "jasa") {
+      const hasService = editingProduct.isOnline || editingProduct.isOnsite || editingProduct.isHomeService || (editingProduct.shippingOptions?.length ?? 0) > 0
+      if (!hasService) {
+        errors.push("Minimal harus memilih satu metode pelayanan")
+      }
+    }
+
     if (errors.length > 0) {
       toast.error(errors.join("\n"))
       return
