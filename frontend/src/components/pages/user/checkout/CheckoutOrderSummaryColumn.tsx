@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Briefcase, CalendarIcon, Clock, Package, Shield, Loader2 } from "lucide-react"
+import { Briefcase, CalendarIcon, Clock, Handshake, Package, Shield, Loader2 } from "lucide-react"
 import type { Address, CheckoutProduct } from "@/components/pages/user/checkout/checkout.types"
 
 interface Props {
@@ -26,6 +26,7 @@ interface Props {
   selectedAddressId: string | null
   addresses: Address[]
   isSubmitting?: boolean
+  negotiatedPrice?: number | null
 }
 
 export default function CheckoutOrderSummaryColumn({
@@ -46,6 +47,7 @@ export default function CheckoutOrderSummaryColumn({
   selectedAddressId,
   addresses,
   isSubmitting = false,
+  negotiatedPrice,
 }: Props) {
   const sellerName = product.seller?.name || "Tidak diketahui";
 
@@ -74,7 +76,20 @@ export default function CheckoutOrderSummaryColumn({
                 )}
               </div>
               <p className="text-sm text-muted-foreground">{quantity}x</p>
-              <p className="font-bold text-primary-600">{displayPrice}</p>
+              {negotiatedPrice ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground line-through">{displayPrice}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-bold text-primary-600">{formatPrice(negotiatedPrice)}</p>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-600 dark:text-amber-400">
+                      <Handshake className="h-3 w-3 mr-0.5" />
+                      Harga Nego
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <p className="font-bold text-primary-600">{displayPrice}</p>
+              )}
             </div>
           </div>
 
@@ -122,7 +137,10 @@ export default function CheckoutOrderSummaryColumn({
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{isService ? "Harga Jasa" : "Harga Barang"}</span>
+              <span className="text-muted-foreground">
+                {isService ? "Harga Jasa" : "Harga Barang"}
+                {negotiatedPrice ? " (nego)" : ""}
+              </span>
               <span>{formatPrice(basePrice)}</span>
             </div>
             {!isService && (
