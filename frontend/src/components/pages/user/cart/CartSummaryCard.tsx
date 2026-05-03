@@ -6,10 +6,16 @@ import { formatPrice } from "@/components/pages/user/cart/cart.utils";
 interface CartSummaryCardProps {
   selectedCount: number;
   subtotal: number;
-  onNavigate: (page: string) => void;
+  onCheckout: () => void;
+  onContinueShopping: () => void;
 }
 
-export default function CartSummaryCard({ selectedCount, subtotal, onNavigate }: CartSummaryCardProps) {
+export default function CartSummaryCard({
+  selectedCount,
+  subtotal,
+  onCheckout,
+  onContinueShopping,
+}: CartSummaryCardProps) {
   return (
     <Card className="sticky top-20">
       <CardHeader>
@@ -38,12 +44,12 @@ export default function CartSummaryCard({ selectedCount, subtotal, onNavigate }:
           className="w-full bg-primary-600 hover:bg-primary-700"
           size="lg"
           disabled={selectedCount === 0}
-          onClick={() => onNavigate("checkout")}
+          onClick={onCheckout}
         >
           Checkout ({selectedCount})
         </Button>
 
-        <Button variant="outline" className="w-full" onClick={() => onNavigate("catalog")}>
+        <Button variant="outline" className="w-full" onClick={onContinueShopping}>
           Lanjut Belanja
         </Button>
       </CardContent>

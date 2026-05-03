@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart } from "lucide-react";
@@ -10,23 +10,45 @@ import FavoritesFilterBar from "@/components/pages/user/favorites/FavoritesFilte
 import FavoritesHeader from "@/components/pages/user/favorites/FavoritesHeader";
 import { getSavings } from "@/components/pages/user/favorites/favorites.helpers";
 import { INITIAL_FAVORITES } from "@/components/pages/user/favorites/favorites.mock";
-import type { Favorite, Product } from "@/components/pages/user/favorites/favorites.types";
+import type { Product } from "@/components/pages/user/favorites/favorites.types";
+import { getFavorites, removeFavorite } from "@/lib/api/products";
+
+const INITIAL_FAVORITE_PRODUCTS: Product[] = INITIAL_FAVORITES
+  .map((favorite) => favorite.product)
+  .filter(Boolean) as Product[];
 
 interface FavoritesPageProps {
   onNavigate: (page: string, data?: string | NavigationData) => void;
 }
 
 export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
-  const [favorites, setFavorites] = useState<Favorite[]>(INITIAL_FAVORITES);
+  const [favorites, setFavorites] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "barang" | "jasa">("all");
   const [sortBy, setSortBy] = useState<"terbaru" | "termurah" | "termahal" | "rating" | "terpopuler">("terbaru");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const products = useMemo(
-    () => favorites.map((favorite) => favorite.product).filter(Boolean) as Product[],
-    [favorites],
-  );
+  useEffect(() => {
+    const loadFavorites = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const favoritesData = await getFavorites();
+        setFavorites(favoritesData);
+      } catch (err: any) {
+        console.error("[FavoritesPage] Failed to load favorites", err);
+        setError(err?.message || "Gagal memuat favorit dari server.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadFavorites();
+  }, []);
+
+  const products = useMemo(() => favorites, [favorites]);
 
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -69,11 +91,16 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
     return { totalItems, totalValue, totalSavings, avgRating };
   }, [products]);
 
-  const handleRemove = (productUuid: string) => {
-    setFavorites((prev) => prev.filter((favorite) => favorite.product?.uuid !== productUuid));
+  const handleRemove = async (productUuid: string) => {
+    try {
+      await removeFavorite(productUuid);
+      setFavorites((prev) => prev.filter((product) => (product.uuid || product.id) !== productUuid));
+    } catch (err: any) {
+      console.error("[FavoritesPage] Failed to remove favorite", err);
+    }
   };
 
-  const handleRestore = () => setFavorites(INITIAL_FAVORITES);
+  const handleRestore = () => setFavorites(INITIAL_FAVORITE_PRODUCTS);
 
   const handleReset = () => {
     setSearchQuery("");
@@ -97,11 +124,29 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
           setViewMode={setViewMode}
         />
 
-        {filtered.length > 0 ? (
+        {loading ? (
+          <Card className="border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-950/60">
+            <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+              <p className="text-sm text-muted-foreground">Memuat favorit...</p>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
+            <CardContent className="px-6 py-16 text-center">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300">Gagal memuat favorit</p>
+              <p className="mt-2 text-sm text-red-600 dark:text-red-200">{error}</p>
+              <div className="mt-5 flex justify-center">
+                <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => void getFavorites().then(setFavorites).catch((err) => setError(err?.message || "Gagal memuat favorit")).finally(() => setLoading(false))}>
+                  Coba lagi
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : filtered.length > 0 ? (
           <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "space-y-4"}>
-            {filtered.map((product) => (
+            {filtered.map((product, index) => (
               <FavoriteProductCard
-                key={product.uuid}
+                key={product.uuid || index}
                 product={product}
                 viewMode={viewMode}
                 onRemove={handleRemove}

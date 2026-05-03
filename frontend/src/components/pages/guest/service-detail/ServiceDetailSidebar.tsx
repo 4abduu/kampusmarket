@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
+import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
 import {
   AlertCircle,
   Calendar,
@@ -42,8 +43,44 @@ export default function ServiceDetailSidebar({
 }: ServiceDetailSidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
 
   const serviceShareUrl = `https://kampusmarket.id/s/${service.id}`;
+
+  // Check if service is already favorited on mount
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const { isFavorited: status } = await checkFavorite(service.id);
+        setIsFavorited(status);
+      } catch (err) {
+        console.error("Failed to check favorite status:", err);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [service.id]);
+
+  const toggleFavorite = async () => {
+    if (isLoadingFavorite) return;
+    
+    try {
+      setIsLoadingFavorite(true);
+      if (isFavorited) {
+        await removeFavorite(service.id);
+        setIsFavorited(false);
+      } else {
+        await addFavorite(service.id);
+        setIsFavorited(true);
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle favorite:", err);
+      alert(err?.message || "Gagal mengubah status favorit");
+    } finally {
+      setIsLoadingFavorite(false);
+    }
+  };
 
   const handleCopyServiceLink = async () => {
     try {
@@ -177,7 +214,24 @@ export default function ServiceDetailSidebar({
           </div>
 
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="flex-1"><Heart className="h-4 w-4 mr-1" />Simpan</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`flex-1 ${
+                isFavorited
+                  ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => onAction(toggleFavorite)}
+              disabled={isLoadingFavorite}
+            >
+              <Heart
+                className={`h-4 w-4 mr-1 ${
+                  isFavorited ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              {isLoadingFavorite ? "..." : "Simpan"}
+            </Button>
             <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowShareModal(true)}>
               <Share2 className="h-4 w-4 mr-1" />
               Bagikan

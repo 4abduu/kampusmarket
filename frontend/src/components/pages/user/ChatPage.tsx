@@ -668,6 +668,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onToggleEmoji={() => setShowEmojiPicker(p => !p)}
           onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
           onRemoveImage={() => { setAttachedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+          onNavigate={onNavigate}
           onToggleContextCard={() => setShowContextCard(p => !p)}
           onAcceptOffer={handleAcceptOffer}
           onRejectOffer={handleRejectOffer}
@@ -694,6 +695,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         onSelectOfferProduct={setSelectedOfferProduct}
         onSubmitNego={handleSubmitNego}
         onSubmitOffer={handleSubmitOffer}
+        isSeller={isSeller}
+        onNavigateToDashboard={() => onNavigate('my-products')}
         formatPrice={formatPrice}
       />
     </div>

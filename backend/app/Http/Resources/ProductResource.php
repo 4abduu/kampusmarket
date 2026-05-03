@@ -41,17 +41,18 @@ class ProductResource extends JsonResource
         return [
             // Primary identifier
             'id' => $this->uuid,
+            'uuid' => $this->uuid,
             
             // Basic info
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
             
-            // Pricing (stored directly in IDR)
-            'price' => $this->price,
-            'originalPrice' => $this->original_price,
-            'priceMin' => $this->price_min,
-            'priceMax' => $this->price_max,
+            // Pricing (converted from cent to IDR)
+            'price' => (int) ($this->price / 100),
+            'originalPrice' => $this->original_price ? (int) ($this->original_price / 100) : null,
+            'priceMin' => $this->price_min ? (int) ($this->price_min / 100) : null,
+            'priceMax' => $this->price_max ? (int) ($this->price_max / 100) : null,
             'priceType' => $this->price_type->value ?? 'fixed',
             
             // Product type

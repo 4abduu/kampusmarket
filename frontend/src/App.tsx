@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
+import { useCartStore } from "@/lib/cart-store";
 import type { User } from "@/lib/mock-data";
 
 // Layout
@@ -45,15 +46,18 @@ function AppContent() {
         setAuthUser(user);
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
+        void useCartStore.getState().fetchCount();
       } else {
         setAuthUser(null);
         setIsLoggedIn(false);
         setUserRole(null);
+        useCartStore.getState().setCount(0);
       }
     } catch {
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
+      useCartStore.getState().setCount(0);
     } finally {
       setAuthReady(true);
     }

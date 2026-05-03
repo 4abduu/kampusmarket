@@ -34,9 +34,15 @@ export interface Address {
   createdAt: string;
 }
 
+export interface CartItem {
+  productId: string;
+  quantity: number;
+}
+
 export interface CheckoutPageProps {
   onNavigate: (page: string, data?: string | NavigationData) => void;
   productId?: string;
+  cartItems?: CartItem[];
 }
 
 export type CheckoutServiceMethod = "pickup" | "cod" | "online";

@@ -1,32 +1,60 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { mockProducts } from "@/lib/mock-data";
+import { useEffect, useMemo, useState } from "react";
+import { getCart, updateCart, removeFromCart } from "@/lib/api/cart";
 import CartEmptyState from "@/components/pages/user/cart/CartEmptyState";
 import CartHeader from "@/components/pages/user/cart/CartHeader";
 import CartItemCard from "@/components/pages/user/cart/CartItemCard";
 import CartSelectAllCard from "@/components/pages/user/cart/CartSelectAllCard";
 import CartSummaryCard from "@/components/pages/user/cart/CartSummaryCard";
-import { buildCartProducts, computeSubtotal } from "@/components/pages/user/cart/cart.utils";
+import { computeSubtotal } from "@/components/pages/user/cart/cart.utils";
 import type { CartItem, CartPageProps } from "@/components/pages/user/cart/cart.types";
-
-const initialCartProductIds = ["p1", "p2", "p5"];
+import { Loader2 } from "lucide-react";
+import { useCartStore } from "@/lib/cart-store";
 
 export default function CartPage({ onNavigate }: CartPageProps) {
-  const [cartProductIds, setCartProductIds] = useState<string[]>(initialCartProductIds);
-  const [selectedItems, setSelectedItems] = useState<string[]>(["p1", "p2"]);
-  const [quantities, setQuantities] = useState<Record<string, number>>({
-    p1: 1,
-    p2: 2,
-    p5: 1,
-  });
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const cartProducts = useMemo(() => buildCartProducts(mockProducts, cartProductIds), [cartProductIds]);
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        setLoading(true);
+        const data = await getCart();
+        // data from API is array of { id, product, quantity }
+        // our local CartItem is { product, quantity }
+        const formattedItems = data.map(item => ({
+          id: item.id, // we might need the cart item id for updates
+          product: item.product,
+          quantity: item.quantity
+        }));
+        
+        setCartItems(formattedItems);
+        
+        // Initialize quantities map
+        const qMap: Record<string, number> = {};
+        formattedItems.forEach(item => {
+          qMap[item.product.id] = item.quantity;
+        });
+        setQuantities(qMap);
+        
+        // Auto-select all items by default
+        setSelectedItems(formattedItems.map(item => item.product.id));
 
-  const cartItems = useMemo<CartItem[]>(
-    () => cartProducts.map((product) => ({ product, quantity: quantities[product.id] || 1 })),
-    [cartProducts, quantities],
-  );
+        // Update global cart store count
+        const totalQty = formattedItems.reduce((sum, item) => sum + item.quantity, 0);
+        useCartStore.getState().setCount(totalQty);
+      } catch (err) {
+        console.error("Failed to fetch cart:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, []);
 
   const subtotal = useMemo(() => computeSubtotal(selectedItems, cartItems), [selectedItems, cartItems]);
 
@@ -43,29 +71,79 @@ export default function CartPage({ onNavigate }: CartPageProps) {
     setSelectedItems((prev) => prev.filter((id) => id !== productId));
   };
 
-  const handleUpdateQuantity = (productId: string, delta: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(1, (prev[productId] || 1) + delta),
-    }));
+  const handleUpdateQuantity = async (productId: string, delta: number) => {
+    const item = cartItems.find(i => i.product.id === productId);
+    if (!item) return;
+
+    const newQty = Math.max(1, item.quantity + delta);
+    
+    try {
+      // If we have the cart item ID, use it for update
+      const cartItemId = (item as any).id;
+      if (cartItemId) {
+        await updateCart(cartItemId, newQty);
+      }
+      
+      setCartItems(prev => prev.map(i => 
+        i.product.id === productId ? { ...i, quantity: newQty } : i
+      ));
+      setQuantities(prev => ({ ...prev, [productId]: newQty }));
+    } catch (err) {
+      console.error("Failed to update cart quantity:", err);
+    }
   };
 
-  const handleQuantityInput = (productId: string, value: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(1, value),
-    }));
+  const handleQuantityInput = async (productId: string, value: number) => {
+    const item = cartItems.find(i => i.product.id === productId);
+    if (!item) return;
+
+    const newQty = Math.min(item.product.stock, Math.max(1, value));
+    try {
+      const cartItemId = (item as any).id;
+      if (cartItemId) {
+        await updateCart(cartItemId, newQty);
+      }
+      setCartItems(prev => prev.map(i => 
+        i.product.id === productId ? { ...i, quantity: newQty } : i
+      ));
+      setQuantities(prev => ({ ...prev, [productId]: newQty }));
+      // Update global cart store
+      useCartStore.getState().fetchCount();
+    } catch (err) {
+      console.error("Failed to update cart quantity:", err);
+    }
   };
 
-  const handleRemoveItem = (productId: string) => {
-    setCartProductIds((prev) => prev.filter((id) => id !== productId));
-    setSelectedItems((prev) => prev.filter((id) => id !== productId));
-    setQuantities((prev) => {
-      const next = { ...prev };
-      delete next[productId];
-      return next;
-    });
+  const handleRemoveItem = async (productId: string) => {
+    const item = cartItems.find(i => i.product.id === productId);
+    if (!item) return;
+
+    try {
+      const cartItemId = (item as any).id;
+      if (cartItemId) {
+        await removeFromCart(cartItemId);
+      }
+      setCartItems((prev) => prev.filter((i) => i.product.id !== productId));
+      setSelectedItems((prev) => prev.filter((id) => id !== productId));
+      setQuantities((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      // Update global cart store
+      useCartStore.getState().fetchCount();
+    } catch (err) {
+      console.error("Failed to remove item from cart:", err);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
@@ -74,32 +152,48 @@ export default function CartPage({ onNavigate }: CartPageProps) {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.length > 0 && (
-              <CartSelectAllCard
-                itemCount={cartItems.length}
-                selectedCount={selectedItems.length}
-                onSelectAll={handleSelectAll}
-              />
+            {cartItems.length > 0 ? (
+              <>
+                <CartSelectAllCard
+                  itemCount={cartItems.length}
+                  selectedCount={selectedItems.length}
+                  onSelectAll={handleSelectAll}
+                />
+
+                {cartItems.map((item) => (
+                  <CartItemCard
+                    key={item.product.id}
+                    item={item}
+                    selected={selectedItems.includes(item.product.id)}
+                    onSelectItem={handleSelectItem}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onQuantityInput={handleQuantityInput}
+                    onRemoveItem={handleRemoveItem}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </>
+            ) : (
+              <CartEmptyState onNavigate={onNavigate} />
             )}
-
-            {cartItems.map((item) => (
-              <CartItemCard
-                key={item.product.id}
-                item={item}
-                selected={selectedItems.includes(item.product.id)}
-                onSelectItem={handleSelectItem}
-                onUpdateQuantity={handleUpdateQuantity}
-                onQuantityInput={handleQuantityInput}
-                onRemoveItem={handleRemoveItem}
-                onNavigate={onNavigate}
-              />
-            ))}
-
-            {cartItems.length === 0 && <CartEmptyState onNavigate={onNavigate} />}
           </div>
 
           <div className="space-y-4">
-            <CartSummaryCard selectedCount={selectedItems.length} subtotal={subtotal} onNavigate={onNavigate} />
+            <CartSummaryCard
+              selectedCount={selectedItems.length}
+              subtotal={subtotal}
+              onCheckout={() => {
+                const checkoutCartItems = cartItems
+                  .filter((item) => selectedItems.includes(item.product.id))
+                  .map((item) => ({
+                    productId: item.product.id,
+                    quantity: item.quantity,
+                  }));
+                localStorage.setItem("checkoutCartItems", JSON.stringify(checkoutCartItems));
+                onNavigate("checkout");
+              }}
+              onContinueShopping={() => onNavigate("catalog")}
+            />
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ interface Props {
   setShippingMethod: (value: string) => void
   shippingOptions: CheckoutShippingOption[]
   selectedShipping?: CheckoutShippingOption
+  isMultipleItems?: boolean
 }
 
 export default function CheckoutShippingMethodSection({
@@ -17,20 +18,21 @@ export default function CheckoutShippingMethodSection({
   setShippingMethod,
   shippingOptions,
   selectedShipping,
+  isMultipleItems,
 }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
           {isService ? (
             <>
               <CalendarDays className="h-5 w-5" />
-              Metode Layanan
+              Metode Layanan {isMultipleItems && <span className="text-sm font-normal text-muted-foreground">(Berlaku untuk semua item)</span>}
             </>
           ) : (
             <>
               <Truck className="h-5 w-5" />
-              Metode Pengiriman
+              Metode Pengiriman {isMultipleItems && <span className="text-sm font-normal text-muted-foreground">(Berlaku untuk semua item)</span>}
             </>
           )}
         </CardTitle>

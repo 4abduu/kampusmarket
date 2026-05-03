@@ -37,7 +37,7 @@ export default function FavoritesFilterBar({
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Cari favorit, seller, atau kategori..."
+          placeholder="Cari favorit, seller, atau kategori…"
           className="h-9 pl-9 text-sm"
         />
       </div>

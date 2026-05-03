@@ -5,7 +5,7 @@ export const centToRupiah = (price: number) =>
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
-  }).format(price);  // No more division - prices are already in IDR
+  }).format(price);
 
 export const getPriceLabel = (product: Product): string => {
   if (product.price_type === "range" && product.price_min && product.price_max) {

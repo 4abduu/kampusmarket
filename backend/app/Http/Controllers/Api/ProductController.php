@@ -603,7 +603,7 @@ class ProductController extends Controller
      */
     public function getCart(Request $request): JsonResponse
     {
-        $cartItems = Cart::with(['product.category', 'product.images'])
+        $cartItems = Cart::with(['product.category', 'product.images', 'product.seller'])
             ->where('user_id', $request->user()->id)
             ->get();
 
@@ -634,26 +634,44 @@ class ProductController extends Controller
         ]);
 
         $product = Product::where('uuid', $request->productId)->firstOrFail();
+        $requestedQuantity = $request->quantity ?? 1;
 
-        // Check stock
-        if ($product->stock < $request->quantity) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stok tidak mencukupi',
-            ], 400);
-        }
+        $cart = Cart::where('user_id', $request->user()->id)
+            ->where('product_id', $product->id)
+            ->first();
 
-        $cart = Cart::updateOrCreate(
-            [
+        if ($cart) {
+            $newQuantity = $cart->quantity + $requestedQuantity;
+            
+            if ($newQuantity > $product->stock) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok tidak mencukupi. Anda sudah memiliki ' . $cart->quantity . ' item di keranjang.',
+                    'current_cart_quantity' => $cart->quantity,
+                    'max_stock' => $product->stock,
+                ], 400);
+            }
+
+            $cart->update([
+                'quantity' => $newQuantity,
+                'notes' => $request->notes ?? $cart->notes,
+            ]);
+        } else {
+            if ($requestedQuantity > $product->stock) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok tidak mencukupi',
+                ], 400);
+            }
+
+            Cart::create([
+                'uuid' => NumberGenerator::uuid(),
                 'user_id' => $request->user()->id,
                 'product_id' => $product->id,
-            ],
-            [
-                'uuid' => NumberGenerator::uuid(),
-                'quantity' => $request->quantity ?? 1,
+                'quantity' => $requestedQuantity,
                 'notes' => $request->notes,
-            ]
-        );
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -727,6 +745,72 @@ class ProductController extends Controller
             'data' => $favorites->map(function ($fav) {
                 return new ProductResource($fav->product);
             }),
+        ]);
+    }
+
+    /**
+     * Update cart item quantity.
+     */
+    public function updateCart(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $cartItem = Cart::where('uuid', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $product = $cartItem->product;
+        if ($product->stock < $request->quantity) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stok tidak mencukupi',
+            ], 400);
+        }
+
+        $cartItem->update([
+            'quantity' => $request->quantity,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Keranjang diperbarui',
+            'data' => [
+                'id' => $cartItem->uuid,
+                'quantity' => $cartItem->quantity,
+                'subtotal' => (int) ($cartItem->getSubtotalInCent() / 100),
+            ]
+        ]);
+    }
+
+    /**
+     * Remove item from cart.
+     */
+    public function removeFromCart(string $id, Request $request): JsonResponse
+    {
+        $cartItem = Cart::where('uuid', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $cartItem->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk dihapus dari keranjang',
+        ]);
+    }
+
+    /**
+     * Clear entire cart.
+     */
+    public function clearCart(Request $request): JsonResponse
+    {
+        Cart::where('user_id', $request->user()->id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Keranjang dikosongkan',
         ]);
     }
 }

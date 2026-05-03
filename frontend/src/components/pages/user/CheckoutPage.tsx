@@ -23,21 +23,22 @@ import type {
   NewAddressForm,
   CheckoutShippingOption,
   Address,
+  CartItem,
 } from "@/components/pages/user/checkout/checkout.types";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProps) {
   const [searchParams] = useSearchParams();
-  const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutItems, setCheckoutItems] = useState<{ product: any; quantity: number }[]>([]);
+
   // [NEW] negotiated price dari offer/nego dalam chat
   const negotiatedPrice = searchParams.get("price") ? parseInt(searchParams.get("price") || "0", 10) : null;
 
   // State for form fields
-  const quantity = 1; // Fixed quantity for now
   const [shippingMethod, setShippingMethod] = useState<string>("");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -52,38 +53,75 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const [newAddress, setNewAddress] = useState<NewAddressForm>(createDefaultAddressForm());
   const [addresses, setAddresses] = useState<Address[]>([]);
 
+  const product = checkoutItems[0]?.product;
+  const isMultipleItems = checkoutItems.length > 1;
+
   // Fetch product data on mount
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) {
-        setError("Product ID is required");
-        setLoading(false);
-        return;
-      }
+    const fetchCheckoutData = async () => {
+      setLoading(true);
+      setError(null);
 
       try {
-        setLoading(true);
-        const data = await getProductDetail(productId);
-        setProduct(data);
-        // Set default shipping method to first available option from database
-        const shippingOpts = (data as any).shippingOptions || (data as any).shipping_options || [];
+        let items: CartItem[] = [];
+        
+        // 1. Coba dari localStorage (CartPage flow)
+        const stored = localStorage.getItem("checkoutCartItems");
+        if (stored) {
+          try {
+            items = JSON.parse(stored);
+            // Don't remove yet to handle StrictMode double-mount in dev
+          } catch (e) {
+            console.error("Failed to parse checkoutCartItems", e);
+          }
+        }
+        
+        // 2. Jika kosong, coba dari props (Direct buy flow)
+        if (items.length === 0 && productId) {
+          items = [{ productId, quantity: 1 }];
+        }
+
+        if (items.length === 0) {
+          console.warn("[CheckoutPage] No items found in localStorage or props");
+          setError("Tidak ada item untuk checkout. Silakan kembali ke keranjang.");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch all products
+        const resolvedItems = await Promise.all(
+          items.map(async (item) => {
+            const data = await getProductDetail(item.productId);
+            return { product: data, quantity: item.quantity };
+          })
+        );
+
+        setCheckoutItems(resolvedItems);
+        
+        // SUCCESS: Now we can clear localStorage
+        if (stored) {
+          localStorage.removeItem("checkoutCartItems");
+        }
+        
+        // Use first item to set default shipping method
+        const firstProduct = resolvedItems[0].product;
+        const shippingOpts = (firstProduct as any).shippingOptions || (firstProduct as any).shipping_options || [];
         const firstShippingOption = shippingOpts[0];
         if (firstShippingOption) {
           setShippingMethod(String(firstShippingOption.type || firstShippingOption.id || ""));
         } else {
-          // Fallback to default if no shipping options defined
-          const isService = data.type === "jasa";
-          setShippingMethod(isService ? "onsite" : "cod");
+          setShippingMethod(firstProduct.type === "jasa" ? "onsite" : "cod");
         }
+
       } catch (err) {
-        console.error("Failed to fetch product:", err);
+        console.error("Failed to fetch checkout items:", err);
         setError("Gagal memuat detail produk. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    fetchCheckoutData();
   }, [productId]);
 
   // Derived values
@@ -139,12 +177,17 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const selectedShipping = shippingOptions.find((option) => option.id === shippingMethod);
 
   const displayPrice = product ? getDisplayPrice(product, isService) : "Rp 0";
-  // [NEW] Use negotiated price if available (from offer/nego in chat), otherwise use product price
-  const basePrice = negotiatedPrice !== null 
+  // [NEW] Use negotiated price if available (from offer/nego in chat) for single item, 
+  // otherwise use the sum of all products in checkoutItems
+  const subtotal = checkoutItems.reduce((sum, item) => {
+    const itemPrice = (item.product.priceMin || item.product.price_min || item.product.price || 0);
+    return sum + (itemPrice * item.quantity);
+  }, 0);
+
+  const basePrice = (negotiatedPrice !== null && checkoutItems.length === 1)
     ? negotiatedPrice
-    : product
-      ? (isService ? (product?.priceMin || product?.price_min || product?.price || 0) : (product?.price || 0))
-      : 0;
+    : subtotal;
+
   const shippingFeeAmount = selectedShipping?.price || 0;
   const totalPayment = basePrice + shippingFeeAmount;
 
@@ -221,61 +264,51 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
 
     setIsSubmitting(true);
     try {
-      const productDbId = product?.uuid || product?.id;
-      console.log('[CheckoutPage] Creating order...', { productId: productDbId, shippingType: selectedShipping.id, hasShippingOptions: !!normalizedShippingOpts.length });
-
-      if (!productDbId) {
-        setValidationError("ID produk tidak valid. Silakan muat ulang halaman.");
-        return;
-      }
+      let lastOrderId = "";
       
-      // Try to find a matching shipping option, but it's optional
-      let shippingOptionId: string | undefined;
-      let hasMatchingShippingType = false;
-      if (normalizedShippingOpts.length) {
-        const matched = normalizedShippingOpts.find((opt: any) => opt.key === selectedShipping.id);
-        hasMatchingShippingType = !!matched;
-        shippingOptionId = matched?.optionId;
+      // Loop through all items to create orders
+      for (const item of checkoutItems) {
+        const itemProduct = item.product;
+        const productDbId = itemProduct?.uuid || itemProduct?.id;
+
+        if (!productDbId) continue;
+        
+        // Find shipping option for this specific product if possible, 
+        // otherwise use the general selectedShipping
+        const itemShippingOpts = (itemProduct as any).shippingOptions || (itemProduct as any).shipping_options || [];
+        let shippingOptionId: string | undefined;
+        
+        if (itemShippingOpts.length) {
+          const matched = itemShippingOpts.find((opt: any) => 
+            (opt.type || opt.id) === selectedShipping?.id
+          );
+          shippingOptionId = matched?.uuid || matched?.id;
+        }
+
+        const orderPayload: any = {
+          productId: productDbId,
+          quantity: item.quantity,
+          negoPrice: (checkoutItems.length === 1 && negotiatedPrice) ? negotiatedPrice : undefined,
+          shippingType: selectedShipping?.id,
+          shippingNotes: "",
+          selectedAddressId: requiresAddress ? selectedAddressId : undefined,
+          serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
+          serviceNotes: isService ? serviceNotes : undefined,
+          paymentMethod: "midtrans",
+          notes: isService ? serviceRequirements : undefined,
+          selectedShippingOptionId: shippingOptionId,
+        };
+
+        console.log(`[CheckoutPage] Creating order for product ${productDbId}...`, orderPayload);
+        const order = await createOrder(orderPayload);
+        lastOrderId = order?.uuid || order?.id || "";
       }
+
+      console.log('[CheckoutPage] All orders created successfully');
       
-      if (!hasMatchingShippingType && normalizedShippingOpts.length) {
-        // Error only when selected shipping type truly does not exist in DB options
-        const msg = "Opsi pengiriman tidak valid. Shipping options yang tersedia: " + (normalizedShippingOpts.map((opt: any) => opt.key).join(", ") || "none");
-        console.error('[CheckoutPage] No matching shipping option:', { selectedType: selectedShipping.id, availableOptions: normalizedShippingOpts });
-        setValidationError(msg);
-        return;
-      }
+      // Navigate to success page
+      onNavigate(isService ? "booking-success" : "payment-success", lastOrderId);
 
-      // Create order
-      const orderPayload: any = {
-        productId: productDbId,
-        quantity,
-        negoPrice: negotiatedPrice ?? undefined,
-        shippingType: selectedShipping.id,
-        shippingNotes: "",
-        selectedAddressId: requiresAddress ? selectedAddressId : undefined,
-        serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
-        serviceNotes: isService ? serviceNotes : undefined,
-        paymentMethod: "midtrans",
-        notes: isService ? serviceRequirements : undefined,
-      };
-      
-      // Only add shippingOptionId if we found one
-      if (shippingOptionId) {
-        orderPayload.selectedShippingOptionId = shippingOptionId;
-      }
-
-      console.log('[CheckoutPage] Order payload:', orderPayload);
-      const order = await createOrder(orderPayload);
-      console.log('[CheckoutPage] Order created:', order);
-
-      // Temporary simplified flow: after order creation, go directly to success page by type.
-      const createdOrderId = order?.uuid || order?.id;
-      if (createdOrderId) {
-        onNavigate(isService ? "booking-success" : "payment-success", createdOrderId);
-      } else {
-        onNavigate(isService ? "booking-success" : "payment-success");
-      }
     } catch (err: any) {
       const backendMessage = err?.message;
       const backendErrors = err?.errors ? Object.values(err.errors).flat().join(" | ") : "";
@@ -342,6 +375,25 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         {!loading && !error && product && (
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
+              {/* Multiple Items Warning */}
+              {isMultipleItems && (
+                <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-5 w-5 text-amber-600 shrink-0 mt-0.5">⚠️</div>
+                      <div className="text-sm">
+                        <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                          Cara Kirim & Pembayaran Sama untuk Semua Item
+                        </p>
+                        <p className="text-amber-700 dark:text-amber-300">
+                          Karena Anda membeli dari seller berbeda, metode pengiriman dan pembayaran akan diterapkan pada semua item dalam 1 order. Kalau ingin cara kirim beda per seller, silakan checkout satu per satu.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {isService && (
                 <ServiceBookingSection
                   bookingDate={bookingDate}
@@ -412,19 +464,23 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                 setShippingMethod={setShippingMethod}
                 shippingOptions={shippingOptions}
                 selectedShipping={selectedShipping}
+                isMultipleItems={isMultipleItems}
               />
 
               <CheckoutContactSellerCard
-                sellerName={product.seller?.name || "Tidak diketahui"}
-                sellerPhone={product.seller?.phone}
-                onChat={() => onNavigate("chat", { productId: product?.id || product?.uuid, chatAction: "chat" })}
+                sellers={checkoutItems.map(item => ({
+                  id: item.product.seller?.uuid || item.product.seller?.id,
+                  name: item.product.seller?.name || "Tidak diketahui",
+                  phone: item.product.seller?.phone
+                }))}
+                onChat={(sellerId) => onNavigate("chat", { productId: sellerId, chatAction: "chat" })}
               />
             </div>
 
             <CheckoutOrderSummaryColumn
               product={product}
               isService={isService}
-              quantity={quantity}
+              quantity={checkoutItems[0]?.quantity || 1}
               displayPrice={displayPrice}
               bookingDate={bookingDate}
               serviceNotes={serviceNotes}
@@ -440,6 +496,8 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
               addresses={addresses}
               isSubmitting={isSubmitting}
               negotiatedPrice={negotiatedPrice}
+              checkoutItems={checkoutItems}
+              isMultipleItems={isMultipleItems}
             />
           </div>
         )}

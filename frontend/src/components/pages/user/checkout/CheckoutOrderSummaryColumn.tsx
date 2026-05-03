@@ -27,6 +27,8 @@ interface Props {
   addresses: Address[]
   isSubmitting?: boolean
   negotiatedPrice?: number | null
+  checkoutItems?: { product: any; quantity: number }[]
+  isMultipleItems?: boolean
 }
 
 export default function CheckoutOrderSummaryColumn({
@@ -48,8 +50,11 @@ export default function CheckoutOrderSummaryColumn({
   addresses,
   isSubmitting = false,
   negotiatedPrice,
+  checkoutItems = [],
+  isMultipleItems = false,
 }: Props) {
   const sellerName = product.seller?.name || "Tidak diketahui";
+  const totalItemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="space-y-4">
@@ -58,49 +63,85 @@ export default function CheckoutOrderSummaryColumn({
           <CardTitle className="text-lg">Ringkasan Pesanan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0">
-              {isService ? (
-                <Briefcase className="h-8 w-8 text-purple-600/60" />
-              ) : (
-                <Package className="h-8 w-8 text-muted-foreground/30" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-medium line-clamp-2">{product.title}</p>
-                {isService && (
-                  <Badge variant="outline" className="text-xs border-purple-500 text-purple-600">
-                    Jasa
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{quantity}x</p>
-              {negotiatedPrice ? (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground line-through">{displayPrice}</p>
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-bold text-primary-600">{formatPrice(negotiatedPrice)}</p>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-600 dark:text-amber-400">
-                      <Handshake className="h-3 w-3 mr-0.5" />
-                      Harga Nego
-                    </Badge>
-                  </div>
+          {!isMultipleItems ? (
+            <>
+              <div className="flex gap-4">
+                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0">
+                  {isService ? (
+                    <Briefcase className="h-8 w-8 text-purple-600/60" />
+                  ) : (
+                    <Package className="h-8 w-8 text-muted-foreground/30" />
+                  )}
                 </div>
-              ) : (
-                <p className="font-bold text-primary-600">{displayPrice}</p>
-              )}
-            </div>
-          </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium line-clamp-2">{product.title}</p>
+                    {isService && (
+                      <Badge variant="outline" className="text-xs border-purple-500 text-purple-600">
+                        Jasa
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{quantity}x</p>
+                  {negotiatedPrice ? (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground line-through">{displayPrice}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-bold text-primary-600">{formatPrice(negotiatedPrice)}</p>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-600 dark:text-amber-400">
+                          <Handshake className="h-3 w-3 mr-0.5" />
+                          Harga Nego
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="font-bold text-primary-600">{displayPrice}</p>
+                  )}
+                </div>
+              </div>
 
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                {sellerName.split(" ").map((name) => name[0]).join("")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm">{sellerName}</span>
-          </div>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
+                    {sellerName.split(" ").map((name) => name[0]).join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{sellerName}</span>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              {checkoutItems.map((item, idx) => (
+                <div key={item.product.id || idx} className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0">
+                      {item.product.type === "jasa" ? (
+                        <Briefcase className="h-6 w-6 text-purple-600/40" />
+                      ) : (
+                        <Package className="h-6 w-6 text-muted-foreground/30" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm line-clamp-2">{item.product.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{item.quantity}x</p>
+                      <p className="font-semibold text-primary-600 text-sm">
+                        {formatPrice((item.product.priceMin || item.product.price_min || item.product.price || 0) * item.quantity)}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Avatar className="h-4 w-4">
+                          <AvatarFallback className="text-[8px] bg-primary-100 text-primary-700">
+                            {item.product.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-[10px] text-muted-foreground truncate">{item.product.seller?.name}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {idx < checkoutItems.length - 1 && <Separator className="opacity-50" />}
+                </div>
+              ))}
+            </div>
+          )}
 
           <Separator />
 
@@ -138,8 +179,9 @@ export default function CheckoutOrderSummaryColumn({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                {isService ? "Harga Jasa" : "Harga Barang"}
-                {negotiatedPrice ? " (nego)" : ""}
+                {isMultipleItems 
+                  ? `Total Harga (${totalItemCount} barang)`
+                  : (isService ? "Harga Jasa" : "Harga Barang") + (negotiatedPrice ? " (nego)" : "")}
               </span>
               <span>{formatPrice(basePrice)}</span>
             </div>

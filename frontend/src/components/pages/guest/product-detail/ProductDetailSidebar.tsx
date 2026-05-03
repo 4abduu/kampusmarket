@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,20 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
-import {
-  Calendar,
-  Clock,
-  Eye,
-  Flag,
-  Heart,
-  MapPin,
-  MessageCircle,
-  Share2,
-  Shield,
-  Star,
-  Truck,
-  User,
-} from "lucide-react";
+import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
+import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Share2, Shield, Star, Truck, User, ShoppingCart, Loader2 } from "lucide-react";
+import { addToCart } from "@/lib/api/cart";
+import { toast } from "sonner";
+import { useCartStore } from "@/lib/cart-store";
 
 interface ProductSeller {
   id: string;
@@ -68,8 +59,47 @@ export default function ProductDetailSidebar({
 }: ProductDetailSidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showSuccessAnim, setShowSuccessAnim] = useState(false);
+  const [showErrorAnim, setShowErrorAnim] = useState(false);
 
   const productShareUrl = `https://kampusmarket.id/p/${product.id}`;
+
+  // Check if product is already favorited on mount
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const { isFavorited: status } = await checkFavorite(product.id);
+        setIsFavorited(status);
+      } catch (err) {
+        console.error("Failed to check favorite status:", err);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [product.id]);
+
+  const toggleFavorite = async () => {
+    if (isLoadingFavorite) return;
+    
+    try {
+      setIsLoadingFavorite(true);
+      if (isFavorited) {
+        await removeFavorite(product.id);
+        setIsFavorited(false);
+      } else {
+        await addFavorite(product.id);
+        setIsFavorited(true);
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle favorite:", err);
+      alert(err?.message || "Gagal mengubah status favorit");
+    } finally {
+      setIsLoadingFavorite(false);
+    }
+  };
 
   const handleCopyProductLink = async () => {
     try {
@@ -91,6 +121,45 @@ export default function ProductDetailSidebar({
 
   const handleNegoWithSeller = () => {
     onNavigate("chat", { productId: product.id, chatAction: "nego" });
+  };
+
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+    
+    try {
+      setIsAddingToCart(true);
+      await addToCart(product.id, quantity);
+      
+      // Update global cart store
+      useCartStore.getState().fetchCount();
+
+      // Show flasher/toast
+      toast.success("Berhasil ditambahkan", {
+        description: `${quantity}x ${product.title} telah masuk ke keranjang.`,
+        action: {
+          label: "Lihat Keranjang",
+          onClick: () => onNavigate("cart")
+        },
+      });
+
+      // Trigger small animation
+      setShowSuccessAnim(true);
+      setTimeout(() => setShowSuccessAnim(false), 2000);
+    } catch (err: any) {
+      console.error("Failed to add to cart:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Silakan coba lagi nanti.";
+      
+      // Trigger error animation (shake)
+      setShowErrorAnim(true);
+      setTimeout(() => setShowErrorAnim(false), 500);
+
+      toast.error("Gagal menambah ke keranjang", {
+        description: errorMessage,
+        duration: 4000,
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -169,8 +238,32 @@ export default function ProductDetailSidebar({
             >
               {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
             </Button>
-            <Button variant="outline" onClick={() => onAction(() => onNavigate("cart"))} disabled={product.stock === 0}>+ Keranjang</Button>
+            <Button 
+              variant="outline" 
+              className={`relative overflow-hidden transition-all ${
+                showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" : 
+                showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
+              }`}
+              style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
+              onClick={() => onAction(handleAddToCart)} 
+              disabled={product.stock === 0 || isAddingToCart}
+            >
+              {isAddingToCart ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <ShoppingCart className={`h-4 w-4 mr-2 ${showSuccessAnim ? "animate-bounce" : ""}`} />
+              )}
+              {showSuccessAnim ? "Ditambahkan!" : showErrorAnim ? "Sudah Maksimal" : "+ Keranjang"}
+            </Button>
           </div>
+
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              25% { transform: translateX(-5px); }
+              75% { transform: translateX(5px); }
+            }
+          `}} />
 
           {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}
           {product.canNego && (
@@ -185,7 +278,24 @@ export default function ProductDetailSidebar({
           )}
 
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="flex-1"><Heart className="h-4 w-4 mr-1" />Simpan</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`flex-1 ${
+                isFavorited
+                  ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => onAction(toggleFavorite)}
+              disabled={isLoadingFavorite}
+            >
+              <Heart
+                className={`h-4 w-4 mr-1 ${
+                  isFavorited ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              {isLoadingFavorite ? "..." : "Simpan"}
+            </Button>
             <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowShareModal(true)}>
               <Share2 className="h-4 w-4 mr-1" />
               Bagikan

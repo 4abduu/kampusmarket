@@ -59,6 +59,7 @@ interface Props {
   onToggleEmoji: () => void;
   onEmojiSelect: (emoji: string) => void;
   onRemoveImage: () => void;
+  onToggleContextCard: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onAcceptOffer: (message: ApiMessage) => void;
   onRejectOffer: (message: ApiMessage) => void;

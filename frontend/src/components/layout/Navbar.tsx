@@ -32,6 +32,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useAdminNotificationStore } from "@/lib/admin-notification-store";
+import { useCartStore } from "@/lib/cart-store";
 import type { User as AppUser } from "@/lib/mock-data";
 
 interface NavbarProps {
@@ -58,6 +59,7 @@ export default function Navbar({
   const [searchQuery, setSearchQuery] = useState("");
   const userUnreadCount = useNotificationStore((state) => state.unreadCount);
   const adminUnreadCount = useAdminNotificationStore((state) => state.unreadCount);
+  const cartCount = useCartStore((state) => state.count);
   const displayName = currentUser?.name || (isCustomerOnly ? "Rina Wulandari" : "Ahmad Santoso");
   const displayEmail = currentUser?.email || (isCustomerOnly ? "rina.wulandari@student.ac.id" : "ahmad@student.ac.id");
   const displayAvatar = currentUser?.avatar || "/avatar.png";
@@ -293,9 +295,11 @@ export default function Navbar({
                 onClick={() => onNavigate("cart")}
               >
                 <ShoppingCart className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  3
-                </Badge>
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </Badge>
+                )}
               </Button>
 
               {/* Messages */}

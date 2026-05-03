@@ -5,11 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowRight,
   BadgeCheck,
-  Briefcase,
   Clock,
   Handshake,
   MapPin,
-  Package,
   Star,
   Store,
   Trash2,
@@ -23,6 +21,7 @@ import {
   getDurationLabel,
   getInitials,
   getPriceLabel,
+  getPrimaryImage,
   getSavings,
 } from "@/components/pages/user/favorites/favorites.helpers";
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
@@ -51,7 +50,9 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
           }`}
         />
       ))}
-      <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400">{rating.toFixed(1)}</span>
+      <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+        {rating.toFixed(1)} ({product.sold_count} terjual)
+      </span>
     </div>
   );
 
@@ -154,15 +155,12 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
       <Card className="group overflow-hidden border-slate-200/80 dark:border-slate-800">
         <div className="grid md:grid-cols-[240px_1fr]">
           <div className="relative h-48 bg-slate-100 md:h-auto dark:bg-slate-800">
-            {product.type === "jasa" ? (
-              <div className="h-full w-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-                <Briefcase className="h-14 w-14 text-emerald-600/70" />
-              </div>
-            ) : (
-              <div className="h-full w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <Package className="h-14 w-14 text-muted-foreground/30" />
-              </div>
-            )}
+            <img
+              src={getPrimaryImage(product)}
+              alt={product.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+            />
             <div className="absolute left-3 top-3 flex flex-col gap-1.5">
               <Badge className="w-fit bg-slate-900/80 text-xs text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
               {savings > 0 && <Badge className="w-fit bg-emerald-500 text-xs text-white hover:bg-emerald-500">-{centToRupiah(savings)}</Badge>}
@@ -176,7 +174,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">Disimpan</p>
                   <h3 className="mt-0.5 text-lg font-semibold leading-snug text-slate-900 dark:text-slate-50">{product.title}</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid)} className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
+                <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid || product.id)} className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -210,7 +208,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onNavigate(detailPage, product.uuid)} className="gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate(detailPage, product.uuid || product.id)} className="gap-1.5">
                   Detail <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
                 {product.seller && (
@@ -227,33 +225,39 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
   }
 
   return (
-    <Card className="group overflow-hidden border-slate-200/80 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800">
+    <Card
+      onClick={() => onNavigate(detailPage, product.uuid || product.id)}
+      className="group overflow-hidden cursor-pointer border-slate-200/80 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800"
+    >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
-        {product.type === "jasa" ? (
-          <div className="h-full w-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-            <Briefcase className="h-14 w-14 text-emerald-600/70" />
-          </div>
-        ) : (
-          <div className="h-full w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-            <Package className="h-14 w-14 text-muted-foreground/30" />
-          </div>
-        )}
+        <img
+          src={getPrimaryImage(product)}
+          alt={product.title}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
           <Badge className="w-fit bg-slate-900/80 text-[11px] text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
           {savings > 0 && <Badge className="w-fit bg-emerald-500 text-[11px] text-white hover:bg-emerald-500">-{centToRupiah(savings)}</Badge>}
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid)} className="absolute right-2.5 top-2.5 h-8 w-8 rounded-full bg-white/90 text-slate-400 shadow-sm backdrop-blur-sm hover:bg-white hover:text-rose-500 dark:bg-slate-950/70 dark:hover:bg-slate-950">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(product.uuid || product.id);
+          }}
+          className="absolute right-2.5 bottom-2.5 h-8 w-8 rounded-full bg-white/90 text-slate-400 shadow-sm backdrop-blur-sm hover:bg-white hover:text-rose-500 dark:bg-slate-950/70 dark:hover:bg-slate-950"
+        >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
 
       <CardContent className="space-y-2.5 p-4">
         <div className="space-y-1">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-50">{product.title}</h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{product.location}</span>
-            {product.category && <><span className="text-slate-300 dark:text-slate-600">·</span><span>{product.category.name}</span></>}
-          </div>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-50">
+            {product.title}
+          </h3>
         </div>
 
         {renderStars(product.rating)}
@@ -272,31 +276,27 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
         </div>
 
         {product.seller && (
-          <div className="flex items-center gap-2.5 border-t border-slate-100 pt-2.5 dark:border-slate-800">
-            <Avatar className="h-7 w-7">
-              {product.seller.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
-              <AvatarFallback className="bg-primary-100 text-[10px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-400">
-                {getInitials(product.seller.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
-                {product.seller.name}
-                {product.seller.is_verified && <BadgeCheck className="ml-1 inline h-3.5 w-3.5 text-primary-500" />}
-              </p>
-              {product.seller.faculty && (
-                <p className="truncate text-[10px] text-muted-foreground">{product.seller.faculty.icon} {product.seller.faculty.name}</p>
-              )}
+          <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar className="h-7 w-7">
+                {product.seller.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
+                <AvatarFallback className="bg-primary-100 text-[10px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-400">
+                  {getInitials(product.seller.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {product.seller.name}
+                  {product.seller.is_verified && <BadgeCheck className="ml-1 inline h-3.5 w-3.5 text-primary-500" />}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground whitespace-nowrap ml-2">
+              <MapPin className="h-3 w-3" />
+              {product.location}
             </div>
           </div>
         )}
-
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => onNavigate(detailPage, product.uuid)}>Detail</Button>
-          {product.seller && (
-            <Button size="sm" className="flex-1 bg-primary-600 text-xs hover:bg-primary-700" onClick={() => onNavigate("profile", { userId: product.seller!.uuid })}>Penjual</Button>
-          )}
-        </div>
       </CardContent>
     </Card>
   );

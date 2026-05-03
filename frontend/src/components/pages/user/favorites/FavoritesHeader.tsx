@@ -12,7 +12,7 @@ export default function FavoritesHeader({ stats }: FavoritesHeaderProps) {
     { label: "Disimpan", value: String(stats.totalItems), cls: "text-slate-900 dark:text-slate-50" },
     { label: "Nilai total", value: centToRupiah(stats.totalValue), cls: "text-slate-900 dark:text-slate-50" },
     { label: "Potensi hemat", value: centToRupiah(stats.totalSavings), cls: "text-emerald-600 dark:text-emerald-400" },
-    { label: "Rating rata2", value: stats.avgRating.toFixed(1), cls: "text-slate-900 dark:text-slate-50" },
+    { label: "Rating rata²", value: stats.avgRating.toFixed(1), cls: "text-slate-900 dark:text-slate-50" },
   ];
 
   return (

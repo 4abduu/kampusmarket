@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/lib/config";
 import type { Product } from "@/lib/mock-data";
+import type { Product as FavoriteProduct } from "@/components/pages/user/favorites/favorites.types";
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -22,12 +23,16 @@ const CACHE_TTL_MS = 30_000;
 const responseCache = new Map<string, { timestamp: number; data: unknown }>();
 const inflightRequests = new Map<string, Promise<unknown>>();
 
+export const clearCache = (key: string) => {
+  responseCache.delete(key);
+};
+
 const parseJson = async <T>(response: Response): Promise<T> => {
   const payload = (await response.json()) as T;
   return payload;
 };
 
-const request = async <T>(
+export const request = async <T>(
   url: string,
   init?: RequestInit,
   options?: { cacheKey?: string; cacheTtlMs?: number }
@@ -237,6 +242,32 @@ export const productsApi = {
       body: JSON.stringify({ status }),
     });
   },
+
+  async getFavorites(): Promise<FavoriteProduct[]> {
+    return request<FavoriteProduct[]>(`${API_BASE_URL}/favorites`, undefined, {
+      cacheKey: "favorites",
+    });
+  },
+
+  async addFavorite(productId: string): Promise<{ isFavorited: boolean; message: string }> {
+    const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
+      method: "POST",
+    });
+    clearCache("favorites");
+    return res;
+  },
+
+  async removeFavorite(productId: string): Promise<{ isFavorited: boolean; message: string }> {
+    const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
+      method: "DELETE",
+    });
+    clearCache("favorites");
+    return res;
+  },
+
+  async checkFavorite(productId: string): Promise<{ isFavorited: boolean }> {
+    return request<{ isFavorited: boolean }>(`${API_BASE_URL}/favorites/check/${productId}`);
+  },
 };
 
 // Export standalone functions for convenience
@@ -249,5 +280,9 @@ export const searchProducts = (query: string, page?: number) => productsApi.sear
 export const getProductsByCategory = (category: string, page?: number) => productsApi.getProductsByCategory(category, page);
 export const getProductsBySeller = (sellerId: string, page?: number) => productsApi.getProductsBySeller(sellerId, page);
 export const getMyProducts = (params?: any) => productsApi.getMyProducts(params);
+export const getFavorites = () => productsApi.getFavorites();
+export const addFavorite = (productId: string) => productsApi.addFavorite(productId);
+export const removeFavorite = (productId: string) => productsApi.removeFavorite(productId);
+export const checkFavorite = (productId: string) => productsApi.checkFavorite(productId);
 
 export const uploadProductImages = (files: File[]) => import('@/lib/api/images').then(m => m.uploadImages(files));

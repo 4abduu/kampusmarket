@@ -15,43 +15,38 @@ export interface SellerProduct {
 
 interface Props {
   showNegoModal: boolean;
-  setShowNegoModal: (v: boolean) => void;
-  chatProduct: ApiChatProduct | null;
-
   showOfferModal: boolean;
-  setShowOfferModal: (v: boolean) => void;
+  negoPrice: string;
+  offerPrice: string;
   sellerProducts: SellerProduct[];
   selectedOfferProduct: SellerProduct | null;
-  setSelectedOfferProduct: (p: SellerProduct) => void;
-
-  negoPrice: string;
-  setNegoPrice: (v: string) => void;
-  offerPrice: string;
-  setOfferPrice: (v: string) => void;
-
+  chatProduct: ApiChatProduct | null;
+  isSending: boolean;
+  onCloseNego: () => void;
+  onCloseOffer: () => void;
+  onNegoPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onOfferPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSelectOfferProduct: (p: SellerProduct) => void;
+  onSubmitNego: () => void;
+  onSubmitOffer: () => void;
   formatPrice: (price: number) => string;
-  formatPriceInput: (v: string) => string;
-
-  handleSubmitNego: () => void;
-  handleSubmitOffer: () => void;
-  isSubmitting: boolean;
-
-  isSeller: boolean;                  // FIX #4 & #5
-  onNavigateToDashboard: () => void;  // FIX #3: tombol edit stok → my-products
+  isSeller: boolean;
+  onNavigateToDashboard: () => void;
 }
 
 export default function ChatActionModals({
-  showNegoModal, setShowNegoModal, chatProduct,
-  showOfferModal, setShowOfferModal, sellerProducts, selectedOfferProduct, setSelectedOfferProduct,
-  negoPrice, setNegoPrice, offerPrice, setOfferPrice,
-  formatPrice, formatPriceInput,
-  handleSubmitNego, handleSubmitOffer, isSubmitting,
+  showNegoModal, showOfferModal, negoPrice, offerPrice,
+  sellerProducts, selectedOfferProduct, chatProduct,
+  isSending, onCloseNego, onCloseOffer,
+  onNegoPriceChange, onOfferPriceChange, onSelectOfferProduct,
+  onSubmitNego, onSubmitOffer,
+  formatPrice,
   isSeller, onNavigateToDashboard,
 }: Props) {
   return (
     <>
       {/* ── Modal Ajukan Nego (Buyer) ── */}
-      <Dialog open={showNegoModal} onOpenChange={setShowNegoModal}>
+      <Dialog open={showNegoModal} onOpenChange={(open) => { if (!open) onCloseNego(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -89,7 +84,7 @@ export default function ChatActionModals({
                 <Input
                   placeholder="0"
                   value={negoPrice}
-                  onChange={e => setNegoPrice(formatPriceInput(e.target.value))}
+                  onChange={onNegoPriceChange}
                   className="pl-10"
                   disabled={!chatProduct?.canNego}
                 />
@@ -100,13 +95,13 @@ export default function ChatActionModals({
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setShowNegoModal(false)}>Batal</Button>
+              <Button variant="outline" className="flex-1" onClick={onCloseNego}>Batal</Button>
               <Button
                 className="flex-1 bg-primary-600 hover:bg-primary-700"
-                onClick={handleSubmitNego}
-                disabled={!chatProduct?.canNego || !negoPrice || isSubmitting}
+                onClick={onSubmitNego}
+                disabled={!chatProduct?.canNego || !negoPrice || isSending}
               >
-                {isSubmitting ? 'Mengirim...' : 'Kirim Penawaran'}
+                {isSending ? 'Mengirim...' : 'Kirim Penawaran'}
               </Button>
             </div>
           </div>
@@ -114,7 +109,7 @@ export default function ChatActionModals({
       </Dialog>
 
       {/* ── Modal Penawaran Khusus (Seller) ── */}
-      <Dialog open={showOfferModal} onOpenChange={setShowOfferModal}>
+      <Dialog open={showOfferModal} onOpenChange={(open) => { if (!open) onCloseOffer(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -143,7 +138,7 @@ export default function ChatActionModals({
                     return (
                       <div
                         key={product.id}
-                        onClick={() => !outOfStock && setSelectedOfferProduct(product)}
+                        onClick={() => !outOfStock && onSelectOfferProduct(product)}
                         className={[
                           'relative flex items-center gap-3 p-2 rounded-lg border transition-colors',
                           outOfStock
@@ -183,7 +178,7 @@ export default function ChatActionModals({
                             className="h-7 px-2 text-xs text-primary-600 shrink-0 hover:bg-primary-50"
                             onClick={e => {
                               e.stopPropagation();
-                              setShowOfferModal(false);
+                              onCloseOffer();
                               onNavigateToDashboard();
                             }}
                           >
@@ -205,7 +200,7 @@ export default function ChatActionModals({
                 <Input
                   placeholder="0"
                   value={offerPrice}
-                  onChange={e => setOfferPrice(formatPriceInput(e.target.value))}
+                  onChange={onOfferPriceChange}
                   className="pl-10"
                 />
               </div>
@@ -215,13 +210,13 @@ export default function ChatActionModals({
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setShowOfferModal(false)}>Batal</Button>
+              <Button variant="outline" className="flex-1" onClick={onCloseOffer}>Batal</Button>
               <Button
                 className="flex-1 bg-primary-600 hover:bg-primary-700"
-                onClick={handleSubmitOffer}
-                disabled={!selectedOfferProduct || selectedOfferProduct.stock <= 0 || !offerPrice || isSubmitting}
+                onClick={onSubmitOffer}
+                disabled={!selectedOfferProduct || selectedOfferProduct.stock <= 0 || !offerPrice || isSending}
               >
-                {isSubmitting ? 'Mengirim...' : 'Kirim Penawaran'}
+                {isSending ? 'Mengirim...' : 'Kirim Penawaran'}
               </Button>
             </div>
           </div>
