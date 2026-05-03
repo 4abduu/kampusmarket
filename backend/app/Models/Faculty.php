@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Faculty extends Model
@@ -30,6 +31,25 @@ class Faculty extends Model
     }
 
     /**
+     * Faculties that may be shown to normal users.
+     * Excludes the redundant admin row and only returns active faculties.
+     */
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query->where('code', '!=', 'admin')
+            ->where('is_active', true);
+    }
+
+    /**
+     * Faculties that may be managed from the admin panel.
+     * Excludes the redundant admin row, but still allows inactive faculties.
+     */
+    public function scopeManaged(Builder $query): Builder
+    {
+        return $query->where('code', '!=', 'admin');
+    }
+
+    /**
      * Scope for active faculties.
      */
     public function scopeActive($query)
@@ -50,6 +70,6 @@ class Faculty extends Model
      */
     public static function findByCode(string $code): ?self
     {
-        return static::where('code', $code)->first();
+        return static::managed()->where('code', $code)->first();
     }
 }

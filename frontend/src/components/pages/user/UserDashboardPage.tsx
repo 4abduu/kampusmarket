@@ -153,7 +153,7 @@ export default function UserDashboardPage({
             getFacultyName={getFacultyName}
           />
 
-          <main className="lg:col-span-3 space-y-6">
+          <main className="lg:col-span-3 space-y-6 min-w-0">
             {activeTab === "overview" && (
               <UserDashboardOverviewTab
                 onNavigate={onNavigate}

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Briefcase, Calendar, FileText, MessageCircle, Package, Timer } from "lucide-react"
-import type { Order } from "@/lib/mock-data"
+import type { Order } from "@/lib/api/orders"
 
 type ServiceData = {
   serviceDate: string
@@ -93,12 +93,12 @@ export default function OrderDetailProductCard({
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback className={isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}>
-              {order.seller.name.split(" ").map((name) => name[0]).join("")}
+              {(order.seller?.name || "S").split(" ").map((name: string) => name[0]).join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-medium">{order.seller.name}</p>
-            <p className="text-sm text-muted-foreground">{order.seller.phone}</p>
+            <p className="font-medium">{order.seller?.name || "Penjual"}</p>
+            <p className="text-sm text-muted-foreground">{order.seller?.phone || order.seller?.email || ""}</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => onNavigate("chat")}>
             <MessageCircle className="h-4 w-4 mr-1" />

@@ -60,13 +60,13 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
             <div className="flex items-center gap-2 mt-2">
               <Avatar className="h-5 w-5">
                 <AvatarFallback className={`text-[10px] ${isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}`}>
-                  {order.seller.name.split(" ").map((namePart) => namePart[0]).join("")}
+                  {(viewMode === "buyer" ? (order.seller?.name || "S") : (order.buyer?.name || "B")).split(" ").map((namePart: string) => namePart[0]).join("")}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-muted-foreground">
                 {viewMode === "buyer"
-                  ? `${isService ? "Penyedia" : "Penjual"}: ${order.seller.name}`
-                  : `${isService ? "Pemesan" : "Pembeli"}: ${order.buyer.name}`}
+                  ? `${isService ? "Penyedia" : "Penjual"}: ${order.seller?.name || "Sistem"}`
+                  : `${isService ? "Pemesan" : "Pembeli"}: ${order.buyer?.name || "User"}`}
               </span>
             </div>
 

@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class OrderHistory extends Model
 {
     use HasFactory;
+    
+    protected static function booted()
+    {
+        static::creating(function ($history) {
+            if (!$history->uuid) {
+                $history->uuid = \App\Http\Helpers\NumberGenerator::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'uuid',

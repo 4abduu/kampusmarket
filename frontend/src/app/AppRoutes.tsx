@@ -62,11 +62,10 @@ type AppRoutesProps = {
   googleUserData: { userName?: string; userEmail?: string } | null;
   currentUser: User | null;
   currentSuccessType: "product" | "service" | null;
-  // REVISI: Ref untuk flag saat proses logout, mencegah redirect ke /unauthorized
   isLoggingOut?: RefObject<boolean>;
+  userRole: "user" | "admin" | null;
 };
 
-// ✅ Dari dev-abdu: Wrapper untuk ChatPage dengan query params support
 function ChatPageWrapper({
   onNavigate,
   currentUser,
@@ -220,6 +219,7 @@ export default function AppRoutes({
   currentUser,
   currentSuccessType,
   isLoggingOut,
+  userRole,
 }: AppRoutesProps) {
   const location = useLocation();
   const unauthorizedState = location.state as { reason?: string } | null;
@@ -605,6 +605,7 @@ export default function AppRoutes({
                 <OrderDetailPage
                   onNavigate={onNavigate}
                   orderId={currentId || undefined}
+                  currentUser={currentUser}
                 />
               }
             />
@@ -666,18 +667,19 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isLoggingOut={isLoggingOut}
-              isAdmin={currentUser?.role === "admin"}
+              isAdmin={userRole === "admin"}
               element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
           }
         />
+
         <Route
           path="/stats"
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isLoggingOut={isLoggingOut}
-              isAdmin={currentUser?.role === "admin"}
+              isAdmin={userRole === "admin"}
               element={<AdminDashboardPage onNavigate={onNavigate} />}
             />
           }
@@ -688,7 +690,7 @@ export default function AppRoutes({
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}
               isLoggingOut={isLoggingOut}
-              isAdmin={currentUser?.role === "admin"}
+              isAdmin={userRole === "admin"}
               element={<AdminNotificationsPage onNavigate={onNavigate} />}
             />
           }

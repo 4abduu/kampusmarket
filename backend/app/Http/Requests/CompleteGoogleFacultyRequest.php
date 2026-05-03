@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CompleteGoogleFacultyRequest extends FormRequest
@@ -15,12 +17,12 @@ class CompleteGoogleFacultyRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules that apply to this request.
      */
     public function rules(): array
     {
         return [
-            'facultyId' => ['required', 'string', 'exists:faculties,code'],
+            'facultyId' => User::facultyIdRules(UserRole::USER->value, true),
         ];
     }
 
@@ -31,7 +33,7 @@ class CompleteGoogleFacultyRequest extends FormRequest
     {
         return [
             'facultyId.required' => 'Fakultas wajib dipilih',
-            'facultyId.exists' => 'Fakultas tidak ditemukan',
+            'facultyId.exists' => 'Fakultas tidak ditemukan atau tidak aktif',
         ];
     }
 }

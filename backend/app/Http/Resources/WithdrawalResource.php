@@ -26,8 +26,8 @@ class WithdrawalResource extends JsonResource
             'user' => new UserResource($this->whenLoaded('user')),
             
             // Amount (convert from cent to Rupiah)
-            'amount' => (int) ($this->amount / 100),
-            'totalDeduction' => (int) ($this->total_deduction / 100),
+            'amount' => (int) $this->amount,
+            'totalDeduction' => (int) $this->total_deduction,
             
             // Account info
             'accountType' => $this->account_type->value ?? $this->account_type,
@@ -54,7 +54,7 @@ class WithdrawalResource extends JsonResource
         return [
             'id' => $this->uuid,
             'withdrawalNumber' => $this->withdrawal_number,
-            'amount' => (int) ($this->amount / 100),
+            'amount' => (int) $this->amount,
             'status' => $this->status->value ?? $this->status,
             'createdAt' => $this->created_at->format('Y-m-d'),
         ];

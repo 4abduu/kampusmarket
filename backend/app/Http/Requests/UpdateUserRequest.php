@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -15,17 +17,23 @@ class UpdateUserRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules that apply to this request.
      */
     public function rules(): array
     {
         $userId = $this->route('user') ?? $this->user()->id;
+        $role = $this->user()?->role?->value ?? UserRole::USER->value;
+
+        $facultyRule = Rule::exists('faculties', 'code')
+            ->where(fn ($query) => $query->where('is_active', true)->where('code', '!=', 'admin'));
 
         return [
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $userId],
             'phone' => ['nullable', 'string', 'max:20'],
-            'facultyId' => ['nullable', 'string', 'exists:faculties,code'],
+            'facultyId' => $role === UserRole::ADMIN->value
+                ? ['nullable', 'string', $facultyRule]
+                : ['sometimes', 'string', $facultyRule],
             'location' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:500'],
             'avatar' => ['nullable', 'string', 'max:500'],
@@ -41,7 +49,7 @@ class UpdateUserRequest extends FormRequest
             'name.string' => 'Nama harus berupa teks',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah digunakan',
-            'facultyId.exists' => 'Fakultas tidak ditemukan',
+            'facultyId.exists' => 'Fakultas tidak ditemukan atau tidak aktif',
         ];
     }
 

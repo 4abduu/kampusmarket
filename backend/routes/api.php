@@ -16,6 +16,11 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CancelRequestController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminCategoryController;
+use App\Http\Controllers\Admin\AdminFacultyController;
+use App\Http\Controllers\Admin\AdminUserController;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -151,6 +156,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/orders/seller/all', [OrderController::class, 'sellerOrders']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/complete', [OrderController::class, 'complete']);
+    Route::post('/orders/{id}/confirm', [OrderController::class, 'confirm']);
+    Route::post('/orders/{id}/deliver', [OrderController::class, 'deliver']);
     Route::post('/orders/{id}/pay', [OrderController::class, 'pay']);
     Route::post('/orders/{id}/set-shipping-fee', [OrderController::class, 'setShippingFee']);
     Route::post('/orders/{id}/offer-price', [OrderController::class, 'offerPrice']);
@@ -230,35 +237,67 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
 
-    // Dashboard
-    Route::get('/stats', [UserController::class, 'adminStats']);
+    // ── DASHBOARD ──────────────────────────────────────────────────────────
+    Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
+    Route::get('/dashboard/revenue', [AdminDashboardController::class, 'revenueStats']);
+    Route::get('/dashboard/activity', [AdminDashboardController::class, 'activitySummary']);
 
-    // Faculties Management
-    Route::get('/faculties', [FacultyController::class, 'adminIndex']);
-    Route::post('/faculties', [FacultyController::class, 'store']);
-    Route::put('/faculties/{code}', [FacultyController::class, 'update']);
-    Route::put('/faculties/{code}/status', [FacultyController::class, 'updateStatus']);
-    Route::delete('/faculties/{code}', [FacultyController::class, 'destroy']);
+    // ── PRODUCTS ───────────────────────────────────────────────────────────
+    Route::prefix('products')->group(function () {
+        Route::get('/', [AdminProductController::class, 'index']);
+        Route::get('/{id}', [AdminProductController::class, 'show']);
+        Route::delete('/{id}', [AdminProductController::class, 'destroy']);
+        Route::get('/trashed', [AdminProductController::class, 'trashed']);
+        Route::post('/{id}/restore', [AdminProductController::class, 'restore']);
+        Route::delete('/{id}/force', [AdminProductController::class, 'forceDelete']);
+    });
 
-    // User Management
-    Route::get('/users', [UserController::class, 'index']);
-    Route::put('/users/{id}/ban', [UserController::class, 'ban']);
-    Route::put('/users/{id}/unban', [UserController::class, 'unban']);
-    Route::put('/users/{id}/warn', [UserController::class, 'warn']);
-    Route::put('/users/{id}/verify', [UserController::class, 'verify']);
+    // ── CATEGORIES ────────────────────────────────────────────────────────
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [AdminCategoryController::class, 'index']);
+        Route::post('/', [AdminCategoryController::class, 'store']);
+        Route::get('/{id}', [AdminCategoryController::class, 'show']);
+        Route::put('/{id}', [AdminCategoryController::class, 'update']);
+        Route::delete('/{id}', [AdminCategoryController::class, 'destroy']);
+        Route::put('/{id}/status', [AdminCategoryController::class, 'updateStatus']);
+        Route::get('/stats', [AdminCategoryController::class, 'stats']);
+    });
 
-    // Reports Management
+    // ── FACULTIES ──────────────────────────────────────────────────────────
+    Route::prefix('faculties')->group(function () {
+        Route::get('/', [AdminFacultyController::class, 'index']);
+        Route::post('/', [AdminFacultyController::class, 'store']);
+        Route::get('/{code}', [AdminFacultyController::class, 'show']);
+        Route::put('/{code}', [AdminFacultyController::class, 'update']);
+        Route::put('/{code}/status', [AdminFacultyController::class, 'updateStatus']);
+        Route::delete('/{code}', [AdminFacultyController::class, 'destroy']);
+        Route::get('/stats', [AdminFacultyController::class, 'stats']);
+    });
+
+    // ── USERS ──────────────────────────────────────────────────────────────
+    Route::prefix('users')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index']);
+        Route::get('/{id}', [AdminUserController::class, 'show']);
+        Route::put('/{id}/ban', [AdminUserController::class, 'ban']);
+        Route::put('/{id}/unban', [AdminUserController::class, 'unban']);
+        Route::put('/{id}/warn', [AdminUserController::class, 'warn']);
+        Route::put('/{id}/remove-warning', [AdminUserController::class, 'removeWarning']);
+        Route::put('/{id}/verify', [AdminUserController::class, 'verify']);
+        Route::get('/stats', [AdminUserController::class, 'stats']);
+    });
+
+    // ── REPORTS ────────────────────────────────────────────────────────────
     Route::get('/reports', [ReportController::class, 'adminIndex']);
     Route::put('/reports/{id}/review', [ReportController::class, 'review']);
     Route::put('/reports/{id}/resolve', [ReportController::class, 'resolve']);
     Route::put('/reports/{id}/dismiss', [ReportController::class, 'dismiss']);
 
-    // Cancel Requests Management
+    // ── CANCEL REQUESTS ────────────────────────────────────────────────────
     Route::get('/cancel-requests', [CancelRequestController::class, 'adminIndex']);
     Route::put('/cancel-requests/{id}/approve', [CancelRequestController::class, 'approve']);
     Route::put('/cancel-requests/{id}/reject', [CancelRequestController::class, 'reject']);
 
-    // Withdrawals Management
+    // ── WITHDRAWALS ────────────────────────────────────────────────────────
     Route::get('/withdrawals', [WalletController::class, 'adminWithdrawals']);
     Route::put('/withdrawals/{id}/approve', [WalletController::class, 'approveWithdrawal']);
     Route::put('/withdrawals/{id}/process', [WalletController::class, 'processWithdrawal']);

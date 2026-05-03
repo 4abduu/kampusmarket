@@ -19,6 +19,10 @@ class UpdateProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        $productId = $this->route('id');
+        $product = \App\Models\Product::where('uuid', $productId)->first();
+        $productType = $product?->type?->value ?? $product?->type ?? $this->type;
+
         $rules = [
             // Basic info
             'title' => ['sometimes', 'string', 'max:255'],
@@ -49,7 +53,7 @@ class UpdateProductRequest extends FormRequest
         ];
 
         // Barang specific rules
-        if ($this->product?->type === 'barang' || $this->type === 'barang') {
+        if ($productType === 'barang') {
             $rules['condition'] = ['sometimes', 'in:baru,bekas'];
             $rules['stock'] = ['sometimes', 'integer', 'min:0'];
             $rules['weight'] = ['nullable', 'integer', 'min:0'];
@@ -66,7 +70,7 @@ class UpdateProductRequest extends FormRequest
         }
 
         // Jasa specific rules
-        if ($this->product?->type === 'jasa' || $this->type === 'jasa') {
+        if ($productType === 'jasa') {
             $rules['durationMin'] = ['nullable', 'integer', 'min:1'];
             $rules['durationMax'] = ['nullable', 'integer', 'min:1'];
             $rules['durationUnit'] = ['nullable', 'in:jam,hari,minggu,bulan'];
@@ -155,12 +159,43 @@ class UpdateProductRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Get product type
-            $productType = $this->product?->type ?? $this->type;
-            $stock = $this->has('stock') ? $this->stock : ($this->product?->stock ?? null);
-            $status = $this->has('status') ? $this->status : null;
+            $productId = $this->route('id');
+            $product = \App\Models\Product::where('uuid', $productId)->first();
+            $productType = $product?->type?->value ?? $product?->type ?? $this->type;
+            
+            $stock = $this->has('stock') ? (int)$this->stock : ($product?->stock ?? null);
+            $status = $this->has('status') ? $this->status : ($product?->status?->value ?? $product?->status ?? null);
+
+            // Shipping methods validation (at least one must be selected)
+            if ($productType === 'barang') {
+                $hasShipping = 
+                    ($this->has('isCod') ? $this->isCod : ($product?->hasShippingMethod('cod') ?? false)) || 
+                    ($this->has('isPickup') ? $this->isPickup : ($product?->hasShippingMethod('pickup') ?? false)) || 
+                    ($this->has('isDelivery') ? $this->isDelivery : ($product?->hasShippingMethod('delivery') ?? false)) || 
+                    ($this->has('shippingOptions') && !empty($this->shippingOptions));
+                
+                // If we are updating shipping-related fields, check if we still have at least one
+                if ($this->hasAny(['isCod', 'isPickup', 'isDelivery', 'shippingOptions'])) {
+                    if (!$hasShipping) {
+                        $validator->errors()->add('shipping_options', 'Minimal harus memilih satu metode pengiriman.');
+                    }
+                }
+            } else if ($productType === 'jasa') {
+                $hasService = 
+                    ($this->has('isOnline') ? $this->isOnline : ($product?->hasShippingMethod('online') ?? false)) || 
+                    ($this->has('isOnsite') ? $this->isOnsite : ($product?->hasShippingMethod('onsite') ?? false)) || 
+                    ($this->has('isHomeService') ? $this->isHomeService : ($product?->hasShippingMethod('home_service') ?? false)) || 
+                    ($this->has('shippingOptions') && !empty($this->shippingOptions));
+                
+                if ($this->hasAny(['isOnline', 'isOnsite', 'isHomeService', 'shippingOptions'])) {
+                    if (!$hasService) {
+                        $validator->errors()->add('shipping_options', 'Minimal harus memilih satu metode layanan.');
+                    }
+                }
+            }
 
             // Only validate if status or stock is being updated
-            if ($status || $this->has('stock')) {
+            if ($this->has('status') || $this->has('stock')) {
                 // For barang products
                 if ($productType === 'barang') {
                     // Rule 1: Status 'sold_out' must have stock = 0
@@ -174,7 +209,7 @@ class UpdateProductRequest extends FormRequest
                     }
 
                     // Rule 3: If stock is 0 but status is active, reject
-                    if ($this->has('stock') && $stock === 0 && (!$status || $status === 'active')) {
+                    if ($this->has('stock') && $stock === 0 && (!$this->has('status') || $status === 'active')) {
                         $validator->errors()->add('stock', 'Ketika stok = 0, status harus diubah menjadi "Terjual" (sold_out).');
                     }
 

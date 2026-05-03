@@ -45,7 +45,7 @@ class CancelRequestResource extends JsonResource
             'rejectionReason' => $this->rejection_reason,
             
             // Refund
-            'refundAmount' => (int) ($this->refund_amount / 100),
+            'refundAmount' => (int) $this->refund_amount,
             'refundProcessed' => $this->refund_processed,
             
             // Timestamps

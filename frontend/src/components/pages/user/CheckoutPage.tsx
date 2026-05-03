@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronRight, Truck, Home, Store, Monitor, Clock } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
 import { createOrder } from "@/lib/api/orders";
+import { getAddresses, createAddress, updateAddress, deleteAddress, setPrimaryAddress } from "@/lib/api/addresses";
 import AddressSection from "@/components/pages/user/checkout/AddressSection";
 import CheckoutAddressDialogs from "@/components/pages/user/checkout/CheckoutAddressDialogs";
 import CheckoutContactSellerCard from "@/components/pages/user/checkout/CheckoutContactSellerCard";
@@ -124,6 +125,24 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     fetchCheckoutData();
   }, [productId]);
 
+  // Fetch addresses on mount
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const response = await getAddresses();
+        const data = response.data || response;
+        setAddresses(data);
+        // Auto-select primary address if any
+        const primary = data.find((a: any) => a.isPrimary);
+        if (primary) setSelectedAddressId(primary.id);
+        else if (data.length > 0) setSelectedAddressId(data[0].id);
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+      }
+    };
+    fetchAddresses();
+  }, []);
+
   // Derived values
   const isService = product?.type === "jasa";
   const priceType = product?.priceType || product?.price_type;
@@ -196,41 +215,43 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const requiresAddress = ["delivery", "home_service"].includes(shippingMethod);
   const isDeliveryAddressMissing = requiresAddress && !selectedAddressId && addresses.length === 0;
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (!newAddress.label || !newAddress.recipient || !newAddress.address) return;
 
-    if (editingAddress) {
-      setAddresses((prev) =>
-        prev.map((address) =>
-          address.id === editingAddress.id
-            ? {
-                ...address,
-                ...newAddress,
-                phone: newAddress.phone || undefined,
-                notes: newAddress.notes || undefined,
-              }
-            : address,
-        ),
-      );
-    } else if (newAddress.saveToProfile) {
-      const address: Address = {
-        id: `a${Date.now()}`,
-        userId: "1",
-        label: newAddress.label,
-        recipient: newAddress.recipient,
-        phone: newAddress.phone || undefined,
-        address: newAddress.address,
-        notes: newAddress.notes || undefined,
-        isPrimary: addresses.length === 0,
-        createdAt: new Date().toISOString(),
-      };
+    try {
+      if (editingAddress) {
+        await updateAddress(editingAddress.id, {
+          label: newAddress.label,
+          recipient: newAddress.recipient,
+          phone: newAddress.phone,
+          address: newAddress.address,
+          notes: newAddress.notes,
+          is_primary: editingAddress.isPrimary,
+        });
+      } else {
+        const response = await createAddress({
+          label: newAddress.label,
+          recipient: newAddress.recipient,
+          phone: newAddress.phone,
+          address: newAddress.address,
+          notes: newAddress.notes,
+          is_primary: addresses.length === 0,
+        });
+        const savedAddress = response.data || response;
+        setAddresses((prev) => [...prev, savedAddress]);
+        setSelectedAddressId(savedAddress.id);
+      }
 
-      setAddresses((prev) => [...prev, address]);
-      setSelectedAddressId(address.id);
+      // Refresh addresses list
+      const response = await getAddresses();
+      setAddresses(response.data || response);
+
+      setShowAddressModal(false);
+      setShowSaveAddressDialog(false);
+    } catch (err) {
+      console.error("Failed to save address:", err);
+      setValidationError("Gagal menyimpan alamat. Silakan coba lagi.");
     }
-
-    setShowAddressModal(false);
-    setShowSaveAddressDialog(false);
   };
 
   const handleCreateOrder = async () => {
@@ -438,22 +459,32 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                     });
                     setShowAddressModal(true);
                   }}
-                  onDeleteAddress={(addressId) => {
-                    setAddresses((prev) => {
-                      const next = prev.filter((address) => address.id !== addressId);
-                      if (selectedAddressId === addressId) {
-                        setSelectedAddressId(nextAddressSelection(prev, addressId));
-                      }
-                      return next;
-                    });
+                  onDeleteAddress={async (addressId) => {
+                    try {
+                      await deleteAddress(addressId);
+                      setAddresses((prev) => {
+                        const next = prev.filter((address) => address.id !== addressId);
+                        if (selectedAddressId === addressId) {
+                          setSelectedAddressId(nextAddressSelection(prev, addressId));
+                        }
+                        return next;
+                      });
+                    } catch (err) {
+                      console.error("Failed to delete address:", err);
+                    }
                   }}
-                  onSetPrimaryAddress={(addressId) => {
-                    setAddresses((prev) =>
-                      prev.map((address) => ({
-                        ...address,
-                        isPrimary: address.id === addressId,
-                      })),
-                    );
+                  onSetPrimaryAddress={async (addressId) => {
+                    try {
+                      await setPrimaryAddress(addressId);
+                      setAddresses((prev) =>
+                        prev.map((address) => ({
+                          ...address,
+                          isPrimary: address.id === addressId,
+                        })),
+                      );
+                    } catch (err) {
+                      console.error("Failed to set primary address:", err);
+                    }
                   }}
                 />
               )}

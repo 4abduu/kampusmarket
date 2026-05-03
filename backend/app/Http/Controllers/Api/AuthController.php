@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use App\Http\Helpers\NumberGenerator;
 
 class AuthController extends Controller
@@ -54,7 +55,7 @@ class AuthController extends Controller
 
             $faculty = null;
             if ($request->facultyId) {
-                $faculty = Faculty::where('code', $request->facultyId)->first();
+                $faculty = Faculty::visible()->where('code', $request->facultyId)->firstOrFail();
             }
 
             $user = User::create([
@@ -410,7 +411,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            $faculty = Faculty::where('code', $request->facultyId)->firstOrFail();
+            $faculty = Faculty::visible()->where('code', $request->facultyId)->firstOrFail();
 
             $user->update([
                 'faculty_id' => $faculty->id,
@@ -627,7 +628,12 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'nullable|string|max:20',
-            'facultyId' => 'nullable|string|exists:faculties,code',
+            'facultyId' => [
+                'nullable',
+                'string',
+                Rule::exists('faculties', 'code')
+                    ->where(fn ($query) => $query->where('is_active', true)->where('code', '!=', 'admin')),
+            ],
             'location' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:500',
             'avatar' => 'nullable|string|max:500',
@@ -635,9 +641,11 @@ class AuthController extends Controller
 
         $data = $request->only(['name', 'phone', 'location', 'bio', 'avatar']);
 
-        if ($request->facultyId) {
-            $faculty = Faculty::where('code', $request->facultyId)->first();
-            $data['faculty_id'] = $faculty?->id;
+        if ($user->role?->value === 'admin') {
+            $data['faculty_id'] = null;
+        } elseif ($request->facultyId) {
+            $faculty = Faculty::visible()->where('code', $request->facultyId)->firstOrFail();
+            $data['faculty_id'] = $faculty->id;
         }
 
         $user->update($data);

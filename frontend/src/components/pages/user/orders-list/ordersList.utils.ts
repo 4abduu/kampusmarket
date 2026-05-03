@@ -124,5 +124,9 @@ export const filterOrdersByTab = (orders: OrderListItem[], tab: OrdersTab) => {
     return orders.filter((order) => order.status === "completed");
   }
 
+  if (tab === "cancelled") {
+    return orders.filter((order) => order.status === "cancelled");
+  }
+
   return [];
 };

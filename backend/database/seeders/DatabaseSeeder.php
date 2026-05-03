@@ -30,6 +30,23 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // ─── ADMIN USER ────────────────────────────────────────────────
+        $admin = User::where('email', 'admin@kampusmarket.com')->first();
+        if (!$admin) {
+            $admin = User::create([
+                'uuid' => NumberGenerator::uuid(),
+                'name' => 'Super Admin',
+                'email' => 'admin@kampusmarket.com',
+                'password' => Hash::make('admin123'),
+                'phone' => '081234567890',
+                'faculty_id' => null,
+                'location' => 'Malang',
+                'role' => 'admin',
+                'is_verified' => true,
+                'email_verified_at' => now(),
+            ]);
+        }
+
         // ─── 2. USERS (SELLERS) ────────────────────────────────────────────────
         $ahmad = User::where('email', 'ahmad@student.ub.ac.id')->first();
         if (!$ahmad) {
@@ -123,49 +140,16 @@ class DatabaseSeeder extends Seeder
         }
 
         // ─── 3. CATEGORIES ─────────────────────────────────────────────────────
-        // BARANG CATEGORIES
-        $catElektronik = Category::firstOrCreate(
-            ['slug' => 'elektronik'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Elektronik', 'type' => 'barang', 'sort_order' => 1, 'is_active' => true]
-        );
-        $catBuku = Category::firstOrCreate(
-            ['slug' => 'buku'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Buku', 'type' => 'barang', 'sort_order' => 2, 'is_active' => true]
-        );
-        $catFashion = Category::firstOrCreate(
-            ['slug' => 'fashion'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Fashion', 'type' => 'barang', 'sort_order' => 3, 'is_active' => true]
-        );
-        $catFurniture = Category::firstOrCreate(
-            ['slug' => 'furniture'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Furniture', 'type' => 'barang', 'sort_order' => 4, 'is_active' => true]
-        );
-        $catOlahraga = Category::firstOrCreate(
-            ['slug' => 'olahraga'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Olahraga', 'type' => 'barang', 'sort_order' => 5, 'is_active' => true]
-        );
+        $catElektronik = Category::where('slug', 'elektronik')->first();
+        $catBuku       = Category::where('slug', 'buku')->first();
+        $catFashion    = Category::where('slug', 'fashion')->first();
+        $catFurniture  = Category::where('slug', 'furniture')->first();
+        $catOlahraga   = Category::where('slug', 'olahraga')->first();
 
-        // JASA CATEGORIES
-        $catFoto = Category::firstOrCreate(
-            ['slug' => 'fotografi-video'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Fotografi & Video', 'type' => 'jasa', 'sort_order' => 1, 'is_active' => true]
-        );
-        $catLes = Category::firstOrCreate(
-            ['slug' => 'pendidikan-les'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Pendidikan & Les', 'type' => 'jasa', 'sort_order' => 2, 'is_active' => true]
-        );
-        $catDesain = Category::firstOrCreate(
-            ['slug' => 'desain-kreatif'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Desain & Kreatif', 'type' => 'jasa', 'sort_order' => 3, 'is_active' => true]
-        );
-        $catTeknisi = Category::firstOrCreate(
-            ['slug' => 'teknisi-servis'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Teknisi & Servis', 'type' => 'jasa', 'sort_order' => 4, 'is_active' => true]
-        );
-        $catLesPribadi = Category::firstOrCreate(
-            ['slug' => 'les-privat'],
-            ['uuid' => NumberGenerator::uuid(), 'name' => 'Les Privat', 'type' => 'jasa', 'sort_order' => 10, 'is_active' => true]
-        );
+        $catFoto       = Category::where('slug', 'fotografi-video')->first();
+        $catLes        = Category::where('slug', 'pendidikan-les')->first();
+        $catDesain     = Category::where('slug', 'desain-kreatif')->first();
+        $catTeknisi    = Category::where('slug', 'teknisi-servis')->first();
 
         // ─── 4. PRODUCTS (BARANG) ──────────────────────────────────────────────
         $this->createBarang($siti, $catElektronik,
@@ -394,7 +378,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // Legacy jasa
-        $this->createJasa($seller, $catLesPribadi,
+        $this->createJasa($seller, $catLes,
             'Les Privat Matematika',
             'Les privat Matematika untuk SMA level expert. Berpengalaman mengajar 5 tahun.',
             1000000, null, null, 'fixed', 1, 2, 'jam', true, 0, 0, 0,
@@ -407,6 +391,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('✅  Seeder selesai!');
         $this->command->info('👤 Login yang tersedia:');
+        $this->command->info('   admin@kampusmarket.com   / admin123');
         $this->command->info('   ahmad@student.ub.ac.id  / password123');
         $this->command->info('   siti@student.ub.ac.id   / password123');
         $this->command->info('   budi@student.ub.ac.id   / password123');

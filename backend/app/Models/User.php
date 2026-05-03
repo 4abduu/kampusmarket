@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Enums\UserRole;
+use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -73,6 +74,40 @@ class User extends Authenticatable
         }
 
         return $this->last_seen->diffInMinutes(now()) < 5;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $user) {
+            if (($user->role?->value ?? $user->role) === UserRole::ADMIN->value) {
+                $user->faculty_id = null;
+            }
+        });
+    }
+
+    /**
+     * Build validation rules for faculty_id that keep the admin account
+     * detached from any faculty record.
+     */
+    public static function facultyIdRules(?string $role = null, bool $required = false): array
+    {
+        $rules = [
+            $required ? 'required' : 'nullable',
+            'string',
+            Rule::exists('faculties', 'code')
+                ->where(fn ($query) => $query->where('is_active', true)->where('code', '!=', 'admin')),
+        ];
+
+        if ($role === UserRole::ADMIN->value) {
+            $rules[0] = 'nullable';
+        }
+
+        return $rules;
+    }
+
+    public static function normalizeFacultyIdForRole(?string $role, ?string $facultyCode): ?string
+    {
+        return $role === UserRole::ADMIN->value ? null : $facultyCode;
     }
 
     // ── Relasi ──────────────────────────────────────────────────────────────

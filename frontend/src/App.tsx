@@ -8,6 +8,7 @@ import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
 import { useCartStore } from "@/lib/cart-store";
 import type { User } from "@/lib/mock-data";
+import { getEcho } from "@/lib/echo";
 
 // Layout
 import Navbar from "@/components/layout/Navbar";
@@ -65,6 +66,14 @@ function AppContent() {
 
   useEffect(() => {
     void syncAuthUser();
+    
+    // Initialize Echo for real-time updates
+    try {
+      (window as any).Echo = getEcho();
+      console.log("[Echo] Initialized successfully");
+    } catch (err) {
+      console.warn("[Echo] Failed to initialize:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -338,7 +347,7 @@ function AppContent() {
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
           currentUser={authUser}
-          isLoggingOut={isLoggingOutRef}
+          userRole={userRole}
         />
       </main>
 

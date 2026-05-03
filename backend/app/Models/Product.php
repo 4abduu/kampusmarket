@@ -212,11 +212,11 @@ class Product extends Model
     }
 
     /**
-     * Get price in Rupiah (from cent).
+     * Get price in Rupiah (no conversion needed as it is now stored directly in IDR).
      */
     public function getPriceInRupiah(): float
     {
-        return $this->price / 100;
+        return (float) $this->price;
     }
 
     /**

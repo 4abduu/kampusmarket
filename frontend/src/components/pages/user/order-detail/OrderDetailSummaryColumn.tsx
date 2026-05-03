@@ -3,15 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, DollarSign, Info, MessageCircle, Phone, Star, Truck, Briefcase, XCircle } from "lucide-react"
 
-type OrderStatus =
-  | "waiting_price"
-  | "waiting_confirmation"
-  | "waiting_shipping_fee"
-  | "waiting_payment"
-  | "processing"
-  | "completed"
-  | "cancelled"
-
 type ShippingMethodConfig = {
   label: string
   desc: string
@@ -25,7 +16,7 @@ interface Props {
   onNavigate: (page: string) => void
   basePrice: number
   shippingFee: number
-  orderStatus: OrderStatus
+  orderStatus: string
   totalPayment: number
   netIncome: number
   adminFeeDeducted: number
@@ -39,6 +30,8 @@ interface Props {
   openSellerCancelDialog: () => void
   orderNumber: string
   createdAt: string
+  orderCompleted?: boolean
+  onRating?: () => void
 }
 
 export default function OrderDetailSummaryColumn({
@@ -63,6 +56,8 @@ export default function OrderDetailSummaryColumn({
   openSellerCancelDialog,
   orderNumber,
   createdAt,
+  orderCompleted,
+  onRating,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -181,39 +176,23 @@ export default function OrderDetailSummaryColumn({
       </Card>
 
       <div className="space-y-3">
-        {!isSellerView && (
+          {!isSellerView && (
           <>
-            {orderStatus === "completed" && (
-              <Button className="w-full bg-primary-600 hover:bg-primary-700" size="lg" onClick={() => onNavigate("rating")}>
+            {orderCompleted && onRating && (
+              <Button className="w-full bg-primary-600 hover:bg-primary-700" size="lg" onClick={onRating}>
                 <Star className="h-4 w-4 mr-2" />
                 Beri Rating & Ulasan
               </Button>
             )}
 
-            {orderStatus === "processing" && (
-              <div className="p-3 rounded-lg border bg-purple-50 dark:bg-purple-900/20 border-purple-200">
-                <p className="text-sm text-purple-700 dark:text-purple-300">
-                  {isService ? "Layanan sedang diproses" : "Pesanan sedang diproses oleh penjual"}
-                </p>
-              </div>
-            )}
-
-            {orderStatus === "completed" && (
-              <div className="p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200">
-                <p className="text-sm text-primary-700 dark:text-primary-300">
-                  {isService ? "Layanan telah selesai" : "Pesanan telah selesai"}. Jangan lupa beri rating!
-                </p>
-              </div>
-            )}
-
-            {(canCancelDirectly || needsCancelRequest) && orderStatus !== "cancelled" && (
+            {(canCancelDirectly || needsCancelRequest) && orderStatus !== "cancelled" && orderStatus !== "completed" && (
               <Button variant="outline" className="w-full text-red-600 border-red-300 hover:bg-red-50" onClick={handleCancelClick}>
                 <XCircle className="h-4 w-4 mr-2" />
                 {canCancelDirectly ? "Batalkan Pesanan" : "Ajukan Pembatalan"}
               </Button>
             )}
 
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => onNavigate("chat")}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Hubungi {isService ? "Penyedia" : "Penjual"}
             </Button>

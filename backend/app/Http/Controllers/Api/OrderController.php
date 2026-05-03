@@ -46,20 +46,25 @@ class OrderController extends Controller
                 'role' => $request->as
             ]);
 
-            $query = Order::with(['product.images', 'buyer', 'seller', 'selectedShippingOption'])
-                ->where('buyer_id', $user->id)
-                ->orWhere('seller_id', $user->id);
+            $query = Order::with(['product.images', 'buyer', 'seller', 'selectedShippingOption']);
 
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
+            $query->where(function($q) use ($user) {
+                $q->where('buyer_id', $user->id)
+                  ->orWhere('seller_id', $user->id);
+            });
 
             // Filter by type (as buyer or seller)
-            if ($request->has('as') && $request->as === 'seller') {
-                $query->where('seller_id', $user->id);
-            } elseif ($request->has('as') && $request->as === 'buyer') {
-                $query->where('buyer_id', $user->id);
+            if ($request->has('as')) {
+                if ($request->as === 'seller') {
+                    $query->where('seller_id', $user->id);
+                } elseif ($request->as === 'buyer') {
+                    $query->where('buyer_id', $user->id);
+                }
+            }
+
+            // Filter by status
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
             }
 
             $perPage = $request->get('per_page', 10);
@@ -158,16 +163,8 @@ class OrderController extends Controller
         $shippingFee = (int) ($selectedShippingOption->price ?? 0);
 
         // Determine initial status based on product type.
-        // Default is waiting_payment so checkout can proceed to pay immediately.
-        $initialStatus = OrderStatus::WAITING_PAYMENT;
-
-        if ($product->type->value === 'jasa' && $product->price_type->value !== 'fixed') {
-            // Variable pricing for jasa - need seller to set price
-            $initialStatus = OrderStatus::WAITING_PRICE;
-        } elseif ($selectedShippingType === ShippingType::DELIVERY->value && $product->type->value === 'barang' && $shippingFee === 0) {
-            // Need seller to set shipping fee
-            $initialStatus = OrderStatus::WAITING_SHIPPING_FEE;
-        }
+        // User requested that ALL orders MUST be confirmed by seller first.
+        $initialStatus = OrderStatus::PENDING;
 
         // Get shipping address
         $shippingAddress = null;
@@ -395,7 +392,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $offeredPrice = $request->offeredPrice * 100;
+        $offeredPrice = (int) $request->offeredPrice;
 
         $order->update([
             'offered_price' => $offeredPrice,
@@ -491,32 +488,139 @@ class OrderController extends Controller
     }
 
     /**
+     * Confirm order (Seller action).
+     * COD barang: pending → processing
+     * Pickup barang: pending → waiting_payment
+     * Jasa (fixed price): pending → waiting_payment
+     */
+    public function confirm(string $id, Request $request): JsonResponse
+    {
+        $order = Order::where('uuid', $id)->firstOrFail();
+
+        if ($order->seller_id !== $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses'], 403);
+        }
+
+        if ($order->status !== OrderStatus::PENDING) {
+            return response()->json(['success' => false, 'message' => 'Status pesanan tidak valid'], 400);
+        }
+
+        $shippingType = $order->shipping_type;
+        $product = $order->product;
+
+        // Determine next status after confirmation
+        if ($product->type->value === 'jasa' && $product->price_type->value !== 'fixed') {
+            // Variable pricing for jasa - need seller to set price
+            $newStatus = OrderStatus::WAITING_PRICE;
+        } elseif ($shippingType === ShippingType::DELIVERY) {
+            // User requested: Manual delivery must always have shipping fee input by seller
+            $newStatus = OrderStatus::WAITING_SHIPPING_FEE;
+        } elseif ($shippingType === ShippingType::COD) {
+            // COD doesn't need payment — go straight to processing
+            $newStatus = OrderStatus::PROCESSING;
+        } else {
+            // Default: waiting for payment
+            $newStatus = OrderStatus::WAITING_PAYMENT;
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        OrderHistory::create([
+            'uuid' => NumberGenerator::uuid(),
+            'order_id' => $order->id,
+            'status' => $newStatus->value,
+            'notes' => 'Pesanan diterima oleh penjual',
+            'actor_id' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesanan berhasil dikonfirmasi',
+            'data' => new OrderResource($order->fresh()->load(['product.images', 'buyer', 'seller', 'history.actor', 'selectedShippingOption'])),
+        ]);
+    }
+
+    /**
+     * Deliver / Service done (Seller action).
+     * Marks that seller has shipped/completed their side.
+     * Sets auto_confirm_deadline to 3 days from now.
+     *
+     * Barang delivery: processing → in_delivery
+     * Barang pickup: ready_pickup (seller confirms handover, waiting buyer confirm)
+     * Barang COD: processing (seller confirms handover, waiting buyer confirm)
+     * Jasa: processing (seller confirms service done, waiting buyer confirm)
+     */
+    public function deliver(string $id, Request $request): JsonResponse
+    {
+        $order = Order::where('uuid', $id)->firstOrFail();
+
+        if ($order->seller_id !== $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses'], 403);
+        }
+
+        $allowedStatuses = [OrderStatus::PROCESSING, OrderStatus::READY_PICKUP];
+        if (!in_array($order->status, $allowedStatuses, true)) {
+            return response()->json(['success' => false, 'message' => 'Status pesanan tidak valid'], 400);
+        }
+
+        $isService = $order->product_type->value === 'jasa';
+        $shippingType = $order->shipping_type;
+
+        // Determine new status
+        if (!$isService && $shippingType === ShippingType::DELIVERY) {
+            $newStatus = OrderStatus::IN_DELIVERY;
+        } else {
+            // For COD, pickup, jasa — stay in same status but seller_confirmed_at is set
+            // The buyer must then click "confirm received" to complete
+            $newStatus = $order->status;
+        }
+
+        $autoConfirmDeadline = now()->addDays(3);
+
+        $order->update([
+            'status' => $newStatus,
+            'seller_confirmed_at' => now(),
+            'auto_confirm_deadline' => $autoConfirmDeadline,
+        ]);
+
+        $notes = $isService ? 'Penyedia jasa mengkonfirmasi layanan selesai' : 'Penjual mengkonfirmasi barang diserahkan/dikirim';
+
+        OrderHistory::create([
+            'uuid' => NumberGenerator::uuid(),
+            'order_id' => $order->id,
+            'status' => $newStatus->value,
+            'notes' => $notes,
+            'actor_id' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $isService ? 'Konfirmasi layanan selesai berhasil' : 'Konfirmasi pengiriman berhasil',
+            'data' => new OrderResource($order->fresh()->load(['product.images', 'buyer', 'seller', 'history.actor', 'selectedShippingOption'])),
+        ]);
+    }
+
+    /**
      * Pay for order (Buyer action).
+     * ESCROW: Dana ditahan di sistem, TIDAK langsung masuk ke saldo penjual.
+     * Penjual baru menerima dana setelah buyer confirm (complete).
      */
     public function pay(string $id, Request $request): JsonResponse
     {
         $order = Order::where('uuid', $id)->firstOrFail();
 
-        // Check if buyer
         if ($order->buyer_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses',
-            ], 403);
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses'], 403);
         }
 
-        // Allow payment for legacy pending orders and current waiting_payment orders.
-        if (!in_array($order->status, [OrderStatus::WAITING_PAYMENT, OrderStatus::PENDING], true)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Status pesanan tidak valid untuk pembayaran',
-            ], 400);
+        if ($order->status !== OrderStatus::WAITING_PAYMENT) {
+            return response()->json(['success' => false, 'message' => 'Silakan tunggu konfirmasi penjual sebelum melakukan pembayaran'], 400);
         }
 
         $buyer = $request->user();
         $totalPrice = $order->total_price;
 
-        // If payment method is midtrans, create payment and return snap token
+        // Midtrans — return snap token, actual payment handled by webhook
         if ($order->payment_method === 'midtrans') {
             $midtrans = app(MidtransService::class);
 
@@ -533,15 +637,15 @@ class OrderController extends Controller
 
             $payload = [
                 'transaction_details' => [
-                    'order_id' => $payment->uuid,
-                    'gross_amount' => (int) ($payment->gross_amount / 100),
+                    'order_id' => (string) $payment->uuid,
+                    'gross_amount' => (int) $payment->gross_amount,
                 ],
                 'item_details' => [
                     [
-                        'id' => $order->product_id,
-                        'price' => (int) ($order->final_price / 100),
+                        'id' => (string) $order->product_id,
+                        'price' => (int) $order->final_price,
                         'quantity' => $order->quantity,
-                        'name' => $order->product_title,
+                        'name' => substr($order->product_title, 0, 50),
                     ],
                 ],
                 'customer_details' => [
@@ -549,6 +653,16 @@ class OrderController extends Controller
                     'email' => $order->buyer?->email ?? null,
                 ],
             ];
+
+            // Add shipping fee as separate item if exists
+            if ($order->shipping_fee > 0) {
+                $payload['item_details'][] = [
+                    'id' => 'SHIPPING',
+                    'price' => (int) $order->shipping_fee,
+                    'quantity' => 1,
+                    'name' => 'Ongkos Kirim',
+                ];
+            }
 
             $result = $midtrans->createSnapToken($payload);
             $payment->raw_response = $result;
@@ -560,29 +674,26 @@ class OrderController extends Controller
                     'message' => 'Snap token created',
                     'data' => [
                         'snap_token' => $result['token'],
-                        'payment_uuid' => $payment->uuid,
+                        'payment_uuid' => (string) $payment->uuid,
                     ],
                 ]);
             }
 
-            return response()->json(['success' => false, 'error' => $result], 500);
+            $payment->save();
+            Log::error('[OrderController] Midtrans snap token failed', ['result' => $result]);
+            return response()->json(['success' => false, 'message' => 'Gagal membuat token pembayaran', 'error' => $result], 500);
         }
 
-        // Check balance if payment method is balance
+        // Balance payment — deduct from buyer, hold in escrow (NOT transferred to seller yet)
         if ($order->payment_method === 'balance') {
             if ($buyer->wallet_balance < $totalPrice) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Saldo tidak mencukupi',
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Saldo tidak mencukupi'], 400);
             }
 
-            // Deduct from buyer's wallet
             $balanceBefore = $buyer->wallet_balance;
             $buyer->wallet_balance -= $totalPrice;
             $buyer->save();
 
-            // Create transaction
             WalletTransaction::create([
                 'uuid' => NumberGenerator::uuid(),
                 'user_id' => $buyer->id,
@@ -590,17 +701,16 @@ class OrderController extends Controller
                 'amount' => -$totalPrice,
                 'balance_before' => $balanceBefore,
                 'balance_after' => $buyer->wallet_balance,
-                'description' => 'Payment for order ' . $order->order_number,
+                'description' => 'Pembayaran pesanan ' . $order->order_number . ' (escrow)',
                 'related_order_id' => $order->id,
                 'status' => 'completed',
             ]);
         }
 
-        // Update order status
+        // Update order status — dana di escrow, penjual belum terima
         $newStatus = match ($order->shipping_type) {
-            ShippingType::GRATIS, ShippingType::PICKUP => OrderStatus::READY_PICKUP,
-            ShippingType::COD, ShippingType::ONLINE, ShippingType::ONSITE, ShippingType::HOME_SERVICE => OrderStatus::PROCESSING,
-            ShippingType::DELIVERY => OrderStatus::IN_DELIVERY,
+            ShippingType::PICKUP => OrderStatus::READY_PICKUP,
+            ShippingType::DELIVERY => OrderStatus::PROCESSING,
             default => OrderStatus::PROCESSING,
         };
 
@@ -614,75 +724,93 @@ class OrderController extends Controller
             'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => $newStatus->value,
-            'notes' => 'Payment completed',
+            'notes' => 'Pembayaran berhasil — dana ditahan di escrow',
             'actor_id' => $request->user()->id,
         ]);
-
-        // Add income to seller's wallet (after admin fee)
-        $seller = $order->seller;
-        $sellerBalanceBefore = $seller->wallet_balance;
-        $seller->wallet_balance += $order->net_income;
-        $seller->save();
-
-        WalletTransaction::create([
-            'uuid' => NumberGenerator::uuid(),
-            'user_id' => $seller->id,
-            'type' => 'income',
-            'amount' => $order->net_income,
-            'balance_before' => $sellerBalanceBefore,
-            'balance_after' => $seller->wallet_balance,
-            'description' => 'Income from order ' . $order->order_number,
-            'related_order_id' => $order->id,
-            'status' => 'completed',
-        ]);
-
-        // Record admin fee
-        if ($order->admin_fee_deducted > 0) {
-            WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $seller->id,
-                'type' => 'admin_fee',
-                'amount' => -$order->admin_fee_deducted,
-                'balance_before' => $sellerBalanceBefore + $order->net_income,
-                'balance_after' => $seller->wallet_balance,
-                'description' => 'Admin fee (5%) for order ' . $order->order_number,
-                'related_order_id' => $order->id,
-                'status' => 'completed',
-            ]);
-        }
 
         return response()->json([
             'success' => true,
             'message' => 'Pembayaran berhasil',
-            'data' => new OrderResource($order->fresh()),
+            'data' => new OrderResource($order->fresh()->load(['product.images', 'buyer', 'seller', 'history.actor', 'selectedShippingOption'])),
         ]);
     }
 
     /**
-     * Complete order.
+     * Complete order (Buyer confirms receipt).
+     * ESCROW RELEASE: Dana diteruskan ke saldo penjual, dipotong admin fee 5%.
+     * Hanya buyer yang boleh complete. Seller pakai deliver().
      */
     public function complete(string $id, Request $request): JsonResponse
     {
         $order = Order::where('uuid', $id)->firstOrFail();
-
-        // Check if seller or buyer
         $user = $request->user();
-        if ($order->seller_id !== $user->id && $order->buyer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses',
-            ], 403);
+
+        // Only buyer can complete
+        if ($order->buyer_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Hanya pembeli yang dapat mengkonfirmasi pesanan selesai'], 403);
         }
 
-        $order->markAsCompleted();
+        // Must be in a completable state (seller has delivered/confirmed)
+        $completableStatuses = [OrderStatus::PROCESSING, OrderStatus::IN_DELIVERY, OrderStatus::READY_PICKUP];
+        if (!in_array($order->status, $completableStatuses, true)) {
+            return response()->json(['success' => false, 'message' => 'Status pesanan tidak valid untuk konfirmasi'], 400);
+        }
+
+        // Mark as completed
+        $order->update([
+            'status' => OrderStatus::COMPLETED,
+            'completed_at' => now(),
+        ]);
+
+        OrderHistory::create([
+            'uuid' => NumberGenerator::uuid(),
+            'order_id' => $order->id,
+            'status' => OrderStatus::COMPLETED->value,
+            'notes' => 'Pembeli mengkonfirmasi pesanan selesai',
+            'actor_id' => $user->id,
+        ]);
 
         // Update product sold count
         $order->product->incrementSoldCount($order->quantity);
 
+        // ESCROW RELEASE: Transfer dana ke penjual (hanya untuk pembayaran digital, bukan COD)
+        if ($order->payment_status === PaymentStatus::PAID) {
+            $seller = $order->seller;
+            $sellerBalanceBefore = $seller->wallet_balance;
+            $seller->wallet_balance += $order->net_income;
+            $seller->save();
+
+            WalletTransaction::create([
+                'uuid' => NumberGenerator::uuid(),
+                'user_id' => $seller->id,
+                'type' => 'income',
+                'amount' => $order->net_income,
+                'balance_before' => $sellerBalanceBefore,
+                'balance_after' => $seller->wallet_balance,
+                'description' => 'Pencairan escrow pesanan ' . $order->order_number,
+                'related_order_id' => $order->id,
+                'status' => 'completed',
+            ]);
+
+            if ($order->admin_fee_deducted > 0) {
+                WalletTransaction::create([
+                    'uuid' => NumberGenerator::uuid(),
+                    'user_id' => $seller->id,
+                    'type' => 'admin_fee',
+                    'amount' => -$order->admin_fee_deducted,
+                    'balance_before' => $sellerBalanceBefore + $order->net_income,
+                    'balance_after' => $seller->wallet_balance,
+                    'description' => 'Biaya admin (5%) pesanan ' . $order->order_number,
+                    'related_order_id' => $order->id,
+                    'status' => 'completed',
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Pesanan selesai',
-            'data' => new OrderResource($order->fresh()),
+            'message' => 'Pesanan dikonfirmasi selesai',
+            'data' => new OrderResource($order->fresh()->load(['product.images', 'buyer', 'seller', 'history.actor', 'selectedShippingOption'])),
         ]);
     }
 
@@ -713,9 +841,6 @@ class OrderController extends Controller
         }
 
         $order->cancel($request->cancelReason, $user->id);
-
-        // Restore product stock
-        $order->product->increment('stock', $order->quantity);
 
         // Refund if already paid
         if ($order->payment_status === PaymentStatus::PAID) {

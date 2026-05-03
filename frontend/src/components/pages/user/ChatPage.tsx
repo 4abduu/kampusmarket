@@ -660,6 +660,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           attachedImage={attachedImage}
           fileInputRef={fileInputRef}
           messagesEndRef={messagesEndRef}
+          onNavigate={onNavigate}
           onBack={handleBackToList}
           onSend={handleSendMessage}
           onKeyPress={handleKeyPress}
@@ -698,6 +699,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         isSeller={isSeller}
         onNavigateToDashboard={() => onNavigate('my-products')}
         formatPrice={formatPrice}
+        formatPriceInput={formatPriceInput}
+        isSeller={isSeller}
+        onNavigateToDashboard={() => onNavigate('dashboard')}
       />
     </div>
   );
