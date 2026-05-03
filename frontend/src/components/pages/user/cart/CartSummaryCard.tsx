@@ -1,7 +1,10 @@
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/components/pages/user/cart/cart.utils";
+
+const MAX_CHECKOUT_ITEMS = 5;
 
 interface CartSummaryCardProps {
   selectedCount: number;
@@ -16,6 +19,8 @@ export default function CartSummaryCard({
   onCheckout,
   onContinueShopping,
 }: CartSummaryCardProps) {
+  const isOverLimit = selectedCount > MAX_CHECKOUT_ITEMS;
+
   return (
     <Card className="sticky top-20">
       <CardHeader>
@@ -40,10 +45,19 @@ export default function CartSummaryCard({
           <span className="text-primary-600">{formatPrice(subtotal)}</span>
         </div>
 
+        {isOverLimit && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Maksimal {MAX_CHECKOUT_ITEMS} barang per checkout. Kurangi pilihan barang untuk melanjutkan.
+            </p>
+          </div>
+        )}
+
         <Button
           className="w-full bg-primary-600 hover:bg-primary-700"
           size="lg"
-          disabled={selectedCount === 0}
+          disabled={selectedCount === 0 || isOverLimit}
           onClick={onCheckout}
         >
           Checkout ({selectedCount})

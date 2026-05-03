@@ -284,61 +284,88 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     }
 
     setIsSubmitting(true);
-    try {
-      let lastOrderId = "";
-      
-      // Loop through all items to create orders
-      for (const item of checkoutItems) {
-        const itemProduct = item.product;
-        const productDbId = itemProduct?.uuid || itemProduct?.id;
+    const successfulOrderIds: string[] = [];
+    const failedItems: { title: string; reason: string }[] = [];
 
-        if (!productDbId) continue;
-        
-        // Find shipping option for this specific product if possible, 
-        // otherwise use the general selectedShipping
-        const itemShippingOpts = (itemProduct as any).shippingOptions || (itemProduct as any).shipping_options || [];
-        let shippingOptionId: string | undefined;
-        
-        if (itemShippingOpts.length) {
-          const matched = itemShippingOpts.find((opt: any) => 
-            (opt.type || opt.id) === selectedShipping?.id
-          );
-          shippingOptionId = matched?.uuid || matched?.id;
-        }
+    // Loop through all items — each order is individually try-caught
+    // so one failure doesn't block the rest
+    for (const item of checkoutItems) {
+      const itemProduct = item.product;
+      const productDbId = itemProduct?.uuid || itemProduct?.id;
+      const productTitle = (itemProduct as any)?.title || (itemProduct as any)?.name || "Produk";
 
-        const orderPayload: any = {
-          productId: productDbId,
-          quantity: item.quantity,
-          negoPrice: (checkoutItems.length === 1 && negotiatedPrice) ? negotiatedPrice : undefined,
-          shippingType: selectedShipping?.id,
-          shippingNotes: "",
-          selectedAddressId: requiresAddress ? selectedAddressId : undefined,
-          serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
-          serviceNotes: isService ? serviceNotes : undefined,
-          paymentMethod: "midtrans",
-          notes: isService ? serviceRequirements : undefined,
-          selectedShippingOptionId: shippingOptionId,
-        };
+      if (!productDbId) continue;
 
-        console.log(`[CheckoutPage] Creating order for product ${productDbId}...`, orderPayload);
-        const order = await createOrder(orderPayload);
-        lastOrderId = order?.uuid || order?.id || "";
+      // Find shipping option for this specific product if possible,
+      // otherwise use the general selectedShipping
+      const itemShippingOpts = (itemProduct as any).shippingOptions || (itemProduct as any).shipping_options || [];
+      let shippingOptionId: string | undefined;
+
+      if (itemShippingOpts.length) {
+        const matched = itemShippingOpts.find((opt: any) =>
+          (opt.type || opt.id) === selectedShipping?.id
+        );
+        shippingOptionId = matched?.uuid || matched?.id;
       }
 
-      console.log('[CheckoutPage] All orders created successfully');
-      
-      // Navigate to success page
-      onNavigate(isService ? "booking-success" : "payment-success", lastOrderId);
+      const orderPayload: any = {
+        productId: productDbId,
+        quantity: item.quantity,
+        negoPrice: (checkoutItems.length === 1 && negotiatedPrice) ? negotiatedPrice : undefined,
+        shippingType: selectedShipping?.id,
+        shippingNotes: "",
+        selectedAddressId: requiresAddress ? selectedAddressId : undefined,
+        serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
+        serviceNotes: isService ? serviceNotes : undefined,
+        paymentMethod: "midtrans",
+        notes: isService ? serviceRequirements : undefined,
+        selectedShippingOptionId: shippingOptionId,
+      };
 
-    } catch (err: any) {
-      const backendMessage = err?.message;
-      const backendErrors = err?.errors ? Object.values(err.errors).flat().join(" | ") : "";
-      const msg = backendErrors || backendMessage || "Gagal membuat pesanan. Silakan coba lagi.";
-      console.error("[CheckoutPage] Order creation error:", err);
-      setValidationError(msg);
-    } finally {
-      setIsSubmitting(false);
+      try {
+        console.log(`[CheckoutPage] Creating order for product ${productDbId}...`, orderPayload);
+        const order = await createOrder(orderPayload);
+        const orderId = order?.uuid || order?.id || "";
+        if (orderId) successfulOrderIds.push(orderId);
+      } catch (err: any) {
+        const reason = err?.message || "Gagal membuat pesanan";
+        console.error(`[CheckoutPage] Order failed for "${productTitle}":`, reason);
+        failedItems.push({ title: productTitle, reason });
+      }
     }
+
+    // Decide what to do based on results
+    if (successfulOrderIds.length > 0) {
+      // At least some orders succeeded — navigate to success page
+      localStorage.setItem("recentCheckoutOrderIds", JSON.stringify(successfulOrderIds));
+
+      if (failedItems.length > 0) {
+        // Partial success — show warning about failed items
+        const failedNames = failedItems.map(f => `${f.title} (${f.reason})`).join(", ");
+        console.warn(`[CheckoutPage] Partial success. Failed: ${failedNames}`);
+        setValidationError(
+          `${successfulOrderIds.length} pesanan berhasil, tetapi ${failedItems.length} gagal: ${failedNames}`
+        );
+        // Still navigate after a short delay so user can see the message
+        setTimeout(() => {
+          const firstOrderId = successfulOrderIds[0] || "";
+          onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
+        }, 2500);
+      } else {
+        // All succeeded
+        console.log('[CheckoutPage] All orders created successfully:', successfulOrderIds);
+        const firstOrderId = successfulOrderIds[0] || "";
+        onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
+      }
+    } else {
+      // All failed
+      const reasons = failedItems.map(f => f.reason).filter((v, i, a) => a.indexOf(v) === i);
+      const msg = reasons.join(" | ") || "Gagal membuat pesanan. Silakan coba lagi.";
+      console.error("[CheckoutPage] All orders failed:", failedItems);
+      setValidationError(msg);
+    }
+
+    setIsSubmitting(false);
   };
 
   return (
