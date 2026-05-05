@@ -42,7 +42,7 @@ import ServicesPageSkeleton from "@/components/skeleton/ServicesPageSkeleton";
 import EmptyState from "@/components/shared/EmptyState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 function buildParams({
   page,
@@ -83,10 +83,10 @@ function buildParams({
 
   if (priceRange && priceRange.length === 2) {
     const [min, max] = priceRange;
-    if (typeof min === "number" && min > 0) {
+    if (typeof min === "number" && min >= 0) {
       params.price_min = min;
     }
-    if (typeof max === "number" && max < 20000000) {
+    if (typeof max === "number" && max > 0) {
       params.price_max = max;
     }
   }
@@ -164,6 +164,16 @@ export default function ServicesPage({
 
   // Fetch services from API
   useEffect(() => {
+    const abortController = new AbortController();
+    console.log("[ServicesPage] useEffect triggered - dependencies:", {
+      selectedCategory,
+      searchQuery,
+      selectedConditions: selectedConditions.length,
+      priceRange,
+      sortBy,
+      currentPage,
+    });
+
     const fetchServices = async () => {
       try {
         setLoading(true);
@@ -179,23 +189,67 @@ export default function ServicesPage({
           priceRange,
           sortBy,
         });
-        console.log("REQUEST PARAMS:", params);
+        console.log(
+          "[ServicesPage] REQUEST PARAMS:",
+          JSON.stringify(params, null, 2),
+        );
+        console.log("[ServicesPage] ITEMS_PER_PAGE constant:", ITEMS_PER_PAGE);
 
         const response = await getProducts(params);
-        const items = (response as any)?.data ?? (response as any) ?? [];
-        setServices(items);
-        if ((response as any)?.meta?.last_page) {
-          setTotalPages((response as any).meta.last_page);
+        console.log(
+          "[ServicesPage] API RESPONSE - data count:",
+          (response as any)?.data?.length,
+          "total:",
+          (response as any)?.meta?.total,
+          "per_page:",
+          (response as any)?.meta?.per_page,
+        );
+        console.log(
+          "[ServicesPage] Abort signal aborted?",
+          abortController.signal.aborted,
+        );
+
+        // Only update state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          const items = (response as any)?.data ?? (response as any) ?? [];
+          console.log(
+            "[ServicesPage] Setting services:",
+            items.length,
+            "items",
+          );
+          setServices(items);
+
+          // Calculate total pages with fallback
+          let pages = 1;
+          if ((response as any)?.meta?.last_page) {
+            pages = (response as any).meta.last_page;
+          } else if (
+            (response as any)?.meta?.total &&
+            (response as any)?.meta?.per_page
+          ) {
+            pages = Math.ceil(
+              (response as any).meta.total / (response as any).meta.per_page,
+            );
+          }
+          setTotalPages(pages);
         }
       } catch (err: any) {
-        console.error("[ServicesPage] Error fetching data:", err);
-        setError("Gagal memuat data");
+        // Don't log error if request was aborted
+        if (err.name !== "AbortError") {
+          console.error("[ServicesPage] Error fetching data:", err);
+          setError("Gagal memuat data");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchServices();
+
+    // Cleanup: abort previous fetch if component unmounts or dependencies change
+    return () => {
+      abortController.abort();
+    };
   }, [
     selectedCategory,
     searchQuery,
@@ -221,10 +275,6 @@ export default function ServicesPage({
       setCurrentPage(totalPages);
     }
   }, [totalPages]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, searchQuery, selectedConditions, priceRange, sortBy]);
 
   const filterSidebarProps = {
     selectedCategory,

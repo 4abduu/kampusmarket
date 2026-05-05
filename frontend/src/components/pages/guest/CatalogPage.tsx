@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,10 +108,10 @@ function buildParams({
 
   if (priceRange && priceRange.length === 2) {
     const [min, max] = priceRange;
-    if (typeof min === "number" && min > 0) {
+    if (typeof min === "number" && min >= 0) {
       params.price_min = min;
     }
-    if (typeof max === "number" && max < 20000000) {
+    if (typeof max === "number" && max > 0) {
       params.price_max = max;
     }
   }
@@ -150,16 +150,22 @@ export default function CatalogPage({
     () => initialCategory || null,
   );
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<number[]>([0, 5000000]);
-  const [tempPrice, setTempPrice] = useState<number[]>([0, 5000000]);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 20000000]);
+  const [tempPrice, setTempPrice] = useState<number[]>([0, 20000000]);
   const [sortBy, setSortBy] = useState("terbaru");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
+  const initialMountRef = useRef(true);
 
-  // Sync initialCategory from props
+  // Sync initialCategory from props (skip on initial mount to avoid double-trigger)
   useEffect(() => {
+    if (initialMountRef.current) {
+      initialMountRef.current = false;
+      return;
+    }
+    // Only sync on subsequent updates from parent
     if (initialCategory !== undefined) {
       setSelectedCategory(initialCategory || null);
       setCurrentPage(1);
@@ -168,6 +174,16 @@ export default function CatalogPage({
 
   // Fetch products (real API)
   useEffect(() => {
+    const abortController = new AbortController();
+    console.log("[CatalogPage] useEffect triggered - dependencies:", {
+      selectedCategory,
+      searchQuery,
+      selectedConditions: selectedConditions.length,
+      priceRange,
+      sortBy,
+      currentPage,
+    });
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -181,22 +197,61 @@ export default function CatalogPage({
           priceRange,
           sortBy,
         });
-        console.log("REQUEST PARAMS:", params);
+        console.log(
+          "[CatalogPage] REQUEST PARAMS:",
+          JSON.stringify(params, null, 2),
+        );
         const res = await getProducts(params);
-        const items = (res as any)?.data ?? (res as any) ?? [];
-        setProducts(items as Product[]);
-        if ((res as any)?.meta?.last_page) {
-          setTotalPages((res as any).meta.last_page);
+        console.log(
+          "[CatalogPage] API RESPONSE - data count:",
+          (res as any)?.data?.length,
+          "total:",
+          (res as any)?.meta?.total,
+          "per_page:",
+          (res as any)?.meta?.per_page,
+        );
+        console.log(
+          "[CatalogPage] Abort signal aborted?",
+          abortController.signal.aborted,
+        );
+
+        // Only update state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          const items = (res as any)?.data ?? (res as any) ?? [];
+          console.log("[CatalogPage] Setting products:", items.length, "items");
+          setProducts(items as Product[]);
+
+          // Calculate total pages with fallback
+          let pages = 1;
+          if ((res as any)?.meta?.last_page) {
+            pages = (res as any).meta.last_page;
+          } else if (
+            (res as any)?.meta?.total &&
+            (res as any)?.meta?.per_page
+          ) {
+            pages = Math.ceil(
+              (res as any).meta.total / (res as any).meta.per_page,
+            );
+          }
+          setTotalPages(pages);
         }
       } catch (err) {
-        console.error(err);
-        setError("Gagal memuat data");
+        // Don't log error if request was aborted
+        if (err instanceof Error && err.name !== "AbortError") {
+          console.error("[CatalogPage] Fetch error:", err);
+          setError("Gagal memuat data");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
+
+    // Cleanup: abort previous fetch if component unmounts or dependencies change
+    return () => {
+      abortController.abort();
+    };
   }, [
     selectedCategory,
     searchQuery,
@@ -204,7 +259,7 @@ export default function CatalogPage({
     priceRange,
     sortBy,
     currentPage,
-  ]);
+  ]); // Fetch products independently - does NOT depend on categories loading
 
   // Fetch categories from API (use same endpoint as LandingPage - "barang" type only)
   useEffect(() => {
@@ -259,14 +314,11 @@ export default function CatalogPage({
   // Filtering/sorting is applied in `filteredProducts` below (do not overwrite `products`).
 
   console.log("PRODUCTS STATE:", products);
+  console.log("SELECTED CATEGORY:", selectedCategory);
 
-  // FIX #1: Filter produk stok 0 dari catalog — jasa tidak punya stok, selalu tampil
-  const paginatedProducts = products.filter((p: any) => {
-    if (p.type === "jasa") return true;
-    return p.stock === undefined || p.stock > 0;
-  });
+  // Use products directly without filtering by stock to show all items
+  const paginatedProducts = products;
 
-  console.log("CATEGORY:", selectedCategory);
   console.log("ITEM COUNT:", products.length);
 
   useEffect(() => {
@@ -435,6 +487,22 @@ export default function CatalogPage({
                 </div>
               </div>
             </div>
+
+            {/* Results Count */}
+            {!loading && !error && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Menampilkan{" "}
+                {paginatedProducts.length === 0
+                  ? 0
+                  : (currentPage - 1) * ITEMS_PER_PAGE + 1}
+                -
+                {Math.min(
+                  currentPage * ITEMS_PER_PAGE,
+                  paginatedProducts.length,
+                )}{" "}
+                dari {paginatedProducts.length} barang
+              </p>
+            )}
 
             {/* Active Filters */}
             {(selectedCategory || selectedConditions.length > 0) && (

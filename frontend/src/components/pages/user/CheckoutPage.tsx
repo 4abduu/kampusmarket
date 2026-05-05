@@ -104,14 +104,18 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
           localStorage.removeItem("checkoutCartItems");
         }
         
-        // Use first item to set default shipping method
-        const firstProduct = resolvedItems[0].product;
-        const shippingOpts = (firstProduct as any).shippingOptions || (firstProduct as any).shipping_options || [];
-        const firstShippingOption = shippingOpts[0];
-        if (firstShippingOption) {
-          setShippingMethod(String(firstShippingOption.type || firstShippingOption.id || ""));
+        // Use intersected items to set default shipping method
+        const intersectedTypes = resolvedItems.reduce<string[]>((acc, item, index) => {
+          const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+          const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
+          if (index === 0) return itemTypes;
+          return acc.filter(type => itemTypes.includes(type));
+        }, []);
+
+        if (intersectedTypes.length > 0) {
+          setShippingMethod(intersectedTypes[0]);
         } else {
-          setShippingMethod(firstProduct.type === "jasa" ? "onsite" : "cod");
+          setShippingMethod("");
         }
 
       } catch (err) {
@@ -148,18 +152,41 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const priceType = product?.priceType || product?.price_type;
   const isVariablePricing = isService && (priceType === "starting" || priceType === "range");
   
-  // Get shipping options from product database (not hardcoded)
-  const shippingOpts = (product as any)?.shippingOptions || (product as any)?.shipping_options || [];
+  // Calculate intersected shipping types across all products
+  const intersectedShippingTypes = checkoutItems.reduce<string[]>((acc, item, index) => {
+    const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+    const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
+    if (index === 0) return itemTypes;
+    return acc.filter(type => itemTypes.includes(type));
+  }, []);
 
-  const normalizedShippingOpts = shippingOpts
-    .map((opt: any) => ({
-      key: String(opt.type || opt.id || ""),
-      optionId: String(opt.uuid || opt.id || ""),
-      label: String(opt.label || opt.name || "Metode"),
-      price: Number(opt.price || 0),
-      raw: opt,
-    }))
-    .filter((opt: any) => opt.key);
+  const hasShippingIntersection = checkoutItems.length === 0 || intersectedShippingTypes.length > 0;
+
+  const normalizedShippingOpts = intersectedShippingTypes.map(type => {
+    let label = "Metode";
+    let optionId = type;
+    let totalPrice = 0;
+    
+    for (const item of checkoutItems) {
+      const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+      const opt = itemShippingOpts.find((o: any) => String(o.type || o.id || "") === type);
+      if (opt) {
+        if (label === "Metode" && (opt.label || opt.name)) {
+          label = String(opt.label || opt.name);
+          optionId = String(opt.uuid || opt.id || type);
+        }
+        totalPrice += Number(opt.price || 0) * item.quantity;
+      }
+    }
+
+    return {
+      key: type,
+      optionId,
+      label,
+      price: totalPrice,
+      raw: null,
+    };
+  });
   
   const getIconForType = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -273,6 +300,13 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     if (requiresAddress && !selectedAddressId && addresses.length === 0) {
       console.log('[CheckoutPage] No address selected, showing dialog');
       setShowSaveAddressDialog(true);
+      return;
+    }
+
+    if (!hasShippingIntersection) {
+      const msg = "Tidak ada metode pengiriman yang tersedia untuk kombinasi produk ini. Silakan checkout secara terpisah.";
+      console.warn('[CheckoutPage] Validation error:', msg);
+      setValidationError(msg);
       return;
     }
 
@@ -423,8 +457,25 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         {!loading && !error && product && (
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              {/* Multiple Items Warning */}
-              {isMultipleItems && (
+              {/* Multiple Items Warning / Error */}
+              {isMultipleItems && !hasShippingIntersection && (
+                <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-5 w-5 text-red-600 shrink-0 mt-0.5">❌</div>
+                      <div className="text-sm">
+                        <p className="font-medium text-red-800 dark:text-red-200 mb-1">
+                          Metode Pengiriman Tidak Tersedia
+                        </p>
+                        <p className="text-red-700 dark:text-red-300">
+                          Tidak ada metode pengiriman yang didukung oleh semua produk dalam keranjang. Silakan checkout produk secara terpisah.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {isMultipleItems && hasShippingIntersection && (
                 <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -434,7 +485,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                           Cara Kirim & Pembayaran Sama untuk Semua Item
                         </p>
                         <p className="text-amber-700 dark:text-amber-300">
-                          Karena Anda membeli dari seller berbeda, metode pengiriman dan pembayaran akan diterapkan pada semua item dalam 1 order. Kalau ingin cara kirim beda per seller, silakan checkout satu per satu.
+                          Karena Anda membeli lebih dari satu item, metode pengiriman yang ditampilkan hanyalah opsi yang didukung oleh SEMUA produk. Harga ongkir adalah total dari semua produk.
                         </p>
                       </div>
                     </div>
@@ -464,7 +515,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                 />
               )}
 
-              {!isService && shippingMethod === "delivery" && (
+              {requiresAddress && (
                 <AddressSection
                   addresses={addresses}
                   selectedAddressId={selectedAddressId}
