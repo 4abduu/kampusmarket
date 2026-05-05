@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Heart, Sparkles } from "lucide-react";
-import { centToRupiah } from "@/components/pages/user/favorites/favorites.helpers";
+import { formatIDR } from "@/components/pages/user/favorites/favorites.helpers";
 import type { FavoriteStats } from "@/components/pages/user/favorites/favorites.types";
 
 interface FavoritesHeaderProps {
@@ -10,8 +10,8 @@ interface FavoritesHeaderProps {
 export default function FavoritesHeader({ stats }: FavoritesHeaderProps) {
   const statCards = [
     { label: "Disimpan", value: String(stats.totalItems), cls: "text-slate-900 dark:text-slate-50" },
-    { label: "Nilai total", value: centToRupiah(stats.totalValue), cls: "text-slate-900 dark:text-slate-50" },
-    { label: "Potensi hemat", value: centToRupiah(stats.totalSavings), cls: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Nilai total", value: formatIDR(stats.totalValue), cls: "text-slate-900 dark:text-slate-50" },
+    { label: "Potensi hemat", value: formatIDR(stats.totalSavings), cls: "text-emerald-600 dark:text-emerald-400" },
     { label: "Rating rata²", value: stats.avgRating.toFixed(1), cls: "text-slate-900 dark:text-slate-50" },
   ];
 

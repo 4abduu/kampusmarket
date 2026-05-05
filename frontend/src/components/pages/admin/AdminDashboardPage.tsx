@@ -32,6 +32,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     setActiveTab,
     successMessage,
     stats,
+    revenueChartData,
+    categoryChartData,
     orders,
     users,
     withdrawals,
@@ -134,12 +136,18 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     showUnbanDialog,
     setShowUnbanDialog,
     userToAction,
+    banReason,
+    setBanReason,
+    unbanReason,
+    setUnbanReason,
     showProductDetail,
     setShowProductDetail,
     selectedProduct,
     showDeleteProductDialog,
     setShowDeleteProductDialog,
     productToDelete,
+    productDeleteReason,
+    setProductDeleteReason,
     showWarningDialog,
     setShowWarningDialog,
     showBanReportDialog,
@@ -166,6 +174,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     showDeleteCategoryDialog,
     setShowDeleteCategoryDialog,
     categoryToDelete,
+    categories,
     showCancelApproveDialog,
     setShowCancelApproveDialog,
     showCancelRejectDialog,
@@ -221,6 +230,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     handleSaveCategory,
     handleDeleteCategory,
     confirmDeleteCategory,
+    handleToggleCategoryActive,
     handleApproveCancelRequest,
     handleRejectCancelRequest,
     confirmApproveCancelRequest,
@@ -271,10 +281,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
             <TabsTrigger value="categories">Kategori</TabsTrigger>
             <TabsTrigger value="faculties">Fakultas</TabsTrigger>
             <TabsTrigger value="reports">Laporan</TabsTrigger>
-            <TabsTrigger value="cancel-requests">
-              Pembatalan
-              {stats.pendingCancelRequests > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5">{stats.pendingCancelRequests}</Badge>}
-            </TabsTrigger>
+            <TabsTrigger value="cancel-requests">Pembatalan</TabsTrigger>
             <TabsTrigger value="orders">Transaksi</TabsTrigger>
             <TabsTrigger value="finance">Keuangan</TabsTrigger>
             <TabsTrigger value="addresses">Alamat</TabsTrigger>
@@ -283,6 +290,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
           <TabsContent value="overview" className="space-y-6">
             <AdminOverviewTab
               stats={stats}
+              revenueChartData={revenueChartData}
+              categoryChartData={categoryChartData}
               formatPrice={formatPrice}
               orders={orders}
               onOpenTab={setActiveTab}
@@ -351,6 +360,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               handleAddCategory={handleAddCategory}
               handleEditCategory={handleEditCategory}
               handleDeleteCategory={handleDeleteCategory}
+              handleToggleCategoryActive={handleToggleCategoryActive}
             />
           </TabsContent>
           <TabsContent value="faculties">
@@ -479,6 +489,10 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         showUnbanDialog={showUnbanDialog}
         setShowUnbanDialog={setShowUnbanDialog}
         userToAction={userToAction}
+        banReason={banReason}
+        setBanReason={setBanReason}
+        unbanReason={unbanReason}
+        setUnbanReason={setUnbanReason}
         confirmBanUser={confirmBanUser}
         confirmUnbanUser={confirmUnbanUser}
         showProductDetail={showProductDetail}
@@ -487,6 +501,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         showDeleteProductDialog={showDeleteProductDialog}
         setShowDeleteProductDialog={setShowDeleteProductDialog}
         productToDelete={productToDelete}
+        productDeleteReason={productDeleteReason}
+        setProductDeleteReason={setProductDeleteReason}
         confirmDeleteProduct={confirmDeleteProduct}
         showWarningDialog={showWarningDialog}
         setShowWarningDialog={setShowWarningDialog}
@@ -518,6 +534,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         categoryForm={categoryForm}
         setCategoryForm={setCategoryForm}
         handleSaveCategory={handleSaveCategory}
+        categories={categories}
         showDeleteCategoryDialog={showDeleteCategoryDialog}
         setShowDeleteCategoryDialog={setShowDeleteCategoryDialog}
         categoryToDelete={categoryToDelete}

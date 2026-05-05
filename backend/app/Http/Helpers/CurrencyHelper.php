@@ -14,34 +14,32 @@ namespace App\Http\Helpers;
 class CurrencyHelper
 {
     /**
-     * Convert Rupiah to cent (database value)
-     * Contoh: 100.000 Rupiah → 10.000.000 cent
+     * Convert value to database format (direct IDR)
      */
-    public static function toCent(int $rupiah): int
+    public static function toCent(int $idr): int
     {
-        return $rupiah * 100;
+        return $idr;
     }
 
     /**
-     * Convert cent (database value) to Rupiah
-     * Contoh: 10.000.000 cent → 100.000 Rupiah
+     * Convert value from database format (direct IDR)
      */
     public static function toRupiah(int $idr): int
     {
-        return (int) ($idr / 100);
+        return $idr;
     }
 
     /**
      * Format ke string Rupiah
      * Contoh: 100000 → "Rp 100.000"
      */
-    public static function format(int $rupiah): string
+    public static function format(int $idr): string
     {
-        return 'Rp ' . number_format($rupiah, 0, ',', '.');
+        return 'Rp ' . number_format($idr, 0, ',', '.');
     }
 
     /**
-     * Format dari database (tidak ada konversi)
+     * Format dari database (IDR langsung)
      * Contoh: 100000 IDR → "Rp 100.000"
      */
     public static function formatFromCent(int $idr): string
@@ -52,24 +50,24 @@ class CurrencyHelper
     /**
      * Hitung biaya admin (5%)
      */
-    public static function calculateAdminFee(int $priceInCent): int
+    public static function calculateAdminFee(int $price): int
     {
-        return (int) round($priceInCent * 0.05);
+        return (int) round($price * 0.05);
     }
 
     /**
      * Hitung pendapatan bersih seller (harga - 5% admin fee)
      */
-    public static function calculateNetIncome(int $priceInCent): int
+    public static function calculateNetIncome(int $price): int
     {
-        return $priceInCent - self::calculateAdminFee($priceInCent);
+        return $price - self::calculateAdminFee($price);
     }
 
     /**
      * Hitung total harga untuk buyer (harga + ongkir)
      */
-    public static function calculateTotalForBuyer(int $priceInCent, int $shippingFeeInCent = 0): int
+    public static function calculateTotalForBuyer(int $price, int $shippingFee = 0): int
     {
-        return $priceInCent + $shippingFeeInCent;
+        return $price + $shippingFee;
     }
 }

@@ -35,7 +35,7 @@ export interface Category {
 }
 
 export interface Product {
-  id: string;
+  id: number;
   uuid: string;
   seller_id: number;
   category_id: number | null;

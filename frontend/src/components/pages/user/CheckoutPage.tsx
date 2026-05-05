@@ -106,7 +106,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         
         // Use intersected items to set default shipping method
         const intersectedTypes = resolvedItems.reduce<string[]>((acc, item, index) => {
-          const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+          const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
           const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
           if (index === 0) return itemTypes;
           return acc.filter(type => itemTypes.includes(type));
@@ -154,7 +154,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   
   // Calculate intersected shipping types across all products
   const intersectedShippingTypes = checkoutItems.reduce<string[]>((acc, item, index) => {
-    const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+    const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
     const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
     if (index === 0) return itemTypes;
     return acc.filter(type => itemTypes.includes(type));
@@ -168,7 +168,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     let totalPrice = 0;
     
     for (const item of checkoutItems) {
-      const itemShippingOpts = item.product?.shippingOptions || item.product?.shipping_options || [];
+      const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
       const opt = itemShippingOpts.find((o: any) => String(o.type || o.id || "") === type);
       if (opt) {
         if (label === "Metode" && (opt.label || opt.name)) {

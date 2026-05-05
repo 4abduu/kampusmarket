@@ -126,6 +126,6 @@ class Message extends Model
      */
     public function getOfferPriceInRupiah(): ?float
     {
-        return $this->offer_price ? $this->offer_price / 100 : null;
+        return $this->offer_price ? $this->offer_price : null;
     }
 }

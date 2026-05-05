@@ -176,7 +176,7 @@ class CancelRequestController extends Controller
         }
 
         $refundAmount = $request->refundAmount 
-            ? $request->refundAmount * 100 
+            ? $request->refundAmount 
             : $cancelRequest->order->total_price;
 
         $cancelRequest->approve($refundAmount, $request->adminNotes);

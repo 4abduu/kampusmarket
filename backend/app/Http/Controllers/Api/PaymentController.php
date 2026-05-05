@@ -43,12 +43,12 @@ class PaymentController extends Controller
         $payload = [
             'transaction_details' => [
                 'order_id' => $payment->uuid,
-                'gross_amount' => (int) ($payment->gross_amount / 100),
+                'gross_amount' => (int) $payment->gross_amount,
             ],
             'item_details' => [
                 [
                     'id' => $order->product_id,
-                    'price' => (int) ($order->final_price / 100),
+                    'price' => (int) $order->final_price,
                     'quantity' => $order->quantity,
                     'name' => $order->product_title,
                 ],

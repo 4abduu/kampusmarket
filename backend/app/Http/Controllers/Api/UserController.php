@@ -200,7 +200,7 @@ class UserController extends Controller
                 'totalProducts' => $user->products()->count(),
                 'totalSales' => $user->ordersAsSeller()->where('status', 'completed')->count(),
                 'totalPurchases' => $user->ordersAsBuyer()->where('status', 'completed')->count(),
-                'walletBalance' => (int) ($user->wallet_balance / 100),
+                'walletBalance' => (int) $user->wallet_balance,
                 'rating' => (float) $user->rating,
                 'reviewCount' => $user->review_count,
             ],

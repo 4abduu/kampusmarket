@@ -155,7 +155,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($siti, $catElektronik,
             'Kalkulator Scientific Casio FX-991EX',
             'Kalkulator scientific Casio FX-991EX kondisi sangat bagus. Masih ada dus dan buku manual. Cocok untuk mahasiswa teknik dan sains.',
-            18000000, 25000000, 'bekas', true, 4.8, 7, 7,
+            180000, 250000, 'bekas', true, 4.8, 7, 7,
             'https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=400',
             [
                 ['type' => 'cod',      'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -167,7 +167,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($budi, $catElektronik,
             'Laptop Asus VivoBook 14 Intel Core i5',
             'Laptop Asus VivoBook 14 Core i5-1135G7, RAM 8GB, SSD 512GB. Kondisi mulus. Baterai tahan 5-6 jam. Dijual karena upgrade.',
-            450000000, 700000000, 'bekas', true, 4.9, 3, 3,
+            4500000, 7000000, 'bekas', true, 4.9, 3, 3,
             'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
             [
                 ['type' => 'cod',    'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -178,7 +178,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($dewi, $catBuku,
             'Buku Kalkulus Purcell Edisi 9',
             'Buku Kalkulus Purcell edisi 9 jilid 1 dan 2. Kondisi baik, ada beberapa stabilo. Lengkap dengan soal-soal latihan.',
-            8500000, 15000000, 'bekas', true, 4.6, 11, 11,
+            85000, 150000, 'bekas', true, 4.6, 11, 11,
             'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400',
             [
                 ['type' => 'cod',      'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -190,7 +190,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($ahmad, $catFurniture,
             'Meja Belajar Portable Lipat Kayu',
             'Meja belajar portable lipat dari kayu. Ringan dan mudah dibawa. Cocok untuk belajar di kos. Ukuran 60x40cm.',
-            12000000, null, 'bekas', false, 4.5, 4, 4,
+            120000, null, 'bekas', false, 4.5, 4, 4,
             'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=400',
             [
                 ['type' => 'cod',      'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -201,7 +201,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($siti, $catFashion,
             'Jaket Almamater Universitas Brawijaya',
             'Jaket almamater UB ukuran L. Kondisi sangat bagus, hanya dipakai beberapa kali untuk acara resmi.',
-            15000000, 25000000, 'bekas', true, 4.9, 18, 18,
+            150000, 250000, 'bekas', true, 4.9, 18, 18,
             'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400',
             [
                 ['type' => 'cod',    'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -212,7 +212,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($budi, $catElektronik,
             'Headphone Sony WH-1000XM4',
             'Headphone Sony WH-1000XM4 noise cancelling. Kondisi 95% mulus. Suara jernih, baterai masih kuat. Lengkap dengan case dan kabel.',
-            180000000, 350000000, 'bekas', true, 4.7, 6, 6,
+            1800000, 3500000, 'bekas', true, 4.7, 6, 6,
             'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
             [
                 ['type' => 'cod',    'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -223,7 +223,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($dewi, $catBuku,
             'Paket Buku Akuntansi Semester 1-4',
             'Dijual paket lengkap buku akuntansi untuk semester 1 sampai 4. Total 8 buku. Kondisi baik semua.',
-            32000000, 60000000, 'bekas', true, 4.4, 9, 9,
+            320000, 600000, 'bekas', true, 4.4, 9, 9,
             'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400',
             [
                 ['type' => 'cod',      'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -234,7 +234,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($reza, $catElektronik,
             'Kamera Mirrorless Sony Alpha A6000',
             'Kamera Sony A6000 body only kondisi mulus. Shutter count masih rendah sekitar 8000. Cocok untuk photography pemula.',
-            280000000, 500000000, 'bekas', true, 4.8, 5, 5,
+            2800000, 5000000, 'bekas', true, 4.8, 5, 5,
             'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400',
             [
                 ['type' => 'cod',    'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -245,7 +245,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($ahmad, $catOlahraga,
             'Sepatu Futsal Nike Tiempo Lunar',
             'Sepatu futsal Nike Tiempo Lunar ukuran 42. Kondisi 80%, sol masih bagus.',
-            18000000, 40000000, 'bekas', true, 4.3, 4, 4,
+            180000, 400000, 'bekas', true, 4.3, 4, 4,
             'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
             [
                 ['type' => 'cod',    'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -256,7 +256,7 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($siti, $catElektronik,
             'Mouse Wireless Logitech MX Master 3',
             'Mouse Logitech MX Master 3 kondisi sangat bagus. Beli baru 6 bulan lalu. Scrolling ultra smooth.',
-            55000000, 90000000, 'bekas', false, 4.9, 8, 8,
+            550000, 900000, 'bekas', false, 4.9, 8, 8,
             'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400',
             [
                 ['type' => 'cod',      'label' => 'COD - Ketemuan Kampus', 'price' => 0],
@@ -269,12 +269,12 @@ class DatabaseSeeder extends Seeder
         $this->createBarang($seller, $catElektronik,
             'Laptop Gaming ROG',
             'Laptop gaming bekas 1 tahun pemakaian, kondisi seperti baru. Cocok untuk gaming dan editing video.',
-            1200000000, 1500000000, 'bekas', true, 0, 0, 0,
+            12000000, 15000000, 'bekas', true, 0, 0, 0,
             'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500',
             [
                 ['type' => 'cod',      'label' => 'COD',          'price' => 0],
                 ['type' => 'pickup',   'label' => 'Ambil Sendiri', 'price' => 0],
-                ['type' => 'delivery', 'label' => 'Antar Manual',  'price' => 500000, 'price_max' => 1000000],
+                ['type' => 'delivery', 'label' => 'Antar Manual',  'price' => 5000, 'price_max' => 10000],
             ],
             weight: 2500
         );
@@ -283,22 +283,22 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($reza, $catFoto,
             'Jasa Foto Wisuda & Portrait',
             'Jasa fotografi wisuda dan portrait profesional. Pengalaman 3 tahun. Hasil edit natural dan elegan.',
-            15000000, 15000000, 50000000, 'range', 2, 4, 'jam', true, 4.9, 34, 34,
+            150000, 150000, 500000, 'range', 2, 4, 'jam', true, 4.9, 34, 34,
             'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400',
             [
                 ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 5000000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 50000],
             ]
         );
 
         $this->createJasa($ahmad, $catLes,
             'Les Privat Matematika & Fisika',
             'Les privat matematika dan fisika untuk SMA dan mahasiswa tingkat 1-2. Sabar dan mudah dipahami.',
-            5000000, 5000000, 8000000, 'range', 1, 2, 'jam', true, 4.8, 21, 21,
+            50000, 50000, 80000, 'range', 1, 2, 'jam', true, 4.8, 21, 21,
             'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
             [
                 ['type' => 'online',       'label' => 'Online',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 1500000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 15000],
                 ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
             ]
         );
@@ -306,7 +306,7 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($budi, $catDesain,
             'Jasa Desain Logo & Poster',
             'Jasa desain logo profesional, poster, banner. Menggunakan Figma dan Adobe Illustrator. Revisi sampai puas.',
-            7500000, 7500000, 35000000, 'range', 1, 3, 'hari', true, 4.7, 28, 28,
+            75000, 75000, 350000, 'range', 1, 3, 'hari', true, 4.7, 28, 28,
             'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400',
             [
                 ['type' => 'online', 'label' => 'Online', 'price' => 0],
@@ -316,18 +316,18 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($dewi, $catTeknisi,
             'Servis Laptop & PC',
             'Terima servis laptop dan PC semua merk. Ganti thermal paste, bersihkan fan, install ulang Windows. Garansi 1 bulan.',
-            5000000, 5000000, 25000000, 'range', 1, 3, 'hari', false, 4.6, 42, 42,
+            50000, 50000, 250000, 'range', 1, 3, 'hari', false, 4.6, 42, 42,
             'https://images.unsplash.com/photo-1588872657578-7efd81e90960?w=400',
             [
                 ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 2000000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 20000],
             ]
         );
 
         $this->createJasa($siti, $catDesain,
             'Jasa Edit Video & Reels',
             'Jasa edit video untuk konten sosial media, YouTube, dokumentasi acara. Hasil cinematic dan profesional.',
-            10000000, 10000000, 50000000, 'range', 1, 5, 'hari', true, 4.8, 19, 19,
+            100000, 100000, 500000, 'range', 1, 5, 'hari', true, 4.8, 19, 19,
             'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400',
             [
                 ['type' => 'online', 'label' => 'Online', 'price' => 0],
@@ -338,29 +338,29 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($reza, $catLes,
             'Tutor Bahasa Inggris & TOEFL',
             'Tutor bahasa Inggris dengan fokus conversational dan persiapan TOEFL. Berpengalaman mengajar 4 tahun.',
-            6000000, 6000000, 10000000, 'range', 1, 2, 'jam', true, 4.7, 15, 15,
+            60000, 60000, 100000, 'range', 1, 2, 'jam', true, 4.7, 15, 15,
             'https://images.unsplash.com/photo-1427504494785-cdfa6b007da0?w=400',
             [
                 ['type' => 'online',       'label' => 'Online',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 2000000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 20000],
             ]
         );
 
         $this->createJasa($budi, $catFoto,
             'Jasa Fotografi Event & Gathering',
             'Jasa fotografi untuk event, gathering, acara kampus. Paket mulai dari foto candid hingga full editing.',
-            12000000, 12000000, 60000000, 'range', 3, 8, 'jam', true, 4.9, 28, 28,
+            120000, 120000, 600000, 'range', 3, 8, 'jam', true, 4.9, 28, 28,
             'https://images.unsplash.com/photo-1505045612881-8c8e548158f1?w=400',
             [
                 ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 3000000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 30000],
             ]
         );
 
         $this->createJasa($ahmad, $catDesain,
             'Jasa Desain Social Media & Content Creator',
             'Membuat desain carousel, template, dan konten visual untuk Instagram, TikTok, dan media sosial lainnya.',
-            8000000, 8000000, 40000000, 'range', 1, 2, 'hari', true, 4.8, 22, 22,
+            80000, 80000, 400000, 'range', 1, 2, 'hari', true, 4.8, 22, 22,
             'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
             [
                 ['type' => 'online', 'label' => 'Online', 'price' => 0],
@@ -370,7 +370,7 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($dewi, $catTeknisi,
             'Jasa Pembuatan Website & Toko Online',
             'Membuat website profesional, landing page, atau toko online dengan teknologi terkini. Konsultasi gratis.',
-            20000000, 20000000, 100000000, 'range', 5, 14, 'hari', true, 4.9, 31, 31,
+            200000, 200000, 1000000, 'range', 5, 14, 'hari', true, 4.9, 31, 31,
             'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
             [
                 ['type' => 'online', 'label' => 'Online', 'price' => 0],
@@ -381,11 +381,11 @@ class DatabaseSeeder extends Seeder
         $this->createJasa($seller, $catLes,
             'Les Privat Matematika',
             'Les privat Matematika untuk SMA level expert. Berpengalaman mengajar 5 tahun.',
-            1000000, null, null, 'fixed', 1, 2, 'jam', true, 0, 0, 0,
+            10000, null, null, 'fixed', 1, 2, 'jam', true, 0, 0, 0,
             'https://images.unsplash.com/photo-1427504494785-cdfa6b007da0?w=500',
             [
                 ['type' => 'online',       'label' => 'Online',       'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 200000],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 2000],
             ]
         );
 

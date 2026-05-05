@@ -26,7 +26,7 @@ class AdminFacultyController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Faculty::managed();
+            $query = Faculty::managed()->withCount('users');
 
             // Filter by active status
             if ($request->has('is_active')) {

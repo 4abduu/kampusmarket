@@ -185,15 +185,15 @@ export const adminCategoriesApi = {
     type: "barang" | "jasa";
     sort_order?: number;
     is_active?: boolean;
-  }) {
-    return request(`${API_BASE_URL}/admin/categories`, {
+  }): Promise<any> {
+    return request<any>(`${API_BASE_URL}/admin/categories`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
-  async getCategory(id: string) {
-    return request(`${API_BASE_URL}/admin/categories/${id}`, {
+  async getCategory(id: string): Promise<any> {
+    return request<any>(`${API_BASE_URL}/admin/categories/${id}`, {
       method: "GET",
     });
   },
@@ -206,8 +206,8 @@ export const adminCategoriesApi = {
       sort_order?: number;
       is_active?: boolean;
     }
-  ) {
-    return request(`${API_BASE_URL}/admin/categories/${id}`, {
+  ): Promise<any> {
+    return request<any>(`${API_BASE_URL}/admin/categories/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -383,6 +383,141 @@ export const adminUsersApi = {
   async getUserStats() {
     return request(`${API_BASE_URL}/admin/users/stats`, {
       method: "GET",
+    });
+  },
+};
+
+// ============================================================
+// ADMIN REPORTS
+// ============================================================
+export const adminReportsApi = {
+  async getReports(params?: {
+    status?: string;
+    search?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+    per_page?: number;
+    page?: number;
+  }): Promise<PaginatedResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/reports${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<PaginatedResponse<any>>(url);
+  },
+
+  async reviewReport(id: string) {
+    return request(`${API_BASE_URL}/admin/reports/${id}/review`, {
+      method: "PUT",
+    });
+  },
+
+  async resolveReport(id: string) {
+    return request(`${API_BASE_URL}/admin/reports/${id}/resolve`, {
+      method: "PUT",
+    });
+  },
+
+  async dismissReport(id: string) {
+    return request(`${API_BASE_URL}/admin/reports/${id}/dismiss`, {
+      method: "PUT",
+    });
+  },
+};
+
+// ============================================================
+// ADMIN CANCEL REQUESTS
+// ============================================================
+export const adminCancelRequestsApi = {
+  async getCancelRequests(params?: {
+    status?: string;
+    search?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+    per_page?: number;
+    page?: number;
+  }): Promise<PaginatedResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/cancel-requests${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<PaginatedResponse<any>>(url);
+  },
+
+  async approveCancelRequest(id: string) {
+    return request(`${API_BASE_URL}/admin/cancel-requests/${id}/approve`, {
+      method: "PUT",
+    });
+  },
+
+  async rejectCancelRequest(id: string) {
+    return request(`${API_BASE_URL}/admin/cancel-requests/${id}/reject`, {
+      method: "PUT",
+    });
+  },
+};
+
+// ============================================================
+// ADMIN WITHDRAWALS
+// ============================================================
+export const adminWithdrawalsApi = {
+  async getWithdrawals(params?: {
+    status?: string;
+    search?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+    per_page?: number;
+    page?: number;
+  }): Promise<PaginatedResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/withdrawals${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<PaginatedResponse<any>>(url);
+  },
+
+  async approveWithdrawal(id: string) {
+    return request(`${API_BASE_URL}/admin/withdrawals/${id}/approve`, {
+      method: "PUT",
+    });
+  },
+
+  async processWithdrawal(id: string) {
+    return request(`${API_BASE_URL}/admin/withdrawals/${id}/process`, {
+      method: "PUT",
+    });
+  },
+
+  async rejectWithdrawal(id: string) {
+    return request(`${API_BASE_URL}/admin/withdrawals/${id}/reject`, {
+      method: "PUT",
+    });
+  },
+
+  async failWithdrawal(id: string) {
+    return request(`${API_BASE_URL}/admin/withdrawals/${id}/fail`, {
+      method: "PUT",
+    });
+  },
+
+  async completeWithdrawal(id: string) {
+    return request(`${API_BASE_URL}/admin/withdrawals/${id}/complete`, {
+      method: "PUT",
     });
   },
 };

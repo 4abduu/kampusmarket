@@ -161,10 +161,12 @@ function RoleProtectedRoute({
 
 function PublicRoute({
   isLoggedIn,
+  userRole,
   element,
   allowLoggedIn = false,
 }: {
   isLoggedIn: boolean;
+  userRole: "user" | "admin" | null;
   element: React.ReactElement;
   allowLoggedIn?: boolean;
 }): React.ReactElement {
@@ -197,6 +199,11 @@ function PublicRoute({
       previousPath.startsWith("/edit-product")
     ) {
       previousPath = "/";
+    }
+
+    // Jika admin login, arahkan ke /admin bukannya ke beranda (/)
+    if (userRole === "admin" && previousPath === "/") {
+      previousPath = "/admin";
     }
 
     return <Navigate to={previousPath} replace />;
@@ -269,6 +276,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
               element={
                 <LoginPage
                   onNavigate={onNavigate}
@@ -284,6 +292,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
               element={
                 <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />
               }
@@ -295,6 +304,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
               element={<ForgotPasswordPage onNavigate={onNavigate} />}
             />
           }
@@ -304,6 +314,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
               element={
                 <FacultySelectionPage
                   onLogin={onLogin}
@@ -332,6 +343,7 @@ export default function AppRoutes({
           element={
             <PublicRoute
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
               element={
                 <EmailVerificationPage
                   onNavigate={onNavigate}
@@ -663,6 +675,17 @@ export default function AppRoutes({
         {/* ── ADMIN ── */}
         <Route
           path="/admin"
+          element={
+            <RoleProtectedRoute
+              isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
+              isAdmin={userRole === "admin"}
+              element={<AdminDashboardPage onNavigate={onNavigate} />}
+            />
+          }
+        />
+        <Route
+          path="/admin/:section"
           element={
             <RoleProtectedRoute
               isLoggedIn={isLoggedIn}

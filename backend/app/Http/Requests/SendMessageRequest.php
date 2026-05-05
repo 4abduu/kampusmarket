@@ -64,7 +64,7 @@ class SendMessageRequest extends FormRequest
         $payload = [];
 
         if ($this->has('offerPrice') && $this->offerPrice !== null && $this->offerPrice !== '') {
-            $payload['offer_price'] = $this->offerPrice * 100; // Convert to cent
+            $payload['offer_price'] = $this->offerPrice;
         }
 
         if ($this->has('imageUrls') && is_array($this->imageUrls)) {

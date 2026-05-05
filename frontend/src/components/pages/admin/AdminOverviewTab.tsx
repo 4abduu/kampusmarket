@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Package, ShoppingCart, DollarSign, AlertTriangle, Wallet, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight, Clock, GraduationCap } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign, AlertTriangle, Wallet, PieChartIcon as PieChartLucide, Activity, ArrowUpRight, ArrowDownRight, Clock, GraduationCap } from "lucide-react";
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface AdminOverviewTabProps {
   stats: {
@@ -12,12 +13,24 @@ interface AdminOverviewTabProps {
     pendingWithdrawals: number;
     totalFaculties: number;
   };
+  revenueChartData?: Array<{ date: string; transactions: number; revenue: number }>;
+  categoryChartData?: Array<{ name: string; value: number; fill: string }>;
   orders: Array<{ status: string }>;
   formatPrice: (price: number) => string;
   onOpenTab: (tab: string) => void;
 }
 
-export default function AdminOverviewTab({ stats, orders, formatPrice, onOpenTab }: AdminOverviewTabProps) {
+export default function AdminOverviewTab({ 
+  stats, 
+  revenueChartData,
+  categoryChartData,
+  orders, 
+  formatPrice, 
+  onOpenTab 
+}: AdminOverviewTabProps) {
+  // Fallback to empty data if not provided
+  const transactionTrendData = revenueChartData || [];
+  const categoryDistributionData = categoryChartData || [];
   return (
     <>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -44,12 +57,34 @@ export default function AdminOverviewTab({ stats, orders, formatPrice, onOpenTab
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5" />Tren Transaksi</CardTitle></CardHeader>
-          <CardContent><div className="h-64 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-lg"><div className="text-center"><BarChart3 className="h-16 w-16 text-muted-foreground/30 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Grafik Tren Transaksi</p><p className="text-xs text-muted-foreground">Line Chart - 30 hari terakhir</p></div></div></CardContent>
+          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5" />Tren Transaksi</CardTitle><p className="text-xs text-muted-foreground mt-1">15 hari terakhir - Jumlah transaksi dan pendapatan</p></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={transactionTrendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                <XAxis dataKey="date" stroke="currentColor" opacity={0.5} />
+                <YAxis stroke="currentColor" opacity={0.5} />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }} />
+                <Legend />
+                <Line type="monotone" dataKey="transactions" stroke="#3b82f6" strokeWidth={2} name="Transaksi" dot={{ fill: "#3b82f6", r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><PieChart className="h-5 w-5" />Distribusi Kategori</CardTitle></CardHeader>
-          <CardContent><div className="h-64 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-lg"><div className="text-center"><PieChart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Pie Chart Kategori</p><p className="text-xs text-muted-foreground">Elektronik, Buku, Fashion, dll</p></div></div></CardContent>
+          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><PieChartLucide className="h-5 w-5" />Distribusi Kategori</CardTitle><p className="text-xs text-muted-foreground mt-1">Produk aktif berdasarkan kategori</p></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie data={categoryDistributionData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => value ? `${name}: ${value}` : name} outerRadius={80} fill="#8884d8" dataKey="value">
+                  {categoryDistributionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: any) => value && typeof value === 'number' ? value.toLocaleString() : value} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
         </Card>
       </div>
 

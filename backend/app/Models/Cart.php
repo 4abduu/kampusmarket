@@ -38,18 +38,18 @@ class Cart extends Model
     }
 
     /**
-     * Get subtotal (price * quantity) in cent.
+     * Get subtotal (price * quantity) in direct IDR format.
      */
-    public function getSubtotalInCent(): int
+    public function getSubtotal(): int
     {
         return $this->product->price * $this->quantity;
     }
 
     /**
-     * Get subtotal in Rupiah.
+     * Get subtotal in Rupiah (same as getSubtotal).
      */
-    public function getSubtotalInRupiah(): float
+    public function getSubtotalInRupiah(): int
     {
-        return $this->getSubtotalInCent() / 100;
+        return $this->getSubtotal();
     }
 }

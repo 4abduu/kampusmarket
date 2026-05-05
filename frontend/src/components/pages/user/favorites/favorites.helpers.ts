@@ -1,6 +1,6 @@
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 
-export const centToRupiah = (price: number) =>
+export const formatIDR = (price: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -9,12 +9,12 @@ export const centToRupiah = (price: number) =>
 
 export const getPriceLabel = (product: Product): string => {
   if (product.price_type === "range" && product.price_min && product.price_max) {
-    return `${centToRupiah(product.price_min)} - ${centToRupiah(product.price_max)}`;
+    return `${formatIDR(product.price_min)} - ${formatIDR(product.price_max)}`;
   }
   if (product.price_type === "starting" && product.price_min) {
-    return `Mulai ${centToRupiah(product.price_min)}`;
+    return `Mulai ${formatIDR(product.price_min)}`;
   }
-  return centToRupiah(product.price);
+  return formatIDR(product.price);
 };
 
 export const getPrimaryImage = (product: Product): string => {

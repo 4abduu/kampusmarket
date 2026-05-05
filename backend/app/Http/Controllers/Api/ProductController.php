@@ -63,10 +63,10 @@ class ProductController extends Controller
 
         // Filter by price range
         if ($request->has('price_min')) {
-            $query->where('price', '>=', (int) $request->price_min * 100);
+            $query->where('price', '>=', (int) $request->price_min);
         }
         if ($request->has('price_max')) {
-            $query->where('price', '<=', (int) $request->price_max * 100);
+            $query->where('price', '<=', (int) $request->price_max);
         }
 
         // Filter by location
@@ -177,10 +177,10 @@ class ProductController extends Controller
             'title' => $request->title,
             'slug' => $slug,
             'description' => $request->description,
-            'price' => (int) $request->price * 100,
-            'original_price' => $request->original_price ? (int) $request->original_price * 100 : null,
-            'price_min' => $request->price_min ? (int) $request->price_min * 100 : null,
-            'price_max' => $request->price_max ? (int) $request->price_max * 100 : null,
+            'price' => (int) $request->price,
+            'original_price' => $request->original_price ? (int) $request->original_price : null,
+            'price_min' => $request->price_min ? (int) $request->price_min : null,
+            'price_max' => $request->price_max ? (int) $request->price_max : null,
             'price_type' => $request->priceType,
             'type' => $request->type,
             'condition' => $request->condition,
@@ -223,8 +223,8 @@ class ProductController extends Controller
                     $options[] = [
                         'type' => 'delivery',
                         'label' => 'Antar Manual',
-                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin * 100 : 0,
-                        'priceMax' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax * 100 : null,
+                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin : 0,
+                        'priceMax' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax : null,
                     ];
                 }
             }
@@ -248,8 +248,8 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'type' => $option['type'],
                 'label' => $option['label'] ?? $option['type'],
-                'price' => (int) (($option['price'] ?? 0) * 100),
-                'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax'] * 100) : (isset($option['price_max']) ? (int) ($option['price_max'] * 100) : null),
+                'price' => (int) ($option['price'] ?? 0),
+                'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax']) : (isset($option['price_max']) ? (int) ($option['price_max']) : null),
             ]);
         }
 
@@ -310,16 +310,16 @@ class ProductController extends Controller
             }
         }
         if ($request->has('price')) {
-            $updateData['price'] = (int) $request->price * 100;
+            $updateData['price'] = (int) $request->price;
         }
         if ($request->has('originalPrice')) {
-            $updateData['original_price'] = $request->originalPrice ? (int) $request->originalPrice * 100 : null;
+            $updateData['original_price'] = $request->originalPrice ? (int) $request->originalPrice : null;
         }
         if ($request->has('priceMin')) {
-            $updateData['price_min'] = $request->priceMin ? (int) $request->priceMin * 100 : null;
+            $updateData['price_min'] = $request->priceMin ? (int) $request->priceMin : null;
         }
         if ($request->has('priceMax')) {
-            $updateData['price_max'] = $request->priceMax ? (int) $request->priceMax * 100 : null;
+            $updateData['price_max'] = $request->priceMax ? (int) $request->priceMax : null;
         }
         if ($request->has('priceType')) {
             $updateData['price_type'] = $request->priceType;
@@ -459,8 +459,8 @@ class ProductController extends Controller
                     $options[] = [
                         'type' => 'delivery',
                         'label' => 'Antar ke Lokasi (Berbayar)',
-                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin * 100 : 0,
-                        'price_max' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax * 100 : null
+                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin : 0,
+                        'price_max' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax : null
                     ];
                 }
 
@@ -486,8 +486,8 @@ class ProductController extends Controller
                     'product_id' => $product->id,
                     'type' => $option['type'],
                     'label' => $option['label'] ?? $option['type'],
-                    'price' => (int) (($option['price'] ?? 0) * 100),
-                    'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax'] * 100) : (isset($option['price_max']) ? (int) ($option['price_max'] * 100) : null),
+                    'price' => (int) ($option['price'] ?? 0),
+                    'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax']) : (isset($option['price_max']) ? (int) ($option['price_max']) : null),
                 ]);
             }
         }
@@ -703,10 +703,10 @@ class ProductController extends Controller
                     'product' => new ProductResource($item->product),
                     'quantity' => $item->quantity,
                     'notes' => $item->notes,
-                    'subtotal' => (int) ($item->getSubtotalInCent() / 100),
+                    'subtotal' => (int) $item->getSubtotal(),
                 ];
             }),
-            'total' => (int) ($cartItems->sum(fn($item) => $item->getSubtotalInCent()) / 100),
+            'total' => (int) $cartItems->sum(fn($item) => $item->getSubtotal()),
         ]);
     }
 
@@ -867,7 +867,7 @@ class ProductController extends Controller
             'data' => [
                 'id' => $cartItem->uuid,
                 'quantity' => $cartItem->quantity,
-                'subtotal' => (int) ($cartItem->getSubtotalInCent() / 100),
+                'subtotal' => (int) $cartItem->getSubtotal(),
             ]
         ]);
     }

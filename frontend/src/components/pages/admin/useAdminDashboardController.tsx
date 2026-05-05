@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Pagination,
@@ -11,15 +12,10 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
-  mockUsers,
-  mockProducts,
-  mockReports,
-  mockWithdrawals,
   mockAddresses,
   mockCategories,
   mockServiceCategories,
   mockOrders,
-  mockCancelRequests,
   platformRevenue,
   getFacultyName,
   CANCEL_REASONS,
@@ -28,36 +24,53 @@ import type { User, Product, Category, Order, Report, Withdrawal, CancelRequest 
 import type { Faculty } from "@/components/pages/admin/admin-dashboard.shared";
 import { getInitials, seedFaculties } from "@/components/pages/admin/admin-dashboard.shared";
 import { facultiesApi } from "@/lib/api/faculties";
+import { 
+  adminCategoriesApi,
+  adminDashboardApi,
+  adminProductsApi,
+  adminUsersApi,
+  adminReportsApi,
+  adminWithdrawalsApi,
+} from "@/lib/api/admin";
 
 const ITEMS_PER_PAGE = 10;
 
 export function useAdminDashboardController() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { section } = useParams<{ section?: string }>();
+  const navigate = useNavigate();
+  
+  const activeTab = (section as string) ?? "overview";
+  const setActiveTab = (tab: string) => {
+    navigate(`/admin/${tab}`, { replace: false });
+  };
 
   const [showUserFilters, setShowUserFilters] = useState(false);
   const [showProductFilters, setShowProductFilters] = useState(false);
   const [showWithdrawalFilters, setShowWithdrawalFilters] = useState(false);
   const [showOrderFilters, setShowOrderFilters] = useState(false);
 
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetail, setShowUserDetail] = useState(false);
   const [showBanDialog, setShowBanDialog] = useState(false);
   const [showUnbanDialog, setShowUnbanDialog] = useState(false);
   const [userToAction, setUserToAction] = useState<User | null>(null);
+  const [banReason, setBanReason] = useState("");
+  const [unbanReason, setUnbanReason] = useState("");
 
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDetail, setShowProductDetail] = useState(false);
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [productDeleteReason, setProductDeleteReason] = useState("");
 
-  const [reports, setReports] = useState<Report[]>(mockReports);
+  const [reports, setReports] = useState<Report[]>([]);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [showBanReportDialog, setShowBanReportDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>(mockWithdrawals);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
@@ -68,14 +81,14 @@ export function useAdminDashboardController() {
 
   const [financeSubTab, setFinanceSubTab] = useState<"withdrawals" | "revenue">("withdrawals");
 
-  const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>(mockCancelRequests);
+  const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
   const [showCancelApproveDialog, setShowCancelApproveDialog] = useState(false);
   const [showCancelRejectDialog, setShowCancelRejectDialog] = useState(false);
   const [selectedCancelRequest, setSelectedCancelRequest] = useState<CancelRequest | null>(null);
   const [cancelApproveNotes, setCancelApproveNotes] = useState("");
   const [cancelRejectReasonInput, setCancelRejectReasonInput] = useState("");
 
-  const [categories, setCategories] = useState<Category[]>([...mockCategories, ...mockServiceCategories]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
@@ -125,6 +138,21 @@ export function useAdminDashboardController() {
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
   const [orders] = useState<Order[]>(mockOrders);
+  const [stats, setStats] = useState<{
+    totalUsers: number;
+    activeProducts: number;
+    pendingOrders: number;
+    totalRevenue: number;
+    platformRevenue: number;
+    monthlyGrowth: number;
+    pendingWithdrawals: number;
+    pendingReports: number;
+    pendingCancelRequests: number;
+    totalFaculties: number;
+    activeFaculties: number;
+  } | null>(null);
+  const [revenueChartData, setRevenueChartData] = useState<Array<{ date: string; transactions: number; revenue: number }>>([]);
+  const [categoryChartData, setCategoryChartData] = useState<Array<{ name: string; value: number; fill: string }>>([]);
   const [orderSearchTerm, setOrderSearchTerm] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "pending" | "processing" | "ready_pickup" | "in_delivery" | "completed" | "cancelled">("all");
   const [orderTypeFilter, setOrderTypeFilter] = useState<"all" | "barang" | "jasa">("all");
@@ -152,20 +180,188 @@ export function useAdminDashboardController() {
   useEffect(() => {
     const controller = new AbortController();
 
-    const loadFaculties = async () => {
+    const loadData = async () => {
       try {
-        const apiFaculties = await facultiesApi.listAdmin();
-        if (!controller.signal.aborted && apiFaculties.length > 0) {
-          setFaculties(apiFaculties);
-        }
-      } catch {
+        const [
+          apiFaculties,
+          apiCategoriesResponse,
+          apiStats,
+          apiUsers,
+          apiProducts,
+          apiReports,
+          apiWithdrawals,
+          apiRevenueStats,
+        ] = await Promise.all([
+          facultiesApi.listAdmin(),
+          adminCategoriesApi.getCategories({ per_page: 100 }),
+          adminDashboardApi.getStats(),
+          adminUsersApi.getUsers({ per_page: 100 }),
+          adminProductsApi.getProducts({ per_page: 100 }),
+          adminReportsApi.getReports({ per_page: 100 }),
+          adminWithdrawalsApi.getWithdrawals({ per_page: 100 }),
+          adminDashboardApi.getRevenueStats(),
+        ]);
+
         if (!controller.signal.aborted) {
-          setFaculties(seedFaculties);
+          if (apiFaculties.length > 0) {
+            setFaculties(apiFaculties);
+          }
+          
+          if (apiCategoriesResponse?.data && Array.isArray(apiCategoriesResponse.data)) {
+            const mappedCategories = apiCategoriesResponse.data.map((cat: any) => ({
+              id: cat.id?.toString() || cat.slug,
+              name: cat.name,
+              slug: cat.slug,
+              type: cat.type,
+              description: cat.description,
+              sortOrder: cat.sort_order || cat.sortOrder || 0,
+              isActive: cat.is_active !== undefined ? cat.is_active : cat.isActive,
+              productCount: cat.product_count || cat.productCount || 0,
+              createdAt: cat.created_at || cat.createdAt,
+            }));
+            setCategories(mappedCategories);
+
+            // Process category distribution data for chart with actual product counts
+            const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#6b7280"];
+            const categoryCharts = mappedCategories.map((cat: any, idx: number) => ({
+              name: cat.name,
+              value: cat.productCount || 0,
+              fill: colors[idx % colors.length],
+            }));
+            setCategoryChartData(categoryCharts);
+          }
+
+          // Set stats from API
+          if (apiStats) {
+            const statsData = (apiStats as any).data || apiStats;
+            setStats({
+              totalUsers: statsData.users?.total || 0,
+              activeProducts: statsData.products?.active || 0,
+              pendingOrders: statsData.orders?.pending || 0,
+              totalRevenue: statsData.orders?.total_revenue || 0,
+              platformRevenue: statsData.platform_revenue || 0,
+              monthlyGrowth: 12.5,
+              pendingWithdrawals: statsData.withdrawals?.pending || 0,
+              pendingReports: statsData.reports?.pending || 0,
+              pendingCancelRequests: 3,
+              totalFaculties: statsData.faculties?.total || 0,
+              activeFaculties: statsData.faculties?.active || 0,
+            });
+          }
+
+          // Set revenue chart data from API
+          if (apiRevenueStats) {
+            const revenueData = (apiRevenueStats as any).data || apiRevenueStats;
+            const chartData = Array.isArray(revenueData) 
+              ? revenueData.map((item: any, idx: number) => ({
+                  date: (idx + 1).toString(),
+                  transactions: item.transactions || item.count || 1,
+                  revenue: item.revenue || item.total || 0,
+                }))
+              : [];
+            setRevenueChartData(chartData);
+          }
+
+          // Set users data from API
+          if (apiUsers?.data && Array.isArray(apiUsers.data)) {
+            const mappedUsers = apiUsers.data.map((user: any) => ({
+              id: user.id?.toString() || user.uuid || user.id,
+              uuid: user.id || user.uuid || "",
+              name: user.name || "",
+              email: user.email || "",
+              phone: user.phone || "",
+              avatar: user.avatar || "",
+              faculty: user.faculty || user.facultyDetails?.id || "",
+              role: user.role || "student",
+              isBanned: user.isBanned || false,
+              isVerified: user.isVerified || false,
+              isWarned: user.isWarned || false,
+              joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
+              createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
+              banReason: user.banReason || "",
+            } as unknown as User));
+            setUsers(mappedUsers);
+          }
+
+          // Set products data from API
+          if (apiProducts?.data && Array.isArray(apiProducts.data)) {
+            const mappedProducts = apiProducts.data.map((product: any) => ({
+              id: product.id?.toString() || product.uuid || "",
+              title: product.title || "",
+              slug: product.slug || "",
+              type: product.type || "barang",
+              price: product.price || 0,
+              priceMin: product.price_min || product.priceMin || 0,
+              priceMax: product.price_max || product.priceMax || 0,
+              priceType: product.price_type || product.priceType || "fixed",
+              category: product.category?.name || product.category_name || "",
+              categoryId: product.category?.uuid || product.category_id?.toString() || "",
+              description: product.description || "",
+              condition: product.condition || "baru",
+              stock: product.stock || 0,
+              location: product.location || "",
+              canNego: product.can_nego || false,
+              seller: {
+                id: product.seller?.uuid || product.seller_id?.toString() || "",
+                name: product.seller?.name || product.seller_name || "",
+                avatar: product.seller?.avatar || product.seller_avatar || "",
+              },
+              images: product.images || [],
+              isActive: product.status === "active" || product.is_active || false,
+              createdAt: product.created_at || new Date().toISOString(),
+            } as unknown as Product));
+            setProducts(mappedProducts);
+          }
+
+          // Set reports data from API
+          if (apiReports?.data && Array.isArray(apiReports.data)) {
+            const mappedReports = apiReports.data.map((report: any) => ({
+              id: report.id?.toString() || "",
+              reportNumber: `RPT-${report.id}`,
+              reason: report.reason || "",
+              description: report.description || "",
+              status: report.status || "pending",
+              priority: "normal",
+              reporter: {
+                id: report.reporter_id?.toString() || "",
+                name: report.reporter_name || "",
+              },
+              reportedUser: {
+                id: report.reported_user_id?.toString() || "",
+                name: report.reported_user_name || "",
+              },
+              createdAt: report.created_at || new Date().toISOString(),
+            } as unknown as Report));
+            setReports(mappedReports);
+          }
+
+          // Set withdrawals data from API
+          if (apiWithdrawals?.data && Array.isArray(apiWithdrawals.data)) {
+            const mappedWithdrawals = apiWithdrawals.data.map((withdrawal: any) => ({
+              id: withdrawal.id?.toString() || "",
+              withdrawalNumber: `WD-${withdrawal.id}`,
+              user: {
+                id: withdrawal.user_id?.toString() || "",
+                name: withdrawal.user_name || "",
+              },
+              amount: withdrawal.amount || 0,
+              totalDeduction: 0,
+              bankName: withdrawal.bank_name || "",
+              accountNumber: withdrawal.account_number || "",
+              accountName: withdrawal.account_name || "",
+              accountType: withdrawal.account_type || "bank",
+              status: withdrawal.status || "pending",
+              createdAt: withdrawal.created_at || new Date().toISOString(),
+            } as unknown as Withdrawal));
+            setWithdrawals(mappedWithdrawals);
+          }
         }
+      } catch (err) {
+        console.error("Failed to load admin data:", err);
       }
     };
 
-    loadFaculties();
+    loadData();
     return () => controller.abort();
   }, []);
 
@@ -292,16 +488,16 @@ export function useAdminDashboardController() {
   const paginatedFaculties = useMemo(() => getPaginatedData(filteredFaculties, facultyPage), [filteredFaculties, facultyPage]);
   const productCategoryOptions = [...mockCategories, ...mockServiceCategories];
 
-  const stats = {
-    totalUsers: 2534,
-    activeProducts: 5012,
-    pendingOrders: 23,
-    totalRevenue: 125450000,
-    platformRevenue: platformRevenue.total,
-    monthlyGrowth: 12.5,
-    pendingWithdrawals: 8,
-    pendingReports: 2,
-    pendingCancelRequests: 3,
+  const displayStats = stats || {
+    totalUsers: 0,
+    activeProducts: 0,
+    pendingOrders: 0,
+    totalRevenue: 0,
+    platformRevenue: 0,
+    monthlyGrowth: 0,
+    pendingWithdrawals: 0,
+    pendingReports: 0,
+    pendingCancelRequests: 0,
     totalFaculties: faculties.length,
     activeFaculties: faculties.filter((faculty) => faculty.isActive).length,
   };
@@ -454,7 +650,12 @@ export function useAdminDashboardController() {
 
   const handleAddCategory = () => {
     setSelectedCategory(null);
-    setCategoryForm({ name: "", type: "barang", description: "", sortOrder: categories.length + 1, isActive: true });
+    // Calculate next sort order based on type
+    const barangCategories = categories.filter(c => c.type === "barang");
+    const nextSortOrder = barangCategories.length > 0 
+      ? Math.max(...barangCategories.map(c => c.sortOrder)) + 1
+      : 1;
+    setCategoryForm({ name: "", type: "barang", description: "", sortOrder: nextSortOrder, isActive: true });
     setShowCategoryDialog(true);
   };
   const handleEditCategory = (category: Category) => {
@@ -462,27 +663,83 @@ export function useAdminDashboardController() {
     setCategoryForm({ name: category.name, type: category.type, description: category.description || "", sortOrder: category.sortOrder, isActive: category.isActive });
     setShowCategoryDialog(true);
   };
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!categoryForm.name.trim()) return;
-    const slug = categoryForm.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    if (selectedCategory) {
-      setCategories(categories.map((c) => c.id === selectedCategory.id ? { ...c, name: categoryForm.name.trim(), slug, type: categoryForm.type, description: categoryForm.description || undefined, sortOrder: categoryForm.sortOrder, isActive: categoryForm.isActive } : c));
-      showSuccess(`Kategori "${categoryForm.name}" berhasil diperbarui`);
-    } else {
-      const newCategory: Category = { id: `cat-${Date.now()}`, name: categoryForm.name.trim(), slug, type: categoryForm.type, description: categoryForm.description || undefined, sortOrder: categoryForm.sortOrder, isActive: categoryForm.isActive, createdAt: new Date().toISOString().split("T")[0] };
-      setCategories([...categories, newCategory]);
-      showSuccess(`Kategori "${categoryForm.name}" berhasil ditambahkan`);
+    
+    try {
+      if (selectedCategory) {
+        const updatedCat = await adminCategoriesApi.updateCategory(selectedCategory.id, {
+          name: categoryForm.name.trim(),
+          type: categoryForm.type,
+          sort_order: categoryForm.sortOrder,
+          is_active: categoryForm.isActive,
+        });
+        
+        setCategories(categories.map((c) => c.id === selectedCategory.id ? {
+          ...c,
+          name: updatedCat.name,
+          type: updatedCat.type,
+          sortOrder: updatedCat.sort_order,
+          isActive: updatedCat.is_active,
+          slug: updatedCat.slug,
+          description: updatedCat.description
+        } : c));
+        showSuccess(`Kategori "${categoryForm.name}" berhasil diperbarui`);
+      } else {
+        const newCat = await adminCategoriesApi.createCategory({
+          name: categoryForm.name.trim(),
+          type: categoryForm.type,
+          sort_order: categoryForm.sortOrder,
+          is_active: categoryForm.isActive,
+        });
+        
+        const mappedNewCat: Category = {
+          id: newCat.id?.toString() || newCat.slug,
+          name: newCat.name,
+          slug: newCat.slug,
+          type: newCat.type,
+          description: newCat.description,
+          sortOrder: newCat.sort_order || 0,
+          isActive: newCat.is_active,
+          createdAt: newCat.created_at || new Date().toISOString().split("T")[0],
+        };
+        
+        setCategories([...categories, mappedNewCat]);
+        showSuccess(`Kategori "${categoryForm.name}" berhasil ditambahkan`);
+      }
+    } catch (err) {
+      console.error("Failed to save category:", err);
+      showSuccess("Gagal menyimpan kategori ke database, silakan coba lagi.");
     }
+    
     setShowCategoryDialog(false);
     setSelectedCategory(null);
   };
   const handleDeleteCategory = (category: Category) => { setCategoryToDelete(category); setShowDeleteCategoryDialog(true); };
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (categoryToDelete) {
-      setCategories(categories.filter((c) => c.id !== categoryToDelete.id));
-      showSuccess(`Kategori "${categoryToDelete.name}" berhasil dihapus`);
+      try {
+        await adminCategoriesApi.deleteCategory(categoryToDelete.id);
+        setCategories(categories.filter((c) => c.id !== categoryToDelete.id));
+        showSuccess(`Kategori "${categoryToDelete.name}" berhasil dihapus`);
+      } catch (err) {
+        console.error("Failed to delete category:", err);
+        showSuccess("Gagal menghapus kategori dari database.");
+      }
       setShowDeleteCategoryDialog(false);
       setCategoryToDelete(null);
+    }
+  };
+
+  const handleToggleCategoryActive = async (category: Category) => {
+    const nextState = !category.isActive;
+    try {
+      await adminCategoriesApi.updateCategoryStatus(category.id, nextState);
+      setCategories(categories.map((c) => c.id === category.id ? { ...c, isActive: nextState } : c));
+      showSuccess(`Kategori "${category.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`);
+    } catch (err) {
+      console.error("Failed to toggle category status:", err);
+      showSuccess("Gagal mengubah status kategori.");
     }
   };
 
@@ -652,7 +909,9 @@ export function useAdminDashboardController() {
     activeTab,
     setActiveTab,
     successMessage,
-    stats,
+    stats: displayStats,
+    revenueChartData,
+    categoryChartData,
     orders,
     users,
     withdrawals,
@@ -755,12 +1014,18 @@ export function useAdminDashboardController() {
     showUnbanDialog,
     setShowUnbanDialog,
     userToAction,
+    banReason,
+    setBanReason,
+    unbanReason,
+    setUnbanReason,
     showProductDetail,
     setShowProductDetail,
     selectedProduct,
     showDeleteProductDialog,
     setShowDeleteProductDialog,
     productToDelete,
+    productDeleteReason,
+    setProductDeleteReason,
     showWarningDialog,
     setShowWarningDialog,
     showBanReportDialog,
@@ -787,6 +1052,7 @@ export function useAdminDashboardController() {
     showDeleteCategoryDialog,
     setShowDeleteCategoryDialog,
     categoryToDelete,
+    categories,
     showCancelApproveDialog,
     setShowCancelApproveDialog,
     showCancelRejectDialog,
@@ -842,6 +1108,7 @@ export function useAdminDashboardController() {
     handleSaveCategory,
     handleDeleteCategory,
     confirmDeleteCategory,
+    handleToggleCategoryActive,
     handleApproveCancelRequest,
     handleRejectCancelRequest,
     confirmApproveCancelRequest,

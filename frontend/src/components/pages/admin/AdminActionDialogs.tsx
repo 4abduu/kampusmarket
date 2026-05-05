@@ -58,6 +58,10 @@ type Props = {
   showUnbanDialog: boolean;
   setShowUnbanDialog: (open: boolean) => void;
   userToAction: User | null;
+  banReason: string;
+  setBanReason: (reason: string) => void;
+  unbanReason: string;
+  setUnbanReason: (reason: string) => void;
   confirmBanUser: () => void;
   confirmUnbanUser: () => void;
 
@@ -67,6 +71,8 @@ type Props = {
   showDeleteProductDialog: boolean;
   setShowDeleteProductDialog: (open: boolean) => void;
   productToDelete: Product | null;
+  productDeleteReason: string;
+  setProductDeleteReason: (reason: string) => void;
   confirmDeleteProduct: () => void;
 
   showWarningDialog: boolean;
@@ -101,6 +107,7 @@ type Props = {
   categoryForm: CategoryFormState;
   setCategoryForm: (value: CategoryFormState) => void;
   handleSaveCategory: () => void;
+  categories: Category[];
   showDeleteCategoryDialog: boolean;
   setShowDeleteCategoryDialog: (open: boolean) => void;
   categoryToDelete: Category | null;
@@ -134,6 +141,10 @@ export default function AdminActionDialogs({
   showUnbanDialog,
   setShowUnbanDialog,
   userToAction,
+  banReason,
+  setBanReason,
+  unbanReason,
+  setUnbanReason,
   confirmBanUser,
   confirmUnbanUser,
   showProductDetail,
@@ -142,6 +153,8 @@ export default function AdminActionDialogs({
   showDeleteProductDialog,
   setShowDeleteProductDialog,
   productToDelete,
+  productDeleteReason,
+  setProductDeleteReason,
   confirmDeleteProduct,
   showWarningDialog,
   setShowWarningDialog,
@@ -173,6 +186,7 @@ export default function AdminActionDialogs({
   categoryForm,
   setCategoryForm,
   handleSaveCategory,
+  categories,
   showDeleteCategoryDialog,
   setShowDeleteCategoryDialog,
   categoryToDelete,
@@ -249,10 +263,22 @@ export default function AdminActionDialogs({
             <DialogTitle className="flex items-center gap-2 text-red-600"><Ban className="h-5 w-5" />Blokir User</DialogTitle>
             <DialogDescription>Apakah Anda yakin ingin memblokir user ini? User tidak akan bisa login atau melakukan transaksi.</DialogDescription>
           </DialogHeader>
-          {userToAction && <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="font-medium">{userToAction.name}</p><p className="text-sm text-muted-foreground">{userToAction.email}</p></div>}
+          {userToAction && (
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                <p className="font-medium">{userToAction.name}</p>
+                <p className="text-sm text-muted-foreground">{userToAction.email}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alasan Blokir</label>
+                <textarea value={banReason} onChange={(e) => setBanReason(e.target.value)} placeholder="Contoh: Melakukan penipuan, tidak responsif, tindakan melawan hukum, dll" className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <p className="text-xs text-muted-foreground">Alasan ini akan dikirim ke user saat akun diblokir</p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBanDialog(false)}>Batal</Button>
-            <Button variant="destructive" onClick={confirmBanUser}><Ban className="h-4 w-4 mr-2" />Blokir User</Button>
+            <Button variant="outline" onClick={() => { setShowBanDialog(false); setBanReason(""); }}>Batal</Button>
+            <Button variant="destructive" onClick={confirmBanUser} disabled={!banReason.trim()}><Ban className="h-4 w-4 mr-2" />Blokir User</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -263,9 +289,21 @@ export default function AdminActionDialogs({
             <DialogTitle className="flex items-center gap-2 text-primary-600"><UserCheck className="h-5 w-5" />Buka Blokir User</DialogTitle>
             <DialogDescription>Apakah Anda yakin ingin membuka blokir user ini? User akan bisa login dan bertransaksi kembali.</DialogDescription>
           </DialogHeader>
-          {userToAction && <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="font-medium">{userToAction.name}</p><p className="text-sm text-muted-foreground">{userToAction.email}</p></div>}
+          {userToAction && (
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                <p className="font-medium">{userToAction.name}</p>
+                <p className="text-sm text-muted-foreground">{userToAction.email}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Catatan Pembukaan Blokir (Opsional)</label>
+                <textarea value={unbanReason} onChange={(e) => setUnbanReason(e.target.value)} placeholder="Contoh: Verifikasi identitas berhasil, kasus sudah diselesaikan, dll" className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <p className="text-xs text-muted-foreground">Catatan akan dikirim ke user saat akun dibuka blokir</p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUnbanDialog(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => { setShowUnbanDialog(false); setUnbanReason(""); }}>Batal</Button>
             <Button className="bg-primary-600 hover:bg-primary-700" onClick={confirmUnbanUser}><UserCheck className="h-4 w-4 mr-2" />Buka Blokir</Button>
           </DialogFooter>
         </DialogContent>
@@ -299,12 +337,29 @@ export default function AdminActionDialogs({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600"><Trash2 className="h-5 w-5" />Hapus Produk</DialogTitle>
-            <DialogDescription>Apakah Anda yakin ingin menghapus produk ini secara permanen? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
+            <DialogDescription>Produk akan dihapus dan owner akan menerima notifikasi dengan alasan penghapusan.</DialogDescription>
           </DialogHeader>
-          {productToDelete && <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 flex items-center gap-3"><div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">{productToDelete.type === "jasa" ? <CalendarDays className="h-6 w-6 text-muted-foreground/30" /> : <Package className="h-6 w-6 text-muted-foreground/30" />}</div><div><p className="font-medium">{productToDelete.title}</p><p className="text-sm text-muted-foreground">{formatProductPrice(productToDelete)}</p></div></div>}
+          {productToDelete && (
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                  {productToDelete.type === "jasa" ? <CalendarDays className="h-6 w-6 text-muted-foreground/30" /> : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                </div>
+                <div>
+                  <p className="font-medium">{productToDelete.title}</p>
+                  <p className="text-sm text-muted-foreground">{formatProductPrice(productToDelete)}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alasan Penghapusan</label>
+                <textarea value={productDeleteReason} onChange={(e) => setProductDeleteReason(e.target.value)} placeholder="Contoh: Melanggar kebijakan, item tidak sesuai deskripsi, penawaran palsu, dll" className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <p className="text-xs text-muted-foreground">Alasan ini akan dikirim ke owner produk sebagai notifikasi</p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteProductDialog(false)}>Batal</Button>
-            <Button variant="destructive" onClick={confirmDeleteProduct}><Trash2 className="h-4 w-4 mr-2" />Hapus Produk</Button>
+            <Button variant="outline" onClick={() => { setShowDeleteProductDialog(false); setProductDeleteReason(""); }}>Batal</Button>
+            <Button variant="destructive" onClick={confirmDeleteProduct} disabled={!productDeleteReason.trim()}><Trash2 className="h-4 w-4 mr-2" />Hapus Produk</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -365,7 +420,14 @@ export default function AdminActionDialogs({
           </DialogHeader>
           <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
             <div className="space-y-2"><label className="text-sm font-medium">Nama Kategori <span className="text-red-500">*</span></label><Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} placeholder="Contoh: Elektronik" /></div>
-            <div className="space-y-2"><label className="text-sm font-medium">Tipe</label><Select value={categoryForm.type} onValueChange={(value: "barang" | "jasa") => setCategoryForm({ ...categoryForm, type: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="barang">Barang</SelectItem><SelectItem value="jasa">Jasa</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><label className="text-sm font-medium">Tipe</label><Select value={categoryForm.type} onValueChange={(value: "barang" | "jasa") => {
+              // Calculate new sort order based on type
+              const categoriesOfType = categories.filter(c => c.type === value);
+              const nextSortOrder = categoriesOfType.length > 0 
+                ? Math.max(...categoriesOfType.map(c => c.sortOrder)) + 1
+                : 1;
+              setCategoryForm({ ...categoryForm, type: value, sortOrder: nextSortOrder });
+            }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="barang">Barang</SelectItem><SelectItem value="jasa">Jasa</SelectItem></SelectContent></Select></div>
             <div className="space-y-2"><div className="flex items-center gap-2"><label className="text-sm font-medium">Deskripsi</label><span className="text-xs text-muted-foreground">(Opsional)</span></div><textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} placeholder="Contoh: Kategori untuk barang-barang elektronik seperti HP, laptop, kamera, dll" className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" /><p className="text-xs text-muted-foreground flex items-start gap-1"><AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />Deskripsi akan ditampilkan sebagai tooltip saat user hover di kategori, membantu user memahami isi kategori.</p></div>
             <div className="space-y-2"><label className="text-sm font-medium">Urutan Tampil</label><Input type="number" value={categoryForm.sortOrder} onChange={(e) => setCategoryForm({ ...categoryForm, sortOrder: parseInt(e.target.value) || 0 })} min={1} className="w-24" /><p className="text-xs text-muted-foreground">Semakin kecil angka, semakin awal kategori ditampilkan</p></div>
             <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50"><div><label className="text-sm font-medium">Status Aktif</label><p className="text-xs text-muted-foreground">Kategori nonaktif tidak akan ditampilkan ke user</p></div><Switch checked={categoryForm.isActive} onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, isActive: checked })} /></div>

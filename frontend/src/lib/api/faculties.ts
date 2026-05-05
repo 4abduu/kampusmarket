@@ -15,6 +15,7 @@ const mapFacultyFromApi = (faculty: FacultyApiItem): Faculty => {
     name: faculty.name || rawCode || "Fakultas",
     sortOrder: Number(faculty.sortOrder ?? faculty.sort_order ?? 0),
     isActive: Boolean(faculty.isActive ?? faculty.is_active ?? true),
+    studentCount: Number(faculty.studentCount ?? faculty.student_count ?? 0),
   };
 };
 

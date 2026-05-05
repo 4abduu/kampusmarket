@@ -27,11 +27,11 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'balance' => (int) ($user->wallet_balance / 100), // Convert to Rupiah
+                'balance' => (int) $user->wallet_balance,
                 'pendingWithdrawal' => (int) (
                     Withdrawal::where('user_id', $user->id)
                         ->whereIn('status', ['pending', 'approved', 'processing'])
-                        ->sum('amount') / 100
+                        ->sum('amount')
                 ),
             ],
         ]);
@@ -78,20 +78,20 @@ class WalletController extends Controller
     public function topUp(TopUpRequest $request): JsonResponse
     {
         $user = $request->user();
-        $amountInCent = $request->amount * 100;
+        $amount = $request->amount;
 
         // In production, this would integrate with payment gateway
         // For now, we'll simulate successful top-up
 
         $balanceBefore = $user->wallet_balance;
-        $user->wallet_balance += $amountInCent;
+        $user->wallet_balance += $amount;
         $user->save();
 
         $transaction = WalletTransaction::create([
             'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'top_up',
-            'amount' => $amountInCent,
+            'amount' => $amount,
             'balance_before' => $balanceBefore,
             'balance_after' => $user->wallet_balance,
             'description' => 'Top up via ' . $request->paymentMethod,
@@ -103,7 +103,7 @@ class WalletController extends Controller
             'message' => 'Top up berhasil',
             'data' => [
                 'transaction' => new WalletTransactionResource($transaction),
-                'newBalance' => (int) ($user->wallet_balance / 100),
+                'newBalance' => (int) $user->wallet_balance,
             ],
         ]);
     }
@@ -114,10 +114,10 @@ class WalletController extends Controller
     public function withdraw(StoreWithdrawalRequest $request): JsonResponse
     {
         $user = $request->user();
-        $amountInCent = $request->amount * 100;
+        $amount = $request->amount;
 
         // Check balance
-        if ($user->wallet_balance < $amountInCent) {
+        if ($user->wallet_balance < $amount) {
             return response()->json([
                 'success' => false,
                 'message' => 'Saldo tidak mencukupi',
@@ -126,7 +126,7 @@ class WalletController extends Controller
 
         // Deduct from balance immediately
         $balanceBefore = $user->wallet_balance;
-        $user->wallet_balance -= $amountInCent;
+        $user->wallet_balance -= $amount;
         $user->save();
 
         // Create withdrawal record
@@ -134,7 +134,7 @@ class WalletController extends Controller
             'uuid' => NumberGenerator::uuid(),
             'withdrawal_number' => NumberGenerator::withdrawalNumber(),
             'user_id' => $user->id,
-            'amount' => $amountInCent,
+            'amount' => $amount,
             'total_deduction' => 0, // No fee for now
             'account_type' => $request->accountType,
             'bank_name' => $request->bankName,
@@ -148,7 +148,7 @@ class WalletController extends Controller
             'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'withdrawal',
-            'amount' => -$amountInCent,
+            'amount' => -$amount,
             'balance_before' => $balanceBefore,
             'balance_after' => $user->wallet_balance,
             'description' => 'Withdrawal to ' . $request->bankName . ' - ' . $request->accountNumber,

@@ -92,7 +92,7 @@ class StoreOrderRequest extends FormRequest
     {
         if ($this->has('negoPrice') && $this->negoPrice) {
             $this->merge([
-                'nego_price' => $this->negoPrice * 100, // Convert to cent
+                'nego_price' => $this->negoPrice,
             ]);
         }
 

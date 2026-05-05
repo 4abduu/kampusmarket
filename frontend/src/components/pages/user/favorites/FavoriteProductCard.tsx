@@ -17,7 +17,7 @@ import {
 import type { ReactNode } from "react";
 import {
   availabilityMap,
-  centToRupiah,
+  formatIDR,
   getDurationLabel,
   getInitials,
   getPriceLabel,
@@ -163,7 +163,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
             />
             <div className="absolute left-3 top-3 flex flex-col gap-1.5">
               <Badge className="w-fit bg-slate-900/80 text-xs text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
-              {savings > 0 && <Badge className="w-fit bg-emerald-500 text-xs text-white hover:bg-emerald-500">-{centToRupiah(savings)}</Badge>}
+              {savings > 0 && <Badge className="w-fit bg-emerald-500 text-xs text-white hover:bg-emerald-500">-{formatIDR(savings)}</Badge>}
             </div>
           </div>
 
@@ -174,7 +174,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">Disimpan</p>
                   <h3 className="mt-0.5 text-lg font-semibold leading-snug text-slate-900 dark:text-slate-50">{product.title}</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid || product.id)} className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
+                <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid || product.id.toString())} className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -199,7 +199,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
                 <p className="text-xl font-bold text-slate-900 dark:text-slate-50">{getPriceLabel(product)}</p>
                 {product.original_price && (
                   <p className="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="line-through">{centToRupiah(product.original_price)}</span>
+                    <span className="line-through">{formatIDR(product.original_price)}</span>
                     <span>·</span><span>{product.review_count} ulasan</span>
                     <span>·</span><span>{product.views} dilihat</span>
                     {product.sold_count > 0 && <><span>·</span><span>{product.sold_count} terjual</span></>}
@@ -208,7 +208,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onNavigate(detailPage, product.uuid || product.id)} className="gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())} className="gap-1.5">
                   Detail <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
                 {product.seller && (
@@ -226,7 +226,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
 
   return (
     <Card
-      onClick={() => onNavigate(detailPage, product.uuid || product.id)}
+      onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())}
       className="group overflow-hidden cursor-pointer border-slate-200/80 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -238,14 +238,14 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
         />
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
           <Badge className="w-fit bg-slate-900/80 text-[11px] text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
-          {savings > 0 && <Badge className="w-fit bg-emerald-500 text-[11px] text-white hover:bg-emerald-500">-{centToRupiah(savings)}</Badge>}
+          {savings > 0 && <Badge className="w-fit bg-emerald-500 text-[11px] text-white hover:bg-emerald-500">-{formatIDR(savings)}</Badge>}
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={(e) => {
             e.stopPropagation();
-            onRemove(product.uuid || product.id);
+            onRemove(product.uuid || product.id.toString());
           }}
           className="absolute right-2.5 bottom-2.5 h-8 w-8 rounded-full bg-white/90 text-slate-400 shadow-sm backdrop-blur-sm hover:bg-white hover:text-rose-500 dark:bg-slate-950/70 dark:hover:bg-slate-950"
         >
@@ -268,7 +268,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
           <p className="text-base font-bold text-slate-900 dark:text-slate-50">{getPriceLabel(product)}</p>
           {product.original_price && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              <span className="line-through">{centToRupiah(product.original_price)}</span>
+              <span className="line-through">{formatIDR(product.original_price)}</span>
               <span className="ml-1.5">{product.review_count} ulasan</span>
               {product.sold_count > 0 && <><span className="ml-1 text-slate-300 dark:text-slate-600">·</span><span>{product.sold_count} terjual</span></>}
             </p>

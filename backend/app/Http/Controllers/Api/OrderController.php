@@ -338,7 +338,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $shippingFee = $request->shippingFee * 100; // Convert to cent
+        $shippingFee = (int) ($selectedShippingOption->price ?? 0);
 
         // Update order
         $order->update([

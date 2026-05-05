@@ -79,13 +79,13 @@ class UpdateOrderRequest extends FormRequest
         // Convert prices from Rupiah to cent
         if ($this->has('shippingFee')) {
             $this->merge([
-                'shipping_fee' => $this->shippingFee * 100,
+                'shipping_fee' => $this->shippingFee,
             ]);
         }
 
         if ($this->has('offeredPrice')) {
             $this->merge([
-                'offered_price' => $this->offeredPrice * 100,
+                'offered_price' => $this->offeredPrice,
             ]);
         }
     }

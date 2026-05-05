@@ -16,7 +16,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -32,13 +31,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
         }));
         
         setCartItems(formattedItems);
-        
-        // Initialize quantities map
-        const qMap: Record<string, number> = {};
-        formattedItems.forEach(item => {
-          qMap[item.product.id] = item.quantity;
-        });
-        setQuantities(qMap);
         
         // Auto-select all items by default
         setSelectedItems(formattedItems.map(item => item.product.id));
@@ -87,7 +79,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       setCartItems(prev => prev.map(i => 
         i.product.id === productId ? { ...i, quantity: newQty } : i
       ));
-      setQuantities(prev => ({ ...prev, [productId]: newQty }));
     } catch (err) {
       console.error("Failed to update cart quantity:", err);
     }
@@ -106,7 +97,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       setCartItems(prev => prev.map(i => 
         i.product.id === productId ? { ...i, quantity: newQty } : i
       ));
-      setQuantities(prev => ({ ...prev, [productId]: newQty }));
       // Update global cart store
       useCartStore.getState().fetchCount();
     } catch (err) {
@@ -125,11 +115,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       }
       setCartItems((prev) => prev.filter((i) => i.product.id !== productId));
       setSelectedItems((prev) => prev.filter((id) => id !== productId));
-      setQuantities((prev) => {
-        const next = { ...prev };
-        delete next[productId];
-        return next;
-      });
       // Update global cart store
       useCartStore.getState().fetchCount();
     } catch (err) {

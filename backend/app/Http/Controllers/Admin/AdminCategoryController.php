@@ -27,7 +27,7 @@ class AdminCategoryController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Category::query();
+            $query = Category::withCount('products');
 
             // Filter by type
             if ($request->has('type')) {
@@ -106,12 +106,20 @@ class AdminCategoryController extends Controller
                 ], 422);
             }
 
+            // Auto-calculate sort order if not provided
+            // Get max sort order for this type and add 1
+            $sortOrder = $validated['sort_order'] ?? null;
+            if ($sortOrder === null) {
+                $maxSortOrder = Category::where('type', $validated['type'])->max('sort_order') ?? 0;
+                $sortOrder = $maxSortOrder + 1;
+            }
+
             $category = Category::create([
                 'uuid' => NumberGenerator::uuid(),
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'type' => $validated['type'],
-                'sort_order' => $validated['sort_order'] ?? 0,
+                'sort_order' => $sortOrder,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 

@@ -48,11 +48,11 @@ class ProductResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             
-            // Pricing (converted from cent to IDR)
-            'price' => (int) ($this->price / 100),
-            'originalPrice' => $this->original_price ? (int) ($this->original_price / 100) : null,
-            'priceMin' => $this->price_min ? (int) ($this->price_min / 100) : null,
-            'priceMax' => $this->price_max ? (int) ($this->price_max / 100) : null,
+            // Pricing (direct IDR format)
+            'price' => (int) $this->price,
+            'originalPrice' => $this->original_price ? (int) $this->original_price : null,
+            'priceMin' => $this->price_min ? (int) $this->price_min : null,
+            'priceMax' => $this->price_max ? (int) $this->price_max : null,
             'priceType' => $this->price_type->value ?? 'fixed',
             
             // Product type

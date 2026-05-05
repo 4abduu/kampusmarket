@@ -52,7 +52,7 @@ class StoreWithdrawalRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $user = $this->user();
-            $amountInCent = $this->amount * 100;
+            $amountInCent = $this->amount;
 
             // Check if user has enough balance
             if ($user->wallet_balance < $amountInCent) {
