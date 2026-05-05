@@ -14,23 +14,21 @@ namespace App\Http\Helpers;
 class CurrencyHelper
 {
     /**
-     * Convert Rupiah (tidak ada konversi, hanya untuk kompatibilitas)
-     * Contoh: 100000 Rupiah → 100000 IDR
+     * Convert Rupiah to cent (database value)
+     * Contoh: 100.000 Rupiah → 10.000.000 cent
      */
     public static function toCent(int $rupiah): int
     {
-        // DEPRECATED: Harga sudah disimpan langsung dalam IDR, tidak perlu dikali 100
-        return $rupiah;
+        return $rupiah * 100;
     }
 
     /**
-     * Convert dari database value (tidak ada konversi, hanya untuk kompatibilitas)
-     * Contoh: 100000 IDR → 100000 Rupiah
+     * Convert cent (database value) to Rupiah
+     * Contoh: 10.000.000 cent → 100.000 Rupiah
      */
     public static function toRupiah(int $idr): int
     {
-        // DEPRECATED: Harga sudah dalam IDR, tidak perlu dibagi 100
-        return $idr;
+        return (int) ($idr / 100);
     }
 
     /**

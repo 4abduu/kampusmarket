@@ -30,7 +30,8 @@ class ProductController extends Controller
             Log::info('[ProductController] Fetching products', [
                 'type' => $request->type,
                 'category' => $request->category,
-                'user' => $request->user()?->id
+                'user' => $request->user()?->id,
+                'filters' => $request->only(['price_min', 'price_max', 'condition', 'location', 'search'])
             ]);
 
             $query = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions'])
@@ -62,10 +63,10 @@ class ProductController extends Controller
 
         // Filter by price range
         if ($request->has('price_min')) {
-            $query->where('price', '>=', $request->price_min);
+            $query->where('price', '>=', (int) $request->price_min * 100);
         }
         if ($request->has('price_max')) {
-            $query->where('price', '<=', $request->price_max);
+            $query->where('price', '<=', (int) $request->price_max * 100);
         }
 
         // Filter by location
@@ -176,10 +177,10 @@ class ProductController extends Controller
             'title' => $request->title,
             'slug' => $slug,
             'description' => $request->description,
-            'price' => $request->price,
-            'original_price' => $request->original_price,
-            'price_min' => $request->price_min,
-            'price_max' => $request->price_max,
+            'price' => (int) $request->price * 100,
+            'original_price' => $request->original_price ? (int) $request->original_price * 100 : null,
+            'price_min' => $request->price_min ? (int) $request->price_min * 100 : null,
+            'price_max' => $request->price_max ? (int) $request->price_max * 100 : null,
             'price_type' => $request->priceType,
             'type' => $request->type,
             'condition' => $request->condition,
@@ -222,8 +223,8 @@ class ProductController extends Controller
                     $options[] = [
                         'type' => 'delivery',
                         'label' => 'Antar Manual',
-                        'price' => $request->deliveryFeeMin ?? 0,
-                        'priceMax' => $request->deliveryFeeMax,
+                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin * 100 : 0,
+                        'priceMax' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax * 100 : null,
                     ];
                 }
             }
@@ -247,8 +248,8 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'type' => $option['type'],
                 'label' => $option['label'] ?? $option['type'],
-                'price' => (int) ($option['price'] ?? 0),
-                'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : null,
+                'price' => (int) (($option['price'] ?? 0) * 100),
+                'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax'] * 100) : (isset($option['price_max']) ? (int) ($option['price_max'] * 100) : null),
             ]);
         }
 
@@ -309,16 +310,16 @@ class ProductController extends Controller
             }
         }
         if ($request->has('price')) {
-            $updateData['price'] = $request->price;
+            $updateData['price'] = (int) $request->price * 100;
         }
         if ($request->has('originalPrice')) {
-            $updateData['original_price'] = $request->originalPrice ?: null;
+            $updateData['original_price'] = $request->originalPrice ? (int) $request->originalPrice * 100 : null;
         }
         if ($request->has('priceMin')) {
-            $updateData['price_min'] = $request->priceMin ?: null;
+            $updateData['price_min'] = $request->priceMin ? (int) $request->priceMin * 100 : null;
         }
         if ($request->has('priceMax')) {
-            $updateData['price_max'] = $request->priceMax ?: null;
+            $updateData['price_max'] = $request->priceMax ? (int) $request->priceMax * 100 : null;
         }
         if ($request->has('priceType')) {
             $updateData['price_type'] = $request->priceType;
@@ -458,8 +459,8 @@ class ProductController extends Controller
                     $options[] = [
                         'type' => 'delivery',
                         'label' => 'Antar ke Lokasi (Berbayar)',
-                        'price' => $request->deliveryFeeMin ?? 0,
-                        'price_max' => $request->deliveryFeeMax
+                        'price' => $request->deliveryFeeMin ? (int) $request->deliveryFeeMin * 100 : 0,
+                        'price_max' => $request->deliveryFeeMax ? (int) $request->deliveryFeeMax * 100 : null
                     ];
                 }
 
@@ -485,8 +486,8 @@ class ProductController extends Controller
                     'product_id' => $product->id,
                     'type' => $option['type'],
                     'label' => $option['label'] ?? $option['type'],
-                    'price' => (int) ($option['price'] ?? 0),
-                    'price_max' => isset($option['priceMax']) ? (int) $option['priceMax'] : (isset($option['price_max']) ? (int) $option['price_max'] : null),
+                    'price' => (int) (($option['price'] ?? 0) * 100),
+                    'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax'] * 100) : (isset($option['price_max']) ? (int) ($option['price_max'] * 100) : null),
                 ]);
             }
         }

@@ -286,8 +286,8 @@ class DatabaseSeeder extends Seeder
             15000000, 15000000, 50000000, 'range', 2, 4, 'jam', true, 4.9, 34, 34,
             'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400',
             [
-                ['type' => 'onsite',       'label' => 'Datang ke Lokasi Penyedia',           'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service (Fotografer ke Lokasi)', 'price' => 5000000],
+                ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 5000000],
             ]
         );
 
@@ -297,9 +297,9 @@ class DatabaseSeeder extends Seeder
             5000000, 5000000, 8000000, 'range', 1, 2, 'jam', true, 4.8, 21, 21,
             'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
             [
-                ['type' => 'online',       'label' => 'Les Online (Video Call)',    'price' => 0],
-                ['type' => 'home_service', 'label' => 'Datang ke Rumah',            'price' => 1500000],
-                ['type' => 'onsite',       'label' => 'Datang ke Tempat Pengajar', 'price' => 0],
+                ['type' => 'online',       'label' => 'Online',       'price' => 0],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 1500000],
+                ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
             ]
         );
 
@@ -309,7 +309,7 @@ class DatabaseSeeder extends Seeder
             7500000, 7500000, 35000000, 'range', 1, 3, 'hari', true, 4.7, 28, 28,
             'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400',
             [
-                ['type' => 'online', 'label' => 'Online / Remote', 'price' => 0],
+                ['type' => 'online', 'label' => 'Online', 'price' => 0],
             ]
         );
 
@@ -319,8 +319,8 @@ class DatabaseSeeder extends Seeder
             5000000, 5000000, 25000000, 'range', 1, 3, 'hari', false, 4.6, 42, 42,
             'https://images.unsplash.com/photo-1588872657578-7efd81e90960?w=400',
             [
-                ['type' => 'onsite',       'label' => 'Antar ke Tempat Servis', 'price' => 0],
-                ['type' => 'home_service', 'label' => 'Home Service',            'price' => 2000000],
+                ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 2000000],
             ]
         );
 
@@ -330,7 +330,7 @@ class DatabaseSeeder extends Seeder
             10000000, 10000000, 50000000, 'range', 1, 5, 'hari', true, 4.8, 19, 19,
             'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400',
             [
-                ['type' => 'online', 'label' => 'Online / Remote', 'price' => 0],
+                ['type' => 'online', 'label' => 'Online', 'price' => 0],
             ]
         );
 
@@ -341,8 +341,8 @@ class DatabaseSeeder extends Seeder
             6000000, 6000000, 10000000, 'range', 1, 2, 'jam', true, 4.7, 15, 15,
             'https://images.unsplash.com/photo-1427504494785-cdfa6b007da0?w=400',
             [
-                ['type' => 'online',       'label' => 'Les Online (Video Call)', 'price' => 0],
-                ['type' => 'home_service', 'label' => 'Datang ke Rumah',         'price' => 2000000],
+                ['type' => 'online',       'label' => 'Online',       'price' => 0],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 2000000],
             ]
         );
 
@@ -352,8 +352,8 @@ class DatabaseSeeder extends Seeder
             12000000, 12000000, 60000000, 'range', 3, 8, 'jam', true, 4.9, 28, 28,
             'https://images.unsplash.com/photo-1505045612881-8c8e548158f1?w=400',
             [
-                ['type' => 'onsite',       'label' => 'Datang ke Lokasi Acara', 'price' => 0],
-                ['type' => 'home_service', 'label' => 'Full Paket dengan Editing', 'price' => 3000000],
+                ['type' => 'onsite',       'label' => 'Onsite',       'price' => 0],
+                ['type' => 'home_service', 'label' => 'Home Service', 'price' => 3000000],
             ]
         );
 
@@ -363,7 +363,7 @@ class DatabaseSeeder extends Seeder
             8000000, 8000000, 40000000, 'range', 1, 2, 'hari', true, 4.8, 22, 22,
             'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
             [
-                ['type' => 'online', 'label' => 'Online / Remote', 'price' => 0],
+                ['type' => 'online', 'label' => 'Online', 'price' => 0],
             ]
         );
 
@@ -373,7 +373,7 @@ class DatabaseSeeder extends Seeder
             20000000, 20000000, 100000000, 'range', 5, 14, 'hari', true, 4.9, 31, 31,
             'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
             [
-                ['type' => 'online', 'label' => 'Full Remote Development', 'price' => 0],
+                ['type' => 'online', 'label' => 'Online', 'price' => 0],
             ]
         );
 
