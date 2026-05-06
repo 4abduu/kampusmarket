@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import type { Address as AddressType } from "@/lib/mock-data"
+import { userApi } from "@/lib/api/users"
+import * as addressApi from "@/lib/api/addresses"
 
 interface DashboardUser {
   id: string
@@ -29,6 +31,8 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     notes: "",
     isPrimary: false,
   })
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
+  const [addressError, setAddressError] = useState<string | null>(null)
 
   const [profileForm, setProfileForm] = useState({
     name: currentUser.name,
@@ -37,6 +41,26 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     bio: currentUser.bio || "",
     faculty: currentUser.faculty || "",
   })
+
+  // Load addresses from API on mount
+  useEffect(() => {
+    const loadAddresses = async () => {
+      try {
+        setIsLoadingAddresses(true)
+        setAddressError(null)
+        const response = await addressApi.getAddresses()
+        const data = Array.isArray(response?.data) ? response.data : response
+        setAddresses(data || [])
+      } catch (err) {
+        setAddressError(err instanceof Error ? err.message : "Gagal memuat alamat")
+        setAddresses([])
+      } finally {
+        setIsLoadingAddresses(false)
+      }
+    }
+
+    loadAddresses()
+  }, [])
 
   useEffect(() => {
     setProfileForm({
@@ -60,6 +84,11 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordError, setPasswordError] = useState("")
   const [showPasswordSuccess, setShowPasswordSuccess] = useState(false)
+  
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false)
+  const [isSavingAddress, setIsSavingAddress] = useState(false)
 
   const passwordValidations = {
     minLength: passwordForm.newPassword.length >= 8,
@@ -89,46 +118,112 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     setShowAddressDialog(true)
   }
 
-  const handleSaveAddress = () => {
-    if (editingAddress) {
-      setAddresses((previous) => previous.map((address) => (
-        address.id === editingAddress.id
-          ? { ...address, ...addressForm }
-          : addressForm.isPrimary ? { ...address, isPrimary: false } : address
-      )))
-    } else {
-      const newAddress: AddressType = {
-        id: `addr-${Date.now()}`,
-        userId: currentUser.id,
-        ...addressForm,
-        createdAt: new Date().toISOString(),
-      }
-
-      if (addressForm.isPrimary) {
-        setAddresses((previous) => [...previous.map((address) => ({ ...address, isPrimary: false })), newAddress])
+  const handleSaveAddress = async () => {
+    try {
+      setIsSavingAddress(true)
+      setAddressError(null)
+      
+      if (editingAddress) {
+        // Update existing address
+        const updatedAddress = await addressApi.updateAddress(editingAddress.id, {
+          label: addressForm.label,
+          recipient: addressForm.recipient,
+          phone: addressForm.phone,
+          address: addressForm.address,
+          notes: addressForm.notes,
+          is_primary: addressForm.isPrimary,
+        })
+        
+        // If setting as primary, update other addresses
+        if (addressForm.isPrimary) {
+          setAddresses((previous) =>
+            previous.map((address) =>
+              address.id === editingAddress.id
+                ? { ...address, ...addressForm }
+                : { ...address, isPrimary: false }
+            )
+          )
+        } else {
+          setAddresses((previous) =>
+            previous.map((address) =>
+              address.id === editingAddress.id ? { ...address, ...addressForm } : address
+            )
+          )
+        }
       } else {
-        setAddresses((previous) => [...previous, newAddress])
+        // Create new address
+        const newAddressData = {
+          label: addressForm.label,
+          recipient: addressForm.recipient,
+          phone: addressForm.phone,
+          address: addressForm.address,
+          notes: addressForm.notes,
+          is_primary: addressForm.isPrimary,
+        }
+        
+        const createdAddress = await addressApi.createAddress(newAddressData)
+        
+        if (addressForm.isPrimary) {
+          setAddresses((previous) => [
+            ...previous.map((address) => ({ ...address, isPrimary: false })),
+            createdAddress,
+          ])
+        } else {
+          setAddresses((previous) => [...previous, createdAddress])
+        }
       }
-    }
 
-    setShowAddressDialog(false)
-    setEditingAddress(null)
+      setShowAddressDialog(false)
+      setEditingAddress(null)
+      setAddressForm({ label: "", recipient: "", phone: "", address: "", notes: "", isPrimary: false })
+    } catch (err) {
+      setAddressError(err instanceof Error ? err.message : "Gagal menyimpan alamat")
+    } finally {
+      setIsSavingAddress(false)
+    }
   }
 
-  const handleDeleteAddress = () => {
+  const handleDeleteAddress = async () => {
     if (!addressToDelete) return
 
-    setAddresses((previous) => previous.filter((address) => address.id !== addressToDelete))
-    setShowDeleteAddressDialog(false)
-    setAddressToDelete(null)
+    try {
+      setIsSavingAddress(true)
+      setAddressError(null)
+      await addressApi.deleteAddress(addressToDelete)
+      
+      setAddresses((previous) => previous.filter((address) => address.id !== addressToDelete))
+      setShowDeleteAddressDialog(false)
+      setAddressToDelete(null)
+    } catch (err) {
+      setAddressError(err instanceof Error ? err.message : "Gagal menghapus alamat")
+      setShowDeleteAddressDialog(false)
+      setAddressToDelete(null)
+    } finally {
+      setIsSavingAddress(false)
+    }
   }
 
-  const handleSaveProfile = () => {
-    setShowProfileSuccess(true)
-    setTimeout(() => setShowProfileSuccess(false), 3000)
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoadingProfile(true)
+      setProfileError(null)
+      
+      await userApi.updateProfile({
+        name: profileForm.name,
+        phone: profileForm.phone,
+        bio: profileForm.bio,
+      })
+      
+      setShowProfileSuccess(true)
+      setTimeout(() => setShowProfileSuccess(false), 3000)
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : "Gagal menyimpan profil")
+    } finally {
+      setIsLoadingProfile(false)
+    }
   }
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!passwordForm.currentPassword) {
       setPasswordError("Masukkan password saat ini")
       return
@@ -142,11 +237,21 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
       return
     }
 
-    setPasswordError("")
-    setShowPasswordDialog(false)
-    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" })
-    setShowPasswordSuccess(true)
-    setTimeout(() => setShowPasswordSuccess(false), 3000)
+    try {
+      setIsLoadingPassword(true)
+      setPasswordError("")
+      
+      await userApi.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
+      
+      setShowPasswordDialog(false)
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" })
+      setShowPasswordSuccess(true)
+      setTimeout(() => setShowPasswordSuccess(false), 3000)
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "Gagal mengubah password")
+    } finally {
+      setIsLoadingPassword(false)
+    }
   }
 
   return {
@@ -183,5 +288,11 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     handleDeleteAddress,
     handleSaveProfile,
     handleChangePassword,
+    isLoadingAddresses,
+    addressError,
+    isLoadingProfile,
+    profileError,
+    isLoadingPassword,
+    isSavingAddress,
   }
 }

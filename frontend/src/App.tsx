@@ -28,6 +28,8 @@ function AppContent() {
   const [authReady, setAuthReady] = useState(false);
   // REVISI: Flag untuk mencegah ProtectedRoute redirect ke /unauthorized saat logout berlangsung
   const isLoggingOutRef = useRef(false);
+  // REVISI: Flag untuk mencegah infinite redirect loop saat user tidak punya faculty
+  const hasRedirectedToFacultyRef = useRef(false);
   const [sellerProductCount, setSellerProductCount] = useState(
     getInitialSellerProductCount(),
   );
@@ -40,7 +42,7 @@ function AppContent() {
   } | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
-  const syncAuthUser = async () => {
+  const syncAuthUser = async (): Promise<boolean> => {
     try {
       const user = await userApi.me();
       if (user) {
@@ -48,17 +50,20 @@ function AppContent() {
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
         void useCartStore.getState().fetchCount();
+        return true;
       } else {
         setAuthUser(null);
         setIsLoggedIn(false);
         setUserRole(null);
         useCartStore.getState().setCount(0);
+        return false;
       }
-    } catch {
+    } catch (err) {
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
       useCartStore.getState().setCount(0);
+      return false;
     } finally {
       setAuthReady(true);
     }
@@ -69,10 +74,10 @@ function AppContent() {
     
     // Initialize Echo for real-time updates
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).Echo = getEcho();
-      console.log("[Echo] Initialized successfully");
     } catch (err) {
-      console.warn("[Echo] Failed to initialize:", err);
+      // Echo optional - Reverb not configured in development
     }
   }, []);
 
@@ -90,6 +95,59 @@ function AppContent() {
     window.addEventListener("unauthorized", handleUnauthorized);
     return () => window.removeEventListener("unauthorized", handleUnauthorized);
   }, [navigate]);
+
+  // ── Handle Google OAuth redirect ──
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const userName = searchParams.get("userName");
+    const userEmail = searchParams.get("userEmail");
+    const requiresFacultySelection = searchParams.get("requiresFacultySelection") === "true";
+
+    if (userName || userEmail) {
+      setGoogleUserData({
+        userName: userName || undefined,
+        userEmail: userEmail || undefined,
+      });
+
+      if (requiresFacultySelection) {
+        navigate("/faculty-selection");
+      }
+
+      // Clean up URL
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location.search, navigate]);
+
+  // [PROTECTION #2] Check if user is logged in but has no faculty - enforce faculty selection
+  useEffect(() => {
+    if (!authReady) return;
+
+    if (isLoggedIn && authUser && userRole === "user" && !authUser.faculty) {
+      // Already on faculty-selection? Make sure googleUserData is set
+      if (location.pathname === "/faculty-selection") {
+        if (!googleUserData?.userName) {
+          setGoogleUserData({
+            userName: authUser.name,
+            userEmail: authUser.email,
+          });
+        }
+      } else {
+        // Not on faculty-selection? Redirect there (but only once!)
+        if (!hasRedirectedToFacultyRef.current) {
+          hasRedirectedToFacultyRef.current = true;
+          setGoogleUserData({
+            userName: authUser.name,
+            userEmail: authUser.email,
+          });
+          navigate("/faculty-selection");
+        }
+      }
+    } else {
+      // User either not logged in, has faculty, or is admin - reset redirect flag
+      hasRedirectedToFacultyRef.current = false;
+    }
+  }, [isLoggedIn, authReady, authUser?.id, authUser?.faculty, userRole, location.pathname, navigate, googleUserData]);
 
   // ── Handle Navigation ──
   // Gabungan: format rapi dari main + chat support dari dev-abdu
@@ -177,7 +235,10 @@ function AppContent() {
     navigate("/");
     try {
       await userApi.logout();
-    } catch {}
+    } catch (err) {
+      // Silent error
+      console.debug("Logout error (ignored):", err);
+    }
     setGoogleUserData(null);
     setAuthUser(null);
     setIsLoggedIn(false);

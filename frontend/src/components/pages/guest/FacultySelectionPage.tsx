@@ -37,6 +37,31 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail }: F
   // Display name from Google account or default
   const displayName = userName || "Mahasiswa Baru";
 
+  // [PROTECTION #3] Check if user already has faculty on mount
+  // If they do, they shouldn't be on this page
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkUserFacultyStatus = async () => {
+      try {
+        const user = await userApi.me();
+        
+        if (isMounted && user?.faculty) {
+          // User already has faculty, redirect home
+          window.location.href = "/";
+        }
+      } catch (err) {
+        // Not authenticated - stay on page and show form
+      }
+    };
+
+    checkUserFacultyStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -142,7 +167,7 @@ export default function FacultySelectionPage({ onLogin, userName, userEmail }: F
           {/* Info message */}
           <div className="text-center">
             <p className="text-slate-600 dark:text-slate-400">
-              {userEmail ? `${userEmail} perlu memilih fakultas sebelum lanjut.` : "Untuk menyelesaikan pendaftaran, silakan pilih fakultas Anda:"}
+              {displayName} perlu memilih fakultas sebelum lanjut.
             </p>
           </div>
 

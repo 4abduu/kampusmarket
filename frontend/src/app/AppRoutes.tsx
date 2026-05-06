@@ -164,14 +164,24 @@ function PublicRoute({
   userRole,
   element,
   allowLoggedIn = false,
+  currentUser,
 }: {
   isLoggedIn: boolean;
   userRole: "user" | "admin" | null;
   element: React.ReactElement;
   allowLoggedIn?: boolean;
+  currentUser?: User | null;
 }): React.ReactElement {
   const location = useLocation();
-  if (isLoggedIn && !allowLoggedIn) {
+  
+  // REVISI: Allow logged-in users WITHOUT faculty to access /faculty-selection page
+  const isAccessingFacultySelectionWithoutFaculty = 
+    location.pathname === "/faculty-selection" && 
+    isLoggedIn && 
+    currentUser && 
+    !currentUser.faculty;
+  
+  if (isLoggedIn && !allowLoggedIn && !isAccessingFacultySelectionWithoutFaculty) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
     // ✅ Dari dev-abdu: cegah redirect ke protected route setelah login
     let previousPath =
@@ -315,6 +325,7 @@ export default function AppRoutes({
             <PublicRoute
               isLoggedIn={isLoggedIn}
               userRole={userRole}
+              currentUser={currentUser}
               element={
                 <FacultySelectionPage
                   onLogin={onLogin}

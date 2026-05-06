@@ -255,10 +255,13 @@ export default function UserDashboardPage({
                 addresses={settings.addresses}
                 handleEditAddress={settings.handleEditAddress}
                 setAddressToDelete={settings.setAddressToDelete}
-                setShowDeleteAddressDialog={
-                  settings.setShowDeleteAddressDialog
-                }
+                setShowDeleteAddressDialog={settings.setShowDeleteAddressDialog}
                 getFacultyName={getFacultyName}
+                isLoadingProfile={settings.isLoadingProfile}
+                profileError={settings.profileError}
+                isLoadingAddresses={settings.isLoadingAddresses}
+                addressError={settings.addressError}
+                showProfileSuccess={settings.showProfileSuccess}
               />
             )}
           </main>
@@ -301,6 +304,8 @@ export default function UserDashboardPage({
         isPasswordValid={settings.isPasswordValid}
         passwordError={settings.passwordError}
         handleChangePassword={settings.handleChangePassword}
+        isLoadingPassword={settings.isLoadingPassword}
+        isSavingAddress={settings.isSavingAddress}
         showTopUpDialog={wallet.showTopUpDialog}
         setShowTopUpDialog={wallet.setShowTopUpDialog}
         quickAmounts={wallet.quickAmounts}

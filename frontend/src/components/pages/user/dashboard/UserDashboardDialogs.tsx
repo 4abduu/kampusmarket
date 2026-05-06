@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { mockAddresses, mockOrders, type Address as AddressType, type Product } from "@/lib/mock-data"
 import { BANK_OPTIONS, EWALLET_OPTIONS } from "@/components/pages/user/dashboard/constants"
-import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck } from "lucide-react"
+import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2 } from "lucide-react"
 import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 import AddProductImagesSection from "@/components/pages/user/add-product/AddProductImagesSection"
 
@@ -91,7 +91,10 @@ type Props = {
   passwordValidations: PasswordValidations
   isPasswordValid: boolean
   passwordError: string
-  handleChangePassword: () => void
+  handleChangePassword: () => Promise<void>
+  isLoadingPassword?: boolean
+
+  isSavingAddress?: boolean
 
   showTopUpDialog: boolean
   setShowTopUpDialog: (open: boolean) => void
@@ -174,6 +177,8 @@ export default function UserDashboardDialogs({
   isPasswordValid,
   passwordError,
   handleChangePassword,
+  isLoadingPassword = false,
+  isSavingAddress = false,
   showTopUpDialog,
   setShowTopUpDialog,
   quickAmounts,
@@ -616,8 +621,11 @@ export default function UserDashboardDialogs({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddressDialog(false)}>Batal</Button>
-            <Button className="bg-primary-600 hover:bg-primary-700" onClick={handleSaveAddress}>Simpan</Button>
+            <Button variant="outline" onClick={() => setShowAddressDialog(false)} disabled={isSavingAddress}>Batal</Button>
+            <Button className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleSaveAddress} disabled={isSavingAddress || !addressForm.label || !addressForm.recipient || !addressForm.phone || !addressForm.address}>
+              {isSavingAddress ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isSavingAddress ? "Menyimpan..." : "Simpan"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -679,8 +687,11 @@ export default function UserDashboardDialogs({
             {passwordError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{passwordError}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Batal</Button>
-            <Button className="bg-primary-600 hover:bg-primary-700" onClick={handleChangePassword} disabled={!isPasswordValid || passwordForm.newPassword !== passwordForm.confirmPassword}>Ubah Password</Button>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={isLoadingPassword}>Batal</Button>
+            <Button className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleChangePassword} disabled={!isPasswordValid || passwordForm.newPassword !== passwordForm.confirmPassword || isLoadingPassword}>
+              {isLoadingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isLoadingPassword ? "Mengubah..." : "Ubah Password"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

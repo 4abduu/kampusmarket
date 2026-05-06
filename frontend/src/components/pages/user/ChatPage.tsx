@@ -127,6 +127,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       }
     } else {
       // User login — muat ulang chat dari server
+      // [REVISI] Pastikan chats selalu dimuat ulang saat user login atau currentUserId berubah
       void loadChats();
     }
   }, [currentUserId, loadChats]);

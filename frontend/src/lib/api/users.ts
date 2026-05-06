@@ -123,7 +123,7 @@ export const userApi = {
    * Update user profile.
    */
   async updateProfile(data: Partial<User>): Promise<User> {
-    return request("/api/users/profile", {
+    return request("/api/profile", {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -136,6 +136,20 @@ export const userApi = {
     return request("/api/users/addresses", {
       method: "PUT",
       body: JSON.stringify(addressData),
+    });
+  },
+
+  /**
+   * Change user password.
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    return request("/api/auth/password", {
+      method: "PUT",
+      body: JSON.stringify({
+        currentPassword,
+        password: newPassword,
+        password_confirmation: newPassword,
+      }),
     });
   },
 

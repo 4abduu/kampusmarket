@@ -73,6 +73,8 @@ class AuthController extends Controller
             Log::info('Auth register success', [
                 'user_id' => $user->id,
                 'email' => $user->email,
+                'has_faculty' => $user->faculty_id ? 'yes' : 'no',
+                'faculty_id' => $user->faculty_id,
             ]);
 
             $response = response()->json([
@@ -132,6 +134,8 @@ class AuthController extends Controller
             Log::info('Auth login success', [
                 'user_id' => $user->id,
                 'email' => $user->email,
+                'has_faculty' => $user->faculty_id ? 'yes' : 'no',
+                'faculty_id' => $user->faculty_id,
             ]);
 
             $response = response()->json([
@@ -365,10 +369,38 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'is_new_user' => $isNewUser,
                 'needs_faculty_selection' => $needsFacultySelection,
+                'has_faculty_id' => $user->faculty_id ? 'yes' : 'no',
             ]);
 
+            // [PROTECTION #1B] Backend always validates faculty requirement
+            // Build redirect URL with query parameters for frontend to handle faculty selection
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            
+            // Always redirect through faculty-selection endpoint which will handle routing
+            // If user already has faculty, the endpoint will redirect to home
+            // If user doesn't have faculty, the endpoint will show faculty selection UI
+            $redirectPath = $needsFacultySelection ? '/faculty-selection' : '/';
+            
+            $query = http_build_query([
+                'requiresFacultySelection' => $needsFacultySelection ? 'true' : 'false',
+                'isNewUser' => $isNewUser ? 'true' : 'false',
+                'userName' => $user->name,
+                'userEmail' => $user->email,
+            ]);
+            
+            $redirectUrl = $frontendUrl . $redirectPath;
+            if ($needsFacultySelection) {
+                $redirectUrl .= '?' . $query;
+            }
+            
+            Log::info('Auth Google callback redirect', [
+                'user_id' => $user->id,
+                'redirect_url' => $redirectUrl,
+                'needs_faculty' => $needsFacultySelection,
+            ]);
+            
             // Set HttpOnly cookies
-            $response = redirect(env('FRONTEND_URL', 'http://localhost:5173') . ($needsFacultySelection ? '/faculty-selection' : '/'));
+            $response = redirect($redirectUrl);
             return $this->attachAuthCookies($response, $token, $needsFacultySelection, $isNewUser);
         } catch (\Exception $e) {
             Log::error('Auth Google callback failed with exception', [
@@ -521,6 +553,14 @@ class AuthController extends Controller
                 'data' => null,
             ], 401);
         }
+
+        // [PROTECTION #1C] Log faculty status on every auth check
+        Log::debug('Auth /me endpoint success', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'has_faculty' => $user->faculty_id ? 'yes' : 'no',
+            'faculty_id' => $user->faculty_id,
+        ]);
 
         return response()->json([
             'success' => true,
