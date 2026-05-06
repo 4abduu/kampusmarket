@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertCircle, Edit, Lock, MapPin, Plus, Save, Trash2, User, Loader2 } from "lucide-react"
 import type { Address as AddressType } from "@/lib/mock-data"
+import AccountCompletionSettings from "@/components/pages/user/AccountCompletionSettings"
 
 type ProfileForm = {
   name: string
@@ -39,6 +40,7 @@ type Props = {
   isLoadingAddresses?: boolean
   addressError?: string | null
   showProfileSuccess?: boolean
+  onNavigate?: (page: string) => void
 }
 
 export default function UserDashboardSettingsTab({
@@ -58,6 +60,7 @@ export default function UserDashboardSettingsTab({
   isLoadingAddresses = false,
   addressError = null,
   showProfileSuccess = false,
+  onNavigate = () => {},
 }: Props) {
   return (
     <>
@@ -211,6 +214,8 @@ export default function UserDashboardSettingsTab({
           )}
         </CardContent>
       </Card>
+
+      <AccountCompletionSettings onNavigate={onNavigate} />
     </>
   )
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import {
   EMAIL_VERIFICATION_CODE_LENGTH,
-  EMAIL_VERIFICATION_DEMO_CODE,
   maskEmail,
 } from "@/components/pages/guest/email-verification/emailVerification.utils";
+import { API_BASE_URL } from "@/lib/config";
 
 interface EmailVerificationPageProps {
   onNavigate: (page: string) => void;
@@ -36,6 +36,16 @@ export default function EmailVerificationPage({
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
+  const [userEmail, setUserEmail] = useState(email);
+
+  useEffect(() => {
+    // If email is passed via props, use it
+    if (email && email !== "user@email.com") {
+      setUserEmail(email);
+      // Optionally send verification OTP on mount
+      sendVerificationOtp(email);
+    }
+  }, [email]);
 
   // Handle input change for OTP
   const handleCodeChange = (index: number, value: string) => {
@@ -66,35 +76,84 @@ export default function EmailVerificationPage({
     }
   };
 
+  // Send verification OTP
+  const sendVerificationOtp = async (emailToVerify: string = userEmail) => {
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/send-email-verification-otp`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email: emailToVerify }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Gagal mengirim kode verifikasi");
+        return;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim kode");
+    }
+  };
+
   // Verify code
-  const handleVerify = (verificationCode: string) => {
+  const handleVerify = async (verificationCode?: string) => {
+    const codeToVerify = verificationCode || code.join("");
+    
+    if (codeToVerify.length !== EMAIL_VERIFICATION_CODE_LENGTH) {
+      setError("Kode verifikasi harus 6 digit");
+      return;
+    }
+
     setIsVerifying(true);
     setError("");
 
-    // Simulate API call
-    setTimeout(() => {
-      // For demo: accept "123456" as valid code
-      if (verificationCode === EMAIL_VERIFICATION_DEMO_CODE) {
-        setIsVerified(true);
-        setIsVerifying(false);
-      } else {
-        setError("Kode verifikasi salah. Silakan coba lagi.");
-        setIsVerifying(false);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-email-with-otp`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ 
+          email: userEmail, 
+          otp: codeToVerify 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Kode verifikasi salah. Silakan coba lagi.");
         setCode(["", "", "", "", "", ""]);
         document.getElementById("code-0")?.focus();
+        setIsVerifying(false);
+        return;
       }
-    }, 1500);
+
+      setIsVerified(true);
+      setIsVerifying(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat verifikasi");
+      setIsVerifying(false);
+    }
   };
 
   // Resend code
-  const handleResend = () => {
+  const handleResend = async () => {
     setIsResending(true);
     setResendCooldown(60);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsResending(false);
-    }, 1500);
+    await sendVerificationOtp(userEmail);
+    
+    setIsResending(false);
 
     // Countdown timer
     const timer = setInterval(() => {
@@ -118,7 +177,7 @@ export default function EmailVerificationPage({
   };
 
   // Masked email display
-  const maskedEmail = maskEmail(email);
+  const maskedEmail = maskEmail(userEmail);
 
   if (isVerified) {
     return (
@@ -164,6 +223,15 @@ export default function EmailVerificationPage({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Spam Warning */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Email tidak masuk?</p>
+              <p className="text-xs mt-1">Silakan cek folder <strong>Spam</strong> atau <strong>Promosi</strong> di email kamu</p>
+            </div>
+          </div>
+
           {/* OTP Input */}
           <div className="space-y-2">
             <Label className="text-center block">Masukkan Kode Verifikasi</Label>
@@ -182,12 +250,13 @@ export default function EmailVerificationPage({
                     error ? "border-red-500" : ""
                   }`}
                   disabled={isVerifying}
+                  autoFocus={index === 0}
                 />
               ))}
             </div>
             {error && (
               <p className="text-sm text-red-500 text-center flex items-center justify-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 {error}
               </p>
             )}
@@ -196,7 +265,7 @@ export default function EmailVerificationPage({
           {/* Verify Button */}
           <Button
             className="w-full bg-primary-600 hover:bg-primary-700"
-            onClick={() => handleVerify(code.join(""))}
+            onClick={() => handleVerify()}
             disabled={code.some(d => d === "") || isVerifying}
           >
             {isVerifying ? (
@@ -208,14 +277,6 @@ export default function EmailVerificationPage({
               "Verifikasi"
             )}
           </Button>
-
-          {/* Demo Hint */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
-            <p className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>Demo: Gunakan kode <strong>{EMAIL_VERIFICATION_DEMO_CODE}</strong> untuk verifikasi</span>
-            </p>
-          </div>
 
           {/* Resend Code */}
           <div className="text-center space-y-2">
@@ -240,7 +301,6 @@ export default function EmailVerificationPage({
             </Button>
           </div>
 
-                <span>Demo: Gunakan kode <strong>{EMAIL_VERIFICATION_DEMO_CODE}</strong> untuk verifikasi</span>
           <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg space-y-2">
             <p className="text-sm font-medium flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-primary-600" />

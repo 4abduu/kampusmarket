@@ -222,7 +222,18 @@ function AppContent() {
     setGoogleUserData(null);
     setIsLoggedIn(true);
     setUserRole(role);
-    void syncAuthUser();
+    setAuthReady(true);
+    // Sync user data in background tanpa override isLoggedIn jika gagal
+    // karena cookie sudah di-set oleh backend saat login
+    userApi.me().then((user) => {
+      if (user) {
+        setAuthUser(user);
+        setUserRole(user.role === "admin" ? "admin" : "user");
+        void useCartStore.getState().fetchCount();
+      }
+    }).catch(() => {
+      // Ignore - user tetap login, me() akan dicoba ulang saat refresh
+    });
     navigate(role === "admin" ? "/admin" : "/");
   };
 

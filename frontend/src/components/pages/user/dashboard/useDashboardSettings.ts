@@ -125,7 +125,7 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
       
       if (editingAddress) {
         // Update existing address
-        const updatedAddress = await addressApi.updateAddress(editingAddress.id, {
+        await addressApi.updateAddress(editingAddress.id, {
           label: addressForm.label,
           recipient: addressForm.recipient,
           phone: addressForm.phone,

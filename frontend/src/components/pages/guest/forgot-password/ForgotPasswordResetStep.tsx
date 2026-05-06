@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 
 interface ForgotPasswordResetStepProps {
   newPassword: string;
@@ -57,21 +57,34 @@ export default function ForgotPasswordResetStep({
         </div>
 
         {newPassword && (
-          <div className="space-y-1">
-            <div className="flex gap-1">
-              {["uppercase", "lowercase", "number", "length"].map((criteria) => {
-                const isValid =
-                  (criteria === "uppercase" && /[A-Z]/.test(newPassword)) ||
-                  (criteria === "lowercase" && /[a-z]/.test(newPassword)) ||
-                  (criteria === "number" && /[0-9]/.test(newPassword)) ||
-                  (criteria === "length" && newPassword.length >= 8);
-
-                return (
-                  <div key={criteria} className={`h-1 flex-1 rounded-full transition-colors ${isValid ? "bg-primary-500" : "bg-muted"}`} />
-                );
-              })}
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Password harus memenuhi syarat:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className={`flex items-center gap-2 text-xs transition-colors ${newPassword.length >= 8 ? "text-primary-600" : "text-muted-foreground"}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${newPassword.length >= 8 ? "bg-primary-100" : "bg-slate-100"}`}>
+                  {newPassword.length >= 8 ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                </div>
+                Minimal 8 karakter
+              </div>
+              <div className={`flex items-center gap-2 text-xs transition-colors ${/[0-9]/.test(newPassword) ? "text-primary-600" : "text-muted-foreground"}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[0-9]/.test(newPassword) ? "bg-primary-100" : "bg-slate-100"}`}>
+                  {/[0-9]/.test(newPassword) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                </div>
+                1 Angka
+              </div>
+              <div className={`flex items-center gap-2 text-xs transition-colors ${/[a-z]/.test(newPassword) ? "text-primary-600" : "text-muted-foreground"}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[a-z]/.test(newPassword) ? "bg-primary-100" : "bg-slate-100"}`}>
+                  {/[a-z]/.test(newPassword) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                </div>
+                1 Huruf kecil
+              </div>
+              <div className={`flex items-center gap-2 text-xs transition-colors ${/[A-Z]/.test(newPassword) ? "text-primary-600" : "text-muted-foreground"}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${/[A-Z]/.test(newPassword) ? "bg-primary-100" : "bg-slate-100"}`}>
+                  {/[A-Z]/.test(newPassword) ? <Check className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                </div>
+                1 Huruf besar
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">Gunakan 8+ karakter dengan huruf besar, huruf kecil, dan angka</p>
           </div>
         )}
       </div>

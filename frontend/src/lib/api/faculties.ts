@@ -45,12 +45,12 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 
 export const facultiesApi = {
   async listAdmin(): Promise<Faculty[]> {
-    const data = await request<FacultyApiItem[]>("/api/admin/faculties");
+    const data = await request<FacultyApiItem[]>("/admin/faculties");
     return Array.isArray(data) ? data.map(mapFacultyFromApi) : [];
   },
 
   async create(input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive">): Promise<Faculty> {
-    const data = await request<FacultyApiItem>("/api/admin/faculties", {
+    const data = await request<FacultyApiItem>("/admin/faculties", {
       method: "POST",
       body: JSON.stringify({
         code: input.code,

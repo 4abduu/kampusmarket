@@ -60,17 +60,12 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
     }
 
     if (formData.password.length < 8 || !/[0-9]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/[A-Z]/.test(formData.password)) {
-      setError("Password minimal 8 karakter");
+      setError("Password minimal 8 karakter, minimal 1 huruf besar, huruf kecil, dan angka");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Password tidak cocok");
-      return;
-    }
-
-    if (!formData.faculty_id) {
-      setError("Pilih fakultas");
       return;
     }
 
@@ -95,7 +90,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
           phone: formData.phone,
           password: formData.password,
           password_confirmation: formData.confirmPassword,
-          facultyId: formData.faculty_id,
+          facultyId: formData.faculty_id || null,
         }),
       });
 
@@ -239,11 +234,10 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               </div>
             </div>
 
-            {/* Faculty Selection - ONCE ONLY */}
+            {/* Faculty Selection - Optional during registration */}
             <div className="space-y-2">
               <Label htmlFor="faculty_id">
-                Fakultas
-                <span className="text-amber-600 ml-1 text-xs">⚠️ Hanya bisa dipilih sekali!</span>
+                Fakultas <span className="text-muted-foreground text-xs">(Opsional)</span>
               </Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -255,17 +249,16 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
                   value={formData.faculty_id}
                   onChange={handleInputChange}
                   disabled={isLoading}
-                  required
                 >
-                  <option value="">Pilih fakultas...</option>
+                  <option value="">Pilih fakultas (atau pilih nanti)</option>
                   {FACULTIES.map((f) => (
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </select>
               </div>
-              <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg text-xs text-amber-700">
+              <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-xs text-blue-700 dark:text-blue-300">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>Fakultas bersifat permanen dan tidak dapat diubah setelah pendaftaran.</span>
+                <span>Anda dapat memilih atau mengubah fakultas nanti di pengaturan akun.</span>
               </div>
             </div>
 

@@ -28,7 +28,7 @@ type FacultyOption = {
   name: string;
 };
 
-export default function FacultySelectionPage({ onLogin, userName, userEmail }: FacultySelectionPageProps) {
+export default function FacultySelectionPage({ onLogin, userName }: FacultySelectionPageProps) {
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>(fallbackFaculties);

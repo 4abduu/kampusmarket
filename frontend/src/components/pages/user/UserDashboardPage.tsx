@@ -262,6 +262,7 @@ export default function UserDashboardPage({
                 isLoadingAddresses={settings.isLoadingAddresses}
                 addressError={settings.addressError}
                 showProfileSuccess={settings.showProfileSuccess}
+                onNavigate={onNavigate}
               />
             )}
           </main>

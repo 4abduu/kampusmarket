@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Package } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockOtps, type PasswordResetOtp } from "@/lib/mock-data";
 import ForgotPasswordEmailStep from "@/components/pages/guest/forgot-password/ForgotPasswordEmailStep";
 import ForgotPasswordOtpStep from "@/components/pages/guest/forgot-password/ForgotPasswordOtpStep";
 import ForgotPasswordProgress from "@/components/pages/guest/forgot-password/ForgotPasswordProgress";
@@ -18,6 +17,7 @@ import {
   validateEmailFormat,
   validatePasswordStrength,
 } from "@/components/pages/guest/forgot-password/forgotPassword.utils";
+import { API_BASE_URL } from "@/lib/config";
 
 interface ForgotPasswordPageProps {
   onNavigate: (page: string) => void;
@@ -42,15 +42,27 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
 
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(OTP_EXPIRATION_SECONDS);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [canResend, setCanResend] = useState(false);
-  const [currentOtpData, setCurrentOtpData] = useState<PasswordResetOtp | null>(null);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | undefined;
+    let expiryTimer: ReturnType<typeof setInterval> | undefined;
+    let resendTimer: ReturnType<typeof setInterval> | undefined;
 
     if (step === "otp" && countdown > 0) {
-      timer = setInterval(() => {
+      expiryTimer = setInterval(() => {
         setCountdown((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    if (step === "otp" && resendCooldown > 0) {
+      resendTimer = setInterval(() => {
+        setResendCooldown((prev) => {
           if (prev <= 1) {
             setCanResend(true);
             return 0;
@@ -61,9 +73,10 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     }
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (expiryTimer) clearInterval(expiryTimer);
+      if (resendTimer) clearInterval(resendTimer);
     };
-  }, [step, countdown]);
+  }, [step, countdown, resendCooldown]);
 
   const formatCountdown = useCallback((seconds: number) => formatCountdownValue(seconds), []);
 
@@ -82,23 +95,36 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     }
 
     setIsSendingOtp(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const newOtp: PasswordResetOtp = {
-      id: `otp-${Date.now()}`,
-      email,
-      otp: "123456",
-      expiresAt: new Date(Date.now() + OTP_EXPIRATION_SECONDS * 1000).toISOString(),
-      isUsed: false,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    setCurrentOtpData(newOtp);
-    setCountdown(OTP_EXPIRATION_SECONDS);
-    setCanResend(false);
-    setOtpSent(true);
-    setIsSendingOtp(false);
-    setStep("otp");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setEmailError(data.message || "Gagal mengirim kode OTP");
+        setIsSendingOtp(false);
+        return;
+      }
+
+      setCountdown(OTP_EXPIRATION_SECONDS);
+      setResendCooldown(60); // 60 seconds resend cooldown
+      setCanResend(false);
+      setOtpSent(true);
+      setStep("otp");
+    } catch (error) {
+      setEmailError(error instanceof Error ? error.message : "Terjadi kesalahan");
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const handleResendOtp = async () => {
@@ -107,21 +133,33 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     setOtpError("");
     setOtp("");
     setIsSendingOtp(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const newOtp: PasswordResetOtp = {
-      id: `otp-${Date.now()}`,
-      email,
-      otp: "123456",
-      expiresAt: new Date(Date.now() + OTP_EXPIRATION_SECONDS * 1000).toISOString(),
-      isUsed: false,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    setCurrentOtpData(newOtp);
-    setCountdown(OTP_EXPIRATION_SECONDS);
-    setCanResend(false);
-    setIsSendingOtp(false);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setOtpError(data.message || "Gagal mengirim ulang kode OTP");
+        return;
+      }
+
+      setCountdown(OTP_EXPIRATION_SECONDS);
+      setResendCooldown(60); // 60 seconds resend cooldown
+      setCanResend(false);
+    } catch (error) {
+      setOtpError(error instanceof Error ? error.message : "Terjadi kesalahan");
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -133,27 +171,46 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
       return;
     }
 
-    setIsVerifyingOtp(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const validOtp =
-      mockOtps.find((o) => o.email === email && o.otp === otp && !o.isUsed) ||
-      (currentOtpData && currentOtpData.otp === otp && !currentOtpData.isUsed);
-
-    if (!validOtp && otp !== "123456") {
-      setOtpError("Kode OTP tidak valid atau sudah kadaluarsa");
-      setIsVerifyingOtp(false);
+    if (!email || !email.trim()) {
+      setOtpError("Email tidak ditemukan. Silakan mulai dari awal.");
       return;
     }
 
     if (countdown === 0) {
       setOtpError("Kode OTP sudah kadaluarsa. Silakan minta kode baru.");
-      setIsVerifyingOtp(false);
       return;
     }
 
-    setIsVerifyingOtp(false);
-    setStep("reset");
+    setIsVerifyingOtp(true);
+
+    try {
+      console.log("[OTP Verify] Sending:", { email, otp }); // Debug log
+      
+      const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await response.json();
+      console.log("[OTP Verify] Response:", response.status, data); // Debug log
+
+      if (!response.ok) {
+        setOtpError(data.message || "Kode OTP tidak valid");
+        return;
+      }
+
+      setStep("reset");
+    } catch (error) {
+      console.error("[OTP Verify] Error:", error); // Debug log
+      setOtpError(error instanceof Error ? error.message : "Terjadi kesalahan");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
   };
 
   const handleResetSubmit = async (e: React.FormEvent) => {
@@ -172,10 +229,31 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     }
 
     setIsResettingPassword(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    setIsResettingPassword(false);
-    setStep("success");
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, otp, password: newPassword, password_confirmation: confirmPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPasswordError(data.message || "Gagal mereset password");
+        return;
+      }
+
+      setStep("success");
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : "Terjadi kesalahan");
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   return (
@@ -230,6 +308,7 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
               otpError={otpError}
               otpSent={otpSent}
               countdown={countdown}
+              resendCooldown={resendCooldown}
               canResend={canResend}
               isSendingOtp={isSendingOtp}
               isVerifyingOtp={isVerifyingOtp}

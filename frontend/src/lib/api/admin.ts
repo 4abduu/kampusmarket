@@ -55,19 +55,19 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 // ============================================================
 export const adminDashboardApi = {
   async getStats() {
-    return request("/api/admin/dashboard/stats", {
+    return request("/admin/dashboard/stats", {
       method: "GET",
     });
   },
 
   async getRevenueStats() {
-    return request("/api/admin/dashboard/revenue", {
+    return request("/admin/dashboard/revenue", {
       method: "GET",
     });
   },
 
   async getActivitySummary() {
-    return request("/api/admin/dashboard/activity", {
+    return request("/admin/dashboard/activity", {
       method: "GET",
     });
   },

@@ -1,4 +1,5 @@
 import type { User } from "@/lib/mock-data";
+import { API_BASE_URL } from "@/lib/config";
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -17,7 +18,8 @@ const parseJson = async <T>(response: Response): Promise<T> => {
  * Token is automatically injected from cookies by the backend middleware.
  */
 const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  const response = await fetch(fullUrl, {
     credentials: "include", // Important: send cookies with request
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +35,7 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
     // Only log error if not 401 (unauthorized)
     if (response.status !== 401) {
       // eslint-disable-next-line no-console
-      console.error(`[API] ${url} failed:`, payload?.message || response.statusText);
+      console.error(`[API] ${fullUrl} failed:`, payload?.message || response.statusText);
     }
     throw new Error(payload?.message || "Request failed");
   }
@@ -48,7 +50,7 @@ export const userApi = {
    */
   async me(): Promise<User | null> {
     try {
-      const user = await request<User>("/api/auth/me");
+      const user = await request<User>("/auth/me");
       return user || null;
     } catch (error) {
       // Not authenticated
@@ -63,7 +65,7 @@ export const userApi = {
     email: string,
     password: string
   ): Promise<{ user: User; token: string; tokenType: string }> {
-    return request("/api/auth/login", {
+    return request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
@@ -79,7 +81,7 @@ export const userApi = {
     phone: string,
     facultyId?: string
   ): Promise<{ user: User; token: string; tokenType: string }> {
-    return request("/api/auth/register", {
+    return request("/auth/register", {
       method: "POST",
       body: JSON.stringify({
         name,
@@ -95,7 +97,7 @@ export const userApi = {
    * Logout user and clear auth tokens/cookies.
    */
   async logout(): Promise<{ message: string }> {
-    return request("/api/auth/logout", {
+    return request("/auth/logout", {
       method: "POST",
     });
   },
@@ -106,7 +108,7 @@ export const userApi = {
   async completeGoogleFacultySelection(
     facultyId: string
   ): Promise<{ data: User }> {
-    return request("/api/auth/google/complete-faculty", {
+    return request("/auth/google/complete-faculty", {
       method: "POST",
       body: JSON.stringify({ facultyId }),
     });
@@ -116,14 +118,14 @@ export const userApi = {
    * Get user profile.
    */
   async getProfile(): Promise<User> {
-    return request("/api/users/profile");
+    return request("/users/profile");
   },
 
   /**
    * Update user profile.
    */
   async updateProfile(data: Partial<User>): Promise<User> {
-    return request("/api/profile", {
+    return request("/profile", {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -133,7 +135,7 @@ export const userApi = {
    * Update user address.
    */
   async updateAddress(addressData: Record<string, unknown>): Promise<unknown> {
-    return request("/api/users/addresses", {
+    return request("/users/addresses", {
       method: "PUT",
       body: JSON.stringify(addressData),
     });
@@ -143,7 +145,7 @@ export const userApi = {
    * Change user password.
    */
   async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
-    return request("/api/auth/password", {
+    return request("/auth/password", {
       method: "PUT",
       body: JSON.stringify({
         currentPassword,
@@ -157,6 +159,6 @@ export const userApi = {
    * Get public user profile by ID.
    */
   async getPublicProfile(userId: string): Promise<User> {
-    return request(`/api/users/${userId}`);
+    return request(`/users/${userId}`);
   },
 };
