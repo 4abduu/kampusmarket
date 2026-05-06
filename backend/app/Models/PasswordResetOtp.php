@@ -23,6 +23,20 @@ class PasswordResetOtp extends Model
     ];
 
     /**
+     * Boot the model and auto-generate UUID.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = \Illuminate\Support\Str::uuid()->toString();
+            }
+        });
+    }
+
+    /**
      * Check if OTP is valid.
      */
     public function isValid(): bool

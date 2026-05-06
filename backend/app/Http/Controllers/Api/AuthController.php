@@ -18,8 +18,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use App\Http\Helpers\NumberGenerator;
+use App\Mail\OtpMail;
 
 class AuthController extends Controller
 {
@@ -569,6 +571,37 @@ class AuthController extends Controller
     }
 
     /**
+     * Check user completion status (email verification and faculty selection).
+     */
+    public function checkCompletion(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null,
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'userId' => $user->id,
+                'email' => $user->email,
+                'isEmailVerified' => (bool) $user->is_verified,
+                'emailVerifiedAt' => $user->email_verified_at,
+                'hasFaculty' => (bool) $user->faculty_id,
+                'facultyId' => $user->faculty_id,
+                'requiresEmailVerification' => !$user->is_verified && !$user->google_id,
+                'requiresFacultySelection' => !$user->faculty_id,
+                'isComplete' => $user->is_verified && $user->faculty_id,
+            ],
+        ]);
+    }
+
+    /**
      * Send password reset OTP.
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
@@ -576,17 +609,44 @@ class AuthController extends Controller
         try {
             Log::info('Auth forgot password requested', ['email' => $request->email]);
 
+            // Create OTP
             $otp = PasswordResetOtp::createForEmail($request->email);
 
-            // In production, send OTP via email
-            // For now, we'll return it in response for testing
-            Log::info('Auth forgot password OTP created', ['email' => $request->email]);
+            // Get user name for email
+            $user = User::where('email', $request->email)->first();
+            $userName = $user ? $user->name : 'Pengguna KampusMarket';
+
+            // Send email
+            try {
+                Mail::to($request->email)->send(new OtpMail(
+                    $otp->otp,
+                    $userName,
+                    'forgot_password',
+                    10
+                ));
+
+                Log::info('Auth forgot password OTP sent', [
+                    'email' => $request->email,
+                    'otp_id' => $otp->id,
+                ]);
+            } catch (\Throwable $mailError) {
+                Log::error('Auth forgot password email failed', [
+                    'email' => $request->email,
+                    'otp_id' => $otp->id,
+                    'error' => $mailError->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mohon maaf, kode OTP gagal dikirim. Silakan coba lagi dalam beberapa saat.',
+                ], 500);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Kode OTP telah dikirim ke email Anda',
                 'data' => [
-                    'otp' => $otp->otp, // Remove this in production
+                    'email' => $request->email,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -595,7 +655,10 @@ class AuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e;
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon maaf, terjadi kesalahan. Silakan coba lagi.',
+            ], 500);
         }
     }
 
@@ -730,7 +793,130 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify email.
+     * Send email verification OTP.
+     */
+    public function sendEmailVerificationOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        try {
+            Log::info('Auth send email verification OTP requested', ['email' => $request->email]);
+
+            // Create OTP
+            $otp = PasswordResetOtp::createForEmail($request->email);
+
+            // Get user name or use email
+            $user = User::where('email', $request->email)->first();
+            $userName = $user ? $user->name : 'Pengguna KampusMarket';
+
+            // Send email
+            try {
+                Mail::to($request->email)->send(new OtpMail(
+                    $otp->otp,
+                    $userName,
+                    'email_verification',
+                    10
+                ));
+
+                Log::info('Auth email verification OTP sent', [
+                    'email' => $request->email,
+                    'otp_id' => $otp->id,
+                ]);
+            } catch (\Throwable $mailError) {
+                Log::error('Auth email verification email failed', [
+                    'email' => $request->email,
+                    'otp_id' => $otp->id,
+                    'error' => $mailError->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mohon maaf, kode OTP gagal dikirim. Silakan coba lagi dalam beberapa saat.',
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode OTP verifikasi telah dikirim ke email Anda',
+                'data' => [
+                    'email' => $request->email,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Auth send email verification OTP failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon maaf, terjadi kesalahan. Silakan coba lagi.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify email with OTP.
+     */
+    public function verifyEmailWithOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        try {
+            // Verify OTP
+            $record = PasswordResetOtp::verify($request->email, $request->otp);
+
+            if (!$record) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode OTP tidak valid atau sudah kedaluwarsa',
+                ], 400);
+            }
+
+            // Find user and mark as verified
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email tidak ditemukan',
+                ], 404);
+            }
+
+            $user->update([
+                'is_verified' => true,
+                'email_verified_at' => now(),
+            ]);
+
+            $record->markAsUsed();
+
+            Log::info('Auth email verified', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email berhasil diverifikasi',
+                'data' => new UserResource($user->load('faculty')),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Auth verify email with OTP failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Verify email (legacy - kept for backward compatibility).
      */
     public function verifyEmail(Request $request): JsonResponse
     {

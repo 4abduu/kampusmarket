@@ -88,6 +88,8 @@ Route::post('/auth/google/complete-faculty', [AuthController::class, 'completeGo
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/auth/send-email-verification-otp', [AuthController::class, 'sendEmailVerificationOtp']);
+Route::post('/auth/verify-email-with-otp', [AuthController::class, 'verifyEmailWithOtp']);
 
 // ============================================
 // PROTECTED ROUTES (Authentication Required)
@@ -101,6 +103,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::get('/auth/check-completion', [AuthController::class, 'checkCompletion']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
     Route::post('/auth/verify-email', [AuthController::class, 'verifyEmail']);
