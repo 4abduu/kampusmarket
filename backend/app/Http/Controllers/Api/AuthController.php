@@ -556,6 +556,14 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->is_banned) {
+            $user->currentAccessToken()->delete();
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun Anda telah dibanned: ' . $user->ban_reason,
+            ], 403);
+        }
+
         // [PROTECTION #1C] Log faculty status on every auth check
         Log::debug('Auth /me endpoint success', [
             'user_id' => $user->id,

@@ -10,13 +10,13 @@ interface UseDashboardProductsParams {
 }
 
 export function useDashboardProducts({ initialProducts }: UseDashboardProductsParams) {
-  const [userProducts, setUserProducts] = useState<Product[]>(initialProducts)
+  const [userProducts, setUserProducts] = useState<Product[]>([])
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showEditProductDialog, setShowEditProductDialog] = useState(false)
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false)
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
   const [productFilter, setProductFilter] = useState<ProductFilter>("semua")
-  const [, setIsLoadingProducts] = useState(true)
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
 
   // Fetch products from API on mount
   useEffect(() => {
@@ -210,5 +210,6 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
     handleEditProduct,
     handleSaveProduct,
     handleDeleteProduct,
+    isLoadingProducts,
   }
 }

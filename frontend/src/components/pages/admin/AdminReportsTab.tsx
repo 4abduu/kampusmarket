@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, MessageCircle, Ban, Search, X } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X, Package, User } from "lucide-react";
 
 interface Props {
   filteredReports: any[];
@@ -21,6 +21,22 @@ interface Props {
 }
 
 export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport }: Props) {
+  const getReportTypeIcon = (type: string) => {
+    switch(type) {
+      case 'product': return <Package className="h-5 w-5 text-amber-600" />;
+      case 'chat': return <MessageCircle className="h-5 w-5 text-blue-600" />;
+      case 'user': default: return <User className="h-5 w-5 text-red-600" />;
+    }
+  };
+
+  const getReportTypeBg = (type: string) => {
+    switch(type) {
+      case 'product': return 'bg-amber-100 dark:bg-amber-900/30';
+      case 'chat': return 'bg-blue-100 dark:bg-blue-900/30';
+      case 'user': default: return 'bg-red-100 dark:bg-red-900/30';
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -45,7 +61,10 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
               {paginatedReports.map((report) => (
                 <div key={report.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="flex items-start gap-3"><div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><p className="font-medium">{report.reason}</p><p className="text-sm text-muted-foreground mt-1">{report.description}</p><div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground"><span>Pelapor: {report.reporter.name}</span><span>•</span><span>Dilaporkan: {report.reportedUser.name}</span><span>•</span><span>{report.createdAt}</span></div></div></div>
+                    <div className="flex items-start gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getReportTypeBg(report.reportType)}`}>{getReportTypeIcon(report.reportType)}</div><div><div className="flex items-center gap-2"><p className="font-medium">{report.reason}</p><span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground uppercase tracking-wider">{report.reportType}</span></div><p className="text-sm text-muted-foreground mt-1">{report.description}</p>
+                    {report.reportType === 'product' && report.productTitle && <div className="mt-2 text-sm p-2 bg-muted/50 rounded border"><span className="font-semibold text-xs text-muted-foreground block mb-1">PRODUK YANG DILAPORKAN:</span>{report.productTitle}</div>}
+                    {report.reportType === 'chat' && report.chatMessage && <div className="mt-2 text-sm p-2 bg-muted/50 rounded border"><span className="font-semibold text-xs text-muted-foreground block mb-1">PESAN YANG DILAPORKAN:</span>"{report.chatMessage}"</div>}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground"><span>Pelapor: {report.reporter?.name}</span><span>•</span><span>Dilaporkan: {report.reportedUser?.name}</span><span>•</span><span>{report.createdAt ? new Date(report.createdAt).toLocaleDateString('id-ID') : '-'}</span></div></div></div>
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end">{getReportStatusBadge(report.status)}{report.status === "pending" && <div className="flex gap-1 mt-2"><Button variant="outline" size="sm" onClick={() => handleSendWarning(report)}><MessageCircle className="h-3 w-3 mr-1" />Warning</Button><Button variant="destructive" size="sm" onClick={() => handleBanFromReport(report)}><Ban className="h-3 w-3 mr-1" />Ban</Button></div>}</div>
                   </div>
                 </div>

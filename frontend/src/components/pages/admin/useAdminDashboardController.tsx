@@ -309,6 +309,8 @@ export function useAdminDashboardController() {
               images: product.images || [],
               isActive: product.status === "active" || product.is_active || false,
               createdAt: product.created_at || new Date().toISOString(),
+              deletedAt: product.deleted_at || product.deletedAt || undefined,
+              deletedBy: product.deleted_by || product.deletedBy || undefined,
             } as unknown as Product));
             setProducts(mappedProducts);
           }
@@ -526,32 +528,63 @@ export function useAdminDashboardController() {
 
   const handleViewUser = (user: User) => { setSelectedUser(user); setShowUserDetail(true); };
   const handleBanUser = (user: User) => { setUserToAction(user); setShowBanDialog(true); };
-  const confirmBanUser = () => {
+  const confirmBanUser = async () => {
     if (userToAction) {
-      setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: true, banReason: "Melanggar aturan platform KampusMarket." } : u));
-      showSuccess(`User ${userToAction.name} berhasil diblokir`);
-      setShowBanDialog(false);
-      setUserToAction(null);
+      try {
+        await adminUsersApi.banUser(userToAction.id, { ban_reason: "Melanggar aturan platform KampusMarket." });
+        setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: true, banReason: "Melanggar aturan platform KampusMarket." } : u));
+        showSuccess(`User ${userToAction.name} berhasil diblokir`);
+      } catch (err) {
+        console.error(err);
+        showSuccess(`Gagal memblokir user ${userToAction.name}`);
+      } finally {
+        setShowBanDialog(false);
+        setUserToAction(null);
+      }
     }
   };
   const handleUnbanUser = (user: User) => { setUserToAction(user); setShowUnbanDialog(true); };
-  const confirmUnbanUser = () => {
+  const confirmUnbanUser = async () => {
     if (userToAction) {
-      setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: false, banReason: undefined } : u));
-      showSuccess(`User ${userToAction.name} berhasil di-unblock`);
-      setShowUnbanDialog(false);
-      setUserToAction(null);
+      try {
+        await adminUsersApi.unbanUser(userToAction.id);
+        setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: false, banReason: undefined } : u));
+        showSuccess(`User ${userToAction.name} berhasil di-unblock`);
+      } catch (err) {
+        console.error(err);
+        showSuccess(`Gagal meng-unblock user ${userToAction.name}`);
+      } finally {
+        setShowUnbanDialog(false);
+        setUserToAction(null);
+      }
     }
   };
 
   const handleViewProduct = (product: Product) => { setSelectedProduct(product); setShowProductDetail(true); };
   const handleDeleteProduct = (product: Product) => { setProductToDelete(product); setShowDeleteProductDialog(true); };
-  const confirmDeleteProduct = () => {
+  const confirmDeleteProduct = async () => {
     if (productToDelete) {
-      setProducts(products.filter((p) => p.id !== productToDelete.id));
-      showSuccess(`Produk "${productToDelete.title}" berhasil dihapus`);
-      setShowDeleteProductDialog(false);
-      setProductToDelete(null);
+      try {
+        await adminProductsApi.deleteProduct(productToDelete.id, { delete_reason: "Dihapus oleh admin." });
+        setProducts(products.map((p) => p.id === productToDelete.id ? { ...p, deletedAt: new Date().toISOString(), deletedBy: "admin" } : p));
+        showSuccess(`Produk "${productToDelete.title}" berhasil dihapus`);
+      } catch (err) {
+        console.error(err);
+        showSuccess(`Gagal menghapus produk "${productToDelete.title}"`);
+      } finally {
+        setShowDeleteProductDialog(false);
+        setProductToDelete(null);
+      }
+    }
+  };
+  const handleRestoreProduct = async (product: Product) => {
+    try {
+      await adminProductsApi.restoreProduct(product.id);
+      setProducts(products.map(p => p.id === product.id ? { ...p, deletedAt: undefined, deletedBy: undefined } : p));
+      showSuccess(`Produk "${product.title}" berhasil dipulihkan`);
+    } catch (err) {
+      console.error(err);
+      showSuccess(`Gagal memulihkan produk "${product.title}"`);
     }
   };
 
@@ -1103,21 +1136,22 @@ export function useAdminDashboardController() {
     confirmRejectWithdrawal,
     confirmCompleteWithdrawal,
     confirmFailWithdrawal,
-    handleAddCategory,
-    handleEditCategory,
-    handleSaveCategory,
-    handleDeleteCategory,
-    confirmDeleteCategory,
-    handleToggleCategoryActive,
     handleApproveCancelRequest,
     handleRejectCancelRequest,
     confirmApproveCancelRequest,
     confirmRejectCancelRequest,
+    handleAddCategory,
+    handleEditCategory,
+    handleDeleteCategory,
+    handleSaveCategory,
+    confirmDeleteCategory,
+    handleToggleCategoryActive,
     handleAddFaculty,
     handleEditFaculty,
-    handleSaveFaculty,
     handleDeleteFaculty,
+    handleSaveFaculty,
     confirmDeleteFaculty,
     handleToggleFacultyActive,
+    handleRestoreProduct,
   };
 }

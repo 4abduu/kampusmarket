@@ -149,6 +149,9 @@ class AdminUserController extends Controller
                 'ban_reason' => $validated['ban_reason'],
             ]);
 
+            // Revoke all tokens to force logout
+            $user->tokens()->delete();
+
             Log::info('[AdminUserController] User banned', [
                 'user_id' => $user->uuid,
                 'user_email' => $user->email,
@@ -234,6 +237,17 @@ class AdminUserController extends Controller
             $user->update([
                 'is_warned' => true,
                 'warning_reason' => $validated['warning_reason'],
+            ]);
+
+            \App\Models\Notification::create([
+                'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
+                'user_id' => $user->id,
+                'type' => \App\Enums\NotificationType::SYSTEM,
+                'title' => 'Peringatan Akun',
+                'message' => "Akun Anda mendapat peringatan dari Admin: " . $validated['warning_reason'],
+                'link' => null,
+                'data' => null,
+                'is_read' => false,
             ]);
 
             Log::info('[AdminUserController] User warned', [

@@ -29,8 +29,14 @@ class ReportResource extends JsonResource
             'reporter' => new UserResource($this->whenLoaded('reporter')),
             'reportedUser' => new UserResource($this->whenLoaded('reportedUser')),
             
-            // Product (optional)
+            // Target (optional)
             'productId' => $this->product?->uuid,
+            'productTitle' => $this->product?->title,
+            'chatId' => $this->chat?->uuid,
+            'chatMessage' => $this->chat?->message,
+            
+            // Inferred Type
+            'reportType' => $this->chat_id ? 'chat' : ($this->product_id ? 'product' : 'user'),
             
             // Report details
             'reason' => $this->reason,

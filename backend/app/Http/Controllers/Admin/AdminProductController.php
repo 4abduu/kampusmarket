@@ -25,7 +25,7 @@ class AdminProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Product::with(['category', 'images', 'seller.faculty']);
+            $query = Product::withTrashed()->with(['category', 'images', 'seller.faculty']);
 
             // Filter by type
             if ($request->has('type')) {
@@ -143,12 +143,33 @@ class AdminProductController extends Controller
     /**
      * Delete a product (soft delete).
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $product = Product::where('uuid', $id)->firstOrFail();
 
+        $validated = $request->validate([
+            'delete_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $product->update([
+            'delete_reason' => $validated['delete_reason'],
+            'deleted_by' => 'admin',
+        ]);
+
         // Soft delete the product
         $product->delete();
+
+        // Notify seller
+        \App\Models\Notification::create([
+            'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
+            'user_id' => $product->seller_id,
+            'type' => \App\Enums\NotificationType::SYSTEM,
+            'title' => 'Produk Dihapus oleh Admin',
+            'message' => "Produk Anda '{$product->title}' telah dihapus oleh Admin dengan alasan: " . $validated['delete_reason'],
+            'link' => null,
+            'data' => null,
+            'is_read' => false,
+        ]);
 
         Log::info('[AdminProductController] Product deleted', [
             'product_id' => $product->uuid,

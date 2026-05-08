@@ -67,6 +67,7 @@ interface Props {
   onOpenNego: () => void;
   onOpenOffer: () => void;
   formatPrice: (price: number) => string;
+  onReportMessage: (message: ApiMessage) => void;
 }
 
 function getInitials(name: string): string {
@@ -104,6 +105,7 @@ export default function ChatConversationPanel({
   onOpenNego,
   onOpenOffer,
   formatPrice,
+  onReportMessage,
 }: Props) {
   const handleOpenProfile = () => {
     if (!otherUser?.id) return;
@@ -256,6 +258,7 @@ export default function ChatConversationPanel({
                     onAcceptOffer={onAcceptOffer}
                     onRejectOffer={onRejectOffer}
                     onOpenPaymentDialog={onBayarSekarang}
+                    onReportMessage={onReportMessage}
                   />
                 ))}
                 <div ref={messagesEndRef} />

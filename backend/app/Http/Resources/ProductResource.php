@@ -109,8 +109,11 @@ class ProductResource extends JsonResource
             // Status
             'status' => $this->status->value ?? 'active',
             
-            // Timestamps
+            // Timestamps and Delete info
             'createdAt' => $this->created_at->format('Y-m-d'),
+            'deletedAt' => $this->deleted_at?->format('Y-m-d H:i:s'),
+            'deleteReason' => $this->delete_reason,
+            'deletedBy' => $this->deleted_by,
         ];
     }
 

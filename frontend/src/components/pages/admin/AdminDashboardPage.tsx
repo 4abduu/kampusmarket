@@ -241,6 +241,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     handleDeleteFaculty,
     confirmDeleteFaculty,
     handleToggleFacultyActive,
+    handleRestoreProduct,
   } = useAdminDashboardController();
 
   return (
@@ -348,6 +349,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               formatProductPrice={formatProductPrice}
               handleViewProduct={handleViewProduct}
               handleDeleteProduct={handleDeleteProduct}
+              handleRestoreProduct={handleRestoreProduct}
             />
           </TabsContent>
           <TabsContent value="categories">

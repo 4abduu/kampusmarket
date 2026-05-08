@@ -67,6 +67,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>([]);
   const [selectedOfferProduct, setSelectedOfferProduct] = useState<SellerProduct | null>(null);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReportMessage, setSelectedReportMessage] = useState<ApiMessage | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+
   // [REVISI] Set userId yang sedang online dari presence channel
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
@@ -609,6 +614,32 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     } catch { /* silent */ }
   };
 
+  const handleReportMessage = (message: ApiMessage) => {
+    setSelectedReportMessage(message);
+    setReportReason('Spam');
+    setReportDescription('');
+    setShowReportModal(true);
+  };
+
+  const handleSubmitReport = async () => {
+    if (!chatDetail || !selectedReportMessage || isSending) return;
+    setIsSending(true);
+    try {
+      await apiClient.post('/reports', {
+        reason: reportReason,
+        description: reportDescription,
+        reported_user_id: selectedReportMessage.senderId,
+        chat_id: chatDetail.id,
+      });
+      toast.success('Pesan berhasil dilaporkan');
+      setShowReportModal(false);
+    } catch {
+      toast.error('Gagal melaporkan pesan');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const isSeller = chatDetail ? chatDetail.seller?.id === currentUserId : false;
 
   const chatProduct: ApiChatProduct | null = chatDetail?.product
@@ -677,6 +708,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onOpenNego={() => setShowNegoModal(true)}
           onOpenOffer={handleOpenOfferModal}
           formatPrice={formatPrice}
+          onReportMessage={handleReportMessage}
         />
       </div>
 
@@ -700,6 +732,66 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         onNavigateToDashboard={() => onNavigate('dashboard')}
         formatPrice={formatPrice}
       />
+
+      {/* Modal Report Message */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="font-semibold text-lg flex items-center gap-2 text-red-600">
+                Laporkan Pesan
+              </h3>
+              <button onClick={() => setShowReportModal(false)} className="text-muted-foreground hover:text-foreground">
+                <span className="sr-only">Tutup</span>
+                &times;
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm text-muted-foreground italic border-l-4 border-slate-300">
+                "{selectedReportMessage?.content}"
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alasan Laporan</label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                >
+                  <option value="Spam">Spam</option>
+                  <option value="Penipuan">Penipuan</option>
+                  <option value="Kata-kata Kasar">Kata-kata Kasar</option>
+                  <option value="Pelecehan">Pelecehan</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Detail Tambahan</label>
+                <textarea 
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground"
+                  placeholder="Ceritakan detail lebih lanjut..."
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
+              <button 
+                className="px-4 py-2 text-sm border rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => setShowReportModal(false)}
+              >
+                Batal
+              </button>
+              <button 
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                onClick={handleSubmitReport}
+                disabled={isSending}
+              >
+                {isSending ? 'Mengirim...' : 'Kirim Laporan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

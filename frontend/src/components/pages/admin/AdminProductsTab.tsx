@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, CalendarDays, Search, Filter, ChevronDown, ChevronUp, X, Eye, Trash2 } from "lucide-react";
+import { Package, CalendarDays, Search, Filter, ChevronDown, ChevronUp, X, Eye, Trash2, RefreshCcw } from "lucide-react";
 
 interface Props {
   filteredProducts: any[];
@@ -33,6 +33,7 @@ interface Props {
   formatProductPrice: (product: any) => string;
   handleViewProduct: (product: any) => void;
   handleDeleteProduct: (product: any) => void;
+  handleRestoreProduct: (product: any) => void;
 }
 
 export default function AdminProductsTab(props: Props) {
@@ -63,6 +64,7 @@ export default function AdminProductsTab(props: Props) {
     formatProductPrice,
     handleViewProduct,
     handleDeleteProduct,
+    handleRestoreProduct,
   } = props;
 
   return (
@@ -108,13 +110,19 @@ export default function AdminProductsTab(props: Props) {
               <TableHeader><TableRow><TableHead>Produk</TableHead><TableHead>Tipe</TableHead><TableHead>Harga</TableHead><TableHead>Penjual</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
               <TableBody>
                 {paginatedProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell><div className="flex items-center gap-2"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">{product.type === "jasa" ? <CalendarDays className="h-5 w-5 text-muted-foreground" /> : <Package className="h-5 w-5 text-muted-foreground" />}</div><div><p className="font-medium text-sm line-clamp-1">{product.title}</p><p className="text-xs text-muted-foreground">{product.category}</p></div></div></TableCell>
+                  <TableRow key={product.id} className={product.deletedAt ? "bg-red-50/50 dark:bg-red-950/20" : ""}>
+                    <TableCell><div className="flex items-center gap-2"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">{product.type === "jasa" ? <CalendarDays className="h-5 w-5 text-muted-foreground" /> : <Package className="h-5 w-5 text-muted-foreground" />}</div><div><div className="flex items-center gap-2"><p className="font-medium text-sm line-clamp-1">{product.title}</p>{product.deletedAt && <Badge variant={product.deletedBy === 'user' ? 'secondary' : 'destructive'} className={`text-[10px] px-1 py-0 h-4 ${product.deletedBy === 'user' ? 'bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200' : ''}`}>Dihapus ({product.deletedBy === 'user' ? 'User' : 'Admin'})</Badge>}</div><p className="text-xs text-muted-foreground">{product.category}</p></div></div></TableCell>
                     <TableCell><Badge variant={product.type === "jasa" ? "secondary" : "outline"} className={product.type === "jasa" ? "bg-purple-50 text-purple-700 border-purple-200" : ""}>{product.type === "jasa" ? "Jasa" : "Barang"}</Badge></TableCell>
                     <TableCell className="font-medium text-primary-600">{formatProductPrice(product)}</TableCell>
-                    <TableCell className="text-sm">{product.seller.name}</TableCell>
+                    <TableCell className="text-sm">{product.seller?.name}</TableCell>
                     <TableCell><Badge variant={product.status === "active" ? "default" : "secondary"} className={product.status === "active" ? "bg-primary-500" : ""}>{product.status === "active" ? "Aktif" : "Nonaktif"}</Badge></TableCell>
-                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewProduct(product)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteProduct(product)}><Trash2 className="h-4 w-4" /></Button></div></TableCell>
+                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewProduct(product)}><Eye className="h-4 w-4" /></Button>
+                    {!product.deletedAt ? (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteProduct(product)}><Trash2 className="h-4 w-4" /></Button>
+                    ) : (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={() => handleRestoreProduct(product)} title="Pulihkan"><RefreshCcw className="h-4 w-4" /></Button>
+                    )}
+                    </div></TableCell>
                   </TableRow>
                 ))}
               </TableBody>

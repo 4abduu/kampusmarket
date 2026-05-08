@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt } from 'lucide-react';
+import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle } from 'lucide-react';
 import type { ApiMessage, ApiChatDetail } from '@/components/pages/user/chat/chat.types';
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   onAcceptOffer: (message: ApiMessage) => void;
   onRejectOffer: (message: ApiMessage) => void;
   onOpenPaymentDialog: (message: ApiMessage) => void;
+  onReportMessage: (message: ApiMessage) => void;
 }
 
 function formatTime(iso: string): string {
@@ -19,7 +20,7 @@ function formatTime(iso: string): string {
 
 export default function ChatMessageItem({
   message, currentUserId, chat, formatPrice,
-  onNavigate, onAcceptOffer, onRejectOffer, onOpenPaymentDialog,
+  onNavigate, onAcceptOffer, onRejectOffer, onOpenPaymentDialog, onReportMessage
 }: Props) {
   const isMe = message.senderId === currentUserId;
   const isSeller = chat.seller?.id === currentUserId;
@@ -43,7 +44,12 @@ export default function ChatMessageItem({
   const product = chat.product;
 
   return (
-    <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex group ${isMe ? 'justify-end' : 'justify-start'} items-center gap-2`}>
+      {!isMe && (
+        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 shrink-0 transition-opacity" onClick={() => onReportMessage(message)} title="Laporkan Pesan">
+          <AlertTriangle className="h-3 w-3" />
+        </Button>
+      )}
       <div className={[
         'max-w-[85%] sm:max-w-[75%] shadow-sm px-3 sm:px-4 py-2',
         isMe

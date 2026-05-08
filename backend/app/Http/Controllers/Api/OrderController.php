@@ -224,6 +224,13 @@ class OrderController extends Controller
             'actor_id' => $user->id,
         ]);
 
+        \App\Models\Notification::createOrderNotification(
+            $order->seller_id,
+            'Pesanan Baru',
+            "Anda menerima pesanan baru untuk produk '{$product->title}'.",
+            $order->id
+        );
+
         // Update product stock
         $product->decrement('stock', $request->quantity);
 
@@ -357,6 +364,13 @@ class OrderController extends Controller
             'actor_id' => $request->user()->id,
         ]);
 
+        \App\Models\Notification::createOrderNotification(
+            $order->buyer_id,
+            'Ongkos Kirim Ditetapkan',
+            "Penjual telah menetapkan ongkos kirim sebesar Rp " . number_format($request->shippingFee, 0, ',', '.') . " untuk pesanan Anda. Silakan lanjutkan ke pembayaran.",
+            $order->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Ongkir berhasil ditetapkan',
@@ -407,6 +421,13 @@ class OrderController extends Controller
             'notes' => 'Price offered: Rp ' . number_format($request->offeredPrice, 0, ',', '.'),
             'actor_id' => $request->user()->id,
         ]);
+
+        \App\Models\Notification::createOrderNotification(
+            $order->buyer_id,
+            'Penawaran Harga',
+            "Penjual memberikan penawaran harga sebesar Rp " . number_format($request->offeredPrice, 0, ',', '.') . ". Silakan konfirmasi.",
+            $order->id
+        );
 
         return response()->json([
             'success' => true,
@@ -465,6 +486,13 @@ class OrderController extends Controller
                 'notes' => 'Buyer accepted the price offer',
                 'actor_id' => $request->user()->id,
             ]);
+
+            \App\Models\Notification::createOrderNotification(
+                $order->seller_id,
+                'Penawaran Diterima',
+                "Pembeli telah menyetujui penawaran harga Anda sebesar Rp " . number_format($newFinalPrice, 0, ',', '.') . ".",
+                $order->id
+            );
         } else {
             // Reject - back to negotiation or cancel
             $order->update([
@@ -478,6 +506,13 @@ class OrderController extends Controller
                 'notes' => 'Buyer rejected the price offer',
                 'actor_id' => $request->user()->id,
             ]);
+
+            \App\Models\Notification::createOrderNotification(
+                $order->seller_id,
+                'Penawaran Ditolak',
+                "Pembeli menolak penawaran harga Anda. Silakan berikan penawaran baru.",
+                $order->id
+            );
         }
 
         return response()->json([
@@ -532,6 +567,13 @@ class OrderController extends Controller
             'notes' => 'Pesanan diterima oleh penjual',
             'actor_id' => $request->user()->id,
         ]);
+
+        \App\Models\Notification::createOrderNotification(
+            $order->buyer_id,
+            'Pesanan Dikonfirmasi',
+            "Pesanan Anda untuk '{$product->title}' telah dikonfirmasi oleh penjual.",
+            $order->id
+        );
 
         return response()->json([
             'success' => true,
@@ -592,6 +634,13 @@ class OrderController extends Controller
             'notes' => $notes,
             'actor_id' => $request->user()->id,
         ]);
+
+        \App\Models\Notification::createOrderNotification(
+            $order->buyer_id,
+            $isService ? 'Layanan Selesai' : 'Pesanan Dikirim',
+            $notes . ". Silakan konfirmasi penerimaan pesanan jika sudah sesuai.",
+            $order->id
+        );
 
         return response()->json([
             'success' => true,
@@ -728,6 +777,13 @@ class OrderController extends Controller
             'actor_id' => $request->user()->id,
         ]);
 
+        \App\Models\Notification::createOrderNotification(
+            $order->seller_id,
+            'Pembayaran Berhasil',
+            "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil (ditahan di escrow sistem). Silakan proses pesanan.",
+            $order->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Pembayaran berhasil',
@@ -807,6 +863,13 @@ class OrderController extends Controller
             }
         }
 
+        \App\Models\Notification::createOrderNotification(
+            $order->seller_id,
+            'Pesanan Selesai',
+            "Pembeli telah mengkonfirmasi penerimaan pesanan '{$order->product_title}'. Dana telah diteruskan ke saldo Anda.",
+            $order->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Pesanan dikonfirmasi selesai',
@@ -881,6 +944,16 @@ class OrderController extends Controller
 
             $order->update(['payment_status' => PaymentStatus::REFUNDED]);
         }
+
+        $otherPartyId = $user->id === $order->buyer_id ? $order->seller_id : $order->buyer_id;
+        $partyRole = $user->id === $order->buyer_id ? 'Pembeli' : 'Penjual';
+
+        \App\Models\Notification::createOrderNotification(
+            $otherPartyId,
+            'Pesanan Dibatalkan',
+            "$partyRole telah membatalkan pesanan '{$order->product_title}' dengan alasan: {$request->cancelReason}",
+            $order->id
+        );
 
         return response()->json([
             'success' => true,

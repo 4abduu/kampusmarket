@@ -44,6 +44,8 @@ class Product extends Model
         'review_count',
         'sold_count',
         'status',
+        'delete_reason',
+        'deleted_by',
     ];
 
     protected $casts = [

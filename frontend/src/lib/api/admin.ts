@@ -55,19 +55,19 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 // ============================================================
 export const adminDashboardApi = {
   async getStats() {
-    return request("/admin/dashboard/stats", {
+    return request(`${API_BASE_URL}/admin/dashboard/stats`, {
       method: "GET",
     });
   },
 
   async getRevenueStats() {
-    return request("/admin/dashboard/revenue", {
+    return request(`${API_BASE_URL}/admin/dashboard/revenue`, {
       method: "GET",
     });
   },
 
   async getActivitySummary() {
-    return request("/admin/dashboard/activity", {
+    return request(`${API_BASE_URL}/admin/dashboard/activity`, {
       method: "GET",
     });
   },
@@ -117,9 +117,10 @@ export const adminProductsApi = {
     });
   },
 
-  async deleteProduct(id: string) {
+  async deleteProduct(id: string, options?: { delete_reason?: string }) {
     return request(`${API_BASE_URL}/admin/products/${id}`, {
       method: "DELETE",
+      body: options ? JSON.stringify(options) : undefined,
     });
   },
 
@@ -348,10 +349,10 @@ export const adminUsersApi = {
     });
   },
 
-  async banUser(id: string, ban_reason: string) {
+  async banUser(id: string, options: { ban_reason: string }) {
     return request(`${API_BASE_URL}/admin/users/${id}/ban`, {
       method: "PUT",
-      body: JSON.stringify({ ban_reason }),
+      body: JSON.stringify(options),
     });
   },
 

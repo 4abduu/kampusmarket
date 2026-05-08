@@ -23,6 +23,7 @@ class StoreReportRequest extends FormRequest
         return [
             'reportedUserId' => ['required', 'exists:users,uuid'],
             'productId' => ['nullable', 'exists:products,uuid'],
+            'chatId' => ['nullable', 'exists:chats,uuid'],
             'reason' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:2000'],
             // 'evidence' => ['nullable', 'array', 'max:10'],
@@ -63,6 +64,12 @@ class StoreReportRequest extends FormRequest
         if ($this->has('productId')) {
             $this->merge([
                 'product_id' => $this->productId,
+            ]);
+        }
+
+        if ($this->has('chatId')) {
+            $this->merge([
+                'chat_id' => $this->chatId,
             ]);
         }
     }

@@ -8,6 +8,7 @@ import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
 import { useCartStore } from "@/lib/cart-store";
 import type { User } from "@/lib/mock-data";
+import { useNotificationStore } from "@/lib/notification-store";
 import { getEcho } from "@/lib/echo";
 
 // Layout
@@ -50,6 +51,8 @@ function AppContent() {
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
         void useCartStore.getState().fetchCount();
+        void useNotificationStore.getState().fetchNotifications();
+        useNotificationStore.getState().initEcho(user.id);
         return true;
       } else {
         setAuthUser(null);
@@ -255,6 +258,7 @@ function AppContent() {
     setIsLoggedIn(false);
     setUserRole(null);
     setShowSellerWelcome(false);
+    useNotificationStore.getState().cleanupEcho();
     // Clear lastNonAuthPath to prevent redirect to protected pages
     sessionStorage.removeItem("lastNonAuthPath");
     // REVISI: Reset flag setelah semua state bersih

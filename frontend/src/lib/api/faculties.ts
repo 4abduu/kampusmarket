@@ -1,4 +1,5 @@
 import type { Faculty, FacultyApiItem } from "@/components/pages/admin/admin-dashboard.shared";
+import { API_BASE_URL } from "@/lib/config";
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -45,12 +46,12 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 
 export const facultiesApi = {
   async listAdmin(): Promise<Faculty[]> {
-    const data = await request<FacultyApiItem[]>("/admin/faculties");
+    const data = await request<FacultyApiItem[]>(`${API_BASE_URL}/admin/faculties`);
     return Array.isArray(data) ? data.map(mapFacultyFromApi) : [];
   },
 
   async create(input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive">): Promise<Faculty> {
-    const data = await request<FacultyApiItem>("/admin/faculties", {
+    const data = await request<FacultyApiItem>(`${API_BASE_URL}/admin/faculties`, {
       method: "POST",
       body: JSON.stringify({
         code: input.code,
@@ -64,7 +65,7 @@ export const facultiesApi = {
   },
 
   async update(code: string, input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive">): Promise<Faculty> {
-    const data = await request<FacultyApiItem>(`/api/admin/faculties/${encodeURIComponent(code)}`, {
+    const data = await request<FacultyApiItem>(`${API_BASE_URL}/admin/faculties/${encodeURIComponent(code)}`, {
       method: "PUT",
       body: JSON.stringify({
         code: input.code,
@@ -78,7 +79,7 @@ export const facultiesApi = {
   },
 
   async updateStatus(code: string, isActive: boolean): Promise<Faculty> {
-    const data = await request<FacultyApiItem>(`/api/admin/faculties/${encodeURIComponent(code)}/status`, {
+    const data = await request<FacultyApiItem>(`${API_BASE_URL}/admin/faculties/${encodeURIComponent(code)}/status`, {
       method: "PUT",
       body: JSON.stringify({ is_active: isActive }),
     });
@@ -87,7 +88,7 @@ export const facultiesApi = {
   },
 
   async remove(code: string): Promise<void> {
-    await request<unknown>(`/api/admin/faculties/${encodeURIComponent(code)}`, {
+    await request<unknown>(`${API_BASE_URL}/admin/faculties/${encodeURIComponent(code)}`, {
       method: "DELETE",
     });
   },

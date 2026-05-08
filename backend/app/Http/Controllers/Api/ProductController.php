@@ -514,6 +514,11 @@ class ProductController extends Controller
             ], 403);
         }
 
+        $product->update([
+            'delete_reason' => 'Dihapus oleh pengguna',
+            'deleted_by' => 'user',
+        ]);
+
         $product->delete();
 
         return response()->json([
