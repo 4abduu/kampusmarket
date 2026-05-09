@@ -27,10 +27,12 @@ import UserDashboardOverviewTab from "@/components/pages/user/dashboard/UserDash
 import UserDashboardProductsTab from "@/components/pages/user/dashboard/UserDashboardProductsTab";
 import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashboardWalletTab";
 import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar";
-import UserDashboardOverviewSkeleton from "@/components/skeleton/UserDashboardOverviewSkeleton";
-import UserDashboardProductsTabSkeleton from "@/components/skeleton/UserDashboardProductsTabSkeleton";
-import UserDashboardSettingsSkeleton from "@/components/skeleton/UserDashboardSettingsSkeleton";
-import UserDashboardWalletSkeleton from "@/components/skeleton/UserDashboardWalletSkeleton";
+import {
+  UserDashboardOverviewSkeleton,
+  UserDashboardProductsTabSkeleton,
+  UserDashboardSettingsSkeleton,
+  UserDashboardWalletSkeleton,
+} from "@/components/skeleton";
 import { useDashboardProducts } from "@/components/pages/user/dashboard/useDashboardProducts";
 import { useDashboardWallet } from "@/components/pages/user/dashboard/useDashboardWallet";
 import { useDashboardSettings } from "@/components/pages/user/dashboard/useDashboardSettings";

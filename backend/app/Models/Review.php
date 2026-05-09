@@ -5,19 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\HasUuid;
+
 
 class Review extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
     
-    protected static function booted()
-    {
-        static::creating(function ($review) {
-            if (!$review->uuid) {
-                $review->uuid = \App\Http\Helpers\NumberGenerator::uuid();
-            }
-        });
-    }
 
     protected $fillable = [
         'uuid',

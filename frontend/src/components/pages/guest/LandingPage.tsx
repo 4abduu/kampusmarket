@@ -11,7 +11,7 @@ import LandingHowItWorksSection from "@/components/pages/guest/landing/LandingHo
 import LandingProductsSection from "@/components/pages/guest/landing/LandingProductsSection";
 import LandingSellerBanner from "@/components/pages/guest/landing/LandingSellerBanner";
 import LandingServicesSection from "@/components/pages/guest/landing/LandingServicesSection";
-import CategorySectionSkeleton from "@/components/skeleton/CategorySectionSkeleton";
+import { CategorySectionSkeleton } from "@/components/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";

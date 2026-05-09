@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
+import { useChatStore } from "@/lib/chat-store";
 import { useAdminNotificationStore } from "@/lib/admin-notification-store";
 import { useCartStore } from "@/lib/cart-store";
 import type { User as AppUser } from "@/lib/mock-data";
@@ -58,6 +59,7 @@ export default function Navbar({
 }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const userUnreadCount = useNotificationStore((state) => state.unreadCount);
+  const chatUnreadCount = useChatStore((state) => state.unreadCount);
   const adminUnreadCount = useAdminNotificationStore((state) => state.unreadCount);
   const cartCount = useCartStore((state) => state.count);
   const displayName = currentUser?.name || (isCustomerOnly ? "Rina Wulandari" : "Ahmad Santoso");
@@ -310,9 +312,11 @@ export default function Navbar({
                 onClick={() => onNavigate("chat")}
               >
                 <MessageCircle className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  2
-                </Badge>
+                {chatUnreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                  </Badge>
+                )}
               </Button>
 
               {/* Notifications */}

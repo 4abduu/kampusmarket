@@ -20,6 +20,7 @@ import {
 } from '@/lib/api/chat';
 import { getEcho } from '@/lib/echo';
 import apiClient from '@/lib/api/client';
+import { useChatStore } from '@/lib/chat-store';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -265,7 +266,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   // Setiap kali onlineUserIds berubah (dari presence channel), update
   // isOnline di setiap chat.otherUser di list panel secara realtime.
   useEffect(() => {
-    if (onlineUserIds.size === 0) return;
+    // [REVISI] Update isOnline di chats list secara realtime.
+    // Jangan return early jika size 0 agar status bisa berubah jadi offline.
     setChats(prev => prev.map(c => ({
       ...c,
       otherUser: {
@@ -277,7 +279,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
   // ── Open chat ──────────────────────────────────────────────────────────────
 
-  const openChat = useCallback(async (chatUuid: string, showCtxCard = false) => {
+  const openChat = useCallback(async (chatUuid: string) => {
     if (activeChatId === chatUuid) return;
 
     // Bersihkan koneksi lama
@@ -294,7 +296,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setShowChatList(false);
     setChatLoading(true);
     setMessages([]);
-    setShowContextCard(showCtxCard);
+    setShowContextCard(true);
     setChatDetail(null);
 
     try {
@@ -318,39 +320,52 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         const channel = echo.private(`chat.${chatUuid}`);
         channel.listen('.MessageSent', (event: { message: ApiMessage }) => {
           const incoming = event.message;
+          const isVisible = document.visibilityState === 'visible';
+          
           setMessages(prev => {
-            // Cek apakah message dengan ID ini sudah ada
             const existingIdx = prev.findIndex(m => m.id === incoming.id);
             if (existingIdx !== -1) {
-              // Jika sudah ada tapi offer status berubah (misal: pending → accepted/rejected),
-              // update message tersebut agar UI langsung berubah tanpa refresh
-              const existing = prev[existingIdx];
-              if (existing.offerStatus !== incoming.offerStatus) {
-                const next = [...prev];
-                next[existingIdx] = incoming;
-                return next;
-              }
-              // ID sama dan status sama — skip (dedup normal)
-              return prev;
+              const next = [...prev];
+              next[existingIdx] = { ...incoming, isRead: isVisible || incoming.isRead };
+              return next;
             }
-            // Race condition guard: jika pengirim adalah diri sendiri dan ada pesan pending
-            // yang belum di-replace (tempId), replace sekarang daripada menambah duplikat
+            
+            // Deduplicate optimistic messages
             const pendingIdx = prev.findIndex(m => m._pending && m.senderId === incoming.senderId && m.type === incoming.type);
             if (pendingIdx !== -1) {
               const next = [...prev];
-              next[pendingIdx] = incoming;
+              next[pendingIdx] = { ...incoming, isRead: isVisible || incoming.isRead };
               return next;
             }
-            return [...prev, incoming];
+
+            return [...prev, { ...incoming, isRead: isVisible || incoming.isRead }];
           });
+
           setChats(prevChats => prevChats.map(c =>
             c.id === chatUuid
               ? { ...c, lastMessage: incoming.content || '[lampiran]', lastMessageAt: incoming.createdAt }
               : c
           ));
+
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-          if (document.visibilityState === 'visible') markChatRead(chatUuid).catch(() => null);
+          
+          if (isVisible) {
+            markChatRead(chatUuid).catch(() => null);
+            // Update unread count global
+            useChatStore.getState().decrementUnreadCount();
+          }
         });
+
+        // [REVISI] Listen status read dari room chat yang sama
+        channel.listen('.MessagesRead', (event: { chatId: string, readerId: string, readAt: string }) => {
+          if (event.readerId !== currentUserId) {
+            // Jika orang lain yang baca, tandai semua pesan saya sebagai read
+            setMessages(prev => prev.map(m => 
+              m.senderId === currentUserId ? { ...m, isRead: true, readAt: event.readAt } : m
+            ));
+          }
+        });
+
         echoChannelRef.current = channel;
         realtimeOk = true;
       } catch {
@@ -415,8 +430,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           };
           return [item, ...prev];
         });
-        const isNew = (chat.messages?.length ?? 0) === 0;
-        await openChat(chat.id, isNew);
+        await openChat(chat.id);
         if (initialChatAction === 'nego' && chat.product?.canNego) setShowNegoModal(true);
       } catch (err) {
         console.error('[Chat] startChat error', err);
@@ -442,7 +456,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleSelectChat = useCallback(async (chat: ApiChat) => {
-    await openChat(chat.id, false);
+    await openChat(chat.id);
     void markChatRead(chat.id).catch(() => null);
   }, [openChat]);
 
@@ -470,7 +484,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setNewMessage('');
     setAttachedImage(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    setShowContextCard(false);
+    // [REVISI] Tetap tampilkan context card sesuai request user
+    // setShowContextCard(false);
 
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {
@@ -505,7 +520,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     if (!chatDetail?.product || !negoPrice || isSending) return;
     const price = parseInt(negoPrice.replace(/\D/g, ''), 10);
     if (!price || price <= 0) return;
-    setIsSending(true); setShowNegoModal(false); setShowContextCard(false);
+    setIsSending(true); setShowNegoModal(false); 
+    // [REVISI] Tetap tampilkan context card sesuai request user
+    // setShowContextCard(false);
     // Optimistic dengan tempId agar Echo dedup bisa bekerja (replace tempId -> real ID)
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {

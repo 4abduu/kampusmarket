@@ -88,7 +88,6 @@ class WalletController extends Controller
         $user->save();
 
         $transaction = WalletTransaction::create([
-            'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'top_up',
             'amount' => $amount,
@@ -131,7 +130,6 @@ class WalletController extends Controller
 
         // Create withdrawal record
         $withdrawal = Withdrawal::create([
-            'uuid' => NumberGenerator::uuid(),
             'withdrawal_number' => NumberGenerator::withdrawalNumber(),
             'user_id' => $user->id,
             'amount' => $amount,
@@ -145,7 +143,6 @@ class WalletController extends Controller
 
         // Create transaction record
         WalletTransaction::create([
-            'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'withdrawal',
             'amount' => -$amount,
@@ -304,7 +301,6 @@ class WalletController extends Controller
 
         // Create refund transaction
         WalletTransaction::create([
-            'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'refund',
             'amount' => $withdrawal->amount,
@@ -349,7 +345,6 @@ class WalletController extends Controller
         $user->save();
 
         WalletTransaction::create([
-            'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'type' => 'refund',
             'amount' => $withdrawal->amount,

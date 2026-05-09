@@ -23,7 +23,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getOrderDetail, type Order } from "@/lib/api/orders";
-import BookingSuccessPageSkeleton from "@/components/skeleton/BookingSuccessPageSkeleton";
+import { BookingSuccessPageSkeleton } from "@/components/skeleton";
 import type { NavigationData } from "@/app/navigation/types";
 
 interface BookingSuccessPageProps {

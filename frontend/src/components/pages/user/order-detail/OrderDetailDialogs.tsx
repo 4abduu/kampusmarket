@@ -295,15 +295,17 @@ export default function OrderDetailDialogs({
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               Konfirmasi Pesanan Selesai?
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Dengan mengkonfirmasi, kamu menyatakan bahwa:
-              </p>
-              <ul className="list-disc pl-4 space-y-1 text-sm">
-                <li>{isService ? "Layanan sudah diterima dan selesai dengan baik" : "Barang sudah diterima dalam kondisi baik"}</li>
-                <li>Dana pembayaran akan diteruskan ke {isService ? "penyedia jasa" : "penjual"}</li>
-                <li>Tindakan ini <strong>tidak dapat dibatalkan</strong></li>
-              </ul>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <div>
+                  Dengan mengkonfirmasi, kamu menyatakan bahwa:
+                </div>
+                <ul className="list-disc pl-4 space-y-1 text-sm">
+                  <li>{isService ? "Layanan sudah diterima dan selesai dengan baik" : "Barang sudah diterima dalam kondisi baik"}</li>
+                  <li>Dana pembayaran akan diteruskan ke {isService ? "penyedia jasa" : "penjual"}</li>
+                  <li>Tindakan ini <strong>tidak dapat dibatalkan</strong></li>
+                </ul>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

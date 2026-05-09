@@ -171,7 +171,6 @@ class ProductController extends Controller
 
         // Create product
         $product = Product::create([
-            'uuid' => NumberGenerator::uuid(),
             'seller_id' => $user->id,
             'category_id' => $category->id,
             'title' => $request->title,
@@ -244,7 +243,6 @@ class ProductController extends Controller
 
         foreach ($options as $option) {
             ShippingOption::create([
-                'uuid' => NumberGenerator::uuid(),
                 'product_id' => $product->id,
                 'type' => $option['type'],
                 'label' => $option['label'] ?? $option['type'],
@@ -482,7 +480,6 @@ class ProductController extends Controller
             $product->shippingOptions()->delete();
             foreach ($options as $option) {
                 ShippingOption::create([
-                    'uuid' => NumberGenerator::uuid(),
                     'product_id' => $product->id,
                     'type' => $option['type'],
                     'label' => $option['label'] ?? $option['type'],
@@ -758,7 +755,6 @@ class ProductController extends Controller
             }
 
             Cart::create([
-                'uuid' => NumberGenerator::uuid(),
                 'user_id' => $request->user()->id,
                 'product_id' => $product->id,
                 'quantity' => $requestedQuantity,

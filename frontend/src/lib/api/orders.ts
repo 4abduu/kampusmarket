@@ -222,3 +222,13 @@ export const setShippingFee = async (
   });
   return unwrapApiData<Order>(response);
 };
+
+/**
+ * Confirm payment status directly from frontend (Midtrans fallback)
+ */
+export const confirmPaymentClient = async (paymentUuid: string): Promise<any> => {
+  const response = await apiClient.post('/payments/confirm', {
+    payment_uuid: paymentUuid,
+  });
+  return unwrapApiData<any>(response);
+};

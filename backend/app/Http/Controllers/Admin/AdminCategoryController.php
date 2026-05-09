@@ -115,7 +115,6 @@ class AdminCategoryController extends Controller
             }
 
             $category = Category::create([
-                'uuid' => NumberGenerator::uuid(),
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'type' => $validated['type'],

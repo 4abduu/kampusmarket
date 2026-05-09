@@ -91,7 +91,6 @@ class ReportController extends Controller
 
         // Create report
         $report = Report::create([
-            'uuid' => NumberGenerator::uuid(),
             'report_number' => NumberGenerator::reportNumber(),
             'reporter_id' => $request->user()->id,
             'reported_user_id' => $reportedUser->id,

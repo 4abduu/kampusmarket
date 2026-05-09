@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\NotificationType;
+use App\Traits\HasUuid;
+
 
 class Notification extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = [
         'uuid',
@@ -28,6 +30,14 @@ class Notification extends Model
         'read_at' => 'datetime',
         'type' => NotificationType::class,
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function ($notification) {
+            broadcast(new \App\Events\NewNotification($notification));
+        });
+    }
+
 
     /**
      * Get the user that owns the notification.
@@ -68,7 +78,7 @@ class Notification extends Model
     /**
      * Create order notification.
      */
-    public static function createOrderNotification(int $userId, string $title, string $message, ?int $orderId = null): self
+    public static function createOrderNotification(int $userId, string $title, string $message, ?string $orderId = null): self
     {
         return static::create([
             'user_id' => $userId,
@@ -83,7 +93,7 @@ class Notification extends Model
     /**
      * Create chat notification.
      */
-    public static function createChatNotification(int $userId, string $title, string $message, ?int $chatId = null): self
+    public static function createChatNotification(int $userId, string $title, string $message, ?string $chatId = null): self
     {
         return static::create([
             'user_id' => $userId,

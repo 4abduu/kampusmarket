@@ -9,10 +9,12 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductType;
 use App\Enums\ShippingType;
+use App\Traits\HasUuid;
+
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected static function booted()
     {

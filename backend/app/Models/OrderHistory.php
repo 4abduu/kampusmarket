@@ -4,19 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasUuid;
+
 
 class OrderHistory extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
     
-    protected static function booted()
-    {
-        static::creating(function ($history) {
-            if (!$history->uuid) {
-                $history->uuid = \App\Http\Helpers\NumberGenerator::uuid();
-            }
-        });
-    }
 
     protected $fillable = [
         'uuid',

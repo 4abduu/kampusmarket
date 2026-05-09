@@ -37,7 +37,7 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
-import CatalogPageSkeleton from "@/components/skeleton/CatalogPageSkeleton";
+import { CatalogPageSkeleton } from "@/components/skeleton";
 import CatalogFilterSidebar from "@/components/pages/guest/catalog/CatalogFilterSidebar";
 import ProductImage from "@/components/common/ProductImage";
 import EmptyState from "@/components/shared/EmptyState";

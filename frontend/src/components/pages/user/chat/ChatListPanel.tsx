@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -77,10 +77,10 @@ export default function ChatListPanel({ chats, selectedChatId, showChatList, isS
                 >
                   <div className="relative shrink-0">
                     <Avatar className="h-11 w-11">
-                      {chat.otherUser.avatar
-                        ? <img src={chat.otherUser.avatar} alt={chat.otherUser.name} className="h-full w-full object-cover rounded-full" />
-                        : <AvatarFallback className="bg-primary-100 text-primary-700 text-sm">{initials(chat.otherUser.name)}</AvatarFallback>
-                      }
+                      <AvatarImage src={chat.otherUser.avatar} alt={chat.otherUser.name} className="object-cover" />
+                      <AvatarFallback className="bg-primary-100 text-primary-700 text-sm">
+                        {initials(chat.otherUser.name)}
+                      </AvatarFallback>
                     </Avatar>
                     {chat.otherUser.isOnline && (
                       <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />

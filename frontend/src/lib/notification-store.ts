@@ -2,13 +2,13 @@ import { create } from "zustand";
 import { Package, MessageCircle, CheckCircle } from "lucide-react";
 
 export interface Notification {
-  id: number;
+  id: string;
   type: "order" | "chat" | "review" | "system";
   title: string;
   message: string;
   time: string;
   read: boolean;
-  icon: typeof Package;
+  icon: any;
   iconColor: string;
   iconBg: string;
   orderId?: string;
@@ -18,9 +18,9 @@ export interface Notification {
 interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
-  markAsRead: (id: number) => void;
+  markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  deleteNotification: (id: number) => void;
+  deleteNotification: (id: string) => void;
   getUnreadCount: () => number;
 }
 
@@ -38,8 +38,13 @@ export const useNotificationStore = create<NotificationState & {
   fetchNotifications: async () => {
     try {
       const apiClient = (await import('@/lib/api/client')).default;
-      const res = await apiClient.get('/notifications');
-      const data = res.data.data.map((n: any) => {
+      const res: any = await apiClient.get('/notifications');
+      
+      // Handle both { success, data: [...] } and { success, data: { data: [...] } }
+      const rawData = res.data?.data || res.data || [];
+      const notificationsArray = Array.isArray(rawData) ? rawData : [];
+
+      const data = notificationsArray.map((n: any) => {
         let type = n.type;
         if (type === 'payment') type = 'order';
         
@@ -47,6 +52,7 @@ export const useNotificationStore = create<NotificationState & {
         let iconColor = "text-blue-500";
         let iconBg = "bg-blue-100";
         
+
         if (type === 'order') {
           icon = Package;
           iconColor = "text-blue-500";
@@ -62,12 +68,12 @@ export const useNotificationStore = create<NotificationState & {
         }
         
         return {
-          id: n.id,
+          id: n.id, // This is UUID string from NotificationResource
           type: type,
           title: n.title,
           message: n.message,
-          time: n.created_at,
-          read: n.is_read,
+          time: n.createdAt || n.created_at, // Handle both camelCase and snake_case
+          read: n.isRead !== undefined ? n.isRead : n.is_read, // Handle both camelCase and snake_case
           icon,
           iconColor,
           iconBg,
@@ -84,14 +90,16 @@ export const useNotificationStore = create<NotificationState & {
   fetchUnreadCount: async () => {
     try {
       const apiClient = (await import('@/lib/api/client')).default;
-      const res = await apiClient.get('/notifications/unread-count');
-      set({ unreadCount: res.data.data.unreadCount });
+      const res: any = await apiClient.get('/notifications/unread-count');
+      // Fix: res.data is already { unreadCount: ... }
+      const count = res.data?.unreadCount ?? 0;
+      set({ unreadCount: count });
     } catch (e) {
       console.error('Error fetching unread count:', e);
     }
   },
 
-  markAsRead: async (id: number) => {
+  markAsRead: async (id: string) => {
     const original = get().notifications;
     set((state) => {
       const notifications = state.notifications.map((n) =>
@@ -107,7 +115,7 @@ export const useNotificationStore = create<NotificationState & {
       const apiClient = (await import('@/lib/api/client')).default;
       const targetId = original.find(n => n.id === id)?.id;
       if (targetId) {
-        await apiClient.put(`/notifications/${targetId}/read`);
+        await apiClient.post(`/notifications/${targetId}/read`);
       }
     } catch (e) {
       console.error('Error marking as read:', e);
@@ -122,13 +130,13 @@ export const useNotificationStore = create<NotificationState & {
     
     try {
       const apiClient = (await import('@/lib/api/client')).default;
-      await apiClient.put('/notifications/read-all');
+      await apiClient.post('/notifications/read-all');
     } catch (e) {
       console.error('Error marking all as read:', e);
     }
   },
   
-  deleteNotification: async (id: number) => {
+  deleteNotification: async (id: string) => {
     const original = get().notifications;
     set((state) => {
       const notifications = state.notifications.filter((n) => n.id !== id);

@@ -18,7 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getOrderDetail, type Order } from "@/lib/api/orders";
-import PaymentSuccessPageSkeleton from "@/components/skeleton/PaymentSuccessPageSkeleton";
+import { PaymentSuccessPageSkeleton } from "@/components/skeleton";
 import type { NavigationData } from "@/app/navigation/types";
 
 interface PaymentSuccessPageProps {

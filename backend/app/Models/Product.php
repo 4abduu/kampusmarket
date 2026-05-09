@@ -11,10 +11,12 @@ use App\Enums\ProductCondition;
 use App\Enums\PriceType;
 use App\Enums\AvailabilityStatus;
 use App\Enums\DurationUnit;
+use App\Traits\HasUuid;
+
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected $fillable = [
         'uuid',

@@ -10,7 +10,7 @@ import ProductDetailReportDialog from "@/components/pages/guest/product-detail/P
 import ProductDetailSidebar from "@/components/pages/guest/product-detail/ProductDetailSidebar";
 import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/ProductDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
-import ProductDetailPageSkeleton from "@/components/skeleton/ProductDetailPageSkeleton";
+import { ProductDetailPageSkeleton } from "@/components/skeleton";
 
 interface ProductDetailPageProps {
   onNavigate: (

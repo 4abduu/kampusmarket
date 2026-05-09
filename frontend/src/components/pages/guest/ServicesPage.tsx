@@ -38,7 +38,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ServicesFilterSidebar from "@/components/pages/guest/services/ServicesFilterSidebar";
 import ProductImage from "@/components/common/ProductImage";
 import { Skeleton } from "@/components/ui/skeleton";
-import ServicesPageSkeleton from "@/components/skeleton/ServicesPageSkeleton";
+import { ServicesPageSkeleton } from "@/components/skeleton";
 import EmptyState from "@/components/shared/EmptyState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 

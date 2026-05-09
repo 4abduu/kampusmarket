@@ -240,7 +240,6 @@ class AdminUserController extends Controller
             ]);
 
             \App\Models\Notification::create([
-                'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
                 'user_id' => $user->id,
                 'type' => \App\Enums\NotificationType::SYSTEM,
                 'title' => 'Peringatan Akun',

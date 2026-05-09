@@ -12,7 +12,7 @@ import CheckoutContactSellerCard from "@/components/pages/user/checkout/Checkout
 import CheckoutOrderSummaryColumn from "@/components/pages/user/checkout/CheckoutOrderSummaryColumn";
 import CheckoutShippingMethodSection from "@/components/pages/user/checkout/CheckoutShippingMethodSection";
 import ServiceBookingSection from "@/components/pages/user/checkout/ServiceBookingSection";
-import CheckoutPageSkeleton from "@/components/skeleton/CheckoutPageSkeleton";
+import { CheckoutPageSkeleton } from "@/components/skeleton";
 import {
   createDefaultAddressForm,
   formatPrice,

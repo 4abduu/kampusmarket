@@ -9,6 +9,7 @@ import { userApi } from "@/lib/api/users";
 import { useCartStore } from "@/lib/cart-store";
 import type { User } from "@/lib/mock-data";
 import { useNotificationStore } from "@/lib/notification-store";
+import { useChatStore } from "@/lib/chat-store";
 import { getEcho } from "@/lib/echo";
 
 // Layout
@@ -53,6 +54,8 @@ function AppContent() {
         void useCartStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
         useNotificationStore.getState().initEcho(user.id);
+        void useChatStore.getState().fetchUnreadCount();
+        useChatStore.getState().initEcho(user.id);
         return true;
       } else {
         setAuthUser(null);
@@ -157,8 +160,8 @@ function AppContent() {
   const handleNavigate = (page: string, data?: string | NavigationData) => {
     let url = `/${page === "landing" ? "" : page}`;
 
-    // Handle simple string ID
-    if (typeof data === "string") {
+    // Handle simple string/number ID
+    if (typeof data === "string" || typeof data === "number") {
       if (!page.includes("/")) {
         url = `/${page}/${data}`;
       }

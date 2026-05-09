@@ -167,8 +167,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/orders/{id}/confirm-price', [OrderController::class, 'confirmPrice']);
     Route::get('/orders/{id}/history', [OrderController::class, 'history']);
 
-    // Payments (create snap token)
+    // Payments (create snap token and confirm payment client-side)
     Route::post('/payments/create-snap', [PaymentController::class, 'createSnap']);
+    Route::post('/payments/confirm', [PaymentController::class, 'confirmPayment']);
 
     // ----------------------------------------
     // CHATS

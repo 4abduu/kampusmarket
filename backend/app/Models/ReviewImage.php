@@ -27,4 +27,20 @@ class ReviewImage extends Model
     {
         return $this->belongsTo(Review::class);
     }
+
+    /**
+     * Get the full URL.
+     */
+    public function getUrlAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
 }

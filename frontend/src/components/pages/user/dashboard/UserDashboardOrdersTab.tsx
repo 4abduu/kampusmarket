@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getUserOrders } from "@/lib/api/orders"
 import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
 import { AlertCircle, Briefcase, Check, CheckCircle2, DollarSign, MessageCircle, Package, Truck, RotateCw } from "lucide-react"
-import UserDashboardOrdersTabSkeleton from "@/components/skeleton/UserDashboardOrdersTabSkeleton"
+import { UserDashboardOrdersTabSkeleton } from "@/components/skeleton"
 
 type Props = {
   onNavigate: (page: string, productId?: string) => void

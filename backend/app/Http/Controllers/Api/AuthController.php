@@ -61,7 +61,6 @@ class AuthController extends Controller
             }
 
             $user = User::create([
-                'uuid' => NumberGenerator::uuid(),
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
@@ -180,7 +179,6 @@ class AuthController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'uuid' => NumberGenerator::uuid(),
                     'name' => $request->name,
                     'email' => $request->email,
                     'google_id' => $request->googleId,
@@ -334,7 +332,6 @@ class AuthController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'uuid' => NumberGenerator::uuid(),
                     'name' => $googleUser['name'],
                     'email' => $googleUser['email'],
                     'google_id' => $googleUser['id'],

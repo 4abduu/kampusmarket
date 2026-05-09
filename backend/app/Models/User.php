@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use App\Enums\UserRole;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\HasUuid;
+
 
 /**
  * Model: User [REVISI]
@@ -16,7 +18,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
+    use HasFactory, Notifiable, SoftDeletes, HasApiTokens, HasUuid;
 
     protected $fillable = [
         'uuid',
@@ -74,6 +76,22 @@ class User extends Authenticatable
         }
 
         return $this->last_seen->diffInMinutes(now()) < 5;
+    }
+
+    /**
+     * Get the avatar URL.
+     */
+    public function getAvatarAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
     }
 
     protected static function booted(): void

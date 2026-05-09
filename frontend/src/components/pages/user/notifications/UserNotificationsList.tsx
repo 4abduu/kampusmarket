@@ -9,7 +9,7 @@ import type { Notification } from "@/lib/notification-store";
 interface UserNotificationsListProps {
   notifications: Notification[];
   onClickNotification: (notification: Notification) => void;
-  onDeleteNotification: (event: MouseEvent, id: number) => void;
+  onDeleteNotification: (event: MouseEvent, id: string) => void;
 }
 
 export default function UserNotificationsList({

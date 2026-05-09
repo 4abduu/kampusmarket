@@ -1,10 +1,6 @@
-/**
- * ChatConversationPanel.tsx [REVISI v2 — fix build error]
- * Fix: hapus import useRef yang tidak terpakai (TS6133)
- */
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -121,7 +117,27 @@ export default function ChatConversationPanel({
         ${!showChatList || chatDetail ? 'flex' : 'hidden lg:flex'}
       `}
     >
-      {chatDetail ? (
+      {isLoading && !chatDetail ? (
+        <div className="flex-1 flex flex-col animate-pulse">
+           <div className="p-4 border-b flex items-center gap-3">
+             <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-full" />
+             <div className="space-y-2">
+               <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+               <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+             </div>
+           </div>
+           <div className="flex-1 p-4 space-y-4">
+             <div className="flex justify-start"><div className="h-12 w-48 bg-slate-100 dark:bg-slate-800 rounded-2xl" /></div>
+             <div className="flex justify-end"><div className="h-12 w-32 bg-primary-100 dark:bg-primary-900/20 rounded-2xl" /></div>
+             <div className="flex justify-start"><div className="h-20 w-64 bg-slate-100 dark:bg-slate-800 rounded-2xl" /></div>
+           </div>
+           <div className="p-4 border-t flex gap-2">
+             <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+             <div className="h-10 flex-1 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+             <div className="h-10 w-10 bg-primary-200 dark:bg-primary-900/40 rounded-lg" />
+           </div>
+        </div>
+      ) : chatDetail ? (
         <>
           {/* ── Header ── */}
           <CardHeader className="border-b border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/70 dark:bg-slate-900/60">
@@ -138,13 +154,10 @@ export default function ChatConversationPanel({
                 >
                   <div className="relative">
                     <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
-                      {otherUser?.avatar ? (
-                        <img src={otherUser.avatar} alt={otherUser.name} className="h-full w-full object-cover rounded-full" />
-                      ) : (
-                        <AvatarFallback className="bg-primary-100 text-primary-700 text-xs sm:text-sm">
-                          {otherUser ? getInitials(otherUser.name) : '?'}
-                        </AvatarFallback>
-                      )}
+                      <AvatarImage src={otherUser?.avatar} alt={otherUser?.name} className="object-cover" />
+                      <AvatarFallback className="bg-primary-100 text-primary-700 text-xs sm:text-sm">
+                        {otherUser ? getInitials(otherUser.name) : '?'}
+                      </AvatarFallback>
                     </Avatar>
                     {otherUser?.isOnline && (
                       <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
@@ -218,7 +231,7 @@ export default function ChatConversationPanel({
               </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {/* Context card "Sedang Ditanyakan" — tampil saat chat baru dibuka dari produk */}
+                {/* Context card "Sedang Ditanyakan" — tetap tampil selama sesi chat */}
                 {showContextCard && chatProduct && (
                   <div className="flex justify-center mb-4">
                     <div
@@ -226,8 +239,8 @@ export default function ChatConversationPanel({
                       onClick={() => onNavigate('product', chatProduct.id)}
                     >
                       <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
-                        {chatDetail.product?.images?.[0] ? (
-                          <img src={chatDetail.product.images[0]} alt={chatProduct.title} className="w-full h-full object-cover rounded-lg" />
+                        {chatProduct.image ? (
+                          <img src={chatProduct.image} alt={chatProduct.title} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <Package className="h-4 w-4 text-muted-foreground/50" />
                         )}

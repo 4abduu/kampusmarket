@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Traits\HasUuid;
+
 
 class Favorite extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = [
         'uuid',
@@ -40,9 +42,7 @@ class Favorite extends Model
         return static::firstOrCreate([
             'user_id' => $userId,
             'product_id' => $productId,
-        ], [
-            'uuid' => (string) Str::uuid(),
-        ]);
+        ], []);
     }
 
     /**

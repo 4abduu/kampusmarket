@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import type { Service } from "@/lib/mock-data";
-import LandingServicesSectionSkeleton from "@/components/skeleton/LandingServicesSectionSkeleton";
+import { LandingServicesSectionSkeleton } from "@/components/skeleton";
 
 interface LandingServicesSectionProps {
   services: Service[];

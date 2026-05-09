@@ -184,7 +184,6 @@ class OrderController extends Controller
 
         // Create order
         $order = Order::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_number' => NumberGenerator::orderNumber($product->type->value ?? $product->type),
             'product_id' => $product->id,
             'product_title' => $product->title,
@@ -217,7 +216,6 @@ class OrderController extends Controller
 
         // Create order history
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => $initialStatus->value,
             'notes' => 'Order created',
@@ -228,7 +226,7 @@ class OrderController extends Controller
             $order->seller_id,
             'Pesanan Baru',
             "Anda menerima pesanan baru untuk produk '{$product->title}'.",
-            $order->id
+            $order->uuid
         );
 
         // Update product stock
@@ -345,7 +343,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $shippingFee = (int) ($selectedShippingOption->price ?? 0);
+        $shippingFee = (int) $request->shippingFee;
 
         // Update order
         $order->update([
@@ -357,7 +355,6 @@ class OrderController extends Controller
 
         // Add history
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => OrderStatus::WAITING_PAYMENT->value,
             'notes' => 'Shipping fee set: Rp ' . number_format($request->shippingFee, 0, ',', '.'),
@@ -368,7 +365,7 @@ class OrderController extends Controller
             $order->buyer_id,
             'Ongkos Kirim Ditetapkan',
             "Penjual telah menetapkan ongkos kirim sebesar Rp " . number_format($request->shippingFee, 0, ',', '.') . " untuk pesanan Anda. Silakan lanjutkan ke pembayaran.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -415,7 +412,6 @@ class OrderController extends Controller
         ]);
 
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => OrderStatus::WAITING_CONFIRMATION->value,
             'notes' => 'Price offered: Rp ' . number_format($request->offeredPrice, 0, ',', '.'),
@@ -426,7 +422,7 @@ class OrderController extends Controller
             $order->buyer_id,
             'Penawaran Harga',
             "Penjual memberikan penawaran harga sebesar Rp " . number_format($request->offeredPrice, 0, ',', '.') . ". Silakan konfirmasi.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -480,8 +476,7 @@ class OrderController extends Controller
             ]);
 
             OrderHistory::create([
-                'uuid' => NumberGenerator::uuid(),
-                'order_id' => $order->id,
+                    'order_id' => $order->id,
                 'status' => $order->fresh()->status->value,
                 'notes' => 'Buyer accepted the price offer',
                 'actor_id' => $request->user()->id,
@@ -491,7 +486,7 @@ class OrderController extends Controller
                 $order->seller_id,
                 'Penawaran Diterima',
                 "Pembeli telah menyetujui penawaran harga Anda sebesar Rp " . number_format($newFinalPrice, 0, ',', '.') . ".",
-                $order->id
+                $order->uuid
             );
         } else {
             // Reject - back to negotiation or cancel
@@ -500,8 +495,7 @@ class OrderController extends Controller
             ]);
 
             OrderHistory::create([
-                'uuid' => NumberGenerator::uuid(),
-                'order_id' => $order->id,
+                    'order_id' => $order->id,
                 'status' => OrderStatus::WAITING_PRICE->value,
                 'notes' => 'Buyer rejected the price offer',
                 'actor_id' => $request->user()->id,
@@ -511,7 +505,7 @@ class OrderController extends Controller
                 $order->seller_id,
                 'Penawaran Ditolak',
                 "Pembeli menolak penawaran harga Anda. Silakan berikan penawaran baru.",
-                $order->id
+                $order->uuid
             );
         }
 
@@ -561,7 +555,6 @@ class OrderController extends Controller
         $order->update(['status' => $newStatus]);
 
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => $newStatus->value,
             'notes' => 'Pesanan diterima oleh penjual',
@@ -572,7 +565,7 @@ class OrderController extends Controller
             $order->buyer_id,
             'Pesanan Dikonfirmasi',
             "Pesanan Anda untuk '{$product->title}' telah dikonfirmasi oleh penjual.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -628,7 +621,6 @@ class OrderController extends Controller
         $notes = $isService ? 'Penyedia jasa mengkonfirmasi layanan selesai' : 'Penjual mengkonfirmasi barang diserahkan/dikirim';
 
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => $newStatus->value,
             'notes' => $notes,
@@ -639,7 +631,7 @@ class OrderController extends Controller
             $order->buyer_id,
             $isService ? 'Layanan Selesai' : 'Pesanan Dikirim',
             $notes . ". Silakan konfirmasi penerimaan pesanan jika sudah sesuai.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -744,8 +736,7 @@ class OrderController extends Controller
             $buyer->save();
 
             WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $buyer->id,
+                    'user_id' => $buyer->id,
                 'type' => 'payment',
                 'amount' => -$totalPrice,
                 'balance_before' => $balanceBefore,
@@ -770,7 +761,6 @@ class OrderController extends Controller
         ]);
 
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => $newStatus->value,
             'notes' => 'Pembayaran berhasil — dana ditahan di escrow',
@@ -781,7 +771,7 @@ class OrderController extends Controller
             $order->seller_id,
             'Pembayaran Berhasil',
             "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil (ditahan di escrow sistem). Silakan proses pesanan.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -819,7 +809,6 @@ class OrderController extends Controller
         ]);
 
         OrderHistory::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'status' => OrderStatus::COMPLETED->value,
             'notes' => 'Pembeli mengkonfirmasi pesanan selesai',
@@ -837,8 +826,7 @@ class OrderController extends Controller
             $seller->save();
 
             WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $seller->id,
+                    'user_id' => $seller->id,
                 'type' => 'income',
                 'amount' => $order->net_income,
                 'balance_before' => $sellerBalanceBefore,
@@ -850,7 +838,6 @@ class OrderController extends Controller
 
             if ($order->admin_fee_deducted > 0) {
                 WalletTransaction::create([
-                    'uuid' => NumberGenerator::uuid(),
                     'user_id' => $seller->id,
                     'type' => 'admin_fee',
                     'amount' => -$order->admin_fee_deducted,
@@ -867,7 +854,7 @@ class OrderController extends Controller
             $order->seller_id,
             'Pesanan Selesai',
             "Pembeli telah mengkonfirmasi penerimaan pesanan '{$order->product_title}'. Dana telah diteruskan ke saldo Anda.",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([
@@ -913,8 +900,7 @@ class OrderController extends Controller
             $buyer->save();
 
             WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $buyer->id,
+                    'user_id' => $buyer->id,
                 'type' => 'refund',
                 'amount' => $order->total_price,
                 'balance_before' => $balanceBefore,
@@ -931,8 +917,7 @@ class OrderController extends Controller
             $seller->save();
 
             WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $seller->id,
+                    'user_id' => $seller->id,
                 'type' => 'payment',
                 'amount' => -$order->net_income,
                 'balance_before' => $sellerBalanceBefore,
@@ -952,7 +937,7 @@ class OrderController extends Controller
             $otherPartyId,
             'Pesanan Dibatalkan',
             "$partyRole telah membatalkan pesanan '{$order->product_title}' dengan alasan: {$request->cancelReason}",
-            $order->id
+            $order->uuid
         );
 
         return response()->json([

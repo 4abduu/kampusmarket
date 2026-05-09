@@ -4,21 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasUuid;
+
 use App\Enums\WithdrawalStatus;
 use App\Enums\AccountType;
 
 class Withdrawal extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
     
-    protected static function booted()
-    {
-        static::creating(function ($withdrawal) {
-            if (!$withdrawal->uuid) {
-                $withdrawal->uuid = \App\Http\Helpers\NumberGenerator::uuid();
-            }
-        });
-    }
 
     protected $fillable = [
         'uuid',

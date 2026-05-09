@@ -13,6 +13,7 @@ import {
   setShippingFee as apiSetShippingFee,
   offerPrice as apiOfferPrice,
   confirmPrice as apiConfirmPrice,
+  confirmPaymentClient,
   type Order,
 } from "@/lib/api/orders";
 import OrderHistoryTimeline from "@/components/pages/user/order-detail/OrderHistoryTimeline";
@@ -349,7 +350,7 @@ export default function OrderDetailPage({
   };
 
   // Midtrans Snap helper
-  const openMidtransSnap = (token: string) => {
+  const openMidtransSnap = (token: string, paymentUuid: string) => {
     const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || "";
     const isSandbox = (import.meta.env.VITE_MIDTRANS_IS_SANDBOX || "true") === "true";
     const snapSrc = isSandbox
@@ -373,21 +374,35 @@ export default function OrderDetailPage({
 
       try {
         (window as any).snap.pay(token, {
-          onSuccess: (result: any) => {
+          onSuccess: async (result: any) => {
             console.log('[Midtrans] Payment success:', result);
             toast({ 
               title: "✅ Pembayaran berhasil!",
-              description: "Pesanan Anda sedang diproses."
+              description: "Mengonfirmasi pembayaran..."
             });
+            try {
+              if (paymentUuid) {
+                await confirmPaymentClient(paymentUuid);
+              }
+            } catch (e) {
+              console.error("Failed to confirm payment on frontend", e);
+            }
             setActionLoading(false);
             fetchOrder();
           },
-          onPending: (result: any) => {
+          onPending: async (result: any) => {
             console.log('[Midtrans] Payment pending:', result);
             toast({ 
               title: "⏳ Pembayaran pending", 
               description: "Selesaikan pembayaran Anda untuk melanjutkan." 
             });
+            try {
+              if (paymentUuid) {
+                await confirmPaymentClient(paymentUuid);
+              }
+            } catch (e) {
+              console.error("Failed to confirm payment on frontend", e);
+            }
             setActionLoading(false);
             fetchOrder();
           },
@@ -511,8 +526,9 @@ export default function OrderDetailPage({
       if (method === "midtrans") {
         const result = await payOrder(order.id);
         const token = result?.snap_token || (result as any)?.token;
+        const paymentUuid = result?.payment_uuid || (result as any)?.data?.payment_uuid;
         if (token) {
-          openMidtransSnap(token);
+          openMidtransSnap(token, paymentUuid);
         } else {
           toast({ title: "Gagal mendapatkan token pembayaran", variant: "destructive" });
         }

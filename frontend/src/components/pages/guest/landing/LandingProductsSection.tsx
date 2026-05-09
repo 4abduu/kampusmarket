@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ProductImage from "@/components/common/ProductImage";
 import type { Product } from "@/lib/mock-data";
-import LandingProductsSectionSkeleton from "@/components/skeleton/LandingProductsSectionSkeleton";
+import { LandingProductsSectionSkeleton } from "@/components/skeleton";
 
 interface LandingProductsSectionProps {
   products: Product[];

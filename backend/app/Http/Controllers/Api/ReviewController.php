@@ -85,7 +85,6 @@ class ReviewController extends Controller
 
         // Create review
         $review = Review::create([
-            'uuid' => NumberGenerator::uuid(),
             'order_id' => $order->id,
             'reviewer_id' => $user->id,
             'reviewee_id' => $order->seller_id,

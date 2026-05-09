@@ -8,7 +8,7 @@ import ProductImage from "@/components/common/ProductImage";
 import ServiceDetailSidebar from "@/components/pages/guest/service-detail/ServiceDetailSidebar";
 import ServiceDetailTabsPanel from "@/components/pages/guest/service-detail/ServiceDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
-import ServiceDetailPageSkeleton from "@/components/skeleton/ServiceDetailPageSkeleton";
+import { ServiceDetailPageSkeleton } from "@/components/skeleton";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 
 interface ServiceDetailPageProps {

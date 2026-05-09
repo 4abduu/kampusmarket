@@ -60,7 +60,7 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
     }
   };
 
-  const handleDeleteNotification = (event: MouseEvent, id: number) => {
+  const handleDeleteNotification = (event: MouseEvent, id: string) => {
     event.stopPropagation();
     deleteNotification(id);
   };

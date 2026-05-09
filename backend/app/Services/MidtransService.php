@@ -66,4 +66,23 @@ class MidtransService
         $computed = hash('sha512', $orderId . $statusCode . $grossAmount . $this->serverKey);
         return hash_equals($computed, $signatureKey);
     }
+
+    /**
+     * Check transaction status directly from Midtrans API.
+     * This is the fallback for when webhooks can't reach localhost.
+     */
+    public function getTransactionStatus(string $orderId): array
+    {
+        $url = $this->baseUrl . '/v2/' . $orderId . '/status';
+
+        $response = Http::withBasicAuth($this->serverKey, '')
+            ->acceptJson()
+            ->get($url);
+
+        return $response->successful() ? $response->json() : [
+            'error' => true,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ];
+    }
 }

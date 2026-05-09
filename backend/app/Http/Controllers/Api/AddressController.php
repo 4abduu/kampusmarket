@@ -45,7 +45,6 @@ class AddressController extends Controller
         }
 
         $address = Address::create([
-            'uuid' => NumberGenerator::uuid(),
             'user_id' => $user->id,
             'label' => $request->label,
             'recipient' => $request->recipient,

@@ -14,7 +14,6 @@ use App\Http\Resources\MessageResource;
 use App\Http\Requests\SendMessageRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Helpers\NumberGenerator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -81,7 +80,6 @@ class ChatController extends Controller
                 'seller_id'  => $product->seller_id,
             ],
             [
-                'uuid'      => NumberGenerator::uuid(),
                 'is_active' => true,
             ]
         );
@@ -215,12 +213,11 @@ class ChatController extends Controller
 
         $message = DB::transaction(function () use ($request, $chat, $userId) {
             $msgData = [
-                'uuid'         => NumberGenerator::uuid(),
                 'chat_id'      => $chat->id,
                 'sender_id'    => $userId,
                 'content'      => $request->content ?? '',
                 'type'         => $request->type,
-                'offer_price'  => $request->offer_price,  // sudah dalam cent (prepareForValidation)
+                'offer_price'  => $request->offer_price,
                 'offer_status' => $request->type === 'offer' ? 'pending' : null,
             ];
 
@@ -391,7 +388,6 @@ class ChatController extends Controller
             broadcast(new MessageSent($message));
 
             $sysMsg = Message::create([
-                'uuid'      => NumberGenerator::uuid(),
                 'chat_id'   => $chat->id,
                 'sender_id' => $userId,
                 'content'   => '✅ Penawaran diterima! Silakan lanjutkan ke pembayaran.',
@@ -444,7 +440,6 @@ class ChatController extends Controller
             $message->rejectOffer();
 
             $sysMsg = Message::create([
-                'uuid'      => NumberGenerator::uuid(),
                 'chat_id'   => $chat->id,
                 'sender_id' => $userId,
                 'content'   => '❌ Penawaran ditolak.',

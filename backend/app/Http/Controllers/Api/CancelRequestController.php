@@ -80,7 +80,6 @@ class CancelRequestController extends Controller
 
         // Create cancel request
         $cancelRequest = CancelRequest::create([
-            'uuid' => NumberGenerator::uuid(),
             'request_number' => NumberGenerator::cancelRequestNumber(),
             'order_id' => $order->id,
             'requester_id' => $user->id,
@@ -196,8 +195,7 @@ class CancelRequestController extends Controller
             $buyer->save();
 
             \App\Models\WalletTransaction::create([
-                'uuid' => NumberGenerator::uuid(),
-                'user_id' => $buyer->id,
+                    'user_id' => $buyer->id,
                 'type' => 'refund',
                 'amount' => $refundAmount,
                 'balance_before' => $balanceBefore,

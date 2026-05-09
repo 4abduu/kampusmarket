@@ -161,7 +161,6 @@ class AdminProductController extends Controller
 
         // Notify seller
         \App\Models\Notification::create([
-            'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
             'user_id' => $product->seller_id,
             'type' => \App\Enums\NotificationType::SYSTEM,
             'title' => 'Produk Dihapus oleh Admin',
