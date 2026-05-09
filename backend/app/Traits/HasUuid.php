@@ -13,6 +13,7 @@ trait HasUuid
 {
     /**
      * Boot trait HasUuid
+     * Menambahkan generate UUID di satu file saja
      */
     public static function bootHasUuid(): void
     {
