@@ -144,7 +144,22 @@ export const productsApi = {
    * Get product by slug or ID.
    */
   async getProduct(id: string): Promise<Product> {
-    return request<Product>(`${API_BASE_URL}/products/${id}`, undefined, { cacheKey: `product:${id}` });
+    // Check if it's a mock ID first to prevent 404 in console
+    const { mockProducts } = await import("@/lib/mock-data");
+    const mock = mockProducts.find(p => p.id === id || (p as any).uuid === id);
+    
+    if (mock) {
+      console.log(`[productsApi] Returning mock data for product: ${id}`);
+      return mock as Product;
+    }
+
+    try {
+      return await request<Product>(`${API_BASE_URL}/products/${id}`, undefined, { cacheKey: `product:${id}` });
+    } catch (error) {
+      // Final fallback if check above missed it or API failed for other reasons
+      if (mock) return mock as Product;
+      throw error;
+    }
   },
 
   /**
@@ -250,23 +265,56 @@ export const productsApi = {
   },
 
   async addFavorite(productId: string): Promise<{ isFavorited: boolean; message: string }> {
-    const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
-      method: "POST",
-    });
-    clearCache("favorites");
-    return res;
+    const { mockProducts } = await import("@/lib/mock-data");
+    const isMock = mockProducts.some(p => p.id === productId || (p as any).uuid === productId);
+
+    if (isMock) {
+      return { isFavorited: true, message: "Ditambahkan ke favorit (Mock)" };
+    }
+
+    try {
+      const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
+        method: "POST",
+      });
+      clearCache("favorites");
+      return res;
+    } catch (error) {
+      throw error;
+    }
   },
 
   async removeFavorite(productId: string): Promise<{ isFavorited: boolean; message: string }> {
-    const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
-      method: "DELETE",
-    });
-    clearCache("favorites");
-    return res;
+    const { mockProducts } = await import("@/lib/mock-data");
+    const isMock = mockProducts.some(p => p.id === productId || (p as any).uuid === productId);
+
+    if (isMock) {
+      return { isFavorited: false, message: "Dihapus dari favorit (Mock)" };
+    }
+
+    try {
+      const res = await request<{ isFavorited: boolean; message: string }>(`${API_BASE_URL}/favorites/${productId}`, {
+        method: "DELETE",
+      });
+      clearCache("favorites");
+      return res;
+    } catch (error) {
+      throw error;
+    }
   },
 
   async checkFavorite(productId: string): Promise<{ isFavorited: boolean }> {
-    return request<{ isFavorited: boolean }>(`${API_BASE_URL}/favorites/check/${productId}`);
+    const { mockProducts } = await import("@/lib/mock-data");
+    const isMock = mockProducts.some(p => p.id === productId || (p as any).uuid === productId);
+
+    if (isMock) {
+      return { isFavorited: false };
+    }
+
+    try {
+      return await request<{ isFavorited: boolean }>(`${API_BASE_URL}/favorites/check/${productId}`);
+    } catch (error) {
+      throw error;
+    }
   },
 };
 

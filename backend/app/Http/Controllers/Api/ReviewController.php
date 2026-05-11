@@ -57,6 +57,12 @@ class ReviewController extends Controller
     {
         $user = $request->user();
         $order = Order::where('uuid', $request->orderId)->firstOrFail();
+        \Log::info('[ReviewController] Order fetched', [
+            'order_id' => $order->id,
+            'seller_id' => $order->seller_id,
+            'buyer_id' => $order->buyer_id,
+            'uuid' => $order->uuid
+        ]);
 
         // Check if order belongs to user
         if ($order->buyer_id !== $user->id) {
@@ -74,24 +80,30 @@ class ReviewController extends Controller
             ], 400);
         }
 
-        // Check if already reviewed
-        $existingReview = Review::where('order_id', $order->id)->first();
+        // Check if already reviewed (including soft-deleted)
+        $existingReview = Review::withTrashed()->where('order_id', $order->id)->first();
         if ($existingReview) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda sudah memberikan ulasan untuk pesanan ini',
-            ], 400);
+            if ($existingReview->trashed()) {
+                // Force delete soft-deleted review so user can re-submit
+                $existingReview->forceDelete();
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah memberikan ulasan untuk pesanan ini',
+                ], 400);
+            }
         }
 
         // Create review
-        $review = Review::create([
-            'order_id' => $order->id,
-            'reviewer_id' => $user->id,
-            'reviewee_id' => $order->seller_id,
-            'product_id' => $order->product_id,
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-        ]);
+        $review = new Review();
+        $review->order_id = $order->id;
+        $review->reviewer_id = $user->id;
+        // Explicitly set reviewee_id with fallback to product seller
+        $review->reviewee_id = $order->seller_id ?? $order->product->seller_id;
+        $review->product_id = $order->product_id;
+        $review->rating = $request->rating;
+        $review->comment = $request->comment;
+        $review->save();
 
         // Save images
         if ($request->has('images')) {

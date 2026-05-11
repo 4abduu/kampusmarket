@@ -23,6 +23,7 @@ import {
   getPriceLabel,
   getPrimaryImage,
   getSavings,
+  getDiscountPercentage,
 } from "@/components/pages/user/favorites/favorites.helpers";
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 import type { NavigationData } from "@/app/navigation/types";
@@ -226,8 +227,7 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
 
   return (
     <Card
-      onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())}
-      className="group overflow-hidden cursor-pointer border-slate-200/80 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800"
+      className="group overflow-hidden border-slate-200/80 transition-all duration-200 hover:shadow-md dark:border-slate-800"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
         <img
@@ -237,8 +237,20 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
           loading="lazy"
         />
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
-          <Badge className="w-fit bg-slate-900/80 text-[11px] text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
-          {savings > 0 && <Badge className="w-fit bg-emerald-500 text-[11px] text-white hover:bg-emerald-500">-{formatIDR(savings)}</Badge>}
+          {getDiscountPercentage(product) > 0 && (
+            <Badge className="w-fit bg-red-500 text-xs text-white hover:bg-red-600">
+              -{getDiscountPercentage(product)}%
+            </Badge>
+          )}
+          {product.type === "jasa" ? (
+            <Badge className="w-fit bg-teal-500 text-xs text-white hover:bg-teal-600">
+              Jasa
+            </Badge>
+          ) : product.condition === "baru" ? (
+            <Badge className="w-fit bg-teal-500 text-xs text-white hover:bg-teal-600">
+              Baru
+            </Badge>
+          ) : null}
         </div>
         <Button
           variant="ghost"
@@ -255,46 +267,47 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
 
       <CardContent className="space-y-2.5 p-4">
         <div className="space-y-1">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-50">
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight text-slate-900 dark:text-slate-50">
             {product.title}
           </h3>
         </div>
 
         {renderStars(product.rating)}
-        {renderProductBadges()}
-        {renderModeBadges()}
 
         <div>
           <p className="text-base font-bold text-slate-900 dark:text-slate-50">{getPriceLabel(product)}</p>
           {product.original_price && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              <span className="line-through">{formatIDR(product.original_price)}</span>
-              <span className="ml-1.5">{product.review_count} ulasan</span>
-              {product.sold_count > 0 && <><span className="ml-1 text-slate-300 dark:text-slate-600">·</span><span>{product.sold_count} terjual</span></>}
+            <p className="mt-0.5 text-xs text-muted-foreground line-through">
+              {formatIDR(product.original_price)}
             </p>
           )}
         </div>
 
         {product.seller && (
-          <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Avatar className="h-7 w-7">
+          <div className="space-y-1 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="h-5 w-5 shrink-0">
                 {product.seller.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
-                <AvatarFallback className="bg-primary-100 text-[10px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-400">
+                <AvatarFallback className="bg-primary-100 text-[9px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-400">
                   {getInitials(product.seller.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
                   {product.seller.name}
-                  {product.seller.is_verified && <BadgeCheck className="ml-1 inline h-3.5 w-3.5 text-primary-500" />}
+                  {product.seller.is_verified && <BadgeCheck className="ml-1 inline h-3 w-3 text-primary-500" />}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground whitespace-nowrap ml-2">
-              <MapPin className="h-3 w-3" />
-              {product.location}
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {product.location}
+              </div>
             </div>
+            {product.can_nego && (
+              <p className="text-xs text-slate-600 dark:text-slate-400">Bisa Nego</p>
+            )}
           </div>
         )}
       </CardContent>

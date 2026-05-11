@@ -152,7 +152,7 @@ class User extends Authenticatable
 
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'seller_id');
+        return $this->hasMany(Review::class, 'reviewee_id');
     }
 
     public function orders()
@@ -189,5 +189,32 @@ class User extends Authenticatable
     public function canSell(): bool
     {
         return $this->is_verified && !$this->is_banned;
+    }
+
+    /**
+     * Check if user is an administrator.
+     */
+    public function isAdmin(): bool
+    {
+        return ($this->role?->value ?? $this->role) === UserRole::ADMIN->value;
+    }
+
+    /**
+     * Check if user is a regular user.
+     */
+    public function isUser(): bool
+    {
+        return ($this->role?->value ?? $this->role) === UserRole::USER->value;
+    }
+
+    /**
+     * Recalculate rating based on reviews
+     */
+    public function recalculateRating(): void
+    {
+        $reviews = $this->reviews();
+        $this->rating = $reviews->avg('rating') ?? 0;
+        $this->review_count = $reviews->count();
+        $this->save();
     }
 }

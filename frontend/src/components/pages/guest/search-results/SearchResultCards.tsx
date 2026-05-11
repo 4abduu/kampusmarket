@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Package, Star, User } from "lucide-react";
 import ProductImage from "@/components/common/ProductImage";
-import { mockProducts } from "@/lib/mock-data";
 import type { Product, User as UserType } from "@/lib/mock-data";
 import type {
   SearchNavigateFn,
@@ -163,8 +162,6 @@ export function SearchUserCard({
   user: UserType;
   onNavigate: SearchNavigateFn;
 }) {
-  const userProducts = mockProducts.filter((p) => p.seller.id === user.id);
-
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -203,72 +200,21 @@ export function SearchUserCard({
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t">
           <div className="text-center">
-            <p className="font-bold text-lg">{userProducts.length}</p>
-            <p className="text-xs text-muted-foreground">Produk</p>
-          </div>
-          <div className="text-center">
             <p className="font-bold text-lg">
-              {userProducts.reduce((sum, p) => sum + p.soldCount, 0)}
-            </p>
-            <p className="text-xs text-muted-foreground">Terjual</p>
-          </div>
-          <div className="text-center">
-            <p className="font-bold text-lg">
-              {userProducts.length > 0
-                ? (
-                    userProducts.reduce((sum, p) => sum + p.rating, 0) /
-                    userProducts.length
-                  ).toFixed(1)
-                : "-"}
+              {user.rating ? user.rating.toFixed(1) : "-"}
             </p>
             <p className="text-xs text-muted-foreground">Rating</p>
           </div>
-        </div>
-
-        {userProducts.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs text-muted-foreground mb-2">
-              Produk terbaru:
-            </p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {userProducts.slice(0, 3).map((product) => (
-                <div
-                  key={product.id}
-                  className={`w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500 overflow-hidden ${
-                    product.type === "jasa"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : "bg-slate-100 dark:bg-slate-800"
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNavigate(
-                      product.type === "jasa" ? "service" : "product",
-                      product.id,
-                    );
-                  }}
-                >
-                  <ProductImage
-                    src={product.images?.[0]}
-                    alt={product.title}
-                    className="w-full h-full flex items-center justify-center"
-                    imageClassName="w-full h-full object-cover"
-                    fallbackImageUrl="https://placehold.net/default.svg"
-                  />
-                </div>
-              ))}
-              {userProducts.length > 3 && (
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex-shrink-0 flex items-center justify-center text-xs text-muted-foreground">
-                  +{userProducts.length - 3}
-                </div>
-              )}
-            </div>
+          <div className="text-center">
+            <p className="font-bold text-lg">{user.reviewCount || 0}</p>
+            <p className="text-xs text-muted-foreground">Ulasan</p>
           </div>
-        )}
+        </div>
 
         <Button
           variant="outline"
           className="w-full mt-4"
-          onClick={() => onNavigate("chat")}
+          onClick={() => onNavigate("profile", user.id)}
         >
           <User className="h-4 w-4 mr-2" />
           Lihat Profil
