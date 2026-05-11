@@ -177,195 +177,426 @@ export function useAdminDashboardController() {
 
   const getTotalPages = (totalItems: number): number => Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
+  // ---------------------------------------------------------------------------
+  // Per-resource loaded flags (NOT per-tab).
+  // `categories` and `faculties` are shared across tabs — using per-resource
+  // guards ensures they are never re-fetched just because a different tab
+  // opens them for the first time.
+  // A resource is only marked loaded AFTER a successful fetch, so a failed
+  // request can be retried when the tab is opened again.
+  // ---------------------------------------------------------------------------
+  const [loadedResources, setLoadedResources] = useState<Record<string, boolean>>({});
+
+  const isResourceLoaded = (key: string) => loadedResources[key] === true;
+  const markResourceLoaded = (key: string) =>
+    setLoadedResources((prev) => ({ ...prev, [key]: true }));
+
+  // --- Per-resource/tab loading states ---
+  const [overviewLoading, setOverviewLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [facultiesLoading, setFacultiesLoading] = useState(false);
+
+  // --- Per-resource/tab error states ---
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const [reportsError, setReportsError] = useState<string | null>(null);
+  const [withdrawalsError, setWithdrawalsError] = useState<string | null>(null);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [facultiesError, setFacultiesError] = useState<string | null>(null);
+
+  // ---- Helper: map raw API responses to local types ----
+  const mapUsers = (data: any[]): User[] =>
+    data.map((user) => ({
+      id: user.id?.toString() || user.uuid || user.id,
+      uuid: user.id || user.uuid || "",
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      avatar: user.avatar || "",
+      faculty: user.faculty || user.facultyDetails?.id || "",
+      role: user.role || "student",
+      isBanned: user.isBanned || false,
+      isVerified: user.isVerified || false,
+      isWarned: user.isWarned || false,
+      joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
+      createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
+      banReason: user.banReason || "",
+    } as unknown as User));
+
+  const mapProducts = (data: any[]): Product[] =>
+    data.map((product) => ({
+      id: product.id?.toString() || product.uuid || "",
+      title: product.title || "",
+      slug: product.slug || "",
+      type: product.type || "barang",
+      price: product.price || 0,
+      priceMin: product.price_min || product.priceMin || 0,
+      priceMax: product.price_max || product.priceMax || 0,
+      priceType: product.price_type || product.priceType || "fixed",
+      category: product.category?.name || product.category_name || "",
+      categoryId: product.category?.uuid || product.category_id?.toString() || "",
+      description: product.description || "",
+      condition: product.condition || "baru",
+      stock: product.stock || 0,
+      location: product.location || "",
+      canNego: product.can_nego || false,
+      seller: {
+        id: product.seller?.uuid || product.seller_id?.toString() || "",
+        name: product.seller?.name || product.seller_name || "",
+        avatar: product.seller?.avatar || product.seller_avatar || "",
+      },
+      images: product.images || [],
+      isActive: product.status === "active" || product.is_active || false,
+      createdAt: product.created_at || new Date().toISOString(),
+      deletedAt: product.deleted_at || product.deletedAt || undefined,
+      deletedBy: product.deleted_by || product.deletedBy || undefined,
+    } as unknown as Product));
+
+  const mapCategoriesToState = (data: any[]) => {
+    const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#6b7280"];
+    const mapped = data.map((cat: any) => ({
+      id: cat.id?.toString() || cat.slug,
+      name: cat.name,
+      slug: cat.slug,
+      type: cat.type,
+      description: cat.description,
+      sortOrder: cat.sort_order || cat.sortOrder || 0,
+      isActive: cat.is_active !== undefined ? cat.is_active : cat.isActive,
+      productCount: cat.product_count || cat.productCount || 0,
+      createdAt: cat.created_at || cat.createdAt,
+    }));
+    const charts = mapped.map((cat: any, idx: number) => ({
+      name: cat.name,
+      value: cat.productCount || 0,
+      fill: colors[idx % colors.length],
+    }));
+    return { mapped, charts };
+  };
+
+  const mapReports = (data: any[]): Report[] =>
+    data.map((report) => ({
+      id: report.id?.toString() || "",
+      reportNumber: `RPT-${report.id}`,
+      reason: report.reason || "",
+      description: report.description || "",
+      status: report.status || "pending",
+      priority: "normal",
+      reporter: {
+        id: report.reporter_id?.toString() || "",
+        name: report.reporter_name || "",
+      },
+      reportedUser: {
+        id: report.reported_user_id?.toString() || "",
+        name: report.reported_user_name || "",
+      },
+      createdAt: report.created_at || new Date().toISOString(),
+    } as unknown as Report));
+
+  const mapWithdrawals = (data: any[]): Withdrawal[] =>
+    data.map((withdrawal) => ({
+      id: withdrawal.id?.toString() || "",
+      withdrawalNumber: `WD-${withdrawal.id}`,
+      user: {
+        id: withdrawal.user_id?.toString() || "",
+        name: withdrawal.user_name || "",
+      },
+      amount: withdrawal.amount || 0,
+      totalDeduction: 0,
+      bankName: withdrawal.bank_name || "",
+      accountNumber: withdrawal.account_number || "",
+      accountName: withdrawal.account_name || "",
+      accountType: withdrawal.account_type || "bank",
+      status: withdrawal.status || "pending",
+      createdAt: withdrawal.created_at || new Date().toISOString(),
+    } as unknown as Withdrawal));
+
+  // ---------------------------------------------------------------------------
+  // Shared-resource fetch helpers.
+  // These return true on success so callers can decide whether to mark loaded.
+  // ---------------------------------------------------------------------------
+
+  /** Fetch categories (shared: overview, products, categories tabs). */
+  const fetchCategoriesResource = async (): Promise<boolean> => {
+    setCategoriesLoading(true);
+    setCategoriesError(null);
+    try {
+      const res = await adminCategoriesApi.getCategories({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        const { mapped, charts } = mapCategoriesToState(res.data);
+        setCategories(mapped);
+        setCategoryChartData(charts);
+      }
+      markResourceLoaded("categories");
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat kategori";
+      setCategoriesError(msg);
+      console.error("Failed to load categories:", err);
+      return false;
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  /** Fetch faculties (shared: users, faculties tabs). */
+  const fetchFacultiesResource = async (): Promise<boolean> => {
+    setFacultiesLoading(true);
+    setFacultiesError(null);
+    try {
+      const res = await facultiesApi.listAdmin();
+      if (res.length > 0) {
+        setFaculties(res);
+      }
+      markResourceLoaded("faculties");
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat fakultas";
+      setFacultiesError(msg);
+      console.error("Failed to load faculties:", err);
+      return false;
+    } finally {
+      setFacultiesLoading(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Per-tab fetch functions.
+  // Each function fetches only the data its tab actually needs.
+  // Shared resources (categories, faculties) are only fetched if not already
+  // loaded by a previous tab — checked via isResourceLoaded().
+  // ---------------------------------------------------------------------------
+
+  const loadOverviewData = async () => {
+    setOverviewLoading(true);
+    setOverviewError(null);
+    try {
+      // overview-specific: stats + revenue (always fetch fresh)
+      const [apiStats, apiRevenueStats] = await Promise.all([
+        adminDashboardApi.getStats(),
+        adminDashboardApi.getRevenueStats(),
+      ]);
+
+      if (apiStats) {
+        const statsData = (apiStats as any).data || apiStats;
+        setStats({
+          totalUsers: statsData.users?.total || 0,
+          activeProducts: statsData.products?.active || 0,
+          pendingOrders: statsData.orders?.pending || 0,
+          totalRevenue: statsData.orders?.total_revenue || 0,
+          platformRevenue: statsData.platform_revenue || 0,
+          monthlyGrowth: 12.5,
+          pendingWithdrawals: statsData.withdrawals?.pending || 0,
+          pendingReports: statsData.reports?.pending || 0,
+          pendingCancelRequests: 3,
+          totalFaculties: statsData.faculties?.total || 0,
+          activeFaculties: statsData.faculties?.active || 0,
+        });
+      }
+
+      if (apiRevenueStats) {
+        const revenueData = (apiRevenueStats as any).data || apiRevenueStats;
+        const chartData = Array.isArray(revenueData)
+          ? revenueData.map((item: any, idx: number) => ({
+              date: (idx + 1).toString(),
+              transactions: item.transactions || item.count || 1,
+              revenue: item.revenue || item.total || 0,
+            }))
+          : [];
+        setRevenueChartData(chartData);
+      }
+
+      markResourceLoaded("overview");
+
+      // categories chart is also shown on overview — reuse if already loaded
+      if (!isResourceLoaded("categories")) {
+        await fetchCategoriesResource();
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat overview";
+      setOverviewError(msg);
+      console.error("Failed to load overview data:", err);
+    } finally {
+      setOverviewLoading(false);
+    }
+  };
+
+  const loadUsersData = async () => {
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      const res = await adminUsersApi.getUsers({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        setUsers(mapUsers(res.data));
+      }
+      markResourceLoaded("users");
+
+      // faculties needed for user faculty filter — reuse if already loaded
+      if (!isResourceLoaded("faculties")) {
+        await fetchFacultiesResource();
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat data user";
+      setUsersError(msg);
+      console.error("Failed to load users data:", err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const loadProductsData = async () => {
+    setProductsLoading(true);
+    setProductsError(null);
+    try {
+      const res = await adminProductsApi.getProducts({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        setProducts(mapProducts(res.data));
+      }
+      markResourceLoaded("products");
+
+      // categories needed for product category filter — reuse if already loaded
+      if (!isResourceLoaded("categories")) {
+        await fetchCategoriesResource();
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat data produk";
+      setProductsError(msg);
+      console.error("Failed to load products data:", err);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const loadCategoriesData = async () => {
+    // Use cached data if already loaded. Data is invalidated after any
+    // successful CRUD mutation via invalidateCategories().
+    if (!isResourceLoaded("categories")) {
+      await fetchCategoriesResource();
+    }
+  };
+
+  const loadFacultiesData = async () => {
+    // Use cached data if already loaded. Invalidated after CRUD via
+    // invalidateFaculties().
+    if (!isResourceLoaded("faculties")) {
+      await fetchFacultiesResource();
+    }
+  };
+
+  /**
+   * Call after a successful category create/update/delete/toggle so that the
+   * next time the categories tab is opened (or products/overview need it)
+   * the data is re-fetched from the server.
+   */
+  const invalidateCategories = () =>
+    setLoadedResources((prev) => ({ ...prev, categories: false }));
+
+  /**
+   * Call after a successful faculty create/update/delete/toggle so that the
+   * next time the faculties/users tab needs it the data is re-fetched.
+   */
+  const invalidateFaculties = () =>
+    setLoadedResources((prev) => ({ ...prev, faculties: false }));
+
+  const loadReportsData = async () => {
+    setReportsLoading(true);
+    setReportsError(null);
+    try {
+      const res = await adminReportsApi.getReports({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        setReports(mapReports(res.data));
+      }
+      markResourceLoaded("reports");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat laporan";
+      setReportsError(msg);
+      console.error("Failed to load reports data:", err);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  const loadWithdrawalsData = async () => {
+    setWithdrawalsLoading(true);
+    setWithdrawalsError(null);
+    try {
+      const res = await adminWithdrawalsApi.getWithdrawals({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        setWithdrawals(mapWithdrawals(res.data));
+      }
+      markResourceLoaded("withdrawals");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat penarikan";
+      setWithdrawalsError(msg);
+      console.error("Failed to load withdrawals data:", err);
+    } finally {
+      setWithdrawalsLoading(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Lazy-fetch effect: fires only when activeTab changes.
+  // Guard: skip if the primary resource for this tab is already loaded.
+  // Exception: categories/faculties management tabs always refresh on open.
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
 
-    const loadData = async () => {
-      try {
-        const [
-          apiFaculties,
-          apiCategoriesResponse,
-          apiStats,
-          apiUsers,
-          apiProducts,
-          apiReports,
-          apiWithdrawals,
-          apiRevenueStats,
-        ] = await Promise.all([
-          facultiesApi.listAdmin(),
-          adminCategoriesApi.getCategories({ per_page: 100 }),
-          adminDashboardApi.getStats(),
-          adminUsersApi.getUsers({ per_page: 100 }),
-          adminProductsApi.getProducts({ per_page: 100 }),
-          adminReportsApi.getReports({ per_page: 100 }),
-          adminWithdrawalsApi.getWithdrawals({ per_page: 100 }),
-          adminDashboardApi.getRevenueStats(),
-        ]);
+    const runLoad = async () => {
+      if (cancelled) return;
 
-        if (!controller.signal.aborted) {
-          if (apiFaculties.length > 0) {
-            setFaculties(apiFaculties);
+      switch (activeTab) {
+        case "overview":
+          if (!isResourceLoaded("overview")) {
+            await loadOverviewData();
           }
-          
-          if (apiCategoriesResponse?.data && Array.isArray(apiCategoriesResponse.data)) {
-            const mappedCategories = apiCategoriesResponse.data.map((cat: any) => ({
-              id: cat.id?.toString() || cat.slug,
-              name: cat.name,
-              slug: cat.slug,
-              type: cat.type,
-              description: cat.description,
-              sortOrder: cat.sort_order || cat.sortOrder || 0,
-              isActive: cat.is_active !== undefined ? cat.is_active : cat.isActive,
-              productCount: cat.product_count || cat.productCount || 0,
-              createdAt: cat.created_at || cat.createdAt,
-            }));
-            setCategories(mappedCategories);
-
-            // Process category distribution data for chart with actual product counts
-            const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#6b7280"];
-            const categoryCharts = mappedCategories.map((cat: any, idx: number) => ({
-              name: cat.name,
-              value: cat.productCount || 0,
-              fill: colors[idx % colors.length],
-            }));
-            setCategoryChartData(categoryCharts);
+          break;
+        case "users":
+          if (!isResourceLoaded("users")) {
+            await loadUsersData();
           }
-
-          // Set stats from API
-          if (apiStats) {
-            const statsData = (apiStats as any).data || apiStats;
-            setStats({
-              totalUsers: statsData.users?.total || 0,
-              activeProducts: statsData.products?.active || 0,
-              pendingOrders: statsData.orders?.pending || 0,
-              totalRevenue: statsData.orders?.total_revenue || 0,
-              platformRevenue: statsData.platform_revenue || 0,
-              monthlyGrowth: 12.5,
-              pendingWithdrawals: statsData.withdrawals?.pending || 0,
-              pendingReports: statsData.reports?.pending || 0,
-              pendingCancelRequests: 3,
-              totalFaculties: statsData.faculties?.total || 0,
-              activeFaculties: statsData.faculties?.active || 0,
-            });
+          break;
+        case "products":
+          if (!isResourceLoaded("products")) {
+            await loadProductsData();
           }
-
-          // Set revenue chart data from API
-          if (apiRevenueStats) {
-            const revenueData = (apiRevenueStats as any).data || apiRevenueStats;
-            const chartData = Array.isArray(revenueData) 
-              ? revenueData.map((item: any, idx: number) => ({
-                  date: (idx + 1).toString(),
-                  transactions: item.transactions || item.count || 1,
-                  revenue: item.revenue || item.total || 0,
-                }))
-              : [];
-            setRevenueChartData(chartData);
+          break;
+        case "categories":
+          // Guard: loadCategoriesData() itself checks isResourceLoaded.
+          // Cache is cleared by invalidateCategories() after any CRUD success.
+          await loadCategoriesData();
+          break;
+        case "faculties":
+          // Same pattern as categories.
+          await loadFacultiesData();
+          break;
+        case "reports":
+          if (!isResourceLoaded("reports")) {
+            await loadReportsData();
           }
-
-          // Set users data from API
-          if (apiUsers?.data && Array.isArray(apiUsers.data)) {
-            const mappedUsers = apiUsers.data.map((user: any) => ({
-              id: user.id?.toString() || user.uuid || user.id,
-              uuid: user.id || user.uuid || "",
-              name: user.name || "",
-              email: user.email || "",
-              phone: user.phone || "",
-              avatar: user.avatar || "",
-              faculty: user.faculty || user.facultyDetails?.id || "",
-              role: user.role || "student",
-              isBanned: user.isBanned || false,
-              isVerified: user.isVerified || false,
-              isWarned: user.isWarned || false,
-              joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
-              createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
-              banReason: user.banReason || "",
-            } as unknown as User));
-            setUsers(mappedUsers);
+          break;
+        case "finance":
+          if (!isResourceLoaded("withdrawals")) {
+            await loadWithdrawalsData();
           }
-
-          // Set products data from API
-          if (apiProducts?.data && Array.isArray(apiProducts.data)) {
-            const mappedProducts = apiProducts.data.map((product: any) => ({
-              id: product.id?.toString() || product.uuid || "",
-              title: product.title || "",
-              slug: product.slug || "",
-              type: product.type || "barang",
-              price: product.price || 0,
-              priceMin: product.price_min || product.priceMin || 0,
-              priceMax: product.price_max || product.priceMax || 0,
-              priceType: product.price_type || product.priceType || "fixed",
-              category: product.category?.name || product.category_name || "",
-              categoryId: product.category?.uuid || product.category_id?.toString() || "",
-              description: product.description || "",
-              condition: product.condition || "baru",
-              stock: product.stock || 0,
-              location: product.location || "",
-              canNego: product.can_nego || false,
-              seller: {
-                id: product.seller?.uuid || product.seller_id?.toString() || "",
-                name: product.seller?.name || product.seller_name || "",
-                avatar: product.seller?.avatar || product.seller_avatar || "",
-              },
-              images: product.images || [],
-              isActive: product.status === "active" || product.is_active || false,
-              createdAt: product.created_at || new Date().toISOString(),
-              deletedAt: product.deleted_at || product.deletedAt || undefined,
-              deletedBy: product.deleted_by || product.deletedBy || undefined,
-            } as unknown as Product));
-            setProducts(mappedProducts);
-          }
-
-          // Set reports data from API
-          if (apiReports?.data && Array.isArray(apiReports.data)) {
-            const mappedReports = apiReports.data.map((report: any) => ({
-              id: report.id?.toString() || "",
-              reportNumber: `RPT-${report.id}`,
-              reason: report.reason || "",
-              description: report.description || "",
-              status: report.status || "pending",
-              priority: "normal",
-              reporter: {
-                id: report.reporter_id?.toString() || "",
-                name: report.reporter_name || "",
-              },
-              reportedUser: {
-                id: report.reported_user_id?.toString() || "",
-                name: report.reported_user_name || "",
-              },
-              createdAt: report.created_at || new Date().toISOString(),
-            } as unknown as Report));
-            setReports(mappedReports);
-          }
-
-          // Set withdrawals data from API
-          if (apiWithdrawals?.data && Array.isArray(apiWithdrawals.data)) {
-            const mappedWithdrawals = apiWithdrawals.data.map((withdrawal: any) => ({
-              id: withdrawal.id?.toString() || "",
-              withdrawalNumber: `WD-${withdrawal.id}`,
-              user: {
-                id: withdrawal.user_id?.toString() || "",
-                name: withdrawal.user_name || "",
-              },
-              amount: withdrawal.amount || 0,
-              totalDeduction: 0,
-              bankName: withdrawal.bank_name || "",
-              accountNumber: withdrawal.account_number || "",
-              accountName: withdrawal.account_name || "",
-              accountType: withdrawal.account_type || "bank",
-              status: withdrawal.status || "pending",
-              createdAt: withdrawal.created_at || new Date().toISOString(),
-            } as unknown as Withdrawal));
-            setWithdrawals(mappedWithdrawals);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load admin data:", err);
+          break;
+        // TODO: integrate adminCancelRequestsApi when backend is ready
+        // TODO: integrate admin orders API when backend is ready
+        // TODO: integrate admin addresses API when backend is ready
+        // orders, cancel-requests, addresses — currently mock data, no fetch
+        default:
+          break;
       }
     };
 
-    loadData();
-    return () => controller.abort();
-  }, []);
+    runLoad();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const renderPagination = (currentPage: number, totalPages: number, setPage: (page: number) => void) => {
     if (totalPages <= 1) return null;
@@ -717,6 +948,7 @@ export function useAdminDashboardController() {
           slug: updatedCat.slug,
           description: updatedCat.description
         } : c));
+        invalidateCategories();
         showSuccess(`Kategori "${categoryForm.name}" berhasil diperbarui`);
       } else {
         const newCat = await adminCategoriesApi.createCategory({
@@ -738,6 +970,7 @@ export function useAdminDashboardController() {
         };
         
         setCategories([...categories, mappedNewCat]);
+        invalidateCategories();
         showSuccess(`Kategori "${categoryForm.name}" berhasil ditambahkan`);
       }
     } catch (err) {
@@ -754,6 +987,7 @@ export function useAdminDashboardController() {
       try {
         await adminCategoriesApi.deleteCategory(categoryToDelete.id);
         setCategories(categories.filter((c) => c.id !== categoryToDelete.id));
+        invalidateCategories();
         showSuccess(`Kategori "${categoryToDelete.name}" berhasil dihapus`);
       } catch (err) {
         console.error("Failed to delete category:", err);
@@ -769,6 +1003,7 @@ export function useAdminDashboardController() {
     try {
       await adminCategoriesApi.updateCategoryStatus(category.id, nextState);
       setCategories(categories.map((c) => c.id === category.id ? { ...c, isActive: nextState } : c));
+      invalidateCategories();
       showSuccess(`Kategori "${category.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`);
     } catch (err) {
       console.error("Failed to toggle category status:", err);
@@ -804,6 +1039,7 @@ export function useAdminDashboardController() {
             faculty.id === selectedFaculty.id ? updatedFaculty : faculty
           )
         );
+        invalidateFaculties();
         showSuccess(`Fakultas "${facultyForm.name}" berhasil diperbarui`);
       } else {
         const createdFaculty = await facultiesApi.create({
@@ -814,6 +1050,7 @@ export function useAdminDashboardController() {
         });
 
         setFaculties([...faculties, createdFaculty]);
+        invalidateFaculties();
         showSuccess(`Fakultas "${facultyForm.name}" berhasil ditambahkan`);
       }
     } catch {
@@ -856,6 +1093,7 @@ export function useAdminDashboardController() {
       try {
         await facultiesApi.remove(facultyToDelete.code);
         setFaculties(faculties.filter((faculty) => faculty.id !== facultyToDelete.id));
+        invalidateFaculties();
         showSuccess(`Fakultas "${facultyToDelete.name}" berhasil dihapus`);
       } catch {
         setFaculties(faculties.filter((faculty) => faculty.id !== facultyToDelete.id));
@@ -876,6 +1114,7 @@ export function useAdminDashboardController() {
           item.id === faculty.id ? updatedFaculty : item
         )
       );
+      invalidateFaculties();
       showSuccess(`Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`);
     } catch {
       setFaculties(
@@ -950,6 +1189,24 @@ export function useAdminDashboardController() {
     withdrawals,
     cancelRequests,
     platformRevenue,
+    // Per-resource loading states
+    overviewLoading,
+    usersLoading,
+    productsLoading,
+    reportsLoading,
+    withdrawalsLoading,
+    categoriesLoading,
+    facultiesLoading,
+    // Per-resource error states
+    overviewError,
+    usersError,
+    productsError,
+    reportsError,
+    withdrawalsError,
+    categoriesError,
+    facultiesError,
+    // Resource cache map (true = successfully loaded at least once)
+    loadedResources,
     filteredUsers,
     filteredProducts,
     filteredReports,
