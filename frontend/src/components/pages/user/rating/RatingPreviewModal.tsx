@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Briefcase, CheckCircle2, Edit3, Eye, Package } from "lucide-react";
-import type { Order } from "@/lib/mock-data";
+import type { Order } from "@/lib/api/orders";
+import ProductImage from "@/components/common/ProductImage";
 import RatingStarPicker from "@/components/pages/user/rating/RatingStarPicker";
 
 interface RatingPreviewModalProps {
@@ -15,6 +16,7 @@ interface RatingPreviewModalProps {
   comment: string;
   images: string[];
   formatPrice: (price: number) => string;
+  isLoading?: boolean;
 }
 
 export default function RatingPreviewModal({
@@ -26,6 +28,7 @@ export default function RatingPreviewModal({
   comment,
   images,
   formatPrice,
+  isLoading = false,
 }: RatingPreviewModalProps) {
   if (!isOpen || !selectedOrder) return null;
 
@@ -45,14 +48,13 @@ export default function RatingPreviewModal({
               <div className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${selectedOrder.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
                 {selectedOrder.productType === "jasa" ? (
                   <Briefcase className="h-8 w-8 text-emerald-600/70" />
-                ) : selectedOrder.product.images[0] ? (
-                  <img
-                    src={selectedOrder.product.images[0]}
-                    alt={selectedOrder.productTitle}
-                    className="w-full h-full object-cover"
-                  />
                 ) : (
-                  <Package className="h-8 w-8 text-muted-foreground/30" />
+                  <ProductImage
+                    src={selectedOrder.product?.images?.[0]}
+                    alt={selectedOrder.productTitle}
+                    className="w-full h-full"
+                    imageClassName="w-full h-full object-cover"
+                  />
                 )}
               </div>
               <div>
@@ -106,9 +108,15 @@ export default function RatingPreviewModal({
             <Edit3 className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button className="flex-1 bg-primary-600 hover:bg-primary-700" onClick={onSubmit}>
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Kirim Ulasan
+          <Button className="flex-1 bg-primary-600 hover:bg-primary-700" onClick={onSubmit} disabled={isLoading}>
+            {isLoading ? (
+              <>Mengirim...</>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Kirim Ulasan
+              </>
+            )}
           </Button>
         </div>
       </Card>

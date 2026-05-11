@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Briefcase, CheckCircle2, Clock, Package } from "lucide-react";
-import type { Order } from "@/lib/mock-data";
+import type { Order } from "@/lib/api/orders";
+import ProductImage from "@/components/common/ProductImage";
 
 interface RatingOrderCardProps {
   order: Order;
@@ -33,10 +34,13 @@ export default function RatingOrderCard({ order, isSelected, onSelect, formatPri
           <div className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${order.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
             {order.productType === "jasa" ? (
               <Briefcase className="h-8 w-8 text-emerald-600/70" />
-            ) : order.product.images[0] ? (
-              <img src={order.product.images[0]} alt={order.productTitle} className="w-full h-full object-cover" />
             ) : (
-              <Package className="h-8 w-8 text-muted-foreground/30" />
+              <ProductImage
+                src={order.product?.images?.[0]}
+                alt={order.productTitle}
+                className="w-full h-full"
+                imageClassName="w-full h-full object-cover"
+              />
             )}
           </div>
           <div className="flex-1 min-w-0">

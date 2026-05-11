@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,14 +20,19 @@ import {
   Image as ImageIcon,
   ShoppingBag,
   Upload,
+  Loader2,
 } from "lucide-react";
 import ProductImage from "@/components/common/ProductImage";
-import { mockOrders, mockReviews, type Order } from "@/lib/mock-data";
 import RatingImagePreview from "@/components/pages/user/rating/RatingImagePreview";
 import RatingOrderCard from "@/components/pages/user/rating/RatingOrderCard";
 import RatingPreviewModal from "@/components/pages/user/rating/RatingPreviewModal";
 import RatingStarPicker from "@/components/pages/user/rating/RatingStarPicker";
 import RatingSuccessState from "@/components/pages/user/rating/RatingSuccessState";
+
+import { getBuyerOrders } from "@/lib/api/orders";
+import type { Order } from "@/lib/api/orders";
+import { getGivenReviews, submitReview } from "@/lib/api/reviews";
+import { useToast } from "@/hooks/use-toast";
 
 interface RatingPageProps {
   onNavigate: (page: string) => void;
@@ -36,13 +42,12 @@ const MAX_COMMENT_LENGTH = 500;
 const MAX_IMAGES = 5;
 
 export default function RatingPage({ onNavigate }: RatingPageProps) {
-  const completedOrders = mockOrders.filter(
-    (order) => order.status === "completed",
-  );
-  const reviewedOrderIds = mockReviews.map((review) => review.orderId);
-  const ordersToReview = completedOrders.filter(
-    (order) => !reviewedOrderIds.includes(order.id),
-  );
+  const { orderId } = useParams<{ orderId?: string }>();
+  const { toast } = useToast();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ordersToReview, setOrdersToReview] = useState<Order[]>([]);
 
   const [step, setStep] = useState<"select" | "form" | "success">("select");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -51,6 +56,49 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
   const [images, setImages] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch all completed orders
+        const ordersRes = await getBuyerOrders("completed", 100);
+        const allCompletedOrders = Array.isArray(ordersRes) ? ordersRes : (ordersRes as any).data || [];
+
+        // Fetch user's given reviews
+        const reviewsRes = await getGivenReviews();
+        const givenReviews = Array.isArray(reviewsRes) ? reviewsRes : (reviewsRes as any).data || [];
+        const reviewedOrderIds = givenReviews.map((r: any) => r.orderId || r.order_id);
+
+        // Filter unreviewed orders
+        const unreviewed = allCompletedOrders.filter(
+          (order) => !reviewedOrderIds.includes(order.id) && !reviewedOrderIds.includes(order.uuid)
+        );
+
+        setOrdersToReview(unreviewed);
+
+        // If orderId is provided in URL, try to select it
+        if (orderId) {
+          const matchedOrder = unreviewed.find((o) => o.id === orderId || o.uuid === orderId);
+          if (matchedOrder) {
+            setSelectedOrder(matchedOrder);
+            setStep("form");
+          } else {
+            // Either already reviewed, not completed, or not found.
+            if (reviewedOrderIds.includes(orderId)) {
+              toast({ title: "Pesanan ini sudah diulas" });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load data for rating", error);
+        toast({ title: "Gagal memuat data", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [orderId, toast]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -66,6 +114,11 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
     setComment("");
     setImages([]);
     setShowPreview(false);
+    
+    // If we came from a specific order URL and go back, we might just want to list all
+    if (orderId) {
+      onNavigate("rating");
+    }
   };
 
   const handleOrderSelect = (order: Order) => {
@@ -97,14 +150,26 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    console.log({
-      orderId: selectedOrder?.id,
-      rating,
-      comment,
-      images,
-    });
-    setStep("success");
+  const handleSubmit = async () => {
+    if (!selectedOrder) return;
+    try {
+      setIsSubmitting(true);
+      
+      await submitReview({
+        orderId: selectedOrder.uuid || selectedOrder.id,
+        rating,
+        comment,
+        images: images.length > 0 ? images : undefined,
+      });
+
+      toast({ title: "Ulasan berhasil dikirim!" });
+      setStep("success");
+    } catch (error: any) {
+      toast({ title: "Gagal mengirim ulasan", description: error?.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+      setShowPreview(false);
+    }
   };
 
   const handleBack = () => {
@@ -118,6 +183,14 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
   };
 
   const isFormValid = rating > 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (step === "success") {
     return <RatingSuccessState onNavigate={onNavigate} />;
@@ -153,7 +226,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                   {ordersToReview.map((order) => (
                     <RatingOrderCard
                       key={order.id}
-                      order={order}
+                      order={order as any}
                       isSelected={selectedOrder?.id === order.id}
                       onSelect={() => handleOrderSelect(order)}
                       formatPrice={formatPrice}
@@ -172,7 +245,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                   Tidak Ada Pesanan untuk Di-review
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Semua pesanan yang sudah selesai sudah kamu review.
+                  Semua pesanan yang sudah selesai sudah kamu review, atau belum ada pesanan yang selesai.
                 </p>
                 <Button variant="outline" onClick={() => onNavigate("catalog")}>
                   Belanja Sekarang
@@ -211,7 +284,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                     <Briefcase className="h-8 w-8 text-emerald-600/70" />
                   ) : (
                     <ProductImage
-                      src={selectedOrder.product.images?.[0]}
+                      src={selectedOrder.product?.images?.[0]}
                       alt={selectedOrder.productTitle}
                       className="w-full h-full"
                       imageClassName="w-full h-full object-cover"
@@ -224,7 +297,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                     {formatPrice(selectedOrder.finalPrice)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    dari {selectedOrder.seller.name}
+                    dari {selectedOrder.seller?.name}
                   </p>
                   <Badge variant="secondary" className="mt-2 text-xs">
                     {selectedOrder.productType === "barang" ? "Barang" : "Jasa"}
@@ -348,10 +421,14 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
           <Button
             className="w-full bg-primary-600 hover:bg-primary-700"
             size="lg"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isSubmitting}
             onClick={() => setShowPreview(true)}
           >
-            <Eye className="h-4 w-4 mr-2" />
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Eye className="h-4 w-4 mr-2" />
+            )}
             Lihat Preview
           </Button>
 
@@ -366,11 +443,12 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
           isOpen={showPreview}
           onClose={() => setShowPreview(false)}
           onSubmit={handleSubmit}
-          selectedOrder={selectedOrder}
+          selectedOrder={selectedOrder as any}
           rating={rating}
           comment={comment}
           images={images}
           formatPrice={formatPrice}
+          isLoading={isSubmitting}
         />
       </div>
     </div>

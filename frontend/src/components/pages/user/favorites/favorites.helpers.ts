@@ -28,6 +28,12 @@ export const getPrimaryImage = (product: Product): string => {
 export const getSavings = (product: Product): number =>
   product.original_price ? Math.max(0, product.original_price - product.price) : 0;
 
+export const getDiscountPercentage = (product: Product): number => {
+  if (!product.original_price || product.original_price <= 0) return 0;
+  const discount = ((product.original_price - product.price) / product.original_price) * 100;
+  return Math.round(discount);
+};
+
 export const getInitials = (name: string) =>
   name
     .split(" ")

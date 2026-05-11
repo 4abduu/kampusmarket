@@ -644,6 +644,16 @@ export default function AppRoutes({
             />
           }
         />
+        <Route
+          path="/rating/:orderId"
+          element={
+            <ProtectedRoute
+              isLoggedIn={isLoggedIn}
+              isLoggingOut={isLoggingOut}
+              element={<RatingPage onNavigate={onNavigate} />}
+            />
+          }
+        />
 
         {/* ── CHAT (dari dev-abdu: pakai ChatPageWrapper) ── */}
         <Route

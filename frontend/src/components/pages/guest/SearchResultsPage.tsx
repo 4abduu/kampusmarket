@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Briefcase,
   Grid,
   List,
+  Loader2,
   Package,
   Users,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import { mockProducts, mockUsers } from "@/lib/mock-data";
+import { mockUsers } from "@/lib/mock-data";
+import type { Product } from "@/lib/mock-data";
+import { productsApi } from "@/lib/api/products";
 import {
   SearchEmptyState,
   SearchProductCard,
@@ -36,9 +39,33 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const [viewMode, setViewMode] = useState<SearchViewMode>("grid");
 
+  // API-fetched products
+  const [apiProducts, setApiProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch products from API when query changes
+  const fetchProducts = useCallback(async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setApiProducts([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await productsApi.searchProducts(searchTerm);
+      setApiProducts(response.data || []);
+    } catch (error) {
+      console.error("[SearchResultsPage] Error fetching search results:", error);
+      setApiProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setActiveTab("all");
-  }, [query]);
+    void fetchProducts(query);
+  }, [query, fetchProducts]);
 
   const results = useMemo<SearchResultsPayload>(() => {
     const searchTerm = query.toLowerCase().trim();
@@ -46,24 +73,11 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
       return { products: [], services: [], users: [], userProducts: [] };
     }
 
-    const matchedProducts = mockProducts.filter(
-      (p) =>
-        p.type === "barang" &&
-        (p.title.toLowerCase().includes(searchTerm) ||
-          p.description.toLowerCase().includes(searchTerm) ||
-          p.category.toLowerCase().includes(searchTerm) ||
-          p.location.toLowerCase().includes(searchTerm)),
-    );
+    // Products from API (already filtered by backend)
+    const matchedProducts = apiProducts.filter((p) => p.type === "barang");
+    const matchedServices = apiProducts.filter((p) => p.type === "jasa");
 
-    const matchedServices = mockProducts.filter(
-      (p) =>
-        p.type === "jasa" &&
-        (p.title.toLowerCase().includes(searchTerm) ||
-          p.description.toLowerCase().includes(searchTerm) ||
-          p.category.toLowerCase().includes(searchTerm) ||
-          p.location.toLowerCase().includes(searchTerm)),
-    );
-
+    // Users still from mock (no user search API yet)
     const matchedUsers = mockUsers.filter(
       (u) =>
         u.name.toLowerCase().includes(searchTerm) ||
@@ -71,18 +85,13 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
         (u.faculty && u.faculty.toLowerCase().includes(searchTerm)),
     );
 
-    const userIds = matchedUsers.map((u) => u.id);
-    const userProducts = mockProducts.filter(
-      (p) => userIds.includes(p.seller.id) && p.seller.name.toLowerCase().includes(searchTerm),
-    );
-
     return {
       products: matchedProducts,
       services: matchedServices,
       users: matchedUsers,
-      userProducts,
+      userProducts: [],
     };
-  }, [query]);
+  }, [query, apiProducts]);
 
   const totalResults = results.products.length + results.services.length + results.users.length;
 
@@ -107,7 +116,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
           </div>
         </div>
 
-        {query && (
+        {query && !isLoading && (
           <div className="mb-6">
             <p className="text-muted-foreground">
               Ditemukan {totalResults} hasil
@@ -118,7 +127,12 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
           </div>
         )}
 
-        {query && totalResults === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            <p className="text-muted-foreground">Mencari "{query}"...</p>
+          </div>
+        ) : query && totalResults === 0 ? (
           <SearchResultsPrompts mode="empty" onSelectPrompt={(prompt) => onNavigate("search", { searchQuery: prompt })} />
         ) : query ? (
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SearchTab)}>
