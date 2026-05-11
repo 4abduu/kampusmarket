@@ -21,6 +21,15 @@ import AdminFinanceTab from "@/components/pages/admin/AdminFinanceTab";
 import AdminAddressesTab from "@/components/pages/admin/AdminAddressesTab";
 import AdminActionDialogs from "@/components/pages/admin/AdminActionDialogs";
 import { useAdminDashboardController } from "@/components/pages/admin/useAdminDashboardController";
+import {
+  OverviewTabSkeleton,
+  UsersTabSkeleton,
+  ProductsTabSkeleton,
+  CategoriesTabSkeleton,
+  FacultiesTabSkeleton,
+  ReportsTabSkeleton,
+  FinanceTabSkeleton,
+} from "@/components/pages/admin/AdminTabSkeleton";
 
 interface AdminDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -39,6 +48,13 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     withdrawals,
     cancelRequests,
     platformRevenue,
+    overviewLoading,
+    usersLoading,
+    productsLoading,
+    categoriesLoading,
+    facultiesLoading,
+    reportsLoading,
+    withdrawalsLoading,
     filteredUsers,
     filteredProducts,
     filteredReports,
@@ -288,122 +304,146 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
             <TabsTrigger value="addresses">Alamat</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <AdminOverviewTab
-              stats={stats}
-              revenueChartData={revenueChartData}
-              categoryChartData={categoryChartData}
-              formatPrice={formatPrice}
-              orders={orders}
-              onOpenTab={setActiveTab}
-            />
+          <TabsContent value="overview" className="space-y-6 py-2">
+            {overviewLoading ? (
+              <OverviewTabSkeleton />
+            ) : (
+              <AdminOverviewTab
+                stats={stats}
+                revenueChartData={revenueChartData}
+                categoryChartData={categoryChartData}
+                formatPrice={formatPrice}
+                orders={orders}
+                onOpenTab={setActiveTab}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="users">
-            <AdminUsersTab
-              filteredUsers={filteredUsers}
-              paginatedUsers={paginatedUsers}
-              currentPage={userPage}
-              showUserFilters={showUserFilters}
-              setShowUserFilters={setShowUserFilters}
-              userSearchTerm={userSearchTerm}
-              setUserSearchTerm={setUserSearchTerm}
-              userStatusFilter={userStatusFilter}
-              setUserStatusFilter={setUserStatusFilter}
-              userFacultyFilter={userFacultyFilter}
-              setUserFacultyFilter={setUserFacultyFilter}
-              setUserPage={setUserPage}
-              getTotalPages={getTotalPages}
-              renderPagination={renderPagination}
-              getInitials={getInitials}
-              getFacultyName={getFacultyName}
-              handleViewUser={handleViewUser}
-              handleBanUser={handleBanUser}
-              handleUnbanUser={handleUnbanUser}
-            />
+          <TabsContent value="users" className="space-y-6 py-2">
+            {usersLoading ? (
+              <UsersTabSkeleton />
+            ) : (
+              <AdminUsersTab
+                filteredUsers={filteredUsers}
+                paginatedUsers={paginatedUsers}
+                currentPage={userPage}
+                showUserFilters={showUserFilters}
+                setShowUserFilters={setShowUserFilters}
+                userSearchTerm={userSearchTerm}
+                setUserSearchTerm={setUserSearchTerm}
+                userStatusFilter={userStatusFilter}
+                setUserStatusFilter={setUserStatusFilter}
+                userFacultyFilter={userFacultyFilter}
+                setUserFacultyFilter={setUserFacultyFilter}
+                setUserPage={setUserPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
+                getInitials={getInitials}
+                getFacultyName={getFacultyName}
+                handleViewUser={handleViewUser}
+                handleBanUser={handleBanUser}
+                handleUnbanUser={handleUnbanUser}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="products">
-            <AdminProductsTab
-              filteredProducts={filteredProducts}
-              paginatedProducts={paginatedProducts}
-              currentPage={productPage}
-              showProductFilters={showProductFilters}
-              setShowProductFilters={setShowProductFilters}
-              productSearchTerm={productSearchTerm}
-              setProductSearchTerm={setProductSearchTerm}
-              productTypeFilter={productTypeFilter}
-              setProductTypeFilter={setProductTypeFilter}
-              productConditionFilter={productConditionFilter}
-              setProductConditionFilter={setProductConditionFilter}
-              productCategoryFilter={productCategoryFilter}
-              setProductCategoryFilter={setProductCategoryFilter}
-              productPriceMin={productPriceMin}
-              setProductPriceMin={setProductPriceMin}
-              productPriceMax={productPriceMax}
-              setProductPriceMax={setProductPriceMax}
-              productSellerFilter={productSellerFilter}
-              setProductSellerFilter={setProductSellerFilter}
-              productCategoryOptions={productCategoryOptions}
-              setProductPage={setProductPage}
-              getTotalPages={getTotalPages}
-              renderPagination={renderPagination}
-              formatProductPrice={formatProductPrice}
-              handleViewProduct={handleViewProduct}
-              handleDeleteProduct={handleDeleteProduct}
-              handleRestoreProduct={handleRestoreProduct}
-            />
+          <TabsContent value="products" className="space-y-6 py-2">
+            {productsLoading ? (
+              <ProductsTabSkeleton />
+            ) : (
+              <AdminProductsTab
+                filteredProducts={filteredProducts}
+                paginatedProducts={paginatedProducts}
+                currentPage={productPage}
+                showProductFilters={showProductFilters}
+                setShowProductFilters={setShowProductFilters}
+                productSearchTerm={productSearchTerm}
+                setProductSearchTerm={setProductSearchTerm}
+                productTypeFilter={productTypeFilter}
+                setProductTypeFilter={setProductTypeFilter}
+                productConditionFilter={productConditionFilter}
+                setProductConditionFilter={setProductConditionFilter}
+                productCategoryFilter={productCategoryFilter}
+                setProductCategoryFilter={setProductCategoryFilter}
+                productPriceMin={productPriceMin}
+                setProductPriceMin={setProductPriceMin}
+                productPriceMax={productPriceMax}
+                setProductPriceMax={setProductPriceMax}
+                productSellerFilter={productSellerFilter}
+                setProductSellerFilter={setProductSellerFilter}
+                productCategoryOptions={productCategoryOptions}
+                setProductPage={setProductPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
+                formatProductPrice={formatProductPrice}
+                handleViewProduct={handleViewProduct}
+                handleDeleteProduct={handleDeleteProduct}
+                handleRestoreProduct={handleRestoreProduct}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="categories">
-            <AdminCategoriesTab
-              filteredCategories={filteredCategories}
-              categorySearchTerm={categorySearchTerm}
-              setCategorySearchTerm={setCategorySearchTerm}
-              categoryTypeFilter={categoryTypeFilter}
-              setCategoryTypeFilter={setCategoryTypeFilter}
-              handleAddCategory={handleAddCategory}
-              handleEditCategory={handleEditCategory}
-              handleDeleteCategory={handleDeleteCategory}
-              handleToggleCategoryActive={handleToggleCategoryActive}
-            />
+          <TabsContent value="categories" className="space-y-6 py-2">
+            {categoriesLoading ? (
+              <CategoriesTabSkeleton />
+            ) : (
+              <AdminCategoriesTab
+                filteredCategories={filteredCategories}
+                categorySearchTerm={categorySearchTerm}
+                setCategorySearchTerm={setCategorySearchTerm}
+                categoryTypeFilter={categoryTypeFilter}
+                setCategoryTypeFilter={setCategoryTypeFilter}
+                handleAddCategory={handleAddCategory}
+                handleEditCategory={handleEditCategory}
+                handleDeleteCategory={handleDeleteCategory}
+                handleToggleCategoryActive={handleToggleCategoryActive}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="faculties">
-            <AdminFacultiesTab
-              stats={stats}
-              filteredFaculties={filteredFaculties}
-              paginatedFaculties={paginatedFaculties}
-              currentPage={facultyPage}
-              facultySearchTerm={facultySearchTerm}
-              setFacultySearchTerm={setFacultySearchTerm}
-              facultyStatusFilter={facultyStatusFilter}
-              setFacultyStatusFilter={setFacultyStatusFilter}
-              setFacultyPage={setFacultyPage}
-              getTotalPages={getTotalPages}
-              renderPagination={renderPagination}
-              facultyAccentClass={facultyAccentClass}
-              getInitials={getInitials}
-              handleAddFaculty={handleAddFaculty}
-              handleEditFaculty={handleEditFaculty}
-              handleToggleFacultyActive={handleToggleFacultyActive}
-              handleDeleteFaculty={handleDeleteFaculty}
-            />
+          <TabsContent value="faculties" className="space-y-6 py-2">
+            {facultiesLoading ? (
+              <FacultiesTabSkeleton />
+            ) : (
+              <AdminFacultiesTab
+                stats={stats}
+                filteredFaculties={filteredFaculties}
+                paginatedFaculties={paginatedFaculties}
+                currentPage={facultyPage}
+                facultySearchTerm={facultySearchTerm}
+                setFacultySearchTerm={setFacultySearchTerm}
+                facultyStatusFilter={facultyStatusFilter}
+                setFacultyStatusFilter={setFacultyStatusFilter}
+                setFacultyPage={setFacultyPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
+                facultyAccentClass={facultyAccentClass}
+                getInitials={getInitials}
+                handleAddFaculty={handleAddFaculty}
+                handleEditFaculty={handleEditFaculty}
+                handleToggleFacultyActive={handleToggleFacultyActive}
+                handleDeleteFaculty={handleDeleteFaculty}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="reports">
-            <AdminReportsTab
-              filteredReports={filteredReports}
-              paginatedReports={paginatedReports}
-              currentPage={reportPage}
-              reportSearchTerm={reportSearchTerm}
-              setReportSearchTerm={setReportSearchTerm}
-              reportStatusFilter={reportStatusFilter}
-              setReportStatusFilter={setReportStatusFilter}
-              setReportPage={setReportPage}
-              getTotalPages={getTotalPages}
-              renderPagination={renderPagination}
-              getReportStatusBadge={getReportStatusBadge}
-              handleSendWarning={handleSendWarning}
-              handleBanFromReport={handleBanFromReport}
-            />
+          <TabsContent value="reports" className="space-y-6 py-2">
+            {reportsLoading ? (
+              <ReportsTabSkeleton />
+            ) : (
+              <AdminReportsTab
+                filteredReports={filteredReports}
+                paginatedReports={paginatedReports}
+                currentPage={reportPage}
+                reportSearchTerm={reportSearchTerm}
+                setReportSearchTerm={setReportSearchTerm}
+                reportStatusFilter={reportStatusFilter}
+                setReportStatusFilter={setReportStatusFilter}
+                setReportPage={setReportPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
+                getReportStatusBadge={getReportStatusBadge}
+                handleSendWarning={handleSendWarning}
+                handleBanFromReport={handleBanFromReport}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="cancel-requests">
+          <TabsContent value="cancel-requests" className="space-y-6 py-2">
             <AdminCancelRequestsTab
               cancelRequests={cancelRequests}
               formatPrice={formatPrice}
@@ -411,7 +451,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               handleRejectCancelRequest={handleRejectCancelRequest}
             />
           </TabsContent>
-          <TabsContent value="orders">
+          <TabsContent value="orders" className="space-y-6 py-2">
             <AdminOrdersTab
               filteredOrders={filteredOrders}
               paginatedOrders={paginatedOrders}
@@ -437,40 +477,44 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               getPaymentStatusBadge={getPaymentStatusBadge}
             />
           </TabsContent>
-          <TabsContent value="finance" className="space-y-6">
-            <AdminFinanceTab
-              financeSubTab={financeSubTab}
-              setFinanceSubTab={setFinanceSubTab}
-              withdrawals={withdrawals}
-              filteredWithdrawals={filteredWithdrawals}
-              paginatedWithdrawals={paginatedWithdrawals}
-              currentPage={withdrawalPage}
-              showWithdrawalFilters={showWithdrawalFilters}
-              setShowWithdrawalFilters={setShowWithdrawalFilters}
-              withdrawalSearchTerm={withdrawalSearchTerm}
-              setWithdrawalSearchTerm={setWithdrawalSearchTerm}
-              withdrawalStatusFilter={withdrawalStatusFilter}
-              setWithdrawalStatusFilter={setWithdrawalStatusFilter}
-              withdrawalAccountTypeFilter={withdrawalAccountTypeFilter}
-              setWithdrawalAccountTypeFilter={setWithdrawalAccountTypeFilter}
-              withdrawalProviderFilter={withdrawalProviderFilter}
-              setWithdrawalProviderFilter={setWithdrawalProviderFilter}
-              setWithdrawalPage={setWithdrawalPage}
-              getTotalPages={getTotalPages}
-              renderPagination={renderPagination}
-              formatPrice={formatPrice}
-              stats={stats}
-              platformRevenue={platformRevenue}
-              getWithdrawalStatusBadge={getWithdrawalStatusBadge}
-              getInitials={getInitials}
-              handleApproveWithdrawal={handleApproveWithdrawal}
-              handleRejectWithdrawal={handleRejectWithdrawal}
-              handleProcessWithdrawal={handleProcessWithdrawal}
-              handleCompleteWithdrawal={handleCompleteWithdrawal}
-              handleFailWithdrawal={handleFailWithdrawal}
-            />
+          <TabsContent value="finance" className="space-y-6 py-2">
+            {withdrawalsLoading ? (
+              <FinanceTabSkeleton />
+            ) : (
+              <AdminFinanceTab
+                financeSubTab={financeSubTab}
+                setFinanceSubTab={setFinanceSubTab}
+                withdrawals={withdrawals}
+                filteredWithdrawals={filteredWithdrawals}
+                paginatedWithdrawals={paginatedWithdrawals}
+                currentPage={withdrawalPage}
+                showWithdrawalFilters={showWithdrawalFilters}
+                setShowWithdrawalFilters={setShowWithdrawalFilters}
+                withdrawalSearchTerm={withdrawalSearchTerm}
+                setWithdrawalSearchTerm={setWithdrawalSearchTerm}
+                withdrawalStatusFilter={withdrawalStatusFilter}
+                setWithdrawalStatusFilter={setWithdrawalStatusFilter}
+                withdrawalAccountTypeFilter={withdrawalAccountTypeFilter}
+                setWithdrawalAccountTypeFilter={setWithdrawalAccountTypeFilter}
+                withdrawalProviderFilter={withdrawalProviderFilter}
+                setWithdrawalProviderFilter={setWithdrawalProviderFilter}
+                setWithdrawalPage={setWithdrawalPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
+                formatPrice={formatPrice}
+                stats={stats}
+                platformRevenue={platformRevenue}
+                getWithdrawalStatusBadge={getWithdrawalStatusBadge}
+                getInitials={getInitials}
+                handleApproveWithdrawal={handleApproveWithdrawal}
+                handleRejectWithdrawal={handleRejectWithdrawal}
+                handleProcessWithdrawal={handleProcessWithdrawal}
+                handleCompleteWithdrawal={handleCompleteWithdrawal}
+                handleFailWithdrawal={handleFailWithdrawal}
+              />
+            )}
           </TabsContent>
-          <TabsContent value="addresses" className="space-y-6">
+          <TabsContent value="addresses" className="space-y-6 py-2">
             <AdminAddressesTab
               filteredAddresses={filteredAddresses}
               users={users}
