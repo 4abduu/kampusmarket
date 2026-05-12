@@ -69,6 +69,10 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     paginatedWithdrawals,
     paginatedOrders,
     paginatedFaculties,
+    userTotalItems,
+    userTotalPages,
+    productTotalItems,
+    productTotalPages,
     productCategoryOptions,
     userPage,
     setUserPage,
@@ -147,6 +151,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     showUserDetail,
     setShowUserDetail,
     selectedUser,
+    userDetailLoading,
+    userDetailError,
     showBanDialog,
     setShowBanDialog,
     showUnbanDialog,
@@ -159,6 +165,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     showProductDetail,
     setShowProductDetail,
     selectedProduct,
+    productDetailLoading,
+    productDetailError,
     showDeleteProductDialog,
     setShowDeleteProductDialog,
     productToDelete,
@@ -325,6 +333,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               <AdminUsersTab
                 filteredUsers={filteredUsers}
                 paginatedUsers={paginatedUsers}
+                totalUsers={userTotalItems}
+                totalPages={userTotalPages}
                 currentPage={userPage}
                 showUserFilters={showUserFilters}
                 setShowUserFilters={setShowUserFilters}
@@ -352,6 +362,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               <AdminProductsTab
                 filteredProducts={filteredProducts}
                 paginatedProducts={paginatedProducts}
+                totalProducts={productTotalItems}
+                totalPages={productTotalPages}
                 currentPage={productPage}
                 showProductFilters={showProductFilters}
                 setShowProductFilters={setShowProductFilters}
@@ -530,6 +542,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         showUserDetail={showUserDetail}
         setShowUserDetail={setShowUserDetail}
         selectedUser={selectedUser}
+        userDetailLoading={userDetailLoading}
+        userDetailError={userDetailError}
         showBanDialog={showBanDialog}
         setShowBanDialog={setShowBanDialog}
         showUnbanDialog={showUnbanDialog}
@@ -544,6 +558,8 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         showProductDetail={showProductDetail}
         setShowProductDetail={setShowProductDetail}
         selectedProduct={selectedProduct}
+        productDetailLoading={productDetailLoading}
+        productDetailError={productDetailError}
         showDeleteProductDialog={showDeleteProductDialog}
         setShowDeleteProductDialog={setShowDeleteProductDialog}
         productToDelete={productToDelete}

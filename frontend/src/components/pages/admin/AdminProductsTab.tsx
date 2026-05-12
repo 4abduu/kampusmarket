@@ -9,6 +9,8 @@ import { Package, CalendarDays, Search, Filter, ChevronDown, ChevronUp, X, Eye, 
 interface Props {
   filteredProducts: any[];
   paginatedProducts: any[];
+  totalProducts: number;
+  totalPages: number;
   currentPage: number;
   showProductFilters: boolean;
   setShowProductFilters: (value: boolean) => void;
@@ -40,6 +42,8 @@ export default function AdminProductsTab(props: Props) {
   const {
     filteredProducts,
     paginatedProducts,
+    totalProducts,
+    totalPages,
     showProductFilters,
     setShowProductFilters,
     productSearchTerm,
@@ -76,7 +80,7 @@ export default function AdminProductsTab(props: Props) {
               <CardTitle>Manajemen Produk</CardTitle>
               <CardDescription>Daftar semua produk dan jasa di platform</CardDescription>
             </div>
-            <div className="text-sm text-muted-foreground">{filteredProducts.length} produk</div>
+            <div className="text-sm text-muted-foreground">{totalProducts} produk</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -94,9 +98,9 @@ export default function AdminProductsTab(props: Props) {
             <div className="flex flex-wrap gap-2 pt-2 border-t">
               {(productTypeFilter === "all" || productTypeFilter === "barang") && (<Select value={productConditionFilter} onValueChange={(value) => { setProductConditionFilter(value); setProductPage(1); }}><SelectTrigger className="w-[120px]"><SelectValue placeholder="Kondisi" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Kondisi</SelectItem><SelectItem value="baru">Baru</SelectItem><SelectItem value="bekas">Bekas</SelectItem></SelectContent></Select>)}
               <Select value={productCategoryFilter} onValueChange={(value) => { setProductCategoryFilter(value); setProductPage(1); }}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Kategori" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Kategori</SelectItem>{productCategoryOptions.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select>
-              <Input type="number" min="0" placeholder="Harga min" value={productPriceMin} onChange={(e) => setProductPriceMin(e.target.value)} className="w-[120px]" />
-              <Input type="number" min="0" placeholder="Harga max" value={productPriceMax} onChange={(e) => setProductPriceMax(e.target.value)} className="w-[120px]" />
-              <Input type="search" placeholder="Cari penjual..." value={productSellerFilter} onChange={(e) => setProductSellerFilter(e.target.value)} className="w-[180px]" />
+              <Input type="number" min="0" placeholder="Harga min" value={productPriceMin} onChange={(e) => { setProductPriceMin(e.target.value); setProductPage(1); }} className="w-[120px]" />
+              <Input type="number" min="0" placeholder="Harga max" value={productPriceMax} onChange={(e) => { setProductPriceMax(e.target.value); setProductPage(1); }} className="w-[120px]" />
+              <Input type="search" placeholder="Cari penjual..." value={productSellerFilter} onChange={(e) => { setProductSellerFilter(e.target.value); setProductPage(1); }} className="w-[180px]" />
             </div>
           )}
         </div>
@@ -127,7 +131,7 @@ export default function AdminProductsTab(props: Props) {
                 ))}
               </TableBody>
             </Table>
-            {renderPagination(currentPage, getTotalPages(filteredProducts.length), setProductPage)}
+            {renderPagination(currentPage, totalPages || getTotalPages(filteredProducts.length), setProductPage)}
           </>
         )}
       </CardContent>

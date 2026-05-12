@@ -48,9 +48,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -61,6 +59,7 @@
      ========================================== */
 
   /* PRIMARY -> EMERALD (Hijau Utama) */
+  /* DEFAULT dipakai oleh bg-primary, text-primary, dll (tanpa angka) */
   --color-primary-50: #ECFDF5;
   --color-primary-100: #D1FAE5;
   --color-primary-200: #A7F3D0;
@@ -72,6 +71,7 @@
   --color-primary-800: #065F46;
   --color-primary-900: #064E3B;
   --color-primary-950: #022C22;
+  --color-primary: #059669; /* = primary-600, dipakai bg-primary/text-primary */
 
   /* SECONDARY -> TEAL (Hijau Kebiruan) */
   --color-secondary-50: #F0FDFA;
@@ -84,6 +84,7 @@
   --color-secondary-700: #0F766E;
   --color-secondary-800: #115E59;
   --color-secondary-900: #134E4A;
+  --color-secondary: #0D9488; /* = secondary-600, dipakai bg-secondary/text-secondary */
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

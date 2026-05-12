@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/pagination";
 import {
   mockAddresses,
-  mockCategories,
-  mockServiceCategories,
   mockOrders,
   platformRevenue,
   getFacultyName,
@@ -52,6 +50,8 @@ export function useAdminDashboardController() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetail, setShowUserDetail] = useState(false);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
+  const [userDetailError, setUserDetailError] = useState<string | null>(null);
   const [showBanDialog, setShowBanDialog] = useState(false);
   const [showUnbanDialog, setShowUnbanDialog] = useState(false);
   const [userToAction, setUserToAction] = useState<User | null>(null);
@@ -61,6 +61,8 @@ export function useAdminDashboardController() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDetail, setShowProductDetail] = useState(false);
+  const [productDetailLoading, setProductDetailLoading] = useState(false);
+  const [productDetailError, setProductDetailError] = useState<string | null>(null);
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productDeleteReason, setProductDeleteReason] = useState("");
@@ -169,6 +171,14 @@ export function useAdminDashboardController() {
   const [reportPage, setReportPage] = useState(1);
   const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [orderPage, setOrderPage] = useState(1);
+  const [userTotalItems, setUserTotalItems] = useState(0);
+  const [userTotalPages, setUserTotalPages] = useState(1);
+  const [productTotalItems, setProductTotalItems] = useState(0);
+  const [productTotalPages, setProductTotalPages] = useState(1);
+  const userRequestRef = useRef(0);
+  const productRequestRef = useRef(0);
+  const userDetailRequestRef = useRef(0);
+  const productDetailRequestRef = useRef(0);
 
   const getPaginatedData = <T,>(data: T[], page: number): T[] => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
@@ -210,8 +220,8 @@ export function useAdminDashboardController() {
   const [facultiesError, setFacultiesError] = useState<string | null>(null);
 
   // ---- Helper: map raw API responses to local types ----
-  const mapUsers = (data: any[]): User[] =>
-    data.map((user) => ({
+  const mapUser = (user: any): User =>
+    ({
       id: user.id?.toString() || user.uuid || user.id,
       uuid: user.id || user.uuid || "",
       name: user.name || "",
@@ -223,13 +233,17 @@ export function useAdminDashboardController() {
       isBanned: user.isBanned || false,
       isVerified: user.isVerified || false,
       isWarned: user.isWarned || false,
+      warningReason: user.warningReason || "",
       joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
       createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
       banReason: user.banReason || "",
-    } as unknown as User));
+    } as unknown as User);
 
-  const mapProducts = (data: any[]): Product[] =>
-    data.map((product) => ({
+  const mapUsers = (data: any[]): User[] =>
+    data.map((user) => mapUser(user));
+
+  const mapProduct = (product: any): Product =>
+    ({
       id: product.id?.toString() || product.uuid || "",
       title: product.title || "",
       slug: product.slug || "",
@@ -246,16 +260,24 @@ export function useAdminDashboardController() {
       location: product.location || "",
       canNego: product.can_nego || false,
       seller: {
-        id: product.seller?.uuid || product.seller_id?.toString() || "",
+        id: product.seller?.id || product.seller?.uuid || product.seller_id?.toString() || "",
         name: product.seller?.name || product.seller_name || "",
         avatar: product.seller?.avatar || product.seller_avatar || "",
       },
       images: product.images || [],
       isActive: product.status === "active" || product.is_active || false,
+      status: product.status || (product.is_active ? "active" : "inactive"),
+      soldCount: product.soldCount || product.sold_count || 0,
+      durationMin: product.durationMin || product.duration_min || undefined,
+      durationMax: product.durationMax || product.duration_max || undefined,
+      durationUnit: product.durationUnit || product.duration_unit || undefined,
       createdAt: product.created_at || new Date().toISOString(),
       deletedAt: product.deleted_at || product.deletedAt || undefined,
       deletedBy: product.deleted_by || product.deletedBy || undefined,
-    } as unknown as Product));
+    } as unknown as Product);
+
+  const mapProducts = (data: any[]): Product[] =>
+    data.map((product) => mapProduct(product));
 
   const mapCategoriesToState = (data: any[]) => {
     const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#6b7280"];
@@ -426,13 +448,37 @@ export function useAdminDashboardController() {
   };
 
   const loadUsersData = async () => {
+    const requestId = ++userRequestRef.current;
     setUsersLoading(true);
     setUsersError(null);
     try {
-      const res = await adminUsersApi.getUsers({ per_page: 100 });
+      const params: Parameters<typeof adminUsersApi.getUsers>[0] = {
+        per_page: ITEMS_PER_PAGE,
+        page: userPage,
+      };
+
+      if (userSearchTerm.trim()) params.search = userSearchTerm.trim();
+      if (userFacultyFilter !== "all") params.faculty_code = userFacultyFilter;
+
+      if (userStatusFilter === "active") {
+        params.is_verified = true;
+        params.is_banned = false;
+        params.is_warned = false;
+      } else if (userStatusFilter === "banned") {
+        params.is_banned = true;
+      } else if (userStatusFilter === "warned") {
+        params.is_warned = true;
+      } else if (userStatusFilter === "unverified") {
+        params.is_verified = false;
+      }
+
+      const res = await adminUsersApi.getUsers(params);
+      if (requestId !== userRequestRef.current) return;
       if (res?.data && Array.isArray(res.data)) {
         setUsers(mapUsers(res.data));
       }
+      setUserTotalItems(res?.meta?.total ?? 0);
+      setUserTotalPages(res?.meta?.last_page ?? 1);
       markResourceLoaded("users");
 
       // faculties needed for user faculty filter — reuse if already loaded
@@ -440,22 +486,42 @@ export function useAdminDashboardController() {
         await fetchFacultiesResource();
       }
     } catch (err) {
+      if (requestId !== userRequestRef.current) return;
       const msg = err instanceof Error ? err.message : "Gagal memuat data user";
       setUsersError(msg);
       console.error("Failed to load users data:", err);
     } finally {
-      setUsersLoading(false);
+      if (requestId === userRequestRef.current) {
+        setUsersLoading(false);
+      }
     }
   };
 
   const loadProductsData = async () => {
+    const requestId = ++productRequestRef.current;
     setProductsLoading(true);
     setProductsError(null);
     try {
-      const res = await adminProductsApi.getProducts({ per_page: 100 });
+      const params: Parameters<typeof adminProductsApi.getProducts>[0] = {
+        per_page: ITEMS_PER_PAGE,
+        page: productPage,
+      };
+
+      if (productSearchTerm.trim()) params.search = productSearchTerm.trim();
+      if (productTypeFilter !== "all") params.type = productTypeFilter;
+      if (productConditionFilter !== "all") params.condition = productConditionFilter;
+      if (productCategoryFilter !== "all") params.category_id = productCategoryFilter;
+      if (productSellerFilter.trim()) params.seller_name = productSellerFilter.trim();
+      if (productPriceMin.trim()) params.price_min = Number(productPriceMin);
+      if (productPriceMax.trim()) params.price_max = Number(productPriceMax);
+
+      const res = await adminProductsApi.getProducts(params);
+      if (requestId !== productRequestRef.current) return;
       if (res?.data && Array.isArray(res.data)) {
         setProducts(mapProducts(res.data));
       }
+      setProductTotalItems(res?.meta?.total ?? 0);
+      setProductTotalPages(res?.meta?.last_page ?? 1);
       markResourceLoaded("products");
 
       // categories needed for product category filter — reuse if already loaded
@@ -463,11 +529,14 @@ export function useAdminDashboardController() {
         await fetchCategoriesResource();
       }
     } catch (err) {
+      if (requestId !== productRequestRef.current) return;
       const msg = err instanceof Error ? err.message : "Gagal memuat data produk";
       setProductsError(msg);
       console.error("Failed to load products data:", err);
     } finally {
-      setProductsLoading(false);
+      if (requestId === productRequestRef.current) {
+        setProductsLoading(false);
+      }
     }
   };
 
@@ -555,16 +624,6 @@ export function useAdminDashboardController() {
             await loadOverviewData();
           }
           break;
-        case "users":
-          if (!isResourceLoaded("users")) {
-            await loadUsersData();
-          }
-          break;
-        case "products":
-          if (!isResourceLoaded("products")) {
-            await loadProductsData();
-          }
-          break;
         case "categories":
           // Guard: loadCategoriesData() itself checks isResourceLoaded.
           // Cache is cleared by invalidateCategories() after any CRUD success.
@@ -597,6 +656,28 @@ export function useAdminDashboardController() {
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "users") return;
+    void loadUsersData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, userPage, userSearchTerm, userStatusFilter, userFacultyFilter]);
+
+  useEffect(() => {
+    if (activeTab !== "products") return;
+    void loadProductsData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    productPage,
+    productSearchTerm,
+    productTypeFilter,
+    productConditionFilter,
+    productCategoryFilter,
+    productPriceMin,
+    productPriceMax,
+    productSellerFilter,
+  ]);
 
   const renderPagination = (currentPage: number, totalPages: number, setPage: (page: number) => void) => {
     if (totalPages <= 1) return null;
@@ -645,25 +726,9 @@ export function useAdminDashboardController() {
     );
   };
 
-  const filteredUsers = useMemo(() => users.filter((user) => {
-    const matchesSearch = userSearchTerm === "" || user.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || user.email.toLowerCase().includes(userSearchTerm.toLowerCase()) || (user.phone?.toLowerCase() || "").includes(userSearchTerm.toLowerCase());
-    const matchesStatus = userStatusFilter === "all" || (userStatusFilter === "active" && user.isVerified && !user.isBanned && !user.isWarned) || (userStatusFilter === "banned" && user.isBanned) || (userStatusFilter === "warned" && user.isWarned) || (userStatusFilter === "unverified" && !user.isVerified);
-    const matchesFaculty = userFacultyFilter === "all" || user.faculty === userFacultyFilter;
-    return matchesSearch && matchesStatus && matchesFaculty;
-  }), [users, userSearchTerm, userStatusFilter, userFacultyFilter]);
+  const filteredUsers = useMemo(() => users, [users]);
 
-  const filteredProducts = useMemo(() => products.filter((product) => {
-    const matchesSearch = productSearchTerm === "" || product.title.toLowerCase().includes(productSearchTerm.toLowerCase()) || product.description.toLowerCase().includes(productSearchTerm.toLowerCase()) || product.seller.name.toLowerCase().includes(productSearchTerm.toLowerCase());
-    const matchesType = productTypeFilter === "all" || product.type === productTypeFilter;
-    const matchesCondition = productConditionFilter === "all" || (product.type === "barang" && product.condition === productConditionFilter);
-    const matchesCategory = productCategoryFilter === "all" || product.categoryId === productCategoryFilter || product.category.toLowerCase() === productCategoryFilter.toLowerCase();
-    const productPrice = product.priceMin || product.price;
-    const minPrice = productPriceMin ? parseInt(productPriceMin) : 0;
-    const maxPrice = productPriceMax ? parseInt(productPriceMax) : Infinity;
-    const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
-    const matchesSeller = productSellerFilter === "" || product.seller.name.toLowerCase().includes(productSellerFilter.toLowerCase());
-    return matchesSearch && matchesType && matchesCondition && matchesCategory && matchesPrice && matchesSeller;
-  }), [products, productSearchTerm, productTypeFilter, productConditionFilter, productCategoryFilter, productPriceMin, productPriceMax, productSellerFilter]);
+  const filteredProducts = useMemo(() => products, [products]);
 
   const filteredReports = useMemo(() => reports.filter((report) => {
     const matchesSearch = reportSearchTerm === "" || report.reason.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.description.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.reporter.name.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.reportedUser.name.toLowerCase().includes(reportSearchTerm.toLowerCase());
@@ -713,13 +778,16 @@ export function useAdminDashboardController() {
     return matchesSearch && matchesStatus;
   }).sort((a, b) => a.sortOrder - b.sortOrder), [faculties, facultySearchTerm, facultyStatusFilter]);
 
-  const paginatedUsers = useMemo(() => getPaginatedData(filteredUsers, userPage), [filteredUsers, userPage]);
-  const paginatedProducts = useMemo(() => getPaginatedData(filteredProducts, productPage), [filteredProducts, productPage]);
+  const paginatedUsers = useMemo(() => users, [users]);
+  const paginatedProducts = useMemo(() => products, [products]);
   const paginatedReports = useMemo(() => getPaginatedData(filteredReports, reportPage), [filteredReports, reportPage]);
   const paginatedWithdrawals = useMemo(() => getPaginatedData(filteredWithdrawals, withdrawalPage), [filteredWithdrawals, withdrawalPage]);
   const paginatedOrders = useMemo(() => getPaginatedData(filteredOrders, orderPage), [filteredOrders, orderPage]);
   const paginatedFaculties = useMemo(() => getPaginatedData(filteredFaculties, facultyPage), [filteredFaculties, facultyPage]);
-  const productCategoryOptions = [...mockCategories, ...mockServiceCategories];
+  const productCategoryOptions = useMemo(
+    () => categories.map((category) => ({ id: category.id, name: category.name })),
+    [categories]
+  );
 
   const displayStats = stats || {
     totalUsers: 0,
@@ -757,7 +825,28 @@ export function useAdminDashboardController() {
     setTimeout(() => setSuccessMessage(null), 3000);
   };
 
-  const handleViewUser = (user: User) => { setSelectedUser(user); setShowUserDetail(true); };
+  const handleViewUser = async (user: User) => {
+    const requestId = ++userDetailRequestRef.current;
+    setSelectedUser(user);
+    setUserDetailError(null);
+    setShowUserDetail(true);
+    setUserDetailLoading(true);
+
+    try {
+      const detail = await adminUsersApi.getUser(user.id);
+      if (requestId !== userDetailRequestRef.current) return;
+      setSelectedUser(mapUser(detail));
+    } catch (err) {
+      if (requestId !== userDetailRequestRef.current) return;
+      const msg = err instanceof Error ? err.message : "Gagal memuat detail user";
+      setUserDetailError(msg);
+      console.error("Failed to load user detail:", err);
+    } finally {
+      if (requestId === userDetailRequestRef.current) {
+        setUserDetailLoading(false);
+      }
+    }
+  };
   const handleBanUser = (user: User) => { setUserToAction(user); setShowBanDialog(true); };
   const confirmBanUser = async () => {
     if (userToAction) {
@@ -791,7 +880,28 @@ export function useAdminDashboardController() {
     }
   };
 
-  const handleViewProduct = (product: Product) => { setSelectedProduct(product); setShowProductDetail(true); };
+  const handleViewProduct = async (product: Product) => {
+    const requestId = ++productDetailRequestRef.current;
+    setSelectedProduct(product);
+    setProductDetailError(null);
+    setShowProductDetail(true);
+    setProductDetailLoading(true);
+
+    try {
+      const detail = await adminProductsApi.getProduct(product.id);
+      if (requestId !== productDetailRequestRef.current) return;
+      setSelectedProduct(mapProduct(detail));
+    } catch (err) {
+      if (requestId !== productDetailRequestRef.current) return;
+      const msg = err instanceof Error ? err.message : "Gagal memuat detail produk";
+      setProductDetailError(msg);
+      console.error("Failed to load product detail:", err);
+    } finally {
+      if (requestId === productDetailRequestRef.current) {
+        setProductDetailLoading(false);
+      }
+    }
+  };
   const handleDeleteProduct = (product: Product) => { setProductToDelete(product); setShowDeleteProductDialog(true); };
   const confirmDeleteProduct = async () => {
     if (productToDelete) {
@@ -1221,6 +1331,10 @@ export function useAdminDashboardController() {
     paginatedWithdrawals,
     paginatedOrders,
     paginatedFaculties,
+    userTotalItems,
+    userTotalPages,
+    productTotalItems,
+    productTotalPages,
     productCategoryOptions,
     userPage,
     setUserPage,
@@ -1299,6 +1413,8 @@ export function useAdminDashboardController() {
     showUserDetail,
     setShowUserDetail,
     selectedUser,
+    userDetailLoading,
+    userDetailError,
     showBanDialog,
     setShowBanDialog,
     showUnbanDialog,
@@ -1311,6 +1427,8 @@ export function useAdminDashboardController() {
     showProductDetail,
     setShowProductDetail,
     selectedProduct,
+    productDetailLoading,
+    productDetailError,
     showDeleteProductDialog,
     setShowDeleteProductDialog,
     productToDelete,

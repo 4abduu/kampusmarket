@@ -10,6 +10,8 @@ import { Users, Eye, Ban, UserCheck, Search, Filter, ChevronDown, ChevronUp, X }
 interface AdminUsersTabProps {
   filteredUsers: Array<any>;
   paginatedUsers: Array<any>;
+  totalUsers: number;
+  totalPages: number;
   currentPage: number;
   showUserFilters: boolean;
   setShowUserFilters: (value: boolean) => void;
@@ -32,6 +34,8 @@ interface AdminUsersTabProps {
 export default function AdminUsersTab({
   filteredUsers,
   paginatedUsers,
+  totalUsers,
+  totalPages,
   currentPage,
   showUserFilters,
   setShowUserFilters,
@@ -59,7 +63,7 @@ export default function AdminUsersTab({
               <CardTitle>Manajemen User</CardTitle>
               <CardDescription>Daftar semua user terdaftar (Read & Ban)</CardDescription>
             </div>
-            <div className="text-sm text-muted-foreground">{filteredUsers.length} user</div>
+            <div className="text-sm text-muted-foreground">{totalUsers} user</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -121,7 +125,7 @@ export default function AdminUsersTab({
                 ))}
               </TableBody>
             </Table>
-            {renderPagination(currentPage, getTotalPages(filteredUsers.length), setUserPage)}
+            {renderPagination(currentPage, totalPages || getTotalPages(filteredUsers.length), setUserPage)}
           </>
         )}
       </CardContent>

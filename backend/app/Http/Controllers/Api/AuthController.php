@@ -593,7 +593,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'userId' => $user->id,
+                'userId' => $user->uuid,
                 'email' => $user->email,
                 'isEmailVerified' => (bool) $user->is_verified,
                 'emailVerifiedAt' => $user->email_verified_at,

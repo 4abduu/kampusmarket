@@ -52,6 +52,8 @@ type Props = {
   showUserDetail: boolean;
   setShowUserDetail: (open: boolean) => void;
   selectedUser: User | null;
+  userDetailLoading: boolean;
+  userDetailError: string | null;
 
   showBanDialog: boolean;
   setShowBanDialog: (open: boolean) => void;
@@ -68,6 +70,8 @@ type Props = {
   showProductDetail: boolean;
   setShowProductDetail: (open: boolean) => void;
   selectedProduct: Product | null;
+  productDetailLoading: boolean;
+  productDetailError: string | null;
   showDeleteProductDialog: boolean;
   setShowDeleteProductDialog: (open: boolean) => void;
   productToDelete: Product | null;
@@ -136,6 +140,8 @@ export default function AdminActionDialogs({
   showUserDetail,
   setShowUserDetail,
   selectedUser,
+  userDetailLoading,
+  userDetailError,
   showBanDialog,
   setShowBanDialog,
   showUnbanDialog,
@@ -150,6 +156,8 @@ export default function AdminActionDialogs({
   showProductDetail,
   setShowProductDetail,
   selectedProduct,
+  productDetailLoading,
+  productDetailError,
   showDeleteProductDialog,
   setShowDeleteProductDialog,
   productToDelete,
@@ -220,6 +228,12 @@ export default function AdminActionDialogs({
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
+              {userDetailLoading && (
+                <p className="text-sm text-muted-foreground">Memuat detail user...</p>
+              )}
+              {userDetailError && (
+                <p className="text-sm text-red-600">{userDetailError}</p>
+              )}
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarFallback className={`text-lg ${selectedUser.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>
@@ -316,6 +330,12 @@ export default function AdminActionDialogs({
           </DialogHeader>
           {selectedProduct && (
             <div className="space-y-4">
+              {productDetailLoading && (
+                <p className="text-sm text-muted-foreground">Memuat detail produk...</p>
+              )}
+              {productDetailError && (
+                <p className="text-sm text-red-600">{productDetailError}</p>
+              )}
               <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">{selectedProduct.type === "jasa" ? <CalendarDays className="h-12 w-12 text-muted-foreground/30" /> : <Package className="h-12 w-12 text-muted-foreground/30" />}</div>
               <div><p className="font-bold text-lg">{selectedProduct.title}</p><p className="text-sm text-muted-foreground mt-1">{selectedProduct.description}</p></div>
               <div className="grid grid-cols-2 gap-3 text-sm">
