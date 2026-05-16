@@ -4,12 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
-import ProductImage from "@/components/common/ProductImage";
+
 import ServiceDetailSidebar from "@/components/pages/guest/service-detail/ServiceDetailSidebar";
 import ServiceDetailTabsPanel from "@/components/pages/guest/service-detail/ServiceDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 import { ServiceDetailPageSkeleton } from "@/components/skeleton";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
+import ImageGallery from "@/components/common/ImageGallery";
 
 interface ServiceDetailPageProps {
   onNavigate: (
@@ -29,6 +30,7 @@ export default function ServiceDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
   const fetchedIdRef = useRef<string | null>(null);
 
   const handleAction = (action: () => void) => {
@@ -99,41 +101,17 @@ export default function ServiceDetailPage({
 
   const mainContent = (
     <>
-      <Card className="overflow-hidden">
-        <div className="relative flex h-96 items-center justify-center bg-muted overflow-hidden">
-          <ProductImage
-            src={service.images?.[0]?.url || service.images?.[0]}
-            alt={service.title}
-            className="w-full h-full bg-muted flex items-center justify-center"
-            imageClassName="w-full h-full object-cover"
-            fallbackImageUrl="https://placehold.net/default.svg"
-          />
-          <Badge className="absolute top-4 left-4 bg-primary-500">
+      <ImageGallery
+        images={service.images || []}
+        imagesDetail={service.imagesDetail}
+        selectedImage={selectedImage}
+        setSelectedImage={setSelectedImage}
+        customBadge={
+          <Badge className="bg-primary-500">
             {service.category?.name || "Jasa"}
           </Badge>
-        </div>
-      </Card>
-
-      {service.images && service.images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {service.images.map((image: any, index: number) => (
-            <button
-              key={index}
-              className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition-colors hover:border-primary-300"
-              title={`Foto ${index + 1}`}
-              aria-label={`Foto ${index + 1}`}
-            >
-              <ProductImage
-                src={image.url || image}
-                alt={`Foto ${index + 1}`}
-                className="w-full h-full bg-muted flex items-center justify-center"
-                imageClassName="w-full h-full object-cover"
-                fallbackImageUrl="https://placehold.net/default.svg"
-              />
-            </button>
-          ))}
-        </div>
-      )}
+        }
+      />
 
       <ServiceDetailTabsPanel description={service.description} service={service} />
     </>

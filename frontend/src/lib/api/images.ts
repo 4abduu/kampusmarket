@@ -1,8 +1,8 @@
 /**
- * lib/api/images.ts [BARU]
+ * lib/api/images.ts
  *
  * Upload gambar produk ke backend Laravel.
- * Backend menyimpan ke storage/app/public/products/ dan return URL publik.
+ * Backend menyimpan ke storage/app/public/{category}/{variant}/ dan return URLs.
  *
  * CATATAN STORAGE:
  * Gambar disimpan lokal di folder project (bukan cloud).
@@ -20,9 +20,21 @@ const MAX_SIZE_MB = 2;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
+export interface ImageVariantUrls {
+  thumbnail?: string;
+  small?: string;
+  medium?: string;
+  large?: string;
+  original?: string;
+}
+
 export interface UploadImageResult {
+  /** Primary URL (small variant relative path, for storing in DB) */
   url: string;
-  path: string;
+  /** All variant relative paths */
+  urls?: ImageVariantUrls;
+  /** Base filename without extension */
+  filename?: string;
 }
 
 /**
@@ -59,13 +71,23 @@ export async function uploadImage(file: File): Promise<UploadImageResult> {
     // JANGAN set Content-Type — browser otomatis set multipart/form-data + boundary
   });
 
-  const data = await response.json() as { success: boolean; url: string; path: string; message?: string };
+  const data = await response.json() as {
+    success: boolean;
+    url: string;
+    urls?: ImageVariantUrls;
+    filename?: string;
+    message?: string;
+  };
 
   if (!response.ok || !data.success) {
     throw new Error(data.message || 'Gagal upload gambar');
   }
 
-  return { url: data.url, path: data.path };
+  return {
+    url: data.url,
+    urls: data.urls,
+    filename: data.filename,
+  };
 }
 
 /**

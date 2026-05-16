@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Briefcase, CheckCircle2, Edit3, Eye, Package } from "lucide-react";
+import { Briefcase, CheckCircle2, Edit3, Eye } from "lucide-react";
 import type { Order } from "@/lib/api/orders";
 import ProductImage from "@/components/common/ProductImage";
 import RatingStarPicker from "@/components/pages/user/rating/RatingStarPicker";

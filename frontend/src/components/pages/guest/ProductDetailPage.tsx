@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
-import ProductDetailGallery from "@/components/pages/guest/product-detail/ProductDetailGallery";
+import ImageGallery from "@/components/common/ImageGallery";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ProductDetailSidebar from "@/components/pages/guest/product-detail/ProductDetailSidebar";
@@ -145,8 +145,9 @@ export default function ProductDetailPage({
 
   const mainContent = (
     <>
-      <ProductDetailGallery
+      <ImageGallery
         images={product.images || []}
+        imagesDetail={product.imagesDetail}
         condition={product.condition}
         price={product.price}
         originalPrice={product.originalPrice}

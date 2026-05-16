@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, CheckCircle2, Clock, Package } from "lucide-react";
+import { Briefcase, CheckCircle2, Clock } from "lucide-react";
 import type { Order } from "@/lib/api/orders";
 import ProductImage from "@/components/common/ProductImage";
 

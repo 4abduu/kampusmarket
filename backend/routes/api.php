@@ -130,7 +130,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Image upload (untuk produk baru maupun edit)
     // Simpan lokal di storage/app/public/products/ (jalankan: php artisan storage:link)
     Route::post('/images/upload', [ImageController::class, 'upload']);
-    Route::delete('/images', [ImageController::class, 'delete']);
+    Route::delete('/images/{filename}', [ImageController::class, 'delete']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::put('/products/{id}/status', [ProductController::class, 'updateStatus']);

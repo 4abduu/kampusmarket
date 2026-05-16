@@ -65,6 +65,7 @@ class ProductResource extends JsonResource
             
             // Images (1NF - dari tabel terpisah ke array)
             'images' => $this->getImageUrls(),
+            'imagesDetail' => $this->getImagesDetail(),
             
             // Seller
             'seller' => new UserResource($this->whenLoaded('seller')),
@@ -119,6 +120,7 @@ class ProductResource extends JsonResource
 
     /**
      * Get image URLs as array (1NF → Array).
+     * Returns 'small' variant URL when available; falls back to the accessor (which handles external URLs).
      */
     protected function getImageUrls(): array
     {
@@ -126,6 +128,36 @@ class ProductResource extends JsonResource
             return $this->images->pluck('url')->toArray();
         }
         return [];
+    }
+
+    /**
+     * Get detailed image data including all variant URLs for responsive <picture>/<srcset>.
+     *
+     * Returns array of objects:
+     * [
+     *   {
+     *     url: "http://…/small/abc.webp",
+     *     alt: "Produk X",
+     *     variants: { thumbnail: "…", small: "…", medium: "…", large: "…", original: "…" },
+     *     isPrimary: true
+     *   },
+     *   …
+     * ]
+     */
+    protected function getImagesDetail(): array
+    {
+        if (!$this->relationLoaded('images')) {
+            return [];
+        }
+
+        return $this->images->map(function ($img) {
+            return [
+                'url'       => $img->url,
+                'alt'       => $img->alt,
+                'variants'  => $img->variant_urls,
+                'isPrimary' => (bool) $img->is_primary,
+            ];
+        })->toArray();
     }
 
     /**
@@ -145,13 +177,6 @@ class ProductResource extends JsonResource
             'reviewCount' => $this->review_count,
             'soldCount' => $this->sold_count,
             'type' => $this->type->value ?? 'barang',
-            'condition' => $this->condition?->value,
-            'category' => $this->category?->name,
-        ];
-    }
-
-    /**
-     *type' => $this->type->value ?? 'barang',
             'condition' => $this->condition?->value,
             'category' => $this->category?->name,
         ];

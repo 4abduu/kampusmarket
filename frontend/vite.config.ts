@@ -1,19 +1,33 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const backendUrl = env.BACKEND_URL || 'http://127.0.0.1:8000';
+
+  return {
+    plugins: [react(), tailwindcss()],
+    server: {
+      proxy: {
+        '/api': {
+          target: backendUrl,
+          changeOrigin: true,
+          timeout: 60000, // 60 seconds
+          proxyTimeout: 60000,
+        },
+        '/storage': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
+        '/broadcasting': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
       },
     },
-  },
   build: {
     // Tailwind v4 emits custom at-rules that LightningCSS warns about.
     cssMinify: 'esbuild',
@@ -71,5 +85,6 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  }
   }
 })

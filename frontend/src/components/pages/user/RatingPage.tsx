@@ -72,14 +72,14 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
 
         // Filter unreviewed orders
         const unreviewed = allCompletedOrders.filter(
-          (order) => !reviewedOrderIds.includes(order.id) && !reviewedOrderIds.includes(order.uuid)
+          (order: any) => !reviewedOrderIds.includes(order.id) && !reviewedOrderIds.includes(order.uuid)
         );
 
         setOrdersToReview(unreviewed);
 
         // If orderId is provided in URL, try to select it
         if (orderId) {
-          const matchedOrder = unreviewed.find((o) => o.id === orderId || o.uuid === orderId);
+          const matchedOrder = unreviewed.find((o: any) => o.id === orderId || o.uuid === orderId);
           if (matchedOrder) {
             setSelectedOrder(matchedOrder);
             setStep("form");
