@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   type User,
@@ -13,7 +14,6 @@ import {
   categories,
   serviceCategories,
 } from "@/lib/mock-data";
-import { getDashboardTabFromPage } from "@/components/pages/user/dashboard/constants";
 import { getInitialSellerProducts } from "@/components/pages/user/dashboard/seller-products";
 import {
   formatTransactionDate,
@@ -40,25 +40,31 @@ import { useDashboardOrderActions } from "@/components/pages/user/dashboard/useD
 
 interface UserDashboardPageProps {
   onNavigate: (page: string, productId?: string) => void;
-  currentPage?: string;
   onSellerProductCountChange?: (count: number) => void;
   currentUser?: User | null;
 }
 
 export default function UserDashboardPage({
   onNavigate,
-  currentPage = "dashboard",
   onSellerProductCountChange,
   currentUser: authUser,
 }: UserDashboardPageProps) {
-  const [activeTab, setActiveTab] = useState(() =>
-    getDashboardTabFromPage(currentPage),
-  );
+  const { tab } = useParams<{ tab?: string }>();
+  const navigate = useNavigate();
+  const tabFromUrl = tab || "overview";
+  
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(authUser || mockUsers[0]);
+
+  // Sync URL changes to activeTab state
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
 
   useEffect(() => {
-    setActiveTab(getDashboardTabFromPage(currentPage));
-  }, [currentPage]);
+    setCurrentUser(authUser || mockUsers[0]);
+  }, [authUser]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -66,18 +72,27 @@ export default function UserDashboardPage({
     return () => window.clearTimeout(timer);
   }, [activeTab]);
 
-  const currentUser = authUser || mockUsers[0];
+  const handleProfilePictureUpdate = (newAvatarUrl: string) => {
+    setCurrentUser((prev) =>
+      prev ? { ...prev, avatar: newAvatarUrl } : null
+    );
+  };
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    navigate(`/dashboard/${newTab}`);
+  };
 
   const products = useDashboardProducts({
     initialProducts: getInitialSellerProducts(),
   });
 
   const wallet = useDashboardWallet({
-    userId: currentUser.id,
+    userId: currentUser?.id || "",
   });
 
   const settings = useDashboardSettings({
-    currentUser,
+    currentUser: currentUser || mockUsers[0],
     initialAddresses: mockAddresses,
   });
 
@@ -148,10 +163,10 @@ export default function UserDashboardPage({
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8">
           <UserDashboardSidebar
-            currentUser={currentUser}
+            currentUser={currentUser || mockUsers[0]}
             rating={stats.rating}
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             getFacultyName={getFacultyName}
           />
 
@@ -159,13 +174,13 @@ export default function UserDashboardPage({
             {activeTab === "overview" && (
               <UserDashboardOverviewTab
                 onNavigate={onNavigate}
-                currentWalletBalance={currentUser.walletBalance || 0}
+                currentWalletBalance={currentUser?.walletBalance || 0}
                 formatPrice={products.formatPrice}
                 stats={stats}
                 userProducts={products.userProducts}
                 formatPriceRange={products.formatPriceRange}
                 setShowWithdrawDialog={wallet.setShowWithdrawDialog}
-                setActiveTab={setActiveTab}
+                setActiveTab={handleTabChange}
                 adminFeePercentage={ADMIN_FEE_PERCENTAGE}
               />
             )}
@@ -211,7 +226,7 @@ export default function UserDashboardPage({
               <UserDashboardWalletTab
                 showBalance={wallet.showBalance}
                 setShowBalance={wallet.setShowBalance}
-                currentWalletBalance={currentUser.walletBalance || 0}
+                currentWalletBalance={currentUser?.walletBalance || 0}
                 totalIncome={wallet.totalIncome}
                 totalExpense={wallet.totalExpense}
                 setShowTopUpDialog={wallet.setShowTopUpDialog}
@@ -248,7 +263,7 @@ export default function UserDashboardPage({
 
             {activeTab === "settings" && (
               <UserDashboardSettingsTab
-                currentUser={currentUser}
+                currentUser={currentUser || mockUsers[0]}
                 profileForm={settings.profileForm}
                 setProfileForm={settings.setProfileForm}
                 handleSaveProfile={settings.handleSaveProfile}
@@ -265,6 +280,7 @@ export default function UserDashboardPage({
                 addressError={settings.addressError}
                 showProfileSuccess={settings.showProfileSuccess}
                 onNavigate={onNavigate}
+                onProfilePictureUpdate={handleProfilePictureUpdate}
               />
             )}
           </main>
@@ -320,7 +336,7 @@ export default function UserDashboardPage({
         setShowWithdrawDialog={wallet.setShowWithdrawDialog}
         withdrawForm={wallet.withdrawForm}
         setWithdrawForm={wallet.setWithdrawForm}
-        currentWalletBalance={currentUser.walletBalance || 0}
+        currentWalletBalance={currentUser?.walletBalance || 0}
         isBankLainnya={wallet.isBankLainnya}
         isEwalletLainnya={wallet.isEwalletLainnya}
         statsWalletBalance={stats.walletBalance}

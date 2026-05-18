@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
 
@@ -28,6 +28,14 @@ function renderStars(rating: number) {
 }
 
 export default function ProfileReviewsTab({ avgRating, totalReviews }: ProfileReviewsTabProps) {
+  const reviewers = [
+    { name: "Reviewer 1", avatar: "/avatar.png", rating: 5, text: "Barang sesuai deskripsi, pengiriman cepat. Recommended seller!" },
+    { name: "Reviewer 2", avatar: "/avatar.png", rating: 4, text: "Seller ramah dan fast response. Kualitas barang bagus, sesuai foto." },
+    { name: "Reviewer 3", avatar: "/avatar.png", rating: 5, text: "Barang sesuai deskripsi, pengiriman cepat. Recommended seller!" },
+    { name: "Reviewer 4", avatar: "/avatar.png", rating: 4, text: "Seller ramah dan fast response. Kualitas barang bagus, sesuai foto." },
+    { name: "Reviewer 5", avatar: "/avatar.png", rating: 5, text: "Barang sesuai deskripsi, pengiriman cepat. Recommended seller!" },
+  ];
+
   if (totalReviews === 0) {
     return (
       <Card>
@@ -76,33 +84,32 @@ export default function ProfileReviewsTab({ avgRating, totalReviews }: ProfileRe
         </div>
 
         <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {reviewers.map((reviewer, i) => (
             <div key={i} className="border-b pb-4 last:border-0">
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-slate-100 text-slate-600">R{i}</AvatarFallback>
+                  <AvatarImage src={reviewer.avatar} alt={reviewer.name} />
+                  <AvatarFallback className="bg-slate-100 text-slate-600">{reviewer.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-sm">Reviewer {i}</p>
+                    <p className="font-medium text-sm">{reviewer.name}</p>
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
                           className={`h-3 w-3 ${
-                            star <= 5 - (i % 2) ? "fill-yellow-400 text-yellow-400" : "text-slate-300"
+                            star <= reviewer.rating ? "fill-yellow-400 text-yellow-400" : "text-slate-300"
                           }`}
                         />
                       ))}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">
-                    {i % 2 === 0
-                      ? "Barang sesuai deskripsi, pengiriman cepat. Recommended seller!"
-                      : "Seller ramah dan fast response. Kualitas barang bagus, sesuai foto."}
+                    {reviewer.text}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {i} hari yang lalu • <span className="text-primary-600">Produk {i}</span>
+                    {i + 1} hari yang lalu • <span className="text-primary-600">Produk {i + 1}</span>
                   </p>
                 </div>
               </div>

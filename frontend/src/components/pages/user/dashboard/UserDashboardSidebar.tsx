@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Building2, Package, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react"
@@ -7,6 +7,7 @@ type SidebarUser = {
   name: string
   email: string
   faculty: string | null
+  avatar?: string
 }
 
 type Props = {
@@ -30,6 +31,9 @@ export default function UserDashboardSidebar({
         <CardContent className="p-6">
           <div className="text-center mb-6">
             <Avatar className="h-20 w-20 mx-auto mb-3">
+              {currentUser.avatar && (
+                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+              )}
               <AvatarFallback className="bg-primary-100 text-primary-700 text-xl">
                 {currentUser.name.split(" ").map(n => n[0]).join("")}
               </AvatarFallback>

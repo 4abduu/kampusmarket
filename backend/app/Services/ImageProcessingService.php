@@ -20,7 +20,7 @@ use Intervention\Image\Encoders\WebpEncoder;
  *   - original  : full   (zoom / full-screen / download)
  *
  * All variants are WebP with quality 90 (sweet spot: quality ≈ JPEG q95, size ≈ JPEG q70).
- * Uses Intervention Image v4 with GD driver.
+ * Uses Intervention Image v3.11.8 (ImageManager with GD Driver).
  *
  * Storage layout (public disk):
  *   {category}/thumbnail/{filename}.webp
@@ -65,8 +65,17 @@ class ImageProcessingService
             throw new Exception("Invalid image category: {$category}");
         }
 
-        $manager = new ImageManager(new Driver());
-        $source  = $manager->read($tmpPath);
+        try {
+            // Read image using Intervention Image v3 ImageManager
+            $manager = new ImageManager(new Driver());
+            $source = $manager->read($tmpPath);
+        } catch (Exception $e) {
+            Log::error('Failed to read image file', [
+                'path' => $tmpPath,
+                'error' => $e->getMessage(),
+            ]);
+            throw new Exception('Gambar tidak dapat diproses. File mungkin rusak atau format tidak sesuai.');
+        }
 
         $filename = uniqid() . '_' . time();
         $urls     = [];
@@ -75,26 +84,32 @@ class ImageProcessingService
             $dir = "{$category}/{$variant}";
             Storage::disk($this->disk)->makeDirectory($dir);
 
-            // Clone the source for each variant so we don't mutate the original
-            $image = clone $source;
+            try {
+                // Clone the source for each variant using PHP's clone
+                $image = clone $source;
 
-            // Resize (scale down preserving aspect ratio) if a max-side is specified
-            if ($maxSide !== null) {
-                $w = $image->width();
-                $h = $image->height();
-                // Only downscale — never upscale
-                if ($w > $maxSide || $h > $maxSide) {
+                // Scale down (preserve aspect ratio) if a max-side is specified
+                // scaleDown() never upscales, only downscales with aspect ratio preserved
+                if ($maxSide !== null) {
                     $image = $image->scaleDown($maxSide, $maxSide);
                 }
+
+                // Encode as WebP with quality parameter
+                $webp = $image->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
+                $path = "{$dir}/{$filename}.webp";
+                Storage::disk($this->disk)->put($path, (string) $webp);
+
+                // Store the RELATIVE path (no /storage/ prefix).
+                // The model accessor will build the full URL.
+                $urls[$variant] = $path;
+            } catch (Exception $e) {
+                Log::error("Failed to generate image variant", [
+                    'variant' => $variant,
+                    'category' => $category,
+                    'error' => $e->getMessage(),
+                ]);
+                throw new Exception("Gagal membuat varian gambar '{$variant}': " . $e->getMessage());
             }
-
-            $webp = $image->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
-            $path = "{$dir}/{$filename}.webp";
-            Storage::disk($this->disk)->put($path, (string) $webp);
-
-            // Store the RELATIVE path (no /storage/ prefix).
-            // The model accessor will build the full URL.
-            $urls[$variant] = $path;
         }
 
         return [

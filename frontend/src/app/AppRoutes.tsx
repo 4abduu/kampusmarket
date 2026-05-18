@@ -529,7 +529,7 @@ export default function AppRoutes({
 
         {/* ── USER DASHBOARD ── */}
         <Route
-          path="/dashboard"
+          path="/dashboard/:tab?"
           element={
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
@@ -537,7 +537,6 @@ export default function AppRoutes({
               element={
                 <UserDashboardPage
                   onNavigate={onNavigate}
-                  currentPage="dashboard"
                   onSellerProductCountChange={onSellerProductCountChange}
                   currentUser={currentUser}
                 />
@@ -545,56 +544,18 @@ export default function AppRoutes({
             />
           }
         />
+        {/* Redirect old route URLs to new /dashboard/{tab} structure */}
         <Route
           path="/my-products"
-          element={
-            <ProtectedRoute
-              isLoggedIn={isLoggedIn}
-              isLoggingOut={isLoggingOut}
-              element={
-                <UserDashboardPage
-                  onNavigate={onNavigate}
-                  currentPage="my-products"
-                  onSellerProductCountChange={onSellerProductCountChange}
-                  currentUser={currentUser}
-                />
-              }
-            />
-          }
+          element={<Navigate to="/dashboard/products" replace />}
         />
         <Route
           path="/wallet"
-          element={
-            <ProtectedRoute
-              isLoggedIn={isLoggedIn}
-              isLoggingOut={isLoggingOut}
-              element={
-                <UserDashboardPage
-                  onNavigate={onNavigate}
-                  currentPage="wallet"
-                  onSellerProductCountChange={onSellerProductCountChange}
-                  currentUser={currentUser}
-                />
-              }
-            />
-          }
+          element={<Navigate to="/dashboard/wallet" replace />}
         />
         <Route
           path="/settings"
-          element={
-            <ProtectedRoute
-              isLoggedIn={isLoggedIn}
-              isLoggingOut={isLoggingOut}
-              element={
-                <UserDashboardPage
-                  onNavigate={onNavigate}
-                  currentPage="settings"
-                  onSellerProductCountChange={onSellerProductCountChange}
-                  currentUser={currentUser}
-                />
-              }
-            />
-          }
+          element={<Navigate to="/dashboard/settings" replace />}
         />
 
         {/* ── USER PAGES ── */}

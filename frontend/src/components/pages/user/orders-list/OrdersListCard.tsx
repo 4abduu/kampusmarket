@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,6 +59,12 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
 
             <div className="flex items-center gap-2 mt-2">
               <Avatar className="h-5 w-5">
+                {(viewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar) && (
+                  <AvatarImage 
+                    src={viewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar} 
+                    alt={viewMode === "buyer" ? order.seller?.name : order.buyer?.name}
+                  />
+                )}
                 <AvatarFallback className={`text-[10px] ${isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}`}>
                   {(viewMode === "buyer" ? (order.seller?.name || "S") : (order.buyer?.name || "B")).split(" ").map((namePart: string) => namePart[0]).join("")}
                 </AvatarFallback>

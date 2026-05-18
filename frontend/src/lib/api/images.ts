@@ -55,12 +55,16 @@ export function validateImageFile(file: File): string | null {
  * Upload satu gambar ke backend.
  * Menggunakan FormData karena backend terima multipart/form-data.
  */
-export async function uploadImage(file: File): Promise<UploadImageResult> {
+export async function uploadImage(
+  file: File,
+  category: 'products' | 'ratings' | 'profiles' | 'messages' = 'products'
+): Promise<UploadImageResult> {
   const error = validateImageFile(file);
   if (error) throw new Error(error);
 
   const formData = new FormData();
   formData.append('image', file);
+  formData.append('category', category);
 
   // Pakai fetch langsung karena apiClient (axios) butuh header override untuk FormData
   const API_BASE = API_BASE_URL;
@@ -83,9 +87,18 @@ export async function uploadImage(file: File): Promise<UploadImageResult> {
     throw new Error(data.message || 'Gagal upload gambar');
   }
 
+  // Backend returns relative path (e.g., 'products/small/abc123.webp')
+  // Prepend /storage/ to make it accessible from frontend
+  const prependStorage = (relativePath: string) => {
+    if (!relativePath) return '';
+    return relativePath.startsWith('/storage/') ? relativePath : `/storage/${relativePath}`;
+  };
+
   return {
-    url: data.url,
-    urls: data.urls,
+    url: prependStorage(data.url),
+    urls: data.urls ? Object.fromEntries(
+      Object.entries(data.urls).map(([key, val]) => [key, prependStorage(val)])
+    ) as ImageVariantUrls : undefined,
     filename: data.filename,
   };
 }
@@ -97,13 +110,14 @@ export async function uploadImage(file: File): Promise<UploadImageResult> {
  */
 export async function uploadImages(
   files: File[],
+  category: 'products' | 'ratings' | 'profiles' | 'messages' = 'products',
   onProgress?: (uploaded: number, total: number) => void
 ): Promise<string[]> {
   const urls: string[] = [];
 
   for (let i = 0; i < files.length; i++) {
     onProgress?.(i, files.length);
-    const result = await uploadImage(files[i]);
+    const result = await uploadImage(files[i], category);
     urls.push(result.url);
   }
 

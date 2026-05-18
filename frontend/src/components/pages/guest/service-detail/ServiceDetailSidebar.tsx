@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -254,6 +254,7 @@ export default function ServiceDetailSidebar({
             }}
           >
             <Avatar className="h-12 w-12">
+              <AvatarImage src={service.seller?.avatar} alt={service.seller?.name} />
               <AvatarFallback className="bg-primary-100 text-primary-700">
                 {service.seller?.name?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </AvatarFallback>

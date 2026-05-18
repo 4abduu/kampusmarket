@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ interface ProfileUserInfo {
   faculty?: string | null;
   location?: string;
   isVerified?: boolean;
+  avatar?: string;
 }
 
 interface ProfileSidebarProps {
@@ -40,6 +41,7 @@ export default function ProfileSidebar({
         <CardContent className="p-6">
           <div className="text-center mb-6">
             <Avatar className="h-24 w-24 mx-auto mb-4">
+              <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="bg-primary-100 text-primary-700 text-2xl">
                 {user.name
                   .split(" ")

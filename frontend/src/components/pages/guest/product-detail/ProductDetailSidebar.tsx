@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -311,6 +311,7 @@ export default function ProductDetailSidebar({
             onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}
           >
             <Avatar className="h-12 w-12">
+              <AvatarImage src={product.seller.avatar} alt={product.seller.name} />
               <AvatarFallback className="bg-primary-100 text-primary-700">
                 {product.seller.name.split(" ").map((n) => n[0]).join("")}
               </AvatarFallback>

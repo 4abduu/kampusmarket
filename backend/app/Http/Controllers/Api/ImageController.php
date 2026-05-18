@@ -27,7 +27,8 @@ class ImageController extends Controller
     public function upload(Request $request): JsonResponse
     {
         try {
-            $request->validate([
+            // Validate request
+            $validated = $request->validate([
                 'image' => [
                     'required',
                     'file',
@@ -35,7 +36,7 @@ class ImageController extends Controller
                     'mimes:jpeg,jpg,png,webp,gif',
                     'max:2048', // 2MB
                 ],
-                'category' => ['sometimes', 'string', 'in:products,ratings,profiles,messages'],
+                'category' => ['nullable', 'string', 'in:products,ratings,profiles,messages'],
                 'alt' => ['sometimes', 'string', 'max:255'],
             ], [
                 'image.max' => 'Ukuran gambar maksimal 2MB',
@@ -43,8 +44,15 @@ class ImageController extends Controller
             ]);
 
             $file = $request->file('image');
-            $category = $request->input('category', 'products');
+            $category = $request->input('category', 'profiles');
             $alt = $request->input('alt', '');
+
+            Log::info('Image upload attempt', [
+                'file_name' => $file?->getClientOriginalName(),
+                'file_size' => $file?->getSize(),
+                'file_mime' => $file?->getMimeType(),
+                'category' => $category,
+            ]);
 
             // Save to temp first
             $tempPath = $file->store('temp', 'local');
@@ -70,13 +78,18 @@ class ImageController extends Controller
         } catch (Throwable $e) {
             Log::error('Image upload failed', [
                 'error' => $e->getMessage(),
+                'class' => get_class($e),
                 'file'  => $e->getFile(),
                 'line'  => $e->getLine(),
+                'request_data' => [
+                    'has_image' => $request->hasFile('image'),
+                    'image_size' => $request->file('image')?->getSize(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal upload gambar: ' . $e->getMessage(),
+                'message' => 'Gagal memproses gambar. Pastikan format dan ukuran sesuai.',
             ], 422);
         }
     }
@@ -110,7 +123,7 @@ class ImageController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal hapus gambar',
+                'message' => 'Gagal menghapus gambar.',
             ], 422);
         }
     }

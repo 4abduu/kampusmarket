@@ -119,8 +119,16 @@ export default function UserDashboardOverviewTab({
           <div className="grid sm:grid-cols-3 gap-4">
             {userProducts.slice(0, 3).map((product) => (
               <div key={product.id} className="border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-colors" onClick={() => onNavigate("product", product.id)}>
-                <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-32 flex items-center justify-center`}>
-                  {product.type === "jasa" ? <Briefcase className="h-10 w-10 text-secondary-600/50" /> : <Package className="h-10 w-10 text-muted-foreground/30" />}
+                <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-32 flex items-center justify-center relative overflow-hidden`}>
+                  {product.images && product.images.length > 0 ? (
+                    <img 
+                      src={product.images[0]} 
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    product.type === "jasa" ? <Briefcase className="h-10 w-10 text-secondary-600/50" /> : <Package className="h-10 w-10 text-muted-foreground/30" />
+                  )}
                 </div>
                 <div className="p-3">
                   <div className="flex items-center gap-2 mb-1">

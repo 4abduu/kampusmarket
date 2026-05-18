@@ -1,12 +1,15 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { AlertCircle, Edit, Lock, MapPin, Plus, Save, Trash2, User, Loader2 } from "lucide-react"
+import { AlertCircle, Edit, Lock, MapPin, Plus, Save, Trash2, User, Loader2, Pencil } from "lucide-react"
 import type { Address as AddressType } from "@/lib/mock-data"
 import AccountCompletionSettings from "@/components/pages/user/AccountCompletionSettings"
+import ProfilePictureEditDialog from "@/components/pages/user/dashboard/ProfilePictureEditDialog"
+import { useState } from "react"
+import { userApi } from "@/lib/api/users"
 
 type ProfileForm = {
   name: string
@@ -21,6 +24,7 @@ type CurrentUser = {
   email: string
   phone?: string
   faculty: string | null
+  avatar?: string
 }
 
 type Props = {
@@ -41,6 +45,7 @@ type Props = {
   addressError?: string | null
   showProfileSuccess?: boolean
   onNavigate?: (page: string) => void
+  onProfilePictureUpdate?: (newAvatarUrl: string) => void
 }
 
 export default function UserDashboardSettingsTab({
@@ -61,7 +66,10 @@ export default function UserDashboardSettingsTab({
   addressError = null,
   showProfileSuccess = false,
   onNavigate = () => {},
+  onProfilePictureUpdate,
 }: Props) {
+  const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false)
+  const [profilePictureUrl, setProfilePictureUrl] = useState(currentUser.avatar || "")
   return (
     <>
       <Card>
@@ -71,11 +79,23 @@ export default function UserDashboardSettingsTab({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-primary-100 text-primary-700 text-xl">
-                {currentUser.name.split(" ").map(n => n[0]).join("")}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-16 w-16">
+                {profilePictureUrl && (
+                  <AvatarImage src={profilePictureUrl} alt={currentUser.name} />
+                )}
+                <AvatarFallback className="bg-primary-100 text-primary-700 text-xl">
+                  {currentUser.name.split(" ").map(n => n[0]).join("")}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => setShowProfilePictureDialog(true)}
+                className="absolute bottom-0 right-0 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-2 transition-colors shadow-md"
+                title="Edit foto profil"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            </div>
             <div>
               <p className="font-medium">{currentUser.name}</p>
               <p className="text-sm text-muted-foreground">{currentUser.email}</p>
@@ -216,6 +236,26 @@ export default function UserDashboardSettingsTab({
       </Card>
 
       <AccountCompletionSettings onNavigate={onNavigate} />
+
+      <ProfilePictureEditDialog
+        open={showProfilePictureDialog}
+        onOpenChange={setShowProfilePictureDialog}
+        currentUser={currentUser}
+        onUploadSuccess={async (imageUrl) => {
+          try {
+            // Update local state immediately for instant UI update
+            setProfilePictureUrl(imageUrl)
+            
+            // Notify parent component to update currentUser
+            onProfilePictureUpdate?.(imageUrl)
+            
+            // Save avatar URL to user profile in backend
+            await userApi.updateProfile({ avatar: imageUrl })
+          } catch (error) {
+            console.error("Failed to update avatar:", error)
+          }
+        }}
+      />
     </>
   )
 }
