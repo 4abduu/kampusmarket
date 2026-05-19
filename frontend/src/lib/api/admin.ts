@@ -156,6 +156,37 @@ export const adminProductsApi = {
 };
 
 // ============================================================
+// ADMIN ORDERS
+// ============================================================
+export const adminOrdersApi = {
+  async getOrders(params?: {
+    status?: string;
+    payment_status?: string;
+    type?: "barang" | "jasa";
+    category_id?: string;
+    search?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+    per_page?: number;
+    page?: number;
+  }): Promise<PaginatedResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.payment_status) queryParams.append("payment_status", params.payment_status);
+    if (params?.type) queryParams.append("type", params.type);
+    if (params?.category_id) queryParams.append("category_id", params.category_id);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/orders${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<PaginatedResponse<any>>(url);
+  },
+};
+
+// ============================================================
 // ADMIN CATEGORIES
 // ============================================================
 export const adminCategoriesApi = {

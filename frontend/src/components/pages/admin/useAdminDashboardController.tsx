@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/pagination";
 import {
   mockAddresses,
-  mockOrders,
   platformRevenue,
   getFacultyName,
   CANCEL_REASONS,
@@ -37,6 +36,7 @@ import {
   adminCategoriesApi,
   adminDashboardApi,
   adminCancelRequestsApi,
+  adminOrdersApi,
   adminProductsApi,
   adminUsersApi,
   adminReportsApi,
@@ -183,7 +183,7 @@ export function useAdminDashboardController() {
 
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
-  const [orders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<{
     totalUsers: number;
     activeProducts: number;
@@ -477,6 +477,44 @@ export function useAdminDashboardController() {
         }) as unknown as Withdrawal,
     );
 
+  const mapOrders = (data: any[]): Order[] =>
+    data.map(
+      (order) =>
+        ({
+          id: order.id || order.uuid || "",
+          orderNumber: order.orderNumber || order.order_number || "",
+          product: order.product ? mapProduct(order.product) : undefined,
+          productTitle: order.productTitle || order.product_title || "",
+          productType: order.productType || order.product_type || "barang",
+          buyer: order.buyer ? mapUser(order.buyer) : undefined,
+          seller: order.seller ? mapUser(order.seller) : undefined,
+          status: order.status || "pending",
+          quantity: order.quantity || 1,
+          basePrice: order.basePrice || order.base_price || 0,
+          negoPrice: order.negoPrice ?? order.nego_price ?? undefined,
+          finalPrice: order.finalPrice || order.final_price || 0,
+          shippingFee: order.shippingFee || order.shipping_fee || 0,
+          adminFeePercent:
+            order.adminFeePercent || order.admin_fee_percent || 0,
+          adminFeeDeducted:
+            order.adminFeeDeducted || order.admin_fee_deducted || 0,
+          totalPrice: order.totalPrice || order.total_price || 0,
+          netIncome: order.netIncome || order.net_income || 0,
+          shippingMethod: order.shippingMethod || order.shipping_method || "",
+          shippingType: order.shippingType || order.shipping_type || "",
+          paymentMethod: order.paymentMethod || order.payment_method || "",
+          paymentStatus:
+            order.paymentStatus || order.payment_status || "pending",
+          createdAt:
+            order.createdAt || order.created_at || new Date().toISOString(),
+          updatedAt:
+            order.updatedAt || order.updated_at || new Date().toISOString(),
+          completedAt: order.completedAt || order.completed_at || undefined,
+          cancelledAt: order.cancelledAt || order.cancelled_at || undefined,
+          cancelReason: order.cancelReason || order.cancel_reason || undefined,
+        }) as unknown as Order,
+    );
+
   // ---------------------------------------------------------------------------
   // Shared-resource fetch helpers.
   // These return true on success so callers can decide whether to mark loaded.
@@ -765,6 +803,18 @@ export function useAdminDashboardController() {
     }
   };
 
+  const loadOrdersData = async () => {
+    try {
+      const res = await adminOrdersApi.getOrders({ per_page: 100 });
+      if (res?.data && Array.isArray(res.data)) {
+        setOrders(mapOrders(res.data));
+      }
+      markResourceLoaded("orders");
+    } catch (err) {
+      console.error("Failed to load orders:", err);
+    }
+  };
+
   const loadCancelRequestsData = async () => {
     try {
       const res = await adminCancelRequestsApi.getCancelRequests({
@@ -818,9 +868,13 @@ export function useAdminDashboardController() {
         case "cancel-requests":
           await loadCancelRequestsData();
           break;
-        // TODO: integrate admin orders API when backend is ready
+        case "orders":
+          if (!isResourceLoaded("orders")) {
+            await loadOrdersData();
+          }
+          break;
         // TODO: integrate admin addresses API when backend is ready
-        // orders, cancel-requests, addresses — currently mock data, no fetch
+        // addresses — currently mock data, no fetch
         default:
           break;
       }

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminFacultyController;
 use App\Http\Controllers\Admin\AdminUserController;
@@ -255,6 +256,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::post('/{id}/restore', [AdminProductController::class, 'restore']);
         Route::delete('/{id}/force', [AdminProductController::class, 'forceDelete']);
     });
+
+    // ── ORDERS ─────────────────────────────────────────────────────────────
+    Route::get('/orders', [AdminOrderController::class, 'index']);
 
     // ── CATEGORIES ────────────────────────────────────────────────────────
     Route::prefix('categories')->group(function () {
