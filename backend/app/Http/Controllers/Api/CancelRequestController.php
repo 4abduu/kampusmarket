@@ -55,11 +55,11 @@ class CancelRequestController extends Controller
             ], 403);
         }
 
-        // Check if order can be cancelled
-        if (!$order->canBeCancelled()) {
+        // Check if order can request cancellation (post-payment)
+        if (!$order->canRequestCancel()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pesanan tidak dapat dibatalkan',
+                'message' => 'Pesanan tidak dapat diajukan pembatalan',
             ], 400);
         }
 

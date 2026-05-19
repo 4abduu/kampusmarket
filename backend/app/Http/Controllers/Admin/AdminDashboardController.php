@@ -50,6 +50,8 @@ class AdminDashboardController extends Controller
             $completedOrders = Order::where('status', 'completed')->count();
             $totalRevenue = Order::where('status', 'completed')
                 ->sum(DB::raw('total_price + admin_fee_deducted'));
+            $platformRevenue = Order::where('status', 'completed')
+                ->sum('admin_fee_deducted');
 
             // Category Statistics
             $totalCategories = Category::count();
@@ -111,6 +113,7 @@ class AdminDashboardController extends Controller
                         'completed' => $completedOrders,
                         'total_revenue' => $totalRevenue,
                     ],
+                    'platform_revenue' => $platformRevenue,
                     'categories' => [
                         'total' => $totalCategories,
                         'barang' => $barangCategories,

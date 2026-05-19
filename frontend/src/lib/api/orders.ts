@@ -72,6 +72,12 @@ export interface PaymentResponse {
   token?: string;
 }
 
+export interface CreateCancelRequestPayload {
+  orderId: string;
+  reason: string;
+  description: string;
+}
+
 /**
  * Create a new order
  */
@@ -216,6 +222,16 @@ export const cancelOrder = async (orderId: string, reason: string): Promise<Orde
     cancelReason: reason,
   });
   return unwrapApiData<Order>(response);
+};
+
+/**
+ * Create cancel request (post-payment, requires admin approval)
+ */
+export const createCancelRequest = async (
+  payload: CreateCancelRequestPayload,
+): Promise<any> => {
+  const response = await apiClient.post(`/cancel-requests`, payload);
+  return unwrapApiData<any>(response);
 };
 
 /**

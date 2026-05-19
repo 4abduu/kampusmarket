@@ -225,6 +225,17 @@ class Order extends Model
     }
 
     /**
+     * Check if order can request cancellation (post-payment).
+     */
+    public function canRequestCancel(): bool
+    {
+        return in_array($this->status, [
+            OrderStatus::PROCESSING,
+            OrderStatus::READY_PICKUP,
+        ]);
+    }
+
+    /**
      * Check if order is completed.
      */
     public function isCompleted(): bool

@@ -3,11 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  CheckCircle2,
-  Clock,
-  LayoutDashboard,
-} from "lucide-react";
+import { CheckCircle2, Clock, LayoutDashboard } from "lucide-react";
 import AdminOverviewTab from "@/components/pages/admin/AdminOverviewTab";
 import AdminUsersTab from "@/components/pages/admin/AdminUsersTab";
 import AdminProductsTab from "@/components/pages/admin/AdminProductsTab";
@@ -35,7 +31,9 @@ interface AdminDashboardPageProps {
   onNavigate: (page: string) => void;
 }
 
-export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDashboardPageProps) {
+export default function AdminDashboardPage({
+  onNavigate: _onNavigate,
+}: AdminDashboardPageProps) {
   const {
     activeTab,
     setActiveTab,
@@ -48,6 +46,7 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
     withdrawals,
     cancelRequests,
     platformRevenue,
+    activitySummary,
     overviewLoading,
     usersLoading,
     productsLoading,
@@ -276,7 +275,9 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
             <Card className="bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800 shadow-lg">
               <CardContent className="p-4 flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary-600" />
-                <p className="text-sm font-medium text-primary-700 dark:text-primary-300">{successMessage}</p>
+                <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                  {successMessage}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -288,7 +289,9 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
               <LayoutDashboard className="h-8 w-8 text-primary-600" />
               Dashboard Admin
             </h1>
-            <p className="text-muted-foreground">Moderasi & Mediator Keuangan KampusMarket</p>
+            <p className="text-muted-foreground">
+              Moderasi & Mediator Keuangan KampusMarket
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="gap-1">
@@ -318,10 +321,10 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
             ) : (
               <AdminOverviewTab
                 stats={stats}
+                activitySummary={activitySummary}
                 revenueChartData={revenueChartData}
                 categoryChartData={categoryChartData}
                 formatPrice={formatPrice}
-                orders={orders}
                 onOpenTab={setActiveTab}
               />
             )}
@@ -633,7 +636,6 @@ export default function AdminDashboardPage({ onNavigate: _onNavigate }: AdminDas
         facultyAccentClass={facultyAccentClass}
         getInitials={getInitials}
       />
-
     </div>
   );
 }

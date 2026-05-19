@@ -18,13 +18,25 @@ import {
   getFacultyName,
   CANCEL_REASONS,
 } from "@/lib/mock-data";
-import type { User, Product, Category, Order, Report, Withdrawal, CancelRequest } from "@/lib/mock-data";
+import type {
+  User,
+  Product,
+  Category,
+  Order,
+  Report,
+  Withdrawal,
+  CancelRequest,
+} from "@/lib/mock-data";
 import type { Faculty } from "@/components/pages/admin/admin-dashboard.shared";
-import { getInitials, seedFaculties } from "@/components/pages/admin/admin-dashboard.shared";
+import {
+  getInitials,
+  seedFaculties,
+} from "@/components/pages/admin/admin-dashboard.shared";
 import { facultiesApi } from "@/lib/api/faculties";
-import { 
+import {
   adminCategoriesApi,
   adminDashboardApi,
+  adminCancelRequestsApi,
   adminProductsApi,
   adminUsersApi,
   adminReportsApi,
@@ -36,7 +48,7 @@ const ITEMS_PER_PAGE = 10;
 export function useAdminDashboardController() {
   const { section } = useParams<{ section?: string }>();
   const navigate = useNavigate();
-  
+
   const activeTab = (section as string) ?? "overview";
   const setActiveTab = (tab: string) => {
     navigate(`/admin/${tab}`, { replace: false });
@@ -62,7 +74,9 @@ export function useAdminDashboardController() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDetail, setShowProductDetail] = useState(false);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
-  const [productDetailError, setProductDetailError] = useState<string | null>(null);
+  const [productDetailError, setProductDetailError] = useState<string | null>(
+    null,
+  );
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productDeleteReason, setProductDeleteReason] = useState("");
@@ -77,24 +91,33 @@ export function useAdminDashboardController() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showFailDialog, setShowFailDialog] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [selectedWithdrawal, setSelectedWithdrawal] =
+    useState<Withdrawal | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [failureReason, setFailureReason] = useState("");
 
-  const [financeSubTab, setFinanceSubTab] = useState<"withdrawals" | "revenue">("withdrawals");
+  const [financeSubTab, setFinanceSubTab] = useState<"withdrawals" | "revenue">(
+    "withdrawals",
+  );
 
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
   const [showCancelApproveDialog, setShowCancelApproveDialog] = useState(false);
   const [showCancelRejectDialog, setShowCancelRejectDialog] = useState(false);
-  const [selectedCancelRequest, setSelectedCancelRequest] = useState<CancelRequest | null>(null);
+  const [selectedCancelRequest, setSelectedCancelRequest] =
+    useState<CancelRequest | null>(null);
   const [cancelApproveNotes, setCancelApproveNotes] = useState("");
   const [cancelRejectReasonInput, setCancelRejectReasonInput] = useState("");
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
-  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
+    useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null,
+  );
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     type: "barang" as "barang" | "jasa",
@@ -103,7 +126,9 @@ export function useAdminDashboardController() {
     isActive: true,
   });
   const [categorySearchTerm, setCategorySearchTerm] = useState("");
-  const [categoryTypeFilter, setCategoryTypeFilter] = useState<"all" | "barang" | "jasa">("all");
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<
+    "all" | "barang" | "jasa"
+  >("all");
 
   const [faculties, setFaculties] = useState<Faculty[]>(seedFaculties);
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
@@ -117,25 +142,44 @@ export function useAdminDashboardController() {
     isActive: true,
   });
   const [facultySearchTerm, setFacultySearchTerm] = useState("");
-  const [facultyStatusFilter, setFacultyStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [facultyStatusFilter, setFacultyStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [facultyPage, setFacultyPage] = useState(1);
 
   const [userSearchTerm, setUserSearchTerm] = useState("");
-  const [userStatusFilter, setUserStatusFilter] = useState<"all" | "active" | "banned" | "warned" | "unverified">("all");
+  const [userStatusFilter, setUserStatusFilter] = useState<
+    "all" | "active" | "banned" | "warned" | "unverified"
+  >("all");
   const [userFacultyFilter, setUserFacultyFilter] = useState<string>("all");
 
   const [productSearchTerm, setProductSearchTerm] = useState("");
-  const [productTypeFilter, setProductTypeFilter] = useState<"all" | "barang" | "jasa">("all");
-  const [productConditionFilter, setProductConditionFilter] = useState<"all" | "baru" | "bekas">("all");
-  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("all");
+  const [productTypeFilter, setProductTypeFilter] = useState<
+    "all" | "barang" | "jasa"
+  >("all");
+  const [productConditionFilter, setProductConditionFilter] = useState<
+    "all" | "baru" | "bekas"
+  >("all");
+  const [productCategoryFilter, setProductCategoryFilter] =
+    useState<string>("all");
   const [productPriceMin, setProductPriceMin] = useState<string>("");
   const [productPriceMax, setProductPriceMax] = useState<string>("");
   const [productSellerFilter, setProductSellerFilter] = useState<string>("");
 
   const [withdrawalSearchTerm, setWithdrawalSearchTerm] = useState("");
-  const [withdrawalStatusFilter, setWithdrawalStatusFilter] = useState<"all" | "pending" | "approved" | "processing" | "completed" | "failed" | "rejected">("all");
-  const [withdrawalAccountTypeFilter, setWithdrawalAccountTypeFilter] = useState<"all" | "bank" | "e_wallet">("all");
-  const [withdrawalProviderFilter, setWithdrawalProviderFilter] = useState<string>("all");
+  const [withdrawalStatusFilter, setWithdrawalStatusFilter] = useState<
+    | "all"
+    | "pending"
+    | "approved"
+    | "processing"
+    | "completed"
+    | "failed"
+    | "rejected"
+  >("all");
+  const [withdrawalAccountTypeFilter, setWithdrawalAccountTypeFilter] =
+    useState<"all" | "bank" | "e_wallet">("all");
+  const [withdrawalProviderFilter, setWithdrawalProviderFilter] =
+    useState<string>("all");
 
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
@@ -146,23 +190,46 @@ export function useAdminDashboardController() {
     pendingOrders: number;
     totalRevenue: number;
     platformRevenue: number;
-    monthlyGrowth: number;
     pendingWithdrawals: number;
     pendingReports: number;
-    pendingCancelRequests: number;
     totalFaculties: number;
     activeFaculties: number;
   } | null>(null);
-  const [revenueChartData, setRevenueChartData] = useState<Array<{ date: string; transactions: number; revenue: number }>>([]);
-  const [categoryChartData, setCategoryChartData] = useState<Array<{ name: string; value: number; fill: string }>>([]);
+  const [activitySummary, setActivitySummary] = useState<{
+    newUsersThisWeek: number;
+    newProductsThisWeek: number;
+    newOrdersThisWeek: number;
+    pendingReports: number;
+    pendingWithdrawals: number;
+  } | null>(null);
+  const [revenueChartData, setRevenueChartData] = useState<
+    Array<{ date: string; transactions: number; revenue: number }>
+  >([]);
+  const [categoryChartData, setCategoryChartData] = useState<
+    Array<{ name: string; value: number; fill: string }>
+  >([]);
   const [orderSearchTerm, setOrderSearchTerm] = useState("");
-  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "pending" | "processing" | "ready_pickup" | "in_delivery" | "completed" | "cancelled">("all");
-  const [orderTypeFilter, setOrderTypeFilter] = useState<"all" | "barang" | "jasa">("all");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<
+    | "all"
+    | "pending"
+    | "processing"
+    | "ready_pickup"
+    | "in_delivery"
+    | "completed"
+    | "cancelled"
+  >("all");
+  const [orderTypeFilter, setOrderTypeFilter] = useState<
+    "all" | "barang" | "jasa"
+  >("all");
   const [orderCategoryFilter, setOrderCategoryFilter] = useState<string>("all");
-  const [orderPaymentFilter, setOrderPaymentFilter] = useState<"all" | "pending" | "paid" | "failed" | "refunded">("all");
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState<
+    "all" | "pending" | "paid" | "failed" | "refunded"
+  >("all");
 
   const [reportSearchTerm, setReportSearchTerm] = useState("");
-  const [reportStatusFilter, setReportStatusFilter] = useState<"all" | "pending" | "reviewed" | "resolved">("all");
+  const [reportStatusFilter, setReportStatusFilter] = useState<
+    "all" | "pending" | "reviewed" | "resolved"
+  >("all");
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -185,7 +252,8 @@ export function useAdminDashboardController() {
     return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
-  const getTotalPages = (totalItems: number): number => Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const getTotalPages = (totalItems: number): number =>
+    Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
   // ---------------------------------------------------------------------------
   // Per-resource loaded flags (NOT per-tab).
@@ -195,7 +263,9 @@ export function useAdminDashboardController() {
   // A resource is only marked loaded AFTER a successful fetch, so a failed
   // request can be retried when the tab is opened again.
   // ---------------------------------------------------------------------------
-  const [loadedResources, setLoadedResources] = useState<Record<string, boolean>>({});
+  const [loadedResources, setLoadedResources] = useState<
+    Record<string, boolean>
+  >({});
 
   const isResourceLoaded = (key: string) => loadedResources[key] === true;
   const markResourceLoaded = (key: string) =>
@@ -237,10 +307,9 @@ export function useAdminDashboardController() {
       joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
       createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
       banReason: user.banReason || "",
-    } as unknown as User);
+    }) as unknown as User;
 
-  const mapUsers = (data: any[]): User[] =>
-    data.map((user) => mapUser(user));
+  const mapUsers = (data: any[]): User[] => data.map((user) => mapUser(user));
 
   const mapProduct = (product: any): Product =>
     ({
@@ -253,14 +322,19 @@ export function useAdminDashboardController() {
       priceMax: product.price_max || product.priceMax || 0,
       priceType: product.price_type || product.priceType || "fixed",
       category: product.category?.name || product.category_name || "",
-      categoryId: product.category?.uuid || product.category_id?.toString() || "",
+      categoryId:
+        product.category?.uuid || product.category_id?.toString() || "",
       description: product.description || "",
       condition: product.condition || "baru",
       stock: product.stock || 0,
       location: product.location || "",
       canNego: product.can_nego || false,
       seller: {
-        id: product.seller?.id || product.seller?.uuid || product.seller_id?.toString() || "",
+        id:
+          product.seller?.id ||
+          product.seller?.uuid ||
+          product.seller_id?.toString() ||
+          "",
         name: product.seller?.name || product.seller_name || "",
         avatar: product.seller?.avatar || product.seller_avatar || "",
       },
@@ -274,7 +348,7 @@ export function useAdminDashboardController() {
       createdAt: product.created_at || new Date().toISOString(),
       deletedAt: product.deleted_at || product.deletedAt || undefined,
       deletedBy: product.deleted_by || product.deletedBy || undefined,
-    } as unknown as Product);
+    }) as unknown as Product;
 
   const mapProducts = (data: any[]): Product[] =>
     data.map((product) => mapProduct(product));
@@ -301,41 +375,107 @@ export function useAdminDashboardController() {
   };
 
   const mapReports = (data: any[]): Report[] =>
-    data.map((report) => ({
-      id: report.id?.toString() || "",
-      reportNumber: `RPT-${report.id}`,
-      reason: report.reason || "",
-      description: report.description || "",
-      status: report.status || "pending",
-      priority: "normal",
-      reporter: {
-        id: report.reporter_id?.toString() || "",
-        name: report.reporter_name || "",
-      },
-      reportedUser: {
-        id: report.reported_user_id?.toString() || "",
-        name: report.reported_user_name || "",
-      },
-      createdAt: report.created_at || new Date().toISOString(),
-    } as unknown as Report));
+    data.map(
+      (report) =>
+        ({
+          id: report.id?.toString() || "",
+          reportNumber: `RPT-${report.id}`,
+          reason: report.reason || "",
+          description: report.description || "",
+          status: report.status || "pending",
+          priority: "normal",
+          reporter: {
+            id: report.reporter_id?.toString() || "",
+            name: report.reporter_name || "",
+          },
+          reportedUser: {
+            id: report.reported_user_id?.toString() || "",
+            name: report.reported_user_name || "",
+          },
+          createdAt: report.created_at || new Date().toISOString(),
+        }) as unknown as Report,
+    );
+
+  const mapCancelRequest = (request: any): CancelRequest => {
+    const requester = request.requester
+      ? mapUser(request.requester)
+      : ({
+          id: request.requester_id?.toString() || request.requesterId || "",
+          name: request.requester_name || "Unknown",
+          email: "",
+          phone: "",
+          avatar: "",
+          faculty: null,
+          isVerified: false,
+          joinedAt: request.createdAt || new Date().toISOString(),
+        } as User);
+
+    return {
+      id: request.id || request.uuid || "",
+      requestNumber: request.requestNumber || request.request_number || "",
+      orderId:
+        request.orderId ||
+        request.order_id ||
+        request.order?.id ||
+        request.order?.uuid ||
+        "",
+      order: request.order,
+      requester,
+      reason: request.reason || "other",
+      description: request.description || "",
+      status: request.status || "pending",
+      adminNotes: request.adminNotes || request.admin_notes || undefined,
+      rejectionReason:
+        request.rejectionReason || request.rejection_reason || undefined,
+      refundAmount: request.refundAmount ?? request.refund_amount ?? 0,
+      refundProcessed:
+        request.refundProcessed ?? request.refund_processed ?? false,
+      createdAt:
+        request.createdAt || request.created_at || new Date().toISOString(),
+      reviewedAt: request.reviewedAt || request.reviewed_at || undefined,
+      refundedAt: request.refundedAt || request.refunded_at || undefined,
+    } as CancelRequest;
+  };
 
   const mapWithdrawals = (data: any[]): Withdrawal[] =>
-    data.map((withdrawal) => ({
-      id: withdrawal.id?.toString() || "",
-      withdrawalNumber: `WD-${withdrawal.id}`,
-      user: {
-        id: withdrawal.user_id?.toString() || "",
-        name: withdrawal.user_name || "",
-      },
-      amount: withdrawal.amount || 0,
-      totalDeduction: 0,
-      bankName: withdrawal.bank_name || "",
-      accountNumber: withdrawal.account_number || "",
-      accountName: withdrawal.account_name || "",
-      accountType: withdrawal.account_type || "bank",
-      status: withdrawal.status || "pending",
-      createdAt: withdrawal.created_at || new Date().toISOString(),
-    } as unknown as Withdrawal));
+    data.map(
+      (withdrawal) =>
+        ({
+          id: withdrawal.id?.toString() || "",
+          withdrawalNumber:
+            withdrawal.withdrawalNumber ||
+            withdrawal.withdrawal_number ||
+            `WD-${withdrawal.id}`,
+          user: withdrawal.user
+            ? mapUser(withdrawal.user)
+            : ({
+                id: withdrawal.user_id?.toString() || "",
+                name: withdrawal.user_name || "",
+              } as User),
+          amount: withdrawal.amount || 0,
+          totalDeduction:
+            withdrawal.totalDeduction || withdrawal.total_deduction || 0,
+          bankName: withdrawal.bankName || withdrawal.bank_name || "",
+          accountNumber:
+            withdrawal.accountNumber || withdrawal.account_number || "",
+          accountName: withdrawal.accountName || withdrawal.account_name || "",
+          accountType:
+            withdrawal.accountType || withdrawal.account_type || "bank",
+          status: withdrawal.status || "pending",
+          rejectionReason:
+            withdrawal.rejectionReason ||
+            withdrawal.rejection_reason ||
+            undefined,
+          failureReason:
+            withdrawal.failureReason || withdrawal.failure_reason || undefined,
+          createdAt:
+            withdrawal.createdAt ||
+            withdrawal.created_at ||
+            new Date().toISOString(),
+          processedAt:
+            withdrawal.processedAt || withdrawal.processed_at || undefined,
+        }) as unknown as Withdrawal,
+    );
 
   // ---------------------------------------------------------------------------
   // Shared-resource fetch helpers.
@@ -397,11 +537,14 @@ export function useAdminDashboardController() {
     setOverviewLoading(true);
     setOverviewError(null);
     try {
-      // overview-specific: stats + revenue (always fetch fresh)
-      const [apiStats, apiRevenueStats] = await Promise.all([
-        adminDashboardApi.getStats(),
-        adminDashboardApi.getRevenueStats(),
-      ]);
+      // overview-specific: stats + revenue + activity summary (always fetch fresh)
+      const [apiStats, apiRevenueStats, apiActivitySummary] = await Promise.all(
+        [
+          adminDashboardApi.getStats(),
+          adminDashboardApi.getRevenueStats(),
+          adminDashboardApi.getActivitySummary(),
+        ],
+      );
 
       if (apiStats) {
         const statsData = (apiStats as any).data || apiStats;
@@ -411,10 +554,8 @@ export function useAdminDashboardController() {
           pendingOrders: statsData.orders?.pending || 0,
           totalRevenue: statsData.orders?.total_revenue || 0,
           platformRevenue: statsData.platform_revenue || 0,
-          monthlyGrowth: 12.5,
           pendingWithdrawals: statsData.withdrawals?.pending || 0,
           pendingReports: statsData.reports?.pending || 0,
-          pendingCancelRequests: 3,
           totalFaculties: statsData.faculties?.total || 0,
           activeFaculties: statsData.faculties?.active || 0,
         });
@@ -422,14 +563,27 @@ export function useAdminDashboardController() {
 
       if (apiRevenueStats) {
         const revenueData = (apiRevenueStats as any).data || apiRevenueStats;
-        const chartData = Array.isArray(revenueData)
-          ? revenueData.map((item: any, idx: number) => ({
-              date: (idx + 1).toString(),
-              transactions: item.transactions || item.count || 1,
-              revenue: item.revenue || item.total || 0,
-            }))
+        const weekly = Array.isArray(revenueData?.weekly)
+          ? revenueData.weekly
           : [];
+        const chartData = weekly.map((item: any) => ({
+          date: item.date || "",
+          transactions: item.transactions || item.count || 1,
+          revenue: item.revenue || item.total || 0,
+        }));
         setRevenueChartData(chartData);
+      }
+
+      if (apiActivitySummary) {
+        const summaryData =
+          (apiActivitySummary as any).data || apiActivitySummary;
+        setActivitySummary({
+          newUsersThisWeek: summaryData.new_users_this_week || 0,
+          newProductsThisWeek: summaryData.new_products_this_week || 0,
+          newOrdersThisWeek: summaryData.new_orders_this_week || 0,
+          pendingReports: summaryData.pending_reports || 0,
+          pendingWithdrawals: summaryData.pending_withdrawals || 0,
+        });
       }
 
       markResourceLoaded("overview");
@@ -509,9 +663,12 @@ export function useAdminDashboardController() {
 
       if (productSearchTerm.trim()) params.search = productSearchTerm.trim();
       if (productTypeFilter !== "all") params.type = productTypeFilter;
-      if (productConditionFilter !== "all") params.condition = productConditionFilter;
-      if (productCategoryFilter !== "all") params.category_id = productCategoryFilter;
-      if (productSellerFilter.trim()) params.seller_name = productSellerFilter.trim();
+      if (productConditionFilter !== "all")
+        params.condition = productConditionFilter;
+      if (productCategoryFilter !== "all")
+        params.category_id = productCategoryFilter;
+      if (productSellerFilter.trim())
+        params.seller_name = productSellerFilter.trim();
       if (productPriceMin.trim()) params.price_min = Number(productPriceMin);
       if (productPriceMax.trim()) params.price_max = Number(productPriceMax);
 
@@ -530,7 +687,8 @@ export function useAdminDashboardController() {
       }
     } catch (err) {
       if (requestId !== productRequestRef.current) return;
-      const msg = err instanceof Error ? err.message : "Gagal memuat data produk";
+      const msg =
+        err instanceof Error ? err.message : "Gagal memuat data produk";
       setProductsError(msg);
       console.error("Failed to load products data:", err);
     } finally {
@@ -607,6 +765,20 @@ export function useAdminDashboardController() {
     }
   };
 
+  const loadCancelRequestsData = async () => {
+    try {
+      const res = await adminCancelRequestsApi.getCancelRequests({
+        per_page: 100,
+      });
+      if (res?.data && Array.isArray(res.data)) {
+        setCancelRequests(res.data.map((item) => mapCancelRequest(item)));
+      }
+      markResourceLoaded("cancel-requests");
+    } catch (err) {
+      console.error("Failed to load cancel requests:", err);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Lazy-fetch effect: fires only when activeTab changes.
   // Guard: skip if the primary resource for this tab is already loaded.
@@ -643,7 +815,9 @@ export function useAdminDashboardController() {
             await loadWithdrawalsData();
           }
           break;
-        // TODO: integrate adminCancelRequestsApi when backend is ready
+        case "cancel-requests":
+          await loadCancelRequestsData();
+          break;
         // TODO: integrate admin orders API when backend is ready
         // TODO: integrate admin addresses API when backend is ready
         // orders, cancel-requests, addresses — currently mock data, no fetch
@@ -653,20 +827,28 @@ export function useAdminDashboardController() {
     };
 
     runLoad();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
     if (activeTab !== "users") return;
     void loadUsersData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, userPage, userSearchTerm, userStatusFilter, userFacultyFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    userPage,
+    userSearchTerm,
+    userStatusFilter,
+    userFacultyFilter,
+  ]);
 
   useEffect(() => {
     if (activeTab !== "products") return;
     void loadProductsData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
     productPage,
@@ -679,7 +861,11 @@ export function useAdminDashboardController() {
     productSellerFilter,
   ]);
 
-  const renderPagination = (currentPage: number, totalPages: number, setPage: (page: number) => void) => {
+  const renderPagination = (
+    currentPage: number,
+    totalPages: number,
+    setPage: (page: number) => void,
+  ) => {
     if (totalPages <= 1) return null;
 
     const pages: (number | "ellipsis")[] = [];
@@ -688,7 +874,11 @@ export function useAdminDashboardController() {
     } else {
       pages.push(1);
       if (currentPage > 3) pages.push("ellipsis");
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      for (
+        let i = Math.max(2, currentPage - 1);
+        i <= Math.min(totalPages - 1, currentPage + 1);
+        i++
+      ) {
         pages.push(i);
       }
       if (currentPage < totalPages - 2) pages.push("ellipsis");
@@ -701,7 +891,11 @@ export function useAdminDashboardController() {
           <PaginationItem>
             <PaginationPrevious
               onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              className={
+                currentPage === 1
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
             />
           </PaginationItem>
           {pages.map((page, index) => (
@@ -709,7 +903,11 @@ export function useAdminDashboardController() {
               {page === "ellipsis" ? (
                 <PaginationEllipsis />
               ) : (
-                <PaginationLink onClick={() => setPage(page)} isActive={currentPage === page} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => setPage(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
                   {page}
                 </PaginationLink>
               )}
@@ -718,7 +916,11 @@ export function useAdminDashboardController() {
           <PaginationItem>
             <PaginationNext
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              className={
+                currentPage === totalPages
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
             />
           </PaginationItem>
         </PaginationContent>
@@ -730,63 +932,208 @@ export function useAdminDashboardController() {
 
   const filteredProducts = useMemo(() => products, [products]);
 
-  const filteredReports = useMemo(() => reports.filter((report) => {
-    const matchesSearch = reportSearchTerm === "" || report.reason.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.description.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.reporter.name.toLowerCase().includes(reportSearchTerm.toLowerCase()) || report.reportedUser.name.toLowerCase().includes(reportSearchTerm.toLowerCase());
-    const matchesStatus = reportStatusFilter === "all" || report.status === reportStatusFilter;
-    return matchesSearch && matchesStatus;
-  }), [reports, reportSearchTerm, reportStatusFilter]);
+  const filteredReports = useMemo(
+    () =>
+      reports.filter((report) => {
+        const matchesSearch =
+          reportSearchTerm === "" ||
+          report.reason
+            .toLowerCase()
+            .includes(reportSearchTerm.toLowerCase()) ||
+          report.description
+            .toLowerCase()
+            .includes(reportSearchTerm.toLowerCase()) ||
+          report.reporter.name
+            .toLowerCase()
+            .includes(reportSearchTerm.toLowerCase()) ||
+          report.reportedUser.name
+            .toLowerCase()
+            .includes(reportSearchTerm.toLowerCase());
+        const matchesStatus =
+          reportStatusFilter === "all" || report.status === reportStatusFilter;
+        return matchesSearch && matchesStatus;
+      }),
+    [reports, reportSearchTerm, reportStatusFilter],
+  );
 
   const filteredWithdrawals = useMemo(() => {
-    const commonBanks = ["bca", "mandiri", "bri", "bni", "bsi", "bank bca", "bank mandiri", "bank bri", "bank bni", "bank bsi"];
+    const commonBanks = [
+      "bca",
+      "mandiri",
+      "bri",
+      "bni",
+      "bsi",
+      "bank bca",
+      "bank mandiri",
+      "bank bri",
+      "bank bni",
+      "bank bsi",
+    ];
     const commonEWallets = ["gopay", "ovo", "dana", "shopeepay", "linkaja"];
 
     return withdrawals.filter((withdrawal) => {
-      const matchesSearch = withdrawalSearchTerm === "" || withdrawal.user.name.toLowerCase().includes(withdrawalSearchTerm.toLowerCase()) || withdrawal.bankName.toLowerCase().includes(withdrawalSearchTerm.toLowerCase()) || withdrawal.accountNumber.includes(withdrawalSearchTerm) || withdrawal.accountName.toLowerCase().includes(withdrawalSearchTerm.toLowerCase());
-      const matchesStatus = withdrawalStatusFilter === "all" || withdrawal.status === withdrawalStatusFilter;
-      const matchesAccountType = withdrawalAccountTypeFilter === "all" || withdrawal.accountType === withdrawalAccountTypeFilter;
+      const matchesSearch =
+        withdrawalSearchTerm === "" ||
+        withdrawal.user.name
+          .toLowerCase()
+          .includes(withdrawalSearchTerm.toLowerCase()) ||
+        withdrawal.bankName
+          .toLowerCase()
+          .includes(withdrawalSearchTerm.toLowerCase()) ||
+        withdrawal.accountNumber.includes(withdrawalSearchTerm) ||
+        withdrawal.accountName
+          .toLowerCase()
+          .includes(withdrawalSearchTerm.toLowerCase());
+      const matchesStatus =
+        withdrawalStatusFilter === "all" ||
+        withdrawal.status === withdrawalStatusFilter;
+      const matchesAccountType =
+        withdrawalAccountTypeFilter === "all" ||
+        withdrawal.accountType === withdrawalAccountTypeFilter;
       let matchesProvider = true;
       if (withdrawalProviderFilter === "all") {
         matchesProvider = true;
       } else if (withdrawalProviderFilter === "bank_lainnya") {
-        matchesProvider = withdrawal.accountType === "bank" && !commonBanks.some((bank) => withdrawal.bankName.toLowerCase().includes(bank));
+        matchesProvider =
+          withdrawal.accountType === "bank" &&
+          !commonBanks.some((bank) =>
+            withdrawal.bankName.toLowerCase().includes(bank),
+          );
       } else if (withdrawalProviderFilter === "ewallet_lainnya") {
-        matchesProvider = withdrawal.accountType === "e_wallet" && !commonEWallets.some((wallet) => withdrawal.bankName.toLowerCase().includes(wallet));
+        matchesProvider =
+          withdrawal.accountType === "e_wallet" &&
+          !commonEWallets.some((wallet) =>
+            withdrawal.bankName.toLowerCase().includes(wallet),
+          );
       } else {
-        matchesProvider = withdrawal.bankName.toLowerCase().includes(withdrawalProviderFilter.toLowerCase());
+        matchesProvider = withdrawal.bankName
+          .toLowerCase()
+          .includes(withdrawalProviderFilter.toLowerCase());
       }
-      return matchesSearch && matchesStatus && matchesAccountType && matchesProvider;
+      return (
+        matchesSearch && matchesStatus && matchesAccountType && matchesProvider
+      );
     });
-  }, [withdrawals, withdrawalSearchTerm, withdrawalStatusFilter, withdrawalAccountTypeFilter, withdrawalProviderFilter]);
+  }, [
+    withdrawals,
+    withdrawalSearchTerm,
+    withdrawalStatusFilter,
+    withdrawalAccountTypeFilter,
+    withdrawalProviderFilter,
+  ]);
 
-  const filteredAddresses = useMemo(() => mockAddresses.filter((address) => {
-    const matchesSearch = addressSearchTerm === "" || address.recipient.toLowerCase().includes(addressSearchTerm.toLowerCase()) || address.address.toLowerCase().includes(addressSearchTerm.toLowerCase()) || address.label.toLowerCase().includes(addressSearchTerm.toLowerCase()) || (address.notes && address.notes.toLowerCase().includes(addressSearchTerm.toLowerCase()));
-    return matchesSearch;
-  }), [addressSearchTerm]);
+  const filteredAddresses = useMemo(
+    () =>
+      mockAddresses.filter((address) => {
+        const matchesSearch =
+          addressSearchTerm === "" ||
+          address.recipient
+            .toLowerCase()
+            .includes(addressSearchTerm.toLowerCase()) ||
+          address.address
+            .toLowerCase()
+            .includes(addressSearchTerm.toLowerCase()) ||
+          address.label
+            .toLowerCase()
+            .includes(addressSearchTerm.toLowerCase()) ||
+          (address.notes &&
+            address.notes
+              .toLowerCase()
+              .includes(addressSearchTerm.toLowerCase()));
+        return matchesSearch;
+      }),
+    [addressSearchTerm],
+  );
 
-  const filteredOrders = useMemo(() => orders.filter((order) => {
-    const matchesSearch = orderSearchTerm === "" || order.orderNumber.toLowerCase().includes(orderSearchTerm.toLowerCase()) || order.productTitle.toLowerCase().includes(orderSearchTerm.toLowerCase()) || (order.buyer?.name || "").toLowerCase().includes(orderSearchTerm.toLowerCase()) || (order.seller?.name || "").toLowerCase().includes(orderSearchTerm.toLowerCase());
-    const matchesStatus = orderStatusFilter === "all" || order.status === orderStatusFilter;
-    const matchesType = orderTypeFilter === "all" || order.productType === orderTypeFilter;
-    const matchesCategory = orderCategoryFilter === "all" || order.product?.categoryId === orderCategoryFilter;
-    const matchesPayment = orderPaymentFilter === "all" || order.paymentStatus === orderPaymentFilter;
-    return matchesSearch && matchesStatus && matchesType && matchesCategory && matchesPayment;
-  }), [orders, orderSearchTerm, orderStatusFilter, orderTypeFilter, orderCategoryFilter, orderPaymentFilter]);
+  const filteredOrders = useMemo(
+    () =>
+      orders.filter((order) => {
+        const matchesSearch =
+          orderSearchTerm === "" ||
+          order.orderNumber
+            .toLowerCase()
+            .includes(orderSearchTerm.toLowerCase()) ||
+          order.productTitle
+            .toLowerCase()
+            .includes(orderSearchTerm.toLowerCase()) ||
+          (order.buyer?.name || "")
+            .toLowerCase()
+            .includes(orderSearchTerm.toLowerCase()) ||
+          (order.seller?.name || "")
+            .toLowerCase()
+            .includes(orderSearchTerm.toLowerCase());
+        const matchesStatus =
+          orderStatusFilter === "all" || order.status === orderStatusFilter;
+        const matchesType =
+          orderTypeFilter === "all" || order.productType === orderTypeFilter;
+        const matchesCategory =
+          orderCategoryFilter === "all" ||
+          order.product?.categoryId === orderCategoryFilter;
+        const matchesPayment =
+          orderPaymentFilter === "all" ||
+          order.paymentStatus === orderPaymentFilter;
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesType &&
+          matchesCategory &&
+          matchesPayment
+        );
+      }),
+    [
+      orders,
+      orderSearchTerm,
+      orderStatusFilter,
+      orderTypeFilter,
+      orderCategoryFilter,
+      orderPaymentFilter,
+    ],
+  );
 
-  const filteredFaculties = useMemo(() => faculties.filter((faculty) => {
-    const matchesSearch = facultySearchTerm === "" || faculty.name.toLowerCase().includes(facultySearchTerm.toLowerCase()) || faculty.code.toLowerCase().includes(facultySearchTerm.toLowerCase());
-    const matchesStatus = facultyStatusFilter === "all" || (facultyStatusFilter === "active" && faculty.isActive) || (facultyStatusFilter === "inactive" && !faculty.isActive);
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => a.sortOrder - b.sortOrder), [faculties, facultySearchTerm, facultyStatusFilter]);
+  const filteredFaculties = useMemo(
+    () =>
+      faculties
+        .filter((faculty) => {
+          const matchesSearch =
+            facultySearchTerm === "" ||
+            faculty.name
+              .toLowerCase()
+              .includes(facultySearchTerm.toLowerCase()) ||
+            faculty.code
+              .toLowerCase()
+              .includes(facultySearchTerm.toLowerCase());
+          const matchesStatus =
+            facultyStatusFilter === "all" ||
+            (facultyStatusFilter === "active" && faculty.isActive) ||
+            (facultyStatusFilter === "inactive" && !faculty.isActive);
+          return matchesSearch && matchesStatus;
+        })
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [faculties, facultySearchTerm, facultyStatusFilter],
+  );
 
   const paginatedUsers = useMemo(() => users, [users]);
   const paginatedProducts = useMemo(() => products, [products]);
-  const paginatedReports = useMemo(() => getPaginatedData(filteredReports, reportPage), [filteredReports, reportPage]);
-  const paginatedWithdrawals = useMemo(() => getPaginatedData(filteredWithdrawals, withdrawalPage), [filteredWithdrawals, withdrawalPage]);
-  const paginatedOrders = useMemo(() => getPaginatedData(filteredOrders, orderPage), [filteredOrders, orderPage]);
-  const paginatedFaculties = useMemo(() => getPaginatedData(filteredFaculties, facultyPage), [filteredFaculties, facultyPage]);
+  const paginatedReports = useMemo(
+    () => getPaginatedData(filteredReports, reportPage),
+    [filteredReports, reportPage],
+  );
+  const paginatedWithdrawals = useMemo(
+    () => getPaginatedData(filteredWithdrawals, withdrawalPage),
+    [filteredWithdrawals, withdrawalPage],
+  );
+  const paginatedOrders = useMemo(
+    () => getPaginatedData(filteredOrders, orderPage),
+    [filteredOrders, orderPage],
+  );
+  const paginatedFaculties = useMemo(
+    () => getPaginatedData(filteredFaculties, facultyPage),
+    [filteredFaculties, facultyPage],
+  );
   const productCategoryOptions = useMemo(
-    () => categories.map((category) => ({ id: category.id, name: category.name })),
-    [categories]
+    () =>
+      categories.map((category) => ({ id: category.id, name: category.name })),
+    [categories],
   );
 
   const displayStats = stats || {
@@ -795,15 +1142,26 @@ export function useAdminDashboardController() {
     pendingOrders: 0,
     totalRevenue: 0,
     platformRevenue: 0,
-    monthlyGrowth: 0,
     pendingWithdrawals: 0,
     pendingReports: 0,
-    pendingCancelRequests: 0,
     totalFaculties: faculties.length,
     activeFaculties: faculties.filter((faculty) => faculty.isActive).length,
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
+  const displayActivitySummary = activitySummary || {
+    newUsersThisWeek: 0,
+    newProductsThisWeek: 0,
+    newOrdersThisWeek: 0,
+    pendingReports: 0,
+    pendingWithdrawals: 0,
+  };
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(price);
 
   const formatProductPrice = (product: Product) => {
     if (product.type === "jasa") {
@@ -838,7 +1196,8 @@ export function useAdminDashboardController() {
       setSelectedUser(mapUser(detail));
     } catch (err) {
       if (requestId !== userDetailRequestRef.current) return;
-      const msg = err instanceof Error ? err.message : "Gagal memuat detail user";
+      const msg =
+        err instanceof Error ? err.message : "Gagal memuat detail user";
       setUserDetailError(msg);
       console.error("Failed to load user detail:", err);
     } finally {
@@ -847,12 +1206,27 @@ export function useAdminDashboardController() {
       }
     }
   };
-  const handleBanUser = (user: User) => { setUserToAction(user); setShowBanDialog(true); };
+  const handleBanUser = (user: User) => {
+    setUserToAction(user);
+    setShowBanDialog(true);
+  };
   const confirmBanUser = async () => {
     if (userToAction) {
       try {
-        await adminUsersApi.banUser(userToAction.id, { ban_reason: "Melanggar aturan platform KampusMarket." });
-        setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: true, banReason: "Melanggar aturan platform KampusMarket." } : u));
+        await adminUsersApi.banUser(userToAction.id, {
+          ban_reason: "Melanggar aturan platform KampusMarket.",
+        });
+        setUsers(
+          users.map((u) =>
+            u.id === userToAction.id
+              ? {
+                  ...u,
+                  isBanned: true,
+                  banReason: "Melanggar aturan platform KampusMarket.",
+                }
+              : u,
+          ),
+        );
         showSuccess(`User ${userToAction.name} berhasil diblokir`);
       } catch (err) {
         console.error(err);
@@ -863,12 +1237,21 @@ export function useAdminDashboardController() {
       }
     }
   };
-  const handleUnbanUser = (user: User) => { setUserToAction(user); setShowUnbanDialog(true); };
+  const handleUnbanUser = (user: User) => {
+    setUserToAction(user);
+    setShowUnbanDialog(true);
+  };
   const confirmUnbanUser = async () => {
     if (userToAction) {
       try {
         await adminUsersApi.unbanUser(userToAction.id);
-        setUsers(users.map((u) => u.id === userToAction.id ? { ...u, isBanned: false, banReason: undefined } : u));
+        setUsers(
+          users.map((u) =>
+            u.id === userToAction.id
+              ? { ...u, isBanned: false, banReason: undefined }
+              : u,
+          ),
+        );
         showSuccess(`User ${userToAction.name} berhasil di-unblock`);
       } catch (err) {
         console.error(err);
@@ -893,7 +1276,8 @@ export function useAdminDashboardController() {
       setSelectedProduct(mapProduct(detail));
     } catch (err) {
       if (requestId !== productDetailRequestRef.current) return;
-      const msg = err instanceof Error ? err.message : "Gagal memuat detail produk";
+      const msg =
+        err instanceof Error ? err.message : "Gagal memuat detail produk";
       setProductDetailError(msg);
       console.error("Failed to load product detail:", err);
     } finally {
@@ -902,12 +1286,27 @@ export function useAdminDashboardController() {
       }
     }
   };
-  const handleDeleteProduct = (product: Product) => { setProductToDelete(product); setShowDeleteProductDialog(true); };
+  const handleDeleteProduct = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteProductDialog(true);
+  };
   const confirmDeleteProduct = async () => {
     if (productToDelete) {
       try {
-        await adminProductsApi.deleteProduct(productToDelete.id, { delete_reason: "Dihapus oleh admin." });
-        setProducts(products.map((p) => p.id === productToDelete.id ? { ...p, deletedAt: new Date().toISOString(), deletedBy: "admin" } : p));
+        await adminProductsApi.deleteProduct(productToDelete.id, {
+          delete_reason: "Dihapus oleh admin.",
+        });
+        setProducts(
+          products.map((p) =>
+            p.id === productToDelete.id
+              ? {
+                  ...p,
+                  deletedAt: new Date().toISOString(),
+                  deletedBy: "admin",
+                }
+              : p,
+          ),
+        );
         showSuccess(`Produk "${productToDelete.title}" berhasil dihapus`);
       } catch (err) {
         console.error(err);
@@ -921,7 +1320,13 @@ export function useAdminDashboardController() {
   const handleRestoreProduct = async (product: Product) => {
     try {
       await adminProductsApi.restoreProduct(product.id);
-      setProducts(products.map(p => p.id === product.id ? { ...p, deletedAt: undefined, deletedBy: undefined } : p));
+      setProducts(
+        products.map((p) =>
+          p.id === product.id
+            ? { ...p, deletedAt: undefined, deletedBy: undefined }
+            : p,
+        ),
+      );
       showSuccess(`Produk "${product.title}" berhasil dipulihkan`);
     } catch (err) {
       console.error(err);
@@ -929,135 +1334,357 @@ export function useAdminDashboardController() {
     }
   };
 
-  const handleSendWarning = (report: Report) => { setSelectedReport(report); setShowWarningDialog(true); };
+  const handleSendWarning = (report: Report) => {
+    setSelectedReport(report);
+    setShowWarningDialog(true);
+  };
   const confirmSendWarning = () => {
     if (selectedReport) {
-      setReports(reports.map((r) => r.id === selectedReport.id ? { ...r, status: "reviewed" as const } : r));
-      setUsers(users.map((u) => u.id === selectedReport.reportedUser.id ? { ...u, isWarned: true, warningReason: selectedReport.reason } : u));
-      showSuccess(`Warning berhasil dikirim ke ${selectedReport.reportedUser.name}`);
+      setReports(
+        reports.map((r) =>
+          r.id === selectedReport.id
+            ? { ...r, status: "reviewed" as const }
+            : r,
+        ),
+      );
+      setUsers(
+        users.map((u) =>
+          u.id === selectedReport.reportedUser.id
+            ? { ...u, isWarned: true, warningReason: selectedReport.reason }
+            : u,
+        ),
+      );
+      showSuccess(
+        `Warning berhasil dikirim ke ${selectedReport.reportedUser.name}`,
+      );
       setShowWarningDialog(false);
       setSelectedReport(null);
     }
   };
-  const handleBanFromReport = (report: Report) => { setSelectedReport(report); setShowBanReportDialog(true); };
+  const handleBanFromReport = (report: Report) => {
+    setSelectedReport(report);
+    setShowBanReportDialog(true);
+  };
   const confirmBanFromReport = () => {
     if (selectedReport) {
-      setUsers(users.map((u) => u.id === selectedReport.reportedUser.id ? { ...u, isBanned: true, banReason: selectedReport.reason } : u));
-      setReports(reports.map((r) => r.id === selectedReport.id ? { ...r, status: "resolved" as const } : r));
+      setUsers(
+        users.map((u) =>
+          u.id === selectedReport.reportedUser.id
+            ? { ...u, isBanned: true, banReason: selectedReport.reason }
+            : u,
+        ),
+      );
+      setReports(
+        reports.map((r) =>
+          r.id === selectedReport.id
+            ? { ...r, status: "resolved" as const }
+            : r,
+        ),
+      );
       showSuccess(`User ${selectedReport.reportedUser.name} berhasil diblokir`);
       setShowBanReportDialog(false);
       setSelectedReport(null);
     }
   };
 
-  const handleApproveWithdrawal = (withdrawal: Withdrawal) => { setSelectedWithdrawal(withdrawal); setShowApproveDialog(true); };
+  const handleApproveWithdrawal = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setShowApproveDialog(true);
+  };
   const confirmApproveWithdrawal = () => {
     if (selectedWithdrawal) {
-      setWithdrawals(withdrawals.map((w) => w.id === selectedWithdrawal.id ? { ...w, status: "approved" as const, processedAt: new Date().toLocaleDateString("id-ID") } : w));
-      showSuccess(`Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil disetujui`);
-      setShowApproveDialog(false);
-      setSelectedWithdrawal(null);
+      const run = async () => {
+        try {
+          const updated = await adminWithdrawalsApi.approveWithdrawal(
+            selectedWithdrawal.id,
+          );
+          const mapped = mapWithdrawals([updated])[0];
+          setWithdrawals(
+            withdrawals.map((w) => (w.id === mapped.id ? mapped : w)),
+          );
+          showSuccess(
+            `Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil disetujui`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menyetujui penarikan ${formatPrice(selectedWithdrawal.amount)}`,
+          );
+        } finally {
+          setShowApproveDialog(false);
+          setSelectedWithdrawal(null);
+        }
+      };
+      void run();
     }
   };
-  const handleRejectWithdrawal = (withdrawal: Withdrawal) => { setSelectedWithdrawal(withdrawal); setRejectionReason(""); setShowRejectDialog(true); };
+  const handleRejectWithdrawal = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setRejectionReason("");
+    setShowRejectDialog(true);
+  };
   const confirmRejectWithdrawal = () => {
     if (selectedWithdrawal && rejectionReason.trim()) {
-      setWithdrawals(withdrawals.map((w) => w.id === selectedWithdrawal.id ? { ...w, status: "rejected" as const, rejectionReason: rejectionReason.trim(), processedAt: new Date().toLocaleDateString("id-ID") } : w));
-      showSuccess(`Penarikan ${formatPrice(selectedWithdrawal.amount)} ditolak`);
-      setShowRejectDialog(false);
-      setSelectedWithdrawal(null);
-      setRejectionReason("");
+      const run = async () => {
+        try {
+          const updated = await adminWithdrawalsApi.rejectWithdrawal(
+            selectedWithdrawal.id,
+            { rejectionReason: rejectionReason.trim() },
+          );
+          const mapped = mapWithdrawals([updated])[0];
+          setWithdrawals(
+            withdrawals.map((w) => (w.id === mapped.id ? mapped : w)),
+          );
+          showSuccess(
+            `Penarikan ${formatPrice(selectedWithdrawal.amount)} ditolak`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menolak penarikan ${formatPrice(selectedWithdrawal.amount)}`,
+          );
+        } finally {
+          setShowRejectDialog(false);
+          setSelectedWithdrawal(null);
+          setRejectionReason("");
+        }
+      };
+      void run();
     }
   };
 
-  const handleApproveCancelRequest = (cancelReq: CancelRequest) => { setSelectedCancelRequest(cancelReq); setCancelApproveNotes(""); setShowCancelApproveDialog(true); };
+  const handleApproveCancelRequest = (cancelReq: CancelRequest) => {
+    setSelectedCancelRequest(cancelReq);
+    setCancelApproveNotes("");
+    setShowCancelApproveDialog(true);
+  };
   const confirmApproveCancelRequest = () => {
     if (selectedCancelRequest) {
-      setCancelRequests(cancelRequests.map((cr) => cr.id === selectedCancelRequest.id ? { ...cr, status: "approved" as const, adminNotes: cancelApproveNotes || "Permintaan pembatalan disetujui. Refund akan diproses.", refundProcessed: true, reviewedAt: new Date().toLocaleDateString("id-ID"), refundedAt: new Date().toLocaleDateString("id-ID") } : cr));
-      setUsers(users.map((u) => u.id === selectedCancelRequest.requester.id ? { ...u, walletBalance: (u.walletBalance || 0) + selectedCancelRequest.refundAmount } : u));
-      showSuccess(`Permintaan pembatalan ${selectedCancelRequest.requestNumber} disetujui. Refund ${formatPrice(selectedCancelRequest.refundAmount)} telah dikembalikan ke dompet pembeli.`);
-      setShowCancelApproveDialog(false);
-      setSelectedCancelRequest(null);
-      setCancelApproveNotes("");
+      const run = async () => {
+        try {
+          const updated = await adminCancelRequestsApi.approveCancelRequest(
+            selectedCancelRequest.id,
+            {
+              adminNotes: cancelApproveNotes || undefined,
+            },
+          );
+          const mapped = mapCancelRequest(updated);
+          setCancelRequests(
+            cancelRequests.map((cr) => (cr.id === mapped.id ? mapped : cr)),
+          );
+          showSuccess(
+            `Permintaan pembatalan ${mapped.requestNumber} disetujui.`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menyetujui pembatalan ${selectedCancelRequest.requestNumber}`,
+          );
+        } finally {
+          setShowCancelApproveDialog(false);
+          setSelectedCancelRequest(null);
+          setCancelApproveNotes("");
+        }
+      };
+      void run();
     }
   };
-  const handleRejectCancelRequest = (cancelReq: CancelRequest) => { setSelectedCancelRequest(cancelReq); setCancelRejectReasonInput(""); setShowCancelRejectDialog(true); };
+  const handleRejectCancelRequest = (cancelReq: CancelRequest) => {
+    setSelectedCancelRequest(cancelReq);
+    setCancelRejectReasonInput("");
+    setShowCancelRejectDialog(true);
+  };
   const confirmRejectCancelRequest = () => {
     if (selectedCancelRequest && cancelRejectReasonInput.trim()) {
-      setCancelRequests(cancelRequests.map((cr) => cr.id === selectedCancelRequest.id ? { ...cr, status: "rejected" as const, rejectionReason: cancelRejectReasonInput.trim(), reviewedAt: new Date().toLocaleDateString("id-ID") } : cr));
-      showSuccess(`Permintaan pembatalan ${selectedCancelRequest.requestNumber} ditolak`);
-      setShowCancelRejectDialog(false);
-      setSelectedCancelRequest(null);
-      setCancelRejectReasonInput("");
+      const run = async () => {
+        try {
+          const updated = await adminCancelRequestsApi.rejectCancelRequest(
+            selectedCancelRequest.id,
+            {
+              rejectionReason: cancelRejectReasonInput.trim(),
+            },
+          );
+          const mapped = mapCancelRequest(updated);
+          setCancelRequests(
+            cancelRequests.map((cr) => (cr.id === mapped.id ? mapped : cr)),
+          );
+          showSuccess(`Permintaan pembatalan ${mapped.requestNumber} ditolak`);
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menolak pembatalan ${selectedCancelRequest.requestNumber}`,
+          );
+        } finally {
+          setShowCancelRejectDialog(false);
+          setSelectedCancelRequest(null);
+          setCancelRejectReasonInput("");
+        }
+      };
+      void run();
     }
   };
 
-  const handleCompleteWithdrawal = (withdrawal: Withdrawal) => { setSelectedWithdrawal(withdrawal); setShowCompleteDialog(true); };
+  const handleCompleteWithdrawal = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setShowCompleteDialog(true);
+  };
   const confirmCompleteWithdrawal = () => {
     if (selectedWithdrawal) {
-      setWithdrawals(withdrawals.map((w) => w.id === selectedWithdrawal.id ? { ...w, status: "completed" as const, processedAt: new Date().toLocaleDateString("id-ID") } : w));
-      showSuccess(`Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil diselesaikan`);
-      setShowCompleteDialog(false);
-      setSelectedWithdrawal(null);
+      const run = async () => {
+        try {
+          const updated = await adminWithdrawalsApi.completeWithdrawal(
+            selectedWithdrawal.id,
+          );
+          const mapped = mapWithdrawals([updated])[0];
+          setWithdrawals(
+            withdrawals.map((w) => (w.id === mapped.id ? mapped : w)),
+          );
+          showSuccess(
+            `Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil diselesaikan`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menyelesaikan penarikan ${formatPrice(selectedWithdrawal.amount)}`,
+          );
+        } finally {
+          setShowCompleteDialog(false);
+          setSelectedWithdrawal(null);
+        }
+      };
+      void run();
     }
   };
-  const handleFailWithdrawal = (withdrawal: Withdrawal) => { setSelectedWithdrawal(withdrawal); setFailureReason(""); setShowFailDialog(true); };
+  const handleFailWithdrawal = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setFailureReason("");
+    setShowFailDialog(true);
+  };
   const confirmFailWithdrawal = () => {
     if (selectedWithdrawal && failureReason.trim()) {
-      setWithdrawals(withdrawals.map((w) => w.id === selectedWithdrawal.id ? { ...w, status: "failed" as const, failureReason: failureReason.trim(), processedAt: new Date().toLocaleDateString("id-ID") } : w));
-      showSuccess(`Penarikan ${formatPrice(selectedWithdrawal.amount)} ditandai gagal`);
-      setShowFailDialog(false);
-      setSelectedWithdrawal(null);
-      setFailureReason("");
+      const run = async () => {
+        try {
+          const updated = await adminWithdrawalsApi.failWithdrawal(
+            selectedWithdrawal.id,
+            { failureReason: failureReason.trim() },
+          );
+          const mapped = mapWithdrawals([updated])[0];
+          setWithdrawals(
+            withdrawals.map((w) => (w.id === mapped.id ? mapped : w)),
+          );
+          showSuccess(
+            `Penarikan ${formatPrice(selectedWithdrawal.amount)} ditandai gagal`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess(
+            `Gagal menandai penarikan ${formatPrice(selectedWithdrawal.amount)} sebagai gagal`,
+          );
+        } finally {
+          setShowFailDialog(false);
+          setSelectedWithdrawal(null);
+          setFailureReason("");
+        }
+      };
+      void run();
     }
   };
   const handleProcessWithdrawal = (withdrawal: Withdrawal) => {
-    setWithdrawals(withdrawals.map((w) => w.id === withdrawal.id ? { ...w, status: "processing" as const } : w));
-    showSuccess(`Penarikan ${formatPrice(withdrawal.amount)} sedang diproses`);
+    const run = async () => {
+      try {
+        const updated = await adminWithdrawalsApi.processWithdrawal(
+          withdrawal.id,
+        );
+        const mapped = mapWithdrawals([updated])[0];
+        setWithdrawals(
+          withdrawals.map((w) => (w.id === mapped.id ? mapped : w)),
+        );
+        showSuccess(
+          `Penarikan ${formatPrice(withdrawal.amount)} sedang diproses`,
+        );
+      } catch (err) {
+        console.error(err);
+        showSuccess(
+          `Gagal memproses penarikan ${formatPrice(withdrawal.amount)}`,
+        );
+      }
+    };
+    void run();
   };
 
-  const filteredCategories = useMemo(() => categories.filter((cat) => {
-    const matchesSearch = cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase());
-    const matchesType = categoryTypeFilter === "all" || cat.type === categoryTypeFilter;
-    return matchesSearch && matchesType;
-  }).sort((a, b) => a.sortOrder - b.sortOrder), [categories, categorySearchTerm, categoryTypeFilter]);
+  const filteredCategories = useMemo(
+    () =>
+      categories
+        .filter((cat) => {
+          const matchesSearch = cat.name
+            .toLowerCase()
+            .includes(categorySearchTerm.toLowerCase());
+          const matchesType =
+            categoryTypeFilter === "all" || cat.type === categoryTypeFilter;
+          return matchesSearch && matchesType;
+        })
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [categories, categorySearchTerm, categoryTypeFilter],
+  );
 
   const handleAddCategory = () => {
     setSelectedCategory(null);
     // Calculate next sort order based on type
-    const barangCategories = categories.filter(c => c.type === "barang");
-    const nextSortOrder = barangCategories.length > 0 
-      ? Math.max(...barangCategories.map(c => c.sortOrder)) + 1
-      : 1;
-    setCategoryForm({ name: "", type: "barang", description: "", sortOrder: nextSortOrder, isActive: true });
+    const barangCategories = categories.filter((c) => c.type === "barang");
+    const nextSortOrder =
+      barangCategories.length > 0
+        ? Math.max(...barangCategories.map((c) => c.sortOrder)) + 1
+        : 1;
+    setCategoryForm({
+      name: "",
+      type: "barang",
+      description: "",
+      sortOrder: nextSortOrder,
+      isActive: true,
+    });
     setShowCategoryDialog(true);
   };
   const handleEditCategory = (category: Category) => {
     setSelectedCategory(category);
-    setCategoryForm({ name: category.name, type: category.type, description: category.description || "", sortOrder: category.sortOrder, isActive: category.isActive });
+    setCategoryForm({
+      name: category.name,
+      type: category.type,
+      description: category.description || "",
+      sortOrder: category.sortOrder,
+      isActive: category.isActive,
+    });
     setShowCategoryDialog(true);
   };
   const handleSaveCategory = async () => {
     if (!categoryForm.name.trim()) return;
-    
+
     try {
       if (selectedCategory) {
-        const updatedCat = await adminCategoriesApi.updateCategory(selectedCategory.id, {
-          name: categoryForm.name.trim(),
-          type: categoryForm.type,
-          sort_order: categoryForm.sortOrder,
-          is_active: categoryForm.isActive,
-        });
-        
-        setCategories(categories.map((c) => c.id === selectedCategory.id ? {
-          ...c,
-          name: updatedCat.name,
-          type: updatedCat.type,
-          sortOrder: updatedCat.sort_order,
-          isActive: updatedCat.is_active,
-          slug: updatedCat.slug,
-          description: updatedCat.description
-        } : c));
+        const updatedCat = await adminCategoriesApi.updateCategory(
+          selectedCategory.id,
+          {
+            name: categoryForm.name.trim(),
+            type: categoryForm.type,
+            sort_order: categoryForm.sortOrder,
+            is_active: categoryForm.isActive,
+          },
+        );
+
+        setCategories(
+          categories.map((c) =>
+            c.id === selectedCategory.id
+              ? {
+                  ...c,
+                  name: updatedCat.name,
+                  type: updatedCat.type,
+                  sortOrder: updatedCat.sort_order,
+                  isActive: updatedCat.is_active,
+                  slug: updatedCat.slug,
+                  description: updatedCat.description,
+                }
+              : c,
+          ),
+        );
         invalidateCategories();
         showSuccess(`Kategori "${categoryForm.name}" berhasil diperbarui`);
       } else {
@@ -1067,7 +1694,7 @@ export function useAdminDashboardController() {
           sort_order: categoryForm.sortOrder,
           is_active: categoryForm.isActive,
         });
-        
+
         const mappedNewCat: Category = {
           id: newCat.id?.toString() || newCat.slug,
           name: newCat.name,
@@ -1076,9 +1703,10 @@ export function useAdminDashboardController() {
           description: newCat.description,
           sortOrder: newCat.sort_order || 0,
           isActive: newCat.is_active,
-          createdAt: newCat.created_at || new Date().toISOString().split("T")[0],
+          createdAt:
+            newCat.created_at || new Date().toISOString().split("T")[0],
         };
-        
+
         setCategories([...categories, mappedNewCat]);
         invalidateCategories();
         showSuccess(`Kategori "${categoryForm.name}" berhasil ditambahkan`);
@@ -1087,11 +1715,14 @@ export function useAdminDashboardController() {
       console.error("Failed to save category:", err);
       showSuccess("Gagal menyimpan kategori ke database, silakan coba lagi.");
     }
-    
+
     setShowCategoryDialog(false);
     setSelectedCategory(null);
   };
-  const handleDeleteCategory = (category: Category) => { setCategoryToDelete(category); setShowDeleteCategoryDialog(true); };
+  const handleDeleteCategory = (category: Category) => {
+    setCategoryToDelete(category);
+    setShowDeleteCategoryDialog(true);
+  };
   const confirmDeleteCategory = async () => {
     if (categoryToDelete) {
       try {
@@ -1112,9 +1743,15 @@ export function useAdminDashboardController() {
     const nextState = !category.isActive;
     try {
       await adminCategoriesApi.updateCategoryStatus(category.id, nextState);
-      setCategories(categories.map((c) => c.id === category.id ? { ...c, isActive: nextState } : c));
+      setCategories(
+        categories.map((c) =>
+          c.id === category.id ? { ...c, isActive: nextState } : c,
+        ),
+      );
       invalidateCategories();
-      showSuccess(`Kategori "${category.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`);
+      showSuccess(
+        `Kategori "${category.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`,
+      );
     } catch (err) {
       console.error("Failed to toggle category status:", err);
       showSuccess("Gagal mengubah status kategori.");
@@ -1123,17 +1760,30 @@ export function useAdminDashboardController() {
 
   const handleAddFaculty = () => {
     setSelectedFaculty(null);
-    setFacultyForm({ name: "", code: "", sortOrder: faculties.length + 1, isActive: true });
+    setFacultyForm({
+      name: "",
+      code: "",
+      sortOrder: faculties.length + 1,
+      isActive: true,
+    });
     setShowFacultyDialog(true);
   };
   const handleEditFaculty = (faculty: Faculty) => {
     setSelectedFaculty(faculty);
-    setFacultyForm({ name: faculty.name, code: faculty.code, sortOrder: faculty.sortOrder, isActive: faculty.isActive });
+    setFacultyForm({
+      name: faculty.name,
+      code: faculty.code,
+      sortOrder: faculty.sortOrder,
+      isActive: faculty.isActive,
+    });
     setShowFacultyDialog(true);
   };
   const handleSaveFaculty = async () => {
     if (!facultyForm.name.trim() || !facultyForm.code.trim()) return;
-    const normalizedCode = facultyForm.code.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const normalizedCode = facultyForm.code
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
 
     try {
       if (selectedFaculty) {
@@ -1146,8 +1796,8 @@ export function useAdminDashboardController() {
 
         setFaculties(
           faculties.map((faculty) =>
-            faculty.id === selectedFaculty.id ? updatedFaculty : faculty
-          )
+            faculty.id === selectedFaculty.id ? updatedFaculty : faculty,
+          ),
         );
         invalidateFaculties();
         showSuccess(`Fakultas "${facultyForm.name}" berhasil diperbarui`);
@@ -1176,10 +1826,12 @@ export function useAdminDashboardController() {
                   sortOrder: facultyForm.sortOrder,
                   isActive: facultyForm.isActive,
                 }
-              : faculty
-          )
+              : faculty,
+          ),
         );
-        showSuccess(`Fakultas "${facultyForm.name}" berhasil diperbarui (mode lokal)`);
+        showSuccess(
+          `Fakultas "${facultyForm.name}" berhasil diperbarui (mode lokal)`,
+        );
       } else {
         const newFaculty: Faculty = {
           id: normalizedCode || `fac-${Date.now()}`,
@@ -1189,7 +1841,9 @@ export function useAdminDashboardController() {
           isActive: facultyForm.isActive,
         };
         setFaculties([...faculties, newFaculty]);
-        showSuccess(`Fakultas "${facultyForm.name}" berhasil ditambahkan (mode lokal)`);
+        showSuccess(
+          `Fakultas "${facultyForm.name}" berhasil ditambahkan (mode lokal)`,
+        );
       }
     }
 
@@ -1197,17 +1851,26 @@ export function useAdminDashboardController() {
     setSelectedFaculty(null);
     setFacultyPage(1);
   };
-  const handleDeleteFaculty = (faculty: Faculty) => { setFacultyToDelete(faculty); setShowDeleteFacultyDialog(true); };
+  const handleDeleteFaculty = (faculty: Faculty) => {
+    setFacultyToDelete(faculty);
+    setShowDeleteFacultyDialog(true);
+  };
   const confirmDeleteFaculty = async () => {
     if (facultyToDelete) {
       try {
         await facultiesApi.remove(facultyToDelete.code);
-        setFaculties(faculties.filter((faculty) => faculty.id !== facultyToDelete.id));
+        setFaculties(
+          faculties.filter((faculty) => faculty.id !== facultyToDelete.id),
+        );
         invalidateFaculties();
         showSuccess(`Fakultas "${facultyToDelete.name}" berhasil dihapus`);
       } catch {
-        setFaculties(faculties.filter((faculty) => faculty.id !== facultyToDelete.id));
-        showSuccess(`Fakultas "${facultyToDelete.name}" berhasil dihapus (mode lokal)`);
+        setFaculties(
+          faculties.filter((faculty) => faculty.id !== facultyToDelete.id),
+        );
+        showSuccess(
+          `Fakultas "${facultyToDelete.name}" berhasil dihapus (mode lokal)`,
+        );
       }
 
       setShowDeleteFacultyDialog(false);
@@ -1218,26 +1881,39 @@ export function useAdminDashboardController() {
     const nextState = !faculty.isActive;
 
     try {
-      const updatedFaculty = await facultiesApi.updateStatus(faculty.code, nextState);
+      const updatedFaculty = await facultiesApi.updateStatus(
+        faculty.code,
+        nextState,
+      );
       setFaculties(
         faculties.map((item) =>
-          item.id === faculty.id ? updatedFaculty : item
-        )
+          item.id === faculty.id ? updatedFaculty : item,
+        ),
       );
       invalidateFaculties();
-      showSuccess(`Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`);
+      showSuccess(
+        `Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`,
+      );
     } catch {
       setFaculties(
         faculties.map((item) =>
-          item.id === faculty.id ? { ...item, isActive: nextState } : item
-        )
+          item.id === faculty.id ? { ...item, isActive: nextState } : item,
+        ),
       );
-      showSuccess(`Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"} (mode lokal)`);
+      showSuccess(
+        `Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"} (mode lokal)`,
+      );
     }
   };
 
   const getReportStatusBadge = (status: string) => {
-    const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+    const config: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+      }
+    > = {
       pending: { variant: "outline", label: "Menunggu" },
       reviewed: { variant: "secondary", label: "Ditinjau" },
       resolved: { variant: "default", label: "Selesai" },
@@ -1247,38 +1923,109 @@ export function useAdminDashboardController() {
   };
 
   const getWithdrawalStatusBadge = (status: string) => {
-    const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string; className?: string }> = {
-      pending: { variant: "outline", label: "Menunggu", className: "border-amber-500 text-amber-600" },
-      approved: { variant: "default", label: "Disetujui", className: "bg-blue-500" },
-      processing: { variant: "secondary", label: "Diproses", className: "bg-blue-100 text-blue-700" },
-      completed: { variant: "default", label: "Selesai", className: "bg-primary-500" },
+    const config: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+        className?: string;
+      }
+    > = {
+      pending: {
+        variant: "outline",
+        label: "Menunggu",
+        className: "border-amber-500 text-amber-600",
+      },
+      approved: {
+        variant: "default",
+        label: "Disetujui",
+        className: "bg-blue-500",
+      },
+      processing: {
+        variant: "secondary",
+        label: "Diproses",
+        className: "bg-blue-100 text-blue-700",
+      },
+      completed: {
+        variant: "default",
+        label: "Selesai",
+        className: "bg-primary-500",
+      },
       failed: { variant: "destructive", label: "Gagal" },
       rejected: { variant: "destructive", label: "Ditolak" },
-      cancelled: { variant: "outline", label: "Dibatalkan", className: "text-slate-500" },
+      cancelled: {
+        variant: "outline",
+        label: "Dibatalkan",
+        className: "text-slate-500",
+      },
     };
     const statusConfig = config[status] || config.pending;
-    return <Badge variant={statusConfig.variant} className={statusConfig.className}>{statusConfig.label}</Badge>;
+    return (
+      <Badge variant={statusConfig.variant} className={statusConfig.className}>
+        {statusConfig.label}
+      </Badge>
+    );
   };
 
   const getOrderStatusBadge = (status: string) => {
     const badges: Record<string, ReactElement> = {
-      pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Menunggu</Badge>,
-      processing: <Badge variant="secondary" className="bg-blue-100 text-blue-700">Diproses</Badge>,
-      ready_pickup: <Badge variant="secondary" className="bg-purple-100 text-purple-700">Siap Ambil</Badge>,
-      in_delivery: <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">Dalam Pengiriman</Badge>,
-      completed: <Badge variant="default" className="bg-primary-500">Selesai</Badge>,
+      pending: (
+        <Badge variant="outline" className="border-amber-500 text-amber-600">
+          Menunggu
+        </Badge>
+      ),
+      processing: (
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          Diproses
+        </Badge>
+      ),
+      ready_pickup: (
+        <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+          Siap Ambil
+        </Badge>
+      ),
+      in_delivery: (
+        <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">
+          Dalam Pengiriman
+        </Badge>
+      ),
+      completed: (
+        <Badge variant="default" className="bg-primary-500">
+          Selesai
+        </Badge>
+      ),
       cancelled: <Badge variant="destructive">Dibatalkan</Badge>,
-      waiting_price: <Badge variant="outline" className="border-purple-500 text-purple-600">Tunggu Harga</Badge>,
-      waiting_confirmation: <Badge variant="outline" className="border-blue-500 text-blue-600">Tunggu Konfirmasi</Badge>,
-      waiting_shipping_fee: <Badge variant="outline" className="border-cyan-500 text-cyan-600">Tunggu Ongkir</Badge>,
+      waiting_price: (
+        <Badge variant="outline" className="border-purple-500 text-purple-600">
+          Tunggu Harga
+        </Badge>
+      ),
+      waiting_confirmation: (
+        <Badge variant="outline" className="border-blue-500 text-blue-600">
+          Tunggu Konfirmasi
+        </Badge>
+      ),
+      waiting_shipping_fee: (
+        <Badge variant="outline" className="border-cyan-500 text-cyan-600">
+          Tunggu Ongkir
+        </Badge>
+      ),
     };
     return badges[status] || <Badge variant="outline">{status}</Badge>;
   };
 
   const getPaymentStatusBadge = (status: string) => {
     const badges: Record<string, ReactElement> = {
-      pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Menunggu</Badge>,
-      paid: <Badge variant="default" className="bg-primary-500">Dibayar</Badge>,
+      pending: (
+        <Badge variant="outline" className="border-amber-500 text-amber-600">
+          Menunggu
+        </Badge>
+      ),
+      paid: (
+        <Badge variant="default" className="bg-primary-500">
+          Dibayar
+        </Badge>
+      ),
       failed: <Badge variant="destructive">Gagal</Badge>,
       refunded: <Badge variant="secondary">Dikembalikan</Badge>,
     };
@@ -1292,6 +2039,7 @@ export function useAdminDashboardController() {
     setActiveTab,
     successMessage,
     stats: displayStats,
+    activitySummary: displayActivitySummary,
     revenueChartData,
     categoryChartData,
     orders,

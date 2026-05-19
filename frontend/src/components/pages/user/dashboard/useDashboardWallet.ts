@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react"
+import apiClient from "@/lib/api/client"
+import { useToast } from "@/hooks/use-toast"
 import { mockWalletTransactions } from "@/lib/mock-data"
 import { USER_DASHBOARD_ITEMS_PER_PAGE } from "@/components/pages/user/dashboard/constants"
 
@@ -7,6 +9,7 @@ interface UseDashboardWalletParams {
 }
 
 export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
+  const { toast } = useToast()
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
   const [withdrawForm, setWithdrawForm] = useState({
     type: "bank" as "bank" | "ewallet",
@@ -75,20 +78,69 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
     setTopUpAmount("")
   }
 
-  const handleWithdraw = () => {
-    setShowWithdrawDialog(false)
-    setWithdrawForm({
-      type: "bank",
-      bankType: "",
-      customBankName: "",
-      accountNumber: "",
-      accountName: "",
-      ewalletType: "",
-      customEwalletName: "",
-      amount: "",
-    })
-    setShowWithdrawSuccess(true)
-    setTimeout(() => setShowWithdrawSuccess(false), 3000)
+  const handleWithdraw = async () => {
+    const amount = parseInt(withdrawForm.amount, 10)
+    if (!amount || amount < 10000) {
+      toast({
+        title: "Nominal tidak valid",
+        description: "Minimal penarikan Rp 10.000",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const accountType = withdrawForm.type === "ewallet" ? "e_wallet" : "bank"
+    const bankName =
+      accountType === "bank"
+        ? (withdrawForm.bankType === "lainnya"
+            ? withdrawForm.customBankName
+            : withdrawForm.bankType)
+        : (withdrawForm.ewalletType === "lainnya"
+            ? withdrawForm.customEwalletName
+            : withdrawForm.ewalletType)
+
+    if (!bankName || !withdrawForm.accountNumber || !withdrawForm.accountName) {
+      toast({
+        title: "Data belum lengkap",
+        description: "Lengkapi detail rekening/e-wallet",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await apiClient.post("/wallet/withdraw", {
+        amount,
+        accountType,
+        bankName,
+        accountNumber: withdrawForm.accountNumber,
+        accountName: withdrawForm.accountName,
+      })
+
+      setShowWithdrawDialog(false)
+      setWithdrawForm({
+        type: "bank",
+        bankType: "",
+        customBankName: "",
+        accountNumber: "",
+        accountName: "",
+        ewalletType: "",
+        customEwalletName: "",
+        amount: "",
+      })
+      setShowWithdrawSuccess(true)
+      setTimeout(() => setShowWithdrawSuccess(false), 3000)
+      toast({
+        title: "Permintaan penarikan dibuat",
+        description: "Admin akan memproses penarikan Anda",
+      })
+    } catch (err: any) {
+      toast({
+        title: "Gagal menarik dana",
+        description: err?.message || "Terjadi kesalahan",
+        variant: "destructive",
+      })
+    }
   }
 
   const isBankLainnya = withdrawForm.bankType === "lainnya"

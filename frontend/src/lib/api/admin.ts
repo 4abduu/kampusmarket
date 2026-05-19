@@ -455,15 +455,17 @@ export const adminCancelRequestsApi = {
     return request<PaginatedResponse<any>>(url);
   },
 
-  async approveCancelRequest(id: string) {
+  async approveCancelRequest(id: string, options?: { adminNotes?: string; refundAmount?: number }) {
     return request(`${API_BASE_URL}/admin/cancel-requests/${id}/approve`, {
       method: "PUT",
+      body: options ? JSON.stringify(options) : undefined,
     });
   },
 
-  async rejectCancelRequest(id: string) {
+  async rejectCancelRequest(id: string, options: { rejectionReason: string; adminNotes?: string }) {
     return request(`${API_BASE_URL}/admin/cancel-requests/${id}/reject`, {
       method: "PUT",
+      body: JSON.stringify(options),
     });
   },
 };
@@ -504,15 +506,17 @@ export const adminWithdrawalsApi = {
     });
   },
 
-  async rejectWithdrawal(id: string) {
+  async rejectWithdrawal(id: string, options: { rejectionReason: string }) {
     return request(`${API_BASE_URL}/admin/withdrawals/${id}/reject`, {
       method: "PUT",
+      body: JSON.stringify(options),
     });
   },
 
-  async failWithdrawal(id: string) {
+  async failWithdrawal(id: string, options: { failureReason: string }) {
     return request(`${API_BASE_URL}/admin/withdrawals/${id}/fail`, {
       method: "PUT",
+      body: JSON.stringify(options),
     });
   },
 

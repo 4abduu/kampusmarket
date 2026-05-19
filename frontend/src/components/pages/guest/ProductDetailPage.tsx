@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
+import apiClient from "@/lib/api/client";
 import ImageGallery from "@/components/common/ImageGallery";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
@@ -11,6 +12,7 @@ import ProductDetailSidebar from "@/components/pages/guest/product-detail/Produc
 import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/ProductDetailTabsPanel";
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 import { ProductDetailPageSkeleton } from "@/components/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductDetailPageProps {
   onNavigate: (
@@ -36,6 +38,7 @@ export default function ProductDetailPage({
   isLoggedIn,
   onLogin: _onLogin,
 }: ProductDetailPageProps) {
+  const { toast } = useToast();
   const params = useParams();
   const productId = params.id as string | undefined;
   const [selectedImage, setSelectedImage] = useState(0);
@@ -88,9 +91,13 @@ export default function ProductDetailPage({
     action();
   };
 
-  const handleReportSubmit = () => {
+  const handleReportSubmit = async () => {
     if (!reportReason || !reportDescription) {
-      alert("Pilih alasan dan masukkan deskripsi laporan");
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Pilih alasan dan masukkan deskripsi laporan",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -100,17 +107,37 @@ export default function ProductDetailPage({
         : REPORT_REASONS.find((r) => r.id === reportReason)?.label;
 
     if (!finalReason) {
-      alert("Deskripsi alasan laporan tidak boleh kosong");
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Alasan laporan tidak boleh kosong",
+        variant: "destructive",
+      });
       return;
     }
 
-    alert(
-      `Laporan produk berhasil dikirim!\nAlasan: ${finalReason}\nDeskripsi: ${reportDescription}`,
-    );
-    setShowReportModal(false);
-    setReportReason("");
-    setReportDescription("");
-    setReportOtherReason("");
+    try {
+      await apiClient.post("/reports", {
+        reportedUserId: product.seller?.id,
+        productId: product.id,
+        reason: finalReason,
+        description: reportDescription,
+      });
+
+      toast({
+        title: "Laporan berhasil dikirim",
+        description: "Laporan produk sudah masuk ke admin untuk ditinjau",
+      });
+      setShowReportModal(false);
+      setReportReason("");
+      setReportDescription("");
+      setReportOtherReason("");
+    } catch (error: any) {
+      toast({
+        title: "Gagal mengirim laporan",
+        description: error?.message || "Terjadi kesalahan",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatPrice = (price: number) => {
