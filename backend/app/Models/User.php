@@ -91,7 +91,15 @@ class User extends Authenticatable
             return $value;
         }
 
-        return asset('storage/' . $value);
+        // Clean leading slash
+        $cleanPath = ltrim($value, '/');
+
+        // Check if it already starts with 'storage/'
+        if (str_starts_with($cleanPath, 'storage/')) {
+            return asset($cleanPath);
+        }
+
+        return asset('storage/' . $cleanPath);
     }
 
     protected static function booted(): void

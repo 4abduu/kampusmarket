@@ -155,6 +155,7 @@ export default function ProductDetailPage({
         setSelectedImage={setSelectedImage}
       />
       <ProductDetailTabsPanel
+        productId={productId}
         description={product.description}
         shippingOptions={product.shippingOptions || []}
       />

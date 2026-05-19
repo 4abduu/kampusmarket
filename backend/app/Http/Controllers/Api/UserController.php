@@ -80,6 +80,7 @@ class UserController extends Controller
     {
         $user = User::with(['faculty'])
             ->where('uuid', $id)
+            ->orWhere('id', $id)
             ->firstOrFail();
 
         return response()->json([
@@ -132,7 +133,9 @@ class UserController extends Controller
      */
     public function products(string $id, Request $request): JsonResponse
     {
-        $user = User::where('uuid', $id)->firstOrFail();
+        $user = User::where('uuid', $id)
+            ->orWhere('id', $id)
+            ->firstOrFail();
 
         $query = $user->products()
             ->with(['category', 'images', 'shippingOptions'])
@@ -163,10 +166,12 @@ class UserController extends Controller
      */
     public function reviews(string $id, Request $request): JsonResponse
     {
-        $user = User::where('uuid', $id)->firstOrFail();
+        $user = User::where('uuid', $id)
+            ->orWhere('id', $id)
+            ->firstOrFail();
 
-        $query = $user->reviewsReceived()
-            ->with(['reviewer', 'product', 'images', 'order']);
+        $query = $user->reviews()
+            ->with(['reviewer', 'product.images', 'images', 'order']);
 
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
@@ -174,6 +179,13 @@ class UserController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $reviews = $query->paginate($perPage);
+
+        // Calculate rating distribution
+        $distribution = $user->reviews()
+            ->selectRaw('rating, COUNT(*) as count')
+            ->groupBy('rating')
+            ->pluck('count', 'rating')
+            ->toArray();
 
         return response()->json([
             'success' => true,
@@ -183,6 +195,15 @@ class UserController extends Controller
                 'last_page' => $reviews->lastPage(),
                 'per_page' => $reviews->perPage(),
                 'total' => $reviews->total(),
+                'averageRating' => (float) $user->rating,
+                'totalReviews' => $user->review_count,
+                'distribution' => [
+                    5 => $distribution[5] ?? 0,
+                    4 => $distribution[4] ?? 0,
+                    3 => $distribution[3] ?? 0,
+                    2 => $distribution[2] ?? 0,
+                    1 => $distribution[1] ?? 0,
+                ],
             ],
         ]);
     }

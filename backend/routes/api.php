@@ -78,6 +78,9 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 Route::get('/users/{id}/products', [UserController::class, 'products']);
 Route::get('/users/{id}/reviews', [UserController::class, 'reviews']);
 
+// Product Reviews (Public)
+Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
+
 // Authentication
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -193,7 +196,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::apiResource('reviews', ReviewController::class);
     Route::post('/reviews/{id}/respond', [ReviewController::class, 'respond']);
-    Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
     Route::get('/users/{id}/reviews/received', [ReviewController::class, 'receivedReviews']);
     Route::get('/my/reviews/given', [ReviewController::class, 'givenReviews']);
 

@@ -113,7 +113,7 @@ export default function ServiceDetailPage({
         }
       />
 
-      <ServiceDetailTabsPanel description={service.description} service={service} />
+      <ServiceDetailTabsPanel description={service.description} service={service} productId={serviceId} />
     </>
   );
 

@@ -41,6 +41,14 @@ class ReviewImage extends Model
             return $value;
         }
 
-        return asset('storage/' . $value);
+        // Clean up leading slash if present
+        $cleanValue = ltrim($value, '/');
+
+        // Check if the value already starts with storage/
+        if (str_starts_with($cleanValue, 'storage/')) {
+            return asset($cleanValue);
+        }
+
+        return asset('storage/' . $cleanValue);
     }
 }
