@@ -10,6 +10,8 @@ use App\Http\Requests\StoreCancelRequestRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\NumberGenerator;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class CancelRequestController extends Controller
 {
@@ -165,55 +167,67 @@ class CancelRequestController extends Controller
             'refundAmount' => 'nullable|integer|min:0',
         ]);
 
-        $cancelRequest = CancelRequest::where('uuid', $id)->firstOrFail();
+        try {
+            $cancelRequest = DB::transaction(function () use ($id, $request) {
+                // Lock the cancel request to prevent simultaneous approvals
+                $cancelRequest = CancelRequest::where('uuid', $id)->lockForUpdate()->firstOrFail();
 
-        if (!$cancelRequest->canBeProcessed()) {
+                if (!$cancelRequest->canBeProcessed()) {
+                    throw new \Exception('Permintaan tidak dapat diproses', 400);
+                }
+
+                $refundAmount = $request->refundAmount 
+                    ? $request->refundAmount 
+                    : $cancelRequest->order->total_price;
+
+                $cancelRequest->approve($refundAmount, $request->adminNotes);
+
+                // Lock the order
+                $order = Order::where('id', $cancelRequest->order_id)->lockForUpdate()->firstOrFail();
+                $order->cancel('Cancelled by admin due to cancel request', $request->user()->id);
+
+                // Lock the product to avoid stock race condition
+                $product = $order->product()->lockForUpdate()->firstOrFail();
+                $product->increment('stock', $order->quantity);
+
+                // Process refund if paid
+                if ($order->payment_status->value === 'paid' && $refundAmount > 0) {
+                    // Lock the buyer
+                    $buyer = User::where('id', $order->buyer_id)->lockForUpdate()->firstOrFail();
+                    $balanceBefore = $buyer->wallet_balance;
+                    $buyer->wallet_balance += $refundAmount;
+                    $buyer->save();
+
+                    \App\Models\WalletTransaction::create([
+                        'user_id' => $buyer->id,
+                        'type' => 'refund',
+                        'amount' => $refundAmount,
+                        'balance_before' => $balanceBefore,
+                        'balance_after' => $buyer->wallet_balance,
+                        'description' => 'Refund from approved cancel request ' . $cancelRequest->request_number,
+                        'related_order_id' => $order->id,
+                        'status' => 'completed',
+                    ]);
+
+                    $cancelRequest->markRefundProcessed();
+                    $order->update(['payment_status' => 'refunded']);
+                }
+
+                return $cancelRequest;
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan pembatalan disetujui',
+                'data' => new CancelRequestResource($cancelRequest->fresh()),
+            ]);
+        } catch (\Exception $e) {
+            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
             return response()->json([
                 'success' => false,
-                'message' => 'Permintaan tidak dapat diproses',
-            ], 400);
+                'message' => $e->getMessage() ?: 'Gagal menyetujui permintaan pembatalan',
+            ], $code);
         }
-
-        $refundAmount = $request->refundAmount 
-            ? $request->refundAmount 
-            : $cancelRequest->order->total_price;
-
-        $cancelRequest->approve($refundAmount, $request->adminNotes);
-
-        // Cancel the order
-        $order = $cancelRequest->order;
-        $order->cancel('Cancelled by admin due to cancel request', $request->user()->id);
-
-        // Restore product stock
-        $order->product->increment('stock', $order->quantity);
-
-        // Process refund if paid
-        if ($order->payment_status->value === 'paid' && $refundAmount > 0) {
-            $buyer = $order->buyer;
-            $balanceBefore = $buyer->wallet_balance;
-            $buyer->wallet_balance += $refundAmount;
-            $buyer->save();
-
-            \App\Models\WalletTransaction::create([
-                    'user_id' => $buyer->id,
-                'type' => 'refund',
-                'amount' => $refundAmount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $buyer->wallet_balance,
-                'description' => 'Refund from approved cancel request ' . $cancelRequest->request_number,
-                'related_order_id' => $order->id,
-                'status' => 'completed',
-            ]);
-
-            $cancelRequest->markRefundProcessed();
-            $order->update(['payment_status' => 'refunded']);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Permintaan pembatalan disetujui',
-            'data' => new CancelRequestResource($cancelRequest->fresh()),
-        ]);
     }
 
     /**
