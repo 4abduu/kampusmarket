@@ -1394,25 +1394,35 @@ export function useAdminDashboardController() {
   };
   const confirmSendWarning = () => {
     if (selectedReport) {
-      setReports(
-        reports.map((r) =>
-          r.id === selectedReport.id
-            ? { ...r, status: "reviewed" as const }
-            : r,
-        ),
-      );
-      setUsers(
-        users.map((u) =>
-          u.id === selectedReport.reportedUser.id
-            ? { ...u, isWarned: true, warningReason: selectedReport.reason }
-            : u,
-        ),
-      );
-      showSuccess(
-        `Warning berhasil dikirim ke ${selectedReport.reportedUser.name}`,
-      );
-      setShowWarningDialog(false);
-      setSelectedReport(null);
+      const run = async () => {
+        try {
+          await adminReportsApi.reviewReport(selectedReport.id);
+          setReports(
+            reports.map((r) =>
+              r.id === selectedReport.id
+                ? { ...r, status: "reviewed" as const }
+                : r,
+            ),
+          );
+          setUsers(
+            users.map((u) =>
+              u.id === selectedReport.reportedUser.id
+                ? { ...u, isWarned: true, warningReason: selectedReport.reason }
+                : u,
+            ),
+          );
+          showSuccess(
+            `Warning berhasil dikirim ke ${selectedReport.reportedUser.name}`,
+          );
+        } catch (err) {
+          console.error(err);
+          showSuccess("Gagal mengirim warning, coba lagi");
+        } finally {
+          setShowWarningDialog(false);
+          setSelectedReport(null);
+        }
+      };
+      void run();
     }
   };
   const handleBanFromReport = (report: Report) => {
@@ -1421,24 +1431,56 @@ export function useAdminDashboardController() {
   };
   const confirmBanFromReport = () => {
     if (selectedReport) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedReport.reportedUser.id
-            ? { ...u, isBanned: true, banReason: selectedReport.reason }
-            : u,
-        ),
-      );
-      setReports(
-        reports.map((r) =>
-          r.id === selectedReport.id
-            ? { ...r, status: "resolved" as const }
-            : r,
-        ),
-      );
-      showSuccess(`User ${selectedReport.reportedUser.name} berhasil diblokir`);
-      setShowBanReportDialog(false);
-      setSelectedReport(null);
+      const run = async () => {
+        try {
+          await adminReportsApi.resolveReport(selectedReport.id, {
+            resolution: `Ban user karena laporan: ${selectedReport.reason}`,
+            banUser: true,
+            banReason: selectedReport.reason,
+          });
+          setUsers(
+            users.map((u) =>
+              u.id === selectedReport.reportedUser.id
+                ? { ...u, isBanned: true, banReason: selectedReport.reason }
+                : u,
+            ),
+          );
+          setReports(
+            reports.map((r) =>
+              r.id === selectedReport.id
+                ? { ...r, status: "resolved" as const }
+                : r,
+            ),
+          );
+          showSuccess(`User ${selectedReport.reportedUser.name} berhasil diblokir`);
+        } catch (err) {
+          console.error(err);
+          showSuccess("Gagal memblokir user, coba lagi");
+        } finally {
+          setShowBanReportDialog(false);
+          setSelectedReport(null);
+        }
+      };
+      void run();
     }
+  };
+
+  const handleDismissReport = (report: Report) => {
+    const run = async () => {
+      try {
+        await adminReportsApi.dismissReport(report.id);
+        setReports(
+          reports.map((r) =>
+            r.id === report.id ? { ...r, status: "resolved" as const } : r,
+          ),
+        );
+        showSuccess(`Laporan dari ${report.reporter.name} diabaikan`);
+      } catch (err) {
+        console.error(err);
+        showSuccess("Gagal mengabaikan laporan, coba lagi");
+      }
+    };
+    void run();
   };
 
   const handleApproveWithdrawal = (withdrawal: Withdrawal) => {
@@ -2302,6 +2344,7 @@ export function useAdminDashboardController() {
     confirmDeleteProduct,
     handleSendWarning,
     handleBanFromReport,
+    handleDismissReport,
     confirmSendWarning,
     confirmBanFromReport,
     handleApproveWithdrawal,

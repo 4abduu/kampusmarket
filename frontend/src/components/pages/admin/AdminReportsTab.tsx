@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, MessageCircle, Ban, Search, X, Package, User } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X, Package, User, XCircle } from "lucide-react";
 
 interface Props {
   filteredReports: any[];
@@ -18,9 +18,10 @@ interface Props {
   getReportStatusBadge: (status: string) => React.ReactNode;
   handleSendWarning: (report: any) => void;
   handleBanFromReport: (report: any) => void;
+  handleDismissReport: (report: any) => void;
 }
 
-export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport }: Props) {
+export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleDismissReport }: Props) {
   const getReportTypeIcon = (type: string) => {
     switch(type) {
       case 'product': return <Package className="h-5 w-5 text-amber-600" />;
@@ -65,7 +66,7 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                     {report.reportType === 'product' && report.productTitle && <div className="mt-2 text-sm p-2 bg-muted/50 rounded border"><span className="font-semibold text-xs text-muted-foreground block mb-1">PRODUK YANG DILAPORKAN:</span>{report.productTitle}</div>}
                     {report.reportType === 'chat' && report.chatMessage && <div className="mt-2 text-sm p-2 bg-muted/50 rounded border"><span className="font-semibold text-xs text-muted-foreground block mb-1">PESAN YANG DILAPORKAN:</span>"{report.chatMessage}"</div>}
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground"><span>Pelapor: {report.reporter?.name}</span><span>•</span><span>Dilaporkan: {report.reportedUser?.name}</span><span>•</span><span>{report.createdAt ? new Date(report.createdAt).toLocaleDateString('id-ID') : '-'}</span></div></div></div>
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end">{getReportStatusBadge(report.status)}{report.status === "pending" && <div className="flex gap-1 mt-2"><Button variant="outline" size="sm" onClick={() => handleSendWarning(report)}><MessageCircle className="h-3 w-3 mr-1" />Warning</Button><Button variant="destructive" size="sm" onClick={() => handleBanFromReport(report)}><Ban className="h-3 w-3 mr-1" />Ban</Button></div>}</div>
+                    <div className="flex items-center gap-2 sm:flex-col sm:items-end">{getReportStatusBadge(report.status)}{report.status === "pending" && <div className="flex gap-1 mt-2"><Button variant="outline" size="sm" onClick={() => handleSendWarning(report)}><MessageCircle className="h-3 w-3 mr-1" />Warning</Button><Button variant="destructive" size="sm" onClick={() => handleBanFromReport(report)}><Ban className="h-3 w-3 mr-1" />Ban</Button><Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => handleDismissReport(report)}><XCircle className="h-3 w-3 mr-1" />Abaikan</Button></div>}</div>
                   </div>
                 </div>
               ))}

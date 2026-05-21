@@ -237,6 +237,7 @@ export default function AdminDashboardPage({
     confirmDeleteProduct,
     handleSendWarning,
     handleBanFromReport,
+    handleDismissReport,
     confirmSendWarning,
     confirmBanFromReport,
     handleApproveWithdrawal,
@@ -455,6 +456,7 @@ export default function AdminDashboardPage({
                 getReportStatusBadge={getReportStatusBadge}
                 handleSendWarning={handleSendWarning}
                 handleBanFromReport={handleBanFromReport}
+                handleDismissReport={handleDismissReport}
               />
             )}
           </TabsContent>

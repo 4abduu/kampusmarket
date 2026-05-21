@@ -449,9 +449,11 @@ export const adminReportsApi = {
     });
   },
 
-  async resolveReport(id: string) {
+  async resolveReport(id: string, body?: { resolution: string; adminNotes?: string; banUser?: boolean; banReason?: string }) {
     return request(`${API_BASE_URL}/admin/reports/${id}/resolve`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body ?? { resolution: "Diselesaikan oleh admin" }),
     });
   },
 
