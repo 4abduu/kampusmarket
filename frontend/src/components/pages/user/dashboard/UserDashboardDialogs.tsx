@@ -118,6 +118,7 @@ type Props = {
   setShowShippingDialog: (open: boolean) => void
   shippingFee: string
   setShippingFee: (fee: string) => void
+  handleSetShippingFee: () => void
 
   showServicePriceDialog: boolean
   setShowServicePriceDialog: (open: boolean) => void
@@ -199,6 +200,7 @@ export default function UserDashboardDialogs({
   setShowShippingDialog,
   shippingFee,
   setShippingFee,
+  handleSetShippingFee,
   showServicePriceDialog,
   setShowServicePriceDialog,
   selectedServiceOrder,
@@ -818,7 +820,7 @@ export default function UserDashboardDialogs({
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowShippingDialog(false)}>Batal</Button>
-            <Button className="bg-primary-600 hover:bg-primary-700" onClick={() => { setShowShippingDialog(false); setShippingFee("") }} disabled={!shippingFee}>Kirim ke Pembeli</Button>
+            <Button className="bg-primary-600 hover:bg-primary-700" onClick={handleSetShippingFee} disabled={!shippingFee}>Kirim ke Pembeli</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

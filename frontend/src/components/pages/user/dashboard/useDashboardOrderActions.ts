@@ -1,7 +1,10 @@
 import { useState } from "react"
 import apiClient from "@/lib/api/client"
-import { mockOrders } from "@/lib/mock-data"
+// @mock-flagged — mockOrders tidak lagi digunakan, order data diterima via props/params
+// import { mockOrders } from "@/lib/mock-data"
 import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
+import { offerPrice, confirmPrice, setShippingFee } from '@/lib/api/orders'
+import { useToast } from '@/hooks/use-toast'
 
 type PaymentRequest = {
   orderId: string
@@ -9,9 +12,17 @@ type PaymentRequest = {
   totalPayment: number
 }
 
-export function useDashboardOrderActions() {
-  const [showShippingDialog, setShowShippingDialog] = useState(false)
-  const [shippingFee, setShippingFee] = useState("")
+interface UseDashboardOrderActionsParams {
+  onOrderUpdated?: () => void  // callback untuk refresh order list setelah aksi
+}
+
+export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderActionsParams = {}) {
+  const { toast } = useToast()
+  
+  const [selectedShippingOrderId, setSelectedShippingOrderId] = useState<string | null>(null)
+  const [showShippingDialog, setShowShippingDialogState] = useState(false)
+  const [shippingFee, setShippingFeeState] = useState("")
+  
   const [showOrderConfirmDialog, setShowOrderConfirmDialog] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null)
@@ -23,23 +34,42 @@ export function useDashboardOrderActions() {
     notes: "",
   })
 
-  const handleOpenServicePriceDialog = (orderId: string) => {
-    setSelectedServiceOrder(orderId)
-    const order = mockOrders.find((item) => item.id === orderId)
-    if (order) {
-      setServicePriceForm({
-        price: order.basePrice?.toString() || "",
-        notes: "",
-      })
+  // Custom setter for shipping dialog that captures the target order ID
+  const setShowShippingDialog = (value: boolean | string) => {
+    if (typeof value === "string") {
+      setSelectedShippingOrderId(value)
+      setShowShippingDialogState(true)
+    } else {
+      setShowShippingDialogState(value)
+      if (!value) {
+        setSelectedShippingOrderId(null)
+      }
     }
+  }
+
+  const handleOpenServicePriceDialog = (orderId: string, currentPrice?: number) => {
+    setSelectedServiceOrder(orderId)
+    setServicePriceForm({
+      price: currentPrice?.toString() || "",
+      notes: "",
+    })
     setShowServicePriceDialog(true)
   }
 
-  const handleSubmitServicePrice = () => {
-    console.log("Service price submitted:", servicePriceForm)
-    setShowServicePriceDialog(false)
-    setSelectedServiceOrder(null)
-    setServicePriceForm({ price: "", notes: "" })
+  const handleSubmitServicePrice = async () => {
+    if (!selectedServiceOrder || !servicePriceForm.price) return
+    const price = parseInt(servicePriceForm.price, 10)
+    if (isNaN(price) || price <= 0) return
+    try {
+      await offerPrice(selectedServiceOrder, price, servicePriceForm.notes || undefined)
+      setShowServicePriceDialog(false)
+      setSelectedServiceOrder(null)
+      setServicePriceForm({ price: "", notes: "" })
+      toast({ title: 'Penawaran harga dikirim', description: 'Menunggu konfirmasi pembeli' })
+      onOrderUpdated?.()
+    } catch (err: any) {
+      toast({ title: 'Gagal mengirim penawaran', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+    }
   }
 
   const handleAcceptPrice = (order: OrderListItem) => {
@@ -51,15 +81,43 @@ export function useDashboardOrderActions() {
     setShowPaymentDialog(true)
   }
 
-  const handleRejectPrice = (orderId: string) => {
-    console.log("Price rejected for order:", orderId)
+  const handleRejectPrice = async (orderId: string) => {
+    try {
+      await confirmPrice(orderId, false)
+      toast({ title: 'Harga ditolak', description: 'Penjual akan mendapat notifikasi' })
+      onOrderUpdated?.()
+    } catch (err: any) {
+      toast({ title: 'Gagal menolak harga', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+    }
   }
 
-  const handlePayWithWallet = () => {
+  const handleSetShippingFee = async () => {
+    if (!shippingFee || !selectedShippingOrderId) return
+    const fee = parseInt(shippingFee, 10)
+    if (isNaN(fee) || fee < 0) return
+    try {
+      await setShippingFee(selectedShippingOrderId, fee)
+      setShowShippingDialogState(false)
+      setShippingFeeState("")
+      setSelectedShippingOrderId(null)
+      toast({ title: 'Ongkir berhasil diatur' })
+      onOrderUpdated?.()
+    } catch (err: any) {
+      toast({ title: 'Gagal mengatur ongkir', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+    }
+  }
+
+  const handlePayWithWallet = async () => {
     if (!paymentRequest) return
-    console.log("Payment via wallet:", paymentRequest)
-    setShowPaymentDialog(false)
-    setPaymentRequest(null)
+    try {
+      await apiClient.post(`/orders/${paymentRequest.orderId}/pay`, { paymentMethod: 'wallet' })
+      setShowPaymentDialog(false)
+      setPaymentRequest(null)
+      toast({ title: 'Pembayaran berhasil', description: 'Pesanan sedang diproses' })
+      onOrderUpdated?.()
+    } catch (err: any) {
+      toast({ title: 'Pembayaran gagal', description: err?.message || 'Saldo tidak cukup', variant: 'destructive' })
+    }
   }
 
   const handlePayWithMidtrans = () => {
@@ -113,7 +171,7 @@ export function useDashboardOrderActions() {
         ;(window as any).snap?.pay(token, {
           onSuccess: function (result: any) {
             console.log('Midtrans success', result)
-            // Optionally refresh order data here
+            onOrderUpdated?.()
           },
           onPending: function (result: any) {
             console.log('Midtrans pending', result)
@@ -135,7 +193,7 @@ export function useDashboardOrderActions() {
     showShippingDialog,
     setShowShippingDialog,
     shippingFee,
-    setShippingFee,
+    setShippingFee: setShippingFeeState,
     showOrderConfirmDialog,
     setShowOrderConfirmDialog,
     showPaymentDialog,
@@ -152,5 +210,6 @@ export function useDashboardOrderActions() {
     handleRejectPrice,
     handlePayWithWallet,
     handlePayWithMidtrans,
+    handleSetShippingFee,
   }
 }

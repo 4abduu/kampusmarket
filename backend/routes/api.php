@@ -112,6 +112,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/profile', [UserController::class, 'profile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
     Route::get('/profile/stats', [UserController::class, 'stats']);
+    Route::get('/dashboard/stats', [UserController::class, 'dashboardStats']);
 
     // ----------------------------------------
     // ADDRESSES

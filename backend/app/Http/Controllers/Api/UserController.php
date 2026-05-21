@@ -207,6 +207,37 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Get user dashboard stats.
+     */
+    public function dashboardStats(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $totalSalesValue = $user->sellerOrders()
+            ->where('status', 'completed')
+            ->sum('total_price');
+        
+        $totalSold = $user->sellerOrders()
+            ->where('status', 'completed')
+            ->count();
+        
+        $pendingOrders = $user->sellerOrders()
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'totalSales'    => (int) $totalSalesValue,
+                'totalSold'     => $totalSold,
+                'pendingOrders' => $pendingOrders,
+                'walletBalance' => (int) $user->wallet_balance,
+                'rating'        => (float) ($user->rating ?? 0.0),
+            ]
+        ]);
+    }
+
     // ============================================
     // ADMIN ACTIONS
     // ============================================

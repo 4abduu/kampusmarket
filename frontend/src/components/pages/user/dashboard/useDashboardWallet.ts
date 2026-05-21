@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import apiClient from "@/lib/api/client"
 import { useToast } from "@/hooks/use-toast"
-import { mockWalletTransactions } from "@/lib/mock-data"
+// @mock-flagged — digantikan oleh fetchTransactions() dari API /wallet/transactions
+// import { mockWalletTransactions } from "@/lib/mock-data"
+import type { WalletTransaction } from "@/lib/mock-data"
 import { USER_DASHBOARD_ITEMS_PER_PAGE } from "@/components/pages/user/dashboard/constants"
 
 interface UseDashboardWalletParams {
@@ -34,48 +36,81 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
   const [showTransactionFilters, setShowTransactionFilters] = useState(false)
   const [transactionPage, setTransactionPage] = useState(1)
 
-  const userTransactions = useMemo(() => {
-    return mockWalletTransactions.filter((transaction) => transaction.userId === userId)
-  }, [userId])
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([])
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
+  const [transactionsError, setTransactionsError] = useState<string | null>(null)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalIncomeFetched, setTotalIncomeFetched] = useState(0)
+  const [totalExpenseFetched, setTotalExpenseFetched] = useState(0)
 
-  const filteredTransactions = useMemo(() => {
-    return userTransactions.filter((transaction) => {
-      const matchesSearch = transactionSearchTerm === ""
-        || transaction.description.toLowerCase().includes(transactionSearchTerm.toLowerCase())
-      const matchesType = transactionTypeFilter === "all" || transaction.type === transactionTypeFilter
-      const matchesStatus = transactionStatusFilter === "all" || transaction.status === transactionStatusFilter
-      return matchesSearch && matchesType && matchesStatus
-    })
-  }, [transactionSearchTerm, transactionTypeFilter, transactionStatusFilter, userTransactions])
+  const fetchTransactions = async () => {
+    setTransactionsLoading(true)
+    setTransactionsError(null)
+    try {
+      const params = new URLSearchParams()
+      params.set('per_page', String(USER_DASHBOARD_ITEMS_PER_PAGE))
+      params.set('page', String(transactionPage))
+      if (transactionTypeFilter !== 'all') params.set('type', transactionTypeFilter)
+      if (transactionStatusFilter !== 'all') params.set('status', transactionStatusFilter)
+      if (transactionSearchTerm.trim()) params.set('search', transactionSearchTerm.trim())
 
-  const pageSize = USER_DASHBOARD_ITEMS_PER_PAGE
-  const paginatedTransactions = useMemo(() => {
-    return filteredTransactions.slice((transactionPage - 1) * pageSize, transactionPage * pageSize)
-  }, [filteredTransactions, transactionPage])
+      const res = await apiClient.get(`/wallet/transactions?${params.toString()}`)
+      const data = res.data?.data ?? res.data ?? []
+      const meta = res.data?.meta ?? {}
 
-  const totalTransactionPages = Math.ceil(filteredTransactions.length / pageSize) || 1
+      setTransactions(Array.isArray(data) ? data : [])
+      setTotalPages(meta.last_page ?? 1)
+      
+      // Calculate/extract income and expense
+      if (meta.total_income !== undefined) {
+        setTotalIncomeFetched(meta.total_income)
+      } else {
+        // Fallback calculation if not returned in meta
+        const list = Array.isArray(data) ? data : []
+        const inc = list
+          .filter((t: any) => t.amount > 0 && t.status === "completed")
+          .reduce((sum: number, t: any) => sum + t.amount, 0)
+        setTotalIncomeFetched(inc)
+      }
 
-  const totalIncome = useMemo(() => {
-    return userTransactions
-      .filter((transaction) => transaction.amount > 0 && transaction.status === "completed")
-      .reduce((sum, transaction) => sum + transaction.amount, 0)
-  }, [userTransactions])
+      if (meta.total_expense !== undefined) {
+        setTotalExpenseFetched(meta.total_expense)
+      } else {
+        // Fallback calculation if not returned in meta
+        const list = Array.isArray(data) ? data : []
+        const exp = list
+          .filter((t: any) => t.amount < 0 && t.status === "completed")
+          .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0)
+        setTotalExpenseFetched(exp)
+      }
+    } catch (err: any) {
+      setTransactionsError(err?.message || 'Gagal memuat riwayat transaksi')
+    } finally {
+      setTransactionsLoading(false)
+    }
+  }
 
-  const totalExpense = useMemo(() => {
-    return userTransactions
-      .filter((transaction) => transaction.amount < 0 && transaction.status === "completed")
-      .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0)
-  }, [userTransactions])
+  useEffect(() => {
+    if (userId) {
+      void fetchTransactions()
+    }
+  }, [userId, transactionPage, transactionTypeFilter, transactionStatusFilter, transactionSearchTerm])
 
   const quickAmounts = [50000, 100000, 200000, 500000, 1000000]
 
-  const handleTopUp = () => {
+  const handleTopUp = async () => {
     if (!topUpAmount || parseInt(topUpAmount, 10) < 10000) return
-    console.log("Top up:", { amount: topUpAmount })
-    setShowTopUpDialog(false)
-    setShowTopUpSuccess(true)
-    setTimeout(() => setShowTopUpSuccess(false), 3000)
-    setTopUpAmount("")
+    try {
+      await apiClient.post('/wallet/topup', { amount: parseInt(topUpAmount, 10) })
+      setShowTopUpDialog(false)
+      setShowTopUpSuccess(true)
+      setTimeout(() => setShowTopUpSuccess(false), 3000)
+      setTopUpAmount('')
+      void fetchTransactions()
+      toast({ title: 'Top-up berhasil', description: 'Saldo akan diperbarui setelah pembayaran dikonfirmasi' })
+    } catch (err: any) {
+      toast({ title: 'Gagal top-up', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+    }
   }
 
   const handleWithdraw = async () => {
@@ -130,6 +165,7 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
       })
       setShowWithdrawSuccess(true)
       setTimeout(() => setShowWithdrawSuccess(false), 3000)
+      void fetchTransactions()
       toast({
         title: "Permintaan penarikan dibuat",
         description: "Admin akan memproses penarikan Anda",
@@ -169,15 +205,18 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
     setShowTransactionFilters,
     transactionPage,
     setTransactionPage,
-    filteredTransactions,
-    paginatedTransactions,
-    totalTransactionPages,
-    totalIncome,
-    totalExpense,
+    filteredTransactions: transactions,
+    paginatedTransactions: transactions,
+    totalTransactionPages: totalPages,
+    totalIncome: totalIncomeFetched,
+    totalExpense: totalExpenseFetched,
     quickAmounts,
     handleTopUp,
     handleWithdraw,
     isBankLainnya,
     isEwalletLainnya,
+    transactionsLoading,
+    transactionsError,
   }
 }
+

@@ -118,7 +118,7 @@ export const userApi = {
    * Get user profile.
    */
   async getProfile(): Promise<User> {
-    return request("/users/profile");
+    return request("/profile");
   },
 
   /**

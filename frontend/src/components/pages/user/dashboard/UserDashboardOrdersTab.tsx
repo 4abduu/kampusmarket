@@ -11,8 +11,8 @@ type Props = {
   onNavigate: (page: string, productId?: string) => void
   formatPrice: (price: number) => string
   getStatusBadge: (status: string) => React.ReactNode
-  setShowShippingDialog: (open: boolean) => void
-  handleOpenServicePriceDialog: (orderId: string) => void
+  setShowShippingDialog: (open: boolean | string) => void
+  handleOpenServicePriceDialog: (orderId: string, currentPrice?: number) => void
   setShowOrderConfirmDialog: (open: boolean) => void
   handleRejectPrice: (orderId: string) => void
   handleAcceptPrice: (order: OrderListItem) => void
@@ -143,12 +143,12 @@ export default function UserDashboardOrdersTab({
                           <Button variant="outline" size="sm" onClick={() => onNavigate("order-detail", order.id)}>Detail</Button>
                         </div>
                         {order.status === "waiting_shipping_fee" && (
-                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => setShowShippingDialog(true)}>
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => setShowShippingDialog(order.id)}>
                             <Truck className="h-4 w-4 mr-1" />Input Ongkir
                           </Button>
                         )}
                         {order.status === "waiting_price" && (
-                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleOpenServicePriceDialog(order.id)}>
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleOpenServicePriceDialog(order.id, order.basePrice)}>
                             <DollarSign className="h-4 w-4 mr-1" />Kirim Penawaran
                           </Button>
                         )}

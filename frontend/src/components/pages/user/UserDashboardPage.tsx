@@ -5,8 +5,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   type User,
-  mockUsers,
-  mockAddresses,
+  // @mock-flagged
+  // mockUsers,
+  // mockAddresses,
   getFacultyName,
   ADMIN_FEE_PERCENTAGE,
   calculateAdminFee,
@@ -14,6 +15,7 @@ import {
   categories,
   serviceCategories,
 } from "@/lib/mock-data";
+import apiClient from "@/lib/api/client";
 import { getInitialSellerProducts } from "@/components/pages/user/dashboard/seller-products";
 import {
   formatTransactionDate,
@@ -55,7 +57,16 @@ export default function UserDashboardPage({
   
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(authUser || mockUsers[0]);
+  const [currentUser, setCurrentUser] = useState<User | null>(authUser || null);
+  const [ordersRefreshKey, setOrdersRefreshKey] = useState(0);
+  const [dashboardStats, setDashboardStats] = useState<{
+    totalSales: number;
+    totalSold: number;
+    rating: number;
+    pendingOrders: number;
+    walletBalance: number;
+  } | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // Sync URL changes to activeTab state
   useEffect(() => {
@@ -63,7 +74,7 @@ export default function UserDashboardPage({
   }, [tabFromUrl]);
 
   useEffect(() => {
-    setCurrentUser(authUser || mockUsers[0]);
+    setCurrentUser(authUser || null);
   }, [authUser]);
 
   useEffect(() => {
@@ -71,6 +82,60 @@ export default function UserDashboardPage({
     const timer = window.setTimeout(() => setIsLoading(false), 300);
     return () => window.clearTimeout(timer);
   }, [activeTab]);
+
+  const fetchDashboardStats = async () => {
+    if (!currentUser?.id) return;
+    setStatsLoading(true);
+    try {
+      const res = await apiClient.get("/dashboard/stats");
+      const data = res.data?.data ?? res.data;
+      setDashboardStats({
+        totalSales: data.total_sales ?? data.totalSales ?? 0,
+        totalSold: data.total_sold ?? data.totalSold ?? 0,
+        rating: data.rating ?? 4.8,
+        pendingOrders: data.pending_orders ?? data.pendingOrders ?? 0,
+        walletBalance: data.wallet_balance ?? currentUser.walletBalance ?? 0,
+      });
+    } catch {
+      try {
+        const profileRes = await apiClient.get("/profile");
+        const profile = profileRes.data?.data ?? profileRes.data ?? {};
+        setDashboardStats({
+          totalSales: 0,
+          totalSold: 0,
+          rating: profile.rating ?? 4.8,
+          pendingOrders: 0,
+          walletBalance: profile.walletBalance ?? profile.wallet_balance ?? 0,
+        });
+      } catch {
+        setDashboardStats({
+          totalSales: 0,
+          totalSold: 0,
+          rating: 4.8,
+          pendingOrders: 0,
+          walletBalance: currentUser.walletBalance ?? 0,
+        });
+      }
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      void fetchDashboardStats();
+    }
+  }, [currentUser?.id, ordersRefreshKey]);
+
+  useEffect(() => {
+    if (wallet.showTopUpSuccess || wallet.showWithdrawSuccess) {
+      void fetchDashboardStats();
+    }
+  }, [wallet.showTopUpSuccess, wallet.showWithdrawSuccess]);
+
+  const handleOrderUpdated = () => {
+    setOrdersRefreshKey((prev) => prev + 1);
+  };
 
   const handleProfilePictureUpdate = (newAvatarUrl: string) => {
     setCurrentUser((prev) =>
@@ -92,30 +157,32 @@ export default function UserDashboardPage({
   });
 
   const settings = useDashboardSettings({
-    currentUser: currentUser || mockUsers[0],
-    initialAddresses: mockAddresses,
+    currentUser: currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" },
+    initialAddresses: [], // @mock-flagged — addresses diload dari API /addresses di useDashboardSettings
   });
 
-  const orderActions = useDashboardOrderActions();
+  const orderActions = useDashboardOrderActions({
+    onOrderUpdated: handleOrderUpdated,
+  });
 
   useEffect(() => {
     onSellerProductCountChange?.(products.userProducts.length);
   }, [onSellerProductCountChange, products.userProducts.length]);
 
   const stats = {
-    totalSales: 2450000,
-    netIncome: calculateNetIncome(2450000),
-    adminFeeDeducted: calculateAdminFee(2450000),
-    pendingOrders: 3,
+    totalSales: dashboardStats?.totalSales ?? 0,
+    netIncome: calculateNetIncome(dashboardStats?.totalSales ?? 0),
+    adminFeeDeducted: calculateAdminFee(dashboardStats?.totalSales ?? 0),
+    pendingOrders: dashboardStats?.pendingOrders ?? 0,
     activeProducts: products.userProducts.filter(
       (product) => product.stock > 0 && product.type === "barang",
     ).length,
     activeServices: products.userProducts.filter(
       (product) => product.type === "jasa",
     ).length,
-    walletBalance: 250000,
-    totalSold: 28,
-    rating: 4.8,
+    walletBalance: dashboardStats?.walletBalance ?? currentUser?.walletBalance ?? authUser?.walletBalance ?? 0,
+    totalSold: dashboardStats?.totalSold ?? 0,
+    rating: dashboardStats?.rating ?? currentUser?.rating ?? authUser?.rating ?? 4.8,
   };
 
   const getStatusBadge = (status: string) => {
@@ -163,7 +230,7 @@ export default function UserDashboardPage({
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8">
           <UserDashboardSidebar
-            currentUser={currentUser || mockUsers[0]}
+            currentUser={currentUser || { id: "", name: "", email: "", avatar: "", faculty: "" } as any}
             rating={stats.rating}
             activeTab={activeTab}
             setActiveTab={handleTabChange}
@@ -174,7 +241,7 @@ export default function UserDashboardPage({
             {activeTab === "overview" && (
               <UserDashboardOverviewTab
                 onNavigate={onNavigate}
-                currentWalletBalance={currentUser?.walletBalance || 0}
+                currentWalletBalance={stats.walletBalance}
                 formatPrice={products.formatPrice}
                 stats={stats}
                 userProducts={products.userProducts}
@@ -207,6 +274,7 @@ export default function UserDashboardPage({
 
             {activeTab === "orders" && (
               <UserDashboardOrdersTab
+                key={`orders-tab-${ordersRefreshKey}`}
                 onNavigate={onNavigate}
                 formatPrice={products.formatPrice}
                 getStatusBadge={getStatusBadge}
@@ -226,7 +294,7 @@ export default function UserDashboardPage({
               <UserDashboardWalletTab
                 showBalance={wallet.showBalance}
                 setShowBalance={wallet.setShowBalance}
-                currentWalletBalance={currentUser?.walletBalance || 0}
+                currentWalletBalance={stats.walletBalance}
                 totalIncome={wallet.totalIncome}
                 totalExpense={wallet.totalExpense}
                 setShowTopUpDialog={wallet.setShowTopUpDialog}
@@ -263,7 +331,7 @@ export default function UserDashboardPage({
 
             {activeTab === "settings" && (
               <UserDashboardSettingsTab
-                currentUser={currentUser || mockUsers[0]}
+                currentUser={currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" } as any}
                 profileForm={settings.profileForm}
                 setProfileForm={settings.setProfileForm}
                 handleSaveProfile={settings.handleSaveProfile}
@@ -336,7 +404,7 @@ export default function UserDashboardPage({
         setShowWithdrawDialog={wallet.setShowWithdrawDialog}
         withdrawForm={wallet.withdrawForm}
         setWithdrawForm={wallet.setWithdrawForm}
-        currentWalletBalance={currentUser?.walletBalance || 0}
+        currentWalletBalance={stats.walletBalance}
         isBankLainnya={wallet.isBankLainnya}
         isEwalletLainnya={wallet.isEwalletLainnya}
         statsWalletBalance={stats.walletBalance}
@@ -358,6 +426,7 @@ export default function UserDashboardPage({
         paymentRequest={orderActions.paymentRequest}
         handlePayWithWallet={orderActions.handlePayWithWallet}
         handlePayWithMidtrans={orderActions.handlePayWithMidtrans}
+        handleSetShippingFee={orderActions.handleSetShippingFee}
         showProfileSuccess={settings.showProfileSuccess}
         showPasswordSuccess={settings.showPasswordSuccess}
         showTopUpSuccess={wallet.showTopUpSuccess}
