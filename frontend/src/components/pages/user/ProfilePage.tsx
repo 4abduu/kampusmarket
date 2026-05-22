@@ -340,6 +340,8 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
                 <ProfileReviewsTab
                   avgRating={avgRating}
                   totalReviews={totalReviews}
+                  userId={user.id}
+                  onNavigate={onNavigate}
                 />
               </TabsContent>
             </Tabs>

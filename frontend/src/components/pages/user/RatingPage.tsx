@@ -32,6 +32,7 @@ import RatingSuccessState from "@/components/pages/user/rating/RatingSuccessStat
 import { getBuyerOrders } from "@/lib/api/orders";
 import type { Order } from "@/lib/api/orders";
 import { getGivenReviews, submitReview } from "@/lib/api/reviews";
+import { uploadImages } from "@/lib/api/images";
 import { useToast } from "@/hooks/use-toast";
 
 interface RatingPageProps {
@@ -54,6 +55,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,6 +115,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
     setRating(0);
     setComment("");
     setImages([]);
+    setImageFiles([]);
     setShowPreview(false);
     
     // If we came from a specific order URL and go back, we might just want to list all
@@ -134,6 +137,9 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
     const filesToProcess = Array.from(files).slice(0, remainingSlots);
 
     filesToProcess.forEach((file) => {
+      // Store the actual File object for later upload
+      setImageFiles((prev) => [...prev, file]);
+      // Generate base64 preview for display only
       const reader = new FileReader();
       reader.onloadend = () => {
         setImages((prev) => [...prev, reader.result as string]);
@@ -148,18 +154,25 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
 
   const handleRemoveImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
     if (!selectedOrder) return;
     try {
       setIsSubmitting(true);
-      
+
+      // Upload image files first, then send URLs with review
+      let uploadedImageUrls: string[] | undefined;
+      if (imageFiles.length > 0) {
+        uploadedImageUrls = await uploadImages(imageFiles, 'ratings');
+      }
+
       await submitReview({
         orderId: selectedOrder.uuid || selectedOrder.id,
         rating,
         comment,
-        images: images.length > 0 ? images : undefined,
+        images: uploadedImageUrls && uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
       });
 
       toast({ title: "Ulasan berhasil dikirim!" });
