@@ -627,7 +627,7 @@ export default function OrderDetailPage({
       }
 
       if (method === "midtrans") {
-        const result = await payOrder(order.id);
+        const result = await payOrder(order.id, 'midtrans');
         const token = result?.snap_token || (result as any)?.token;
         const paymentUuid =
           result?.payment_uuid || (result as any)?.data?.payment_uuid;
@@ -652,7 +652,7 @@ export default function OrderDetailPage({
           return;
         }
 
-        await payOrder(order.id);
+        await payOrder(order.id, 'wallet');
         toast({ title: "Pembayaran berhasil!" });
         await fetchOrder();
       }

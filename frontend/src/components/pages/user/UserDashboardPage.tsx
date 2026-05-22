@@ -68,6 +68,38 @@ export default function UserDashboardPage({
   } | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
+  const handleOrderUpdated = () => {
+    setOrdersRefreshKey((prev) => prev + 1);
+  };
+
+  const handleProfilePictureUpdate = (newAvatarUrl: string) => {
+    setCurrentUser((prev) =>
+      prev ? { ...prev, avatar: newAvatarUrl } : null
+    );
+  };
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    navigate(`/dashboard/${newTab}`);
+  };
+
+  const products = useDashboardProducts({
+    initialProducts: getInitialSellerProducts(),
+  });
+
+  const wallet = useDashboardWallet({
+    userId: currentUser?.id || "",
+  });
+
+  const settings = useDashboardSettings({
+    currentUser: currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" },
+    initialAddresses: [], // @mock-flagged — addresses diload dari API /addresses di useDashboardSettings
+  });
+
+  const orderActions = useDashboardOrderActions({
+    onOrderUpdated: handleOrderUpdated,
+  });
+
   // Sync URL changes to activeTab state
   useEffect(() => {
     setActiveTab(tabFromUrl);
@@ -132,38 +164,6 @@ export default function UserDashboardPage({
       void fetchDashboardStats();
     }
   }, [wallet.showTopUpSuccess, wallet.showWithdrawSuccess]);
-
-  const handleOrderUpdated = () => {
-    setOrdersRefreshKey((prev) => prev + 1);
-  };
-
-  const handleProfilePictureUpdate = (newAvatarUrl: string) => {
-    setCurrentUser((prev) =>
-      prev ? { ...prev, avatar: newAvatarUrl } : null
-    );
-  };
-
-  const handleTabChange = (newTab: string) => {
-    setActiveTab(newTab);
-    navigate(`/dashboard/${newTab}`);
-  };
-
-  const products = useDashboardProducts({
-    initialProducts: getInitialSellerProducts(),
-  });
-
-  const wallet = useDashboardWallet({
-    userId: currentUser?.id || "",
-  });
-
-  const settings = useDashboardSettings({
-    currentUser: currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" },
-    initialAddresses: [], // @mock-flagged — addresses diload dari API /addresses di useDashboardSettings
-  });
-
-  const orderActions = useDashboardOrderActions({
-    onOrderUpdated: handleOrderUpdated,
-  });
 
   useEffect(() => {
     onSellerProductCountChange?.(products.userProducts.length);

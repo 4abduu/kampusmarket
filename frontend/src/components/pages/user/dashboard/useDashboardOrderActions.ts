@@ -3,7 +3,7 @@ import apiClient from "@/lib/api/client"
 // @mock-flagged — mockOrders tidak lagi digunakan, order data diterima via props/params
 // import { mockOrders } from "@/lib/mock-data"
 import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
-import { offerPrice, confirmPrice, setShippingFee } from '@/lib/api/orders'
+import { offerPrice, confirmPrice, setShippingFee, payOrder } from '@/lib/api/orders'
 import { useToast } from '@/hooks/use-toast'
 
 type PaymentRequest = {
@@ -110,7 +110,7 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
   const handlePayWithWallet = async () => {
     if (!paymentRequest) return
     try {
-      await apiClient.post(`/orders/${paymentRequest.orderId}/pay`, { paymentMethod: 'wallet' })
+      await payOrder(paymentRequest.orderId, 'wallet')
       setShowPaymentDialog(false)
       setPaymentRequest(null)
       toast({ title: 'Pembayaran berhasil', description: 'Pesanan sedang diproses' })
@@ -125,24 +125,17 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
 
     ;(async () => {
       try {
-        // Call backend to create snap token via OrderController::pay
-        const res = await apiClient.post(`/orders/${paymentRequest.orderId}/pay`)
-        // res expected to contain data.snap_token
-        const snapToken = res.data?.snap_token || res.data?.snapToken || null
+        // Call backend to create snap token via payOrder
+        const res = await payOrder(paymentRequest.orderId, 'midtrans')
+        // res expected to contain snap_token
+        const snapToken = res?.snap_token || (res as any)?.token || (res as any)?.snapToken || null
 
-        if (!snapToken && res.data?.snap_token == undefined) {
-          // older API shape may return data.data.snap_token
-          const possible = res?.data?.data || res?.data
-          const token = (possible as any)?.snap_token || (possible as any)?.token || (possible as any)?.snapToken
-          if (token) {
-            openMidtrans(token)
-          } else {
-            console.error('No snap token returned', res)
-            setShowPaymentDialog(false)
-            setPaymentRequest(null)
-          }
+        if (!snapToken) {
+          console.error('No snap token returned', res)
+          setShowPaymentDialog(false)
+          setPaymentRequest(null)
         } else {
-          openMidtrans(snapToken || res.data?.snap_token)
+          openMidtrans(snapToken)
         }
       } catch (err) {
         console.error('Midtrans create snap failed', err)

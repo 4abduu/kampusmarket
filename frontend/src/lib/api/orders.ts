@@ -182,11 +182,10 @@ export const getOrderDetail = async (orderId: string): Promise<Order> => {
   return unwrapApiData<Order>(response);
 };
 
-/**
- * Pay for order (returns snap token for Midtrans or processes balance payment)
- */
-export const payOrder = async (orderId: string): Promise<PaymentResponse & { order?: Order }> => {
-  const response = await apiClient.post(`/orders/${orderId}/pay`);
+export const payOrder = async (orderId: string, paymentMethod?: string): Promise<PaymentResponse & { order?: Order }> => {
+  const response = await apiClient.post(`/orders/${orderId}/pay`, {
+    ...(paymentMethod ? { paymentMethod } : {})
+  });
   return unwrapApiData<PaymentResponse & { order?: Order }>(response);
 };
 

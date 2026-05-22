@@ -650,6 +650,16 @@ class OrderController extends Controller
     {
         $order = Order::where('uuid', $id)->firstOrFail();
 
+        // Override payment_method jika frontend mengirim paymentMethod
+        $requestedMethod = $request->input('paymentMethod');
+        if ($requestedMethod === 'wallet' || $requestedMethod === 'balance') {
+            $order->payment_method = 'balance';
+            $order->save();
+        } elseif ($requestedMethod === 'midtrans') {
+            $order->payment_method = 'midtrans';
+            $order->save();
+        }
+
         if ($order->buyer_id !== $request->user()->id) {
             return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses'], 403);
         }
