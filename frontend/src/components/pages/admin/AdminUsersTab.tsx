@@ -108,7 +108,14 @@ export default function AdminUsersTab({
           <>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>User</TableHead><TableHead>Email</TableHead><TableHead>Fakultas</TableHead><TableHead>Status</TableHead><TableHead>Bergabung</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow>
+                <TableRow>
+                  <TableHead className="w-[30%]">User</TableHead>
+                  <TableHead className="w-[20%]">Email</TableHead>
+                  <TableHead className="w-[20%]">Fakultas</TableHead>
+                  <TableHead className="w-[15%]">Status</TableHead>
+                  <TableHead className="w-[10%]">Bergabung</TableHead>
+                  <TableHead className="w-[5%] text-right">Aksi</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedUsers.map((user) => (

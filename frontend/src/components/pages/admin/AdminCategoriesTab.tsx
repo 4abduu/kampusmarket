@@ -54,7 +54,16 @@ export default function AdminCategoriesTab({
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader><TableRow><TableHead>Nama Kategori</TableHead><TableHead>Tipe</TableHead><TableHead>Deskripsi</TableHead><TableHead>Urutan</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[25%]">Nama Kategori</TableHead>
+              <TableHead className="w-[15%]">Tipe</TableHead>
+              <TableHead className="w-[35%]">Deskripsi</TableHead>
+              <TableHead className="w-[10%]">Urutan</TableHead>
+              <TableHead className="w-[10%]">Status</TableHead>
+              <TableHead className="w-[5%] text-right">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {filteredCategories.map((category) => (
               <TableRow key={category.id}>

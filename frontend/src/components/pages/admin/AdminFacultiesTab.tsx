@@ -128,14 +128,14 @@ export default function AdminFacultiesTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fakultas</TableHead>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead>Mahasiswa</TableHead>
-                  <TableHead>Urutan</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Dibuat</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="w-[25%]">Fakultas</TableHead>
+                  <TableHead className="w-[10%]">Kode</TableHead>
+                  <TableHead className="w-[25%]">Deskripsi</TableHead>
+                  <TableHead className="w-[10%]">Mahasiswa</TableHead>
+                  <TableHead className="w-[10%]">Urutan</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[10%]">Dibuat</TableHead>
+                  <TableHead className="w-[5%] text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

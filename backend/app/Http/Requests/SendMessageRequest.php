@@ -20,11 +20,11 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'content' => ['required_without_all:fileUrl,imageUrls', 'string', 'max:5000'],
+            'content' => ['required_without_all:fileUrl,imageUrls', 'nullable', 'string', 'max:5000'],
             'type' => ['required', 'in:text,offer,image,file'],
             'fileUrl' => ['nullable', 'string', 'max:500', 'required_if:type,file'],
             'imageUrls' => ['nullable', 'array', 'max:5', 'required_if:type,image'],
-            'imageUrls.*' => ['required', 'string', 'max:500'],
+            'imageUrls.*' => ['required', 'string', 'max:500', 'not_regex:/^data:image/i'],
         ];
 
         // If type is offer, validate offer price
@@ -51,6 +51,7 @@ class SendMessageRequest extends FormRequest
             'imageUrls.max' => 'Maksimal 5 gambar per pesan',
             'imageUrls.*.required' => 'URL gambar tidak boleh kosong',
             'imageUrls.*.max' => 'URL gambar maksimal 500 karakter',
+            'imageUrls.*.not_regex' => 'Format URL gambar tidak boleh berupa payload Base64',
             'offerPrice.required' => 'Harga penawaran wajib diisi',
             'offerPrice.min' => 'Harga penawaran minimal 0',
         ];
@@ -62,6 +63,13 @@ class SendMessageRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $payload = [];
+
+        if ($this->has('content') && ($this->content === '' || $this->content === null)) {
+            $this->request->remove('content');
+            if ($this->json()) {
+                $this->json()->remove('content');
+            }
+        }
 
         if ($this->has('offerPrice') && $this->offerPrice !== null && $this->offerPrice !== '') {
             $payload['offer_price'] = $this->offerPrice;

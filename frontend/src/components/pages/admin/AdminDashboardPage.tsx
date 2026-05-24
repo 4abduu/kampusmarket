@@ -265,7 +265,36 @@ export default function AdminDashboardPage({
     confirmDeleteFaculty,
     handleToggleFacultyActive,
     handleRestoreProduct,
+    lastUpdatedAt,
   } = useAdminDashboardController();
+
+  const formatLastUpdated = (date: Date) => {
+    if (!date) return "Belum diupdate";
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeString = date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    if (isToday) {
+      return `Hari ini, ${timeString}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `Kemarin, ${timeString}`;
+    }
+
+    const dateString = date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return `${dateString}, ${timeString}`;
+  };
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900/50 flex-1">
@@ -296,7 +325,7 @@ export default function AdminDashboardPage({
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="gap-1">
               <Clock className="h-3 w-3" />
-              Terakhir update: Hari ini, 14:30
+              Terakhir update: {formatLastUpdated(lastUpdatedAt)}
             </Badge>
           </div>
         </div>

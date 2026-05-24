@@ -48,7 +48,7 @@ class ImageProcessingService
         'original'  => null,
     ];
 
-    protected const WEBP_QUALITY = 90;
+    protected const WEBP_QUALITY = 82;
 
     protected const VALID_CATEGORIES = ['products', 'ratings', 'profiles', 'messages'];
 
@@ -80,7 +80,17 @@ class ImageProcessingService
         $filename = uniqid() . '_' . time();
         $urls     = [];
 
-        foreach (self::VARIANTS as $variant => $maxSide) {
+        $variants = self::VARIANTS;
+        if ($category === 'messages') {
+            $variants = [
+                'chat'     => null,
+                'small'    => 320,
+                'medium'   => 640,
+                'original' => null,
+            ];
+        }
+
+        foreach ($variants as $variant => $maxSide) {
             $dir = "{$category}/{$variant}";
             Storage::disk($this->disk)->makeDirectory($dir);
 
@@ -115,8 +125,8 @@ class ImageProcessingService
         return [
             'filename' => $filename,
             'category' => $category,
-            // Primary URL points to the 'small' variant (best for general use / API lists)
-            'url'      => $urls['small'],
+            // Primary URL points to the 'chat' variant if category is messages, otherwise 'small'
+            'url'      => $category === 'messages' ? $urls['chat'] : $urls['small'],
             // All variants for frontend <picture>/<srcset> usage
             'urls'     => $urls,
         ];
@@ -128,7 +138,12 @@ class ImageProcessingService
     public function deleteImage(string $filename, string $category = 'products'): bool
     {
         try {
-            foreach (array_keys(self::VARIANTS) as $variant) {
+            $variants = array_keys(self::VARIANTS);
+            if ($category === 'messages') {
+                $variants = ['chat', 'small', 'medium', 'original'];
+            }
+
+            foreach ($variants as $variant) {
                 $path = "{$category}/{$variant}/{$filename}.webp";
                 if (Storage::disk($this->disk)->exists($path)) {
                     Storage::disk($this->disk)->delete($path);

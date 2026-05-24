@@ -12,7 +12,7 @@ import {
   Clock,
   GraduationCap,
 } from "lucide-react";
-import AdminNotificationPanel from "@/components/pages/admin/AdminNotificationPanel";
+
 import {
   LineChart,
   Line,
@@ -273,10 +273,7 @@ export default function AdminOverviewTab({
         </Card>
       </div>
 
-      <AdminNotificationPanel
-        onOpenTab={onOpenTab}
-        onOpenNotifications={onOpenNotifications}
-      />
+
 
       <Card>
         <CardHeader>

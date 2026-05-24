@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Bell, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +16,12 @@ export default function AdminNotificationPanel({
   onOpenTab,
   onOpenNotifications,
 }: AdminNotificationPanelProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } =
     useAdminNotificationStore();
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const latestNotifications = notifications.slice(0, 4);
   const pendingNotifications = notifications.filter((notification) => !notification.read);

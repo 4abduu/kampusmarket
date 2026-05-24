@@ -47,6 +47,50 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Seed some admin notifications for testing
+        if (\App\Models\Notification::where('user_id', $admin->id)->count() === 0) {
+            \App\Models\Notification::withoutEvents(function () use ($admin) {
+                \App\Models\Notification::create([
+                    'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
+                    'user_id' => $admin->id,
+                    'type' => \App\Enums\NotificationType::WITHDRAWAL,
+                    'title' => 'Permintaan Penarikan Dana',
+                    'message' => 'Budi Santoso meminta penarikan dana sebesar Rp 500.000 ke rekening BRI.',
+                    'link' => '/admin',
+                    'data' => [
+                        'action_tab' => 'finance',
+                    ],
+                    'is_read' => false,
+                ]);
+
+                \App\Models\Notification::create([
+                    'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
+                    'user_id' => $admin->id,
+                    'type' => \App\Enums\NotificationType::SYSTEM,
+                    'title' => 'Laporan Pengguna',
+                    'message' => 'Ahmad melaporkan penjual TokoBuku karena produk palsu. Perlu investigasi segera.',
+                    'link' => '/admin',
+                    'data' => [
+                        'action_tab' => 'reports',
+                    ],
+                    'is_read' => false,
+                ]);
+
+                \App\Models\Notification::create([
+                    'uuid' => \App\Http\Helpers\NumberGenerator::uuid(),
+                    'user_id' => $admin->id,
+                    'type' => \App\Enums\NotificationType::ORDER,
+                    'title' => 'Permintaan Pembatalan Baru',
+                    'message' => 'Siti Nurhaliza mengajukan pembatalan untuk pesanan #ORD-2026-0004.',
+                    'link' => '/admin',
+                    'data' => [
+                        'action_tab' => 'cancel-requests',
+                    ],
+                    'is_read' => false,
+                ]);
+            });
+        }
+
         // ─── 2. USERS (SELLERS) ────────────────────────────────────────────────
         $ahmad = User::where('email', 'ahmad@student.ub.ac.id')->first();
         if (!$ahmad) {

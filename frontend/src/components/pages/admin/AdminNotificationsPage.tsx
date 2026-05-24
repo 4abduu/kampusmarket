@@ -25,16 +25,21 @@ interface AdminNotificationsPageProps {
 
 export default function AdminNotificationsPage({ onNavigate }: AdminNotificationsPageProps) {
   const [filter, setFilter] = useState("all");
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useAdminNotificationStore();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, fetchNotifications } = useAdminNotificationStore();
 
   useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (notifications.length === 0) return;
     const timer = setTimeout(() => {
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       unreadIds.forEach(id => markAsRead(id));
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [notifications, markAsRead]);
 
   const filteredNotifications = notifications.filter((n) => {
     if (filter === "all") return true;
@@ -56,7 +61,7 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
     }
   };
 
-  const handleDeleteNotification = (e: React.MouseEvent, id: number) => {
+  const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     deleteNotification(id);
   };

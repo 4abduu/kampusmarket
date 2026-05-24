@@ -91,6 +91,27 @@ class CancelRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        // Notify all admins about the new cancel request
+        try {
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => \App\Enums\NotificationType::ORDER,
+                    'title' => 'Permintaan Pembatalan Baru',
+                    'message' => $user->name . ' mengajukan pembatalan untuk pesanan ' . $order->order_number . '.',
+                    'link' => '/admin',
+                    'data' => [
+                        'action_tab' => 'cancel-requests',
+                        'cancel_request_id' => $cancelRequest->uuid,
+                    ],
+                    'is_read' => false,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('[CancelRequestController] Gagal membuat notifikasi admin', ['error' => $e->getMessage()]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Permintaan pembatalan berhasil dikirim',

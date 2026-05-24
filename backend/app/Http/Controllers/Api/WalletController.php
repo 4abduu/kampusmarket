@@ -157,6 +157,27 @@ class WalletController extends Controller
                 return $withdrawal;
             });
 
+            // Notify all admins about the new withdrawal request
+            try {
+                $admins = User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \App\Models\Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => \App\Enums\NotificationType::WITHDRAWAL,
+                        'title' => 'Permintaan Penarikan Dana Baru',
+                        'message' => $request->user()->name . ' meminta penarikan dana sebesar Rp ' . number_format($withdrawal->amount, 0, ',', '.') . '.',
+                        'link' => '/admin',
+                        'data' => [
+                            'action_tab' => 'finance',
+                            'withdrawal_id' => $withdrawal->uuid,
+                        ],
+                        'is_read' => false,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('[WalletController] Gagal membuat notifikasi admin', ['error' => $e->getMessage()]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Permintaan penarikan berhasil dibuat',

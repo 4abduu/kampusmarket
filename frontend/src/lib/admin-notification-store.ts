@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { ShieldAlert, AlertTriangle, DollarSign, UserPlus, CheckCircle, Ban } from "lucide-react";
 
 export interface AdminNotification {
-  id: number;
+  id: string; // UUID string from backend
   type: "moderation" | "dispute" | "withdrawal" | "user" | "report" | "system";
   title: string;
   message: string;
@@ -29,123 +29,124 @@ export interface AdminNotification {
 interface AdminNotificationState {
   notifications: AdminNotification[];
   unreadCount: number;
-  markAsRead: (id: number) => void;
-  markAllAsRead: () => void;
-  deleteNotification: (id: number) => void;
+  fetchNotifications: () => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  initEcho: (userId: string) => void;
+  cleanupEcho: () => void;
 }
 
-// Initial admin notifications data
-const initialAdminNotifications: AdminNotification[] = [
-  {
-    id: 1,
-    type: "moderation",
-    title: "Produk Perlu Dimoderasi",
-    message: "5 produk baru menunggu persetujuan untuk ditampilkan di marketplace.",
-    time: "5 menit yang lalu",
-    read: false,
-    icon: ShieldAlert,
-    iconColor: "text-amber-600",
-    iconBg: "bg-amber-100 dark:bg-amber-900/30",
-    action: "Lihat Produk",
-    actionPage: "admin",
-    actionTab: "products",
-  },
-  {
-    id: 2,
-    type: "dispute",
-    title: "Dispute Baru dari Transaksi #ORD-2024-001",
-    message: "Pembeli melaporkan barang tidak sesuai deskripsi. Perlu mediasi segera.",
-    time: "15 menit yang lalu",
-    read: false,
-    icon: AlertTriangle,
-    iconColor: "text-red-600",
-    iconBg: "bg-red-100 dark:bg-red-900/30",
-    action: "Lihat Dispute",
-    actionPage: "admin",
-    actionTab: "reports",
-  },
-  {
-    id: 3,
-    type: "withdrawal",
-    title: "Permintaan Penarikan Dana",
-    message: "Budi Santoso meminta penarikan dana sebesar Rp 500.000 ke rekening BRI.",
-    time: "30 menit yang lalu",
-    read: false,
-    icon: DollarSign,
-    iconColor: "text-primary-600",
-    iconBg: "bg-primary-100 dark:bg-primary-900/30",
-    action: "Proses Penarikan",
-    actionPage: "admin",
-    actionTab: "finance",
-  },
-  {
-    id: 4,
-    type: "user",
-    title: "Pengguna Baru Terdaftar",
-    message: "10 pengguna baru mendaftar hari ini. Total pengguna: 1.234 orang.",
-    time: "1 jam yang lalu",
-    read: true,
-    icon: UserPlus,
-    iconColor: "text-blue-600",
-    iconBg: "bg-blue-100 dark:bg-blue-900/30",
-    action: "Lihat User",
-    actionPage: "admin",
-    actionTab: "users",
-  },
-  {
-    id: 5,
-    type: "report",
-    title: "Laporan Pengguna",
-    message: "Ahmad melaporkan penjual 'TokoBuku' karena produk palsu. Perlu investigasi.",
-    time: "2 jam yang lalu",
-    read: true,
-    icon: AlertTriangle,
-    iconColor: "text-orange-600",
-    iconBg: "bg-orange-100 dark:bg-orange-900/30",
-    action: "Lihat Laporan",
-    actionPage: "admin",
-    actionTab: "reports",
-  },
-  {
-    id: 6,
-    type: "system",
-    title: "Backup Database Selesai",
-    message: "Backup otomatis database telah selesai. Ukuran: 256 MB.",
-    time: "3 jam yang lalu",
-    read: true,
-    icon: CheckCircle,
-    iconColor: "text-green-600",
-    iconBg: "bg-green-100 dark:bg-green-900/30",
-  },
-  {
-    id: 7,
-    type: "moderation",
-    title: "Produk Ditolak Otomatis",
-    message: "3 produk ditolak karena mengandung kata terlarang atau gambar tidak sesuai.",
-    time: "5 jam yang lalu",
-    read: true,
-    icon: Ban,
-    iconColor: "text-slate-600",
-    iconBg: "bg-slate-100 dark:bg-slate-800",
-  },
-  {
-    id: 8,
-    type: "dispute",
-    title: "Dispute Diselesaikan",
-    message: "Dispute #DSP-2024-012 telah diselesaikan. Dana dikembalikan ke pembeli.",
-    time: "1 hari yang lalu",
-    read: true,
-    icon: CheckCircle,
-    iconColor: "text-green-600",
-    iconBg: "bg-green-100 dark:bg-green-900/30",
-  },
-];
-
-export const useAdminNotificationStore = create<AdminNotificationState>((set) => ({
-  notifications: initialAdminNotifications,
-  unreadCount: initialAdminNotifications.filter((n) => !n.read).length,
+export const useAdminNotificationStore = create<AdminNotificationState>((set, get) => ({
+  notifications: [],
+  unreadCount: 0,
   
-  markAsRead: (id: number) => {
+  fetchNotifications: async () => {
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      const res: any = await apiClient.get('/notifications');
+      
+      const rawData = res.data?.data || res.data || [];
+      const notificationsArray = Array.isArray(rawData) ? rawData : [];
+
+      const data = notificationsArray.map((n: any) => {
+        const actionTab = n.data?.action_tab || null;
+        const type = n.type; // standard db types: 'order', 'chat', 'payment', 'system', 'withdrawal', 'review'
+
+        // Determine frontend notification type, icons, color and bg based on actionTab and database type
+        let frontendType: "moderation" | "dispute" | "withdrawal" | "user" | "report" | "system" = "system";
+        let icon = CheckCircle;
+        let iconColor = "text-green-600";
+        let iconBg = "bg-green-100 dark:bg-green-900/30";
+        let action = "Buka detail";
+        
+        if (actionTab === 'products') {
+          frontendType = "moderation";
+          icon = ShieldAlert;
+          iconColor = "text-amber-600";
+          iconBg = "bg-amber-100 dark:bg-amber-900/30";
+          action = "Lihat Produk";
+        } else if (actionTab === 'reports') {
+          frontendType = "dispute";
+          icon = AlertTriangle;
+          iconColor = "text-red-600";
+          iconBg = "bg-red-100 dark:bg-red-900/30";
+          action = "Lihat Dispute";
+        } else if (actionTab === 'finance' || type === 'withdrawal') {
+          frontendType = "withdrawal";
+          icon = DollarSign;
+          iconColor = "text-primary-600";
+          iconBg = "bg-primary-100 dark:bg-primary-900/30";
+          action = "Proses Penarikan";
+        } else if (actionTab === 'cancel-requests') {
+          frontendType = "dispute"; // map to dispute type in UI
+          icon = AlertTriangle;
+          iconColor = "text-orange-600";
+          iconBg = "bg-orange-100 dark:bg-orange-900/30";
+          action = "Lihat Pembatalan";
+        } else if (actionTab === 'users') {
+          frontendType = "user";
+          icon = UserPlus;
+          iconColor = "text-blue-600";
+          iconBg = "bg-blue-100 dark:bg-blue-900/30";
+          action = "Lihat User";
+        }
+
+        // Relative time helper or raw date string (e.g. from backend createdAt / created_at)
+        let timeStr = n.createdAt || n.created_at || "";
+        try {
+          const date = new Date(timeStr);
+          const now = new Date();
+          const diffMs = now.getTime() - date.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMins / 60);
+          const diffDays = Math.floor(diffHours / 24);
+
+          if (diffMins < 1) timeStr = "Baru saja";
+          else if (diffMins < 60) timeStr = `${diffMins} menit yang lalu`;
+          else if (diffHours < 24) timeStr = `${diffHours} jam yang lalu`;
+          else if (diffDays === 1) timeStr = "Kemarin";
+          else timeStr = `${diffDays} hari yang lalu`;
+        } catch (err) {
+          // ignore
+        }
+
+        return {
+          id: n.id, // UUID string
+          type: frontendType,
+          title: n.title,
+          message: n.message,
+          time: timeStr,
+          read: n.isRead !== undefined ? n.isRead : n.is_read,
+          icon,
+          iconColor,
+          iconBg,
+          action,
+          actionPage: "admin",
+          actionTab: actionTab,
+        };
+      });
+
+      set({ notifications: data, unreadCount: data.filter((n: any) => !n.read).length });
+    } catch (e) {
+      console.error('Error fetching admin notifications:', e);
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      const res: any = await apiClient.get('/notifications/unread-count');
+      const count = res.data?.unreadCount ?? 0;
+      set({ unreadCount: count });
+    } catch (e) {
+      console.error('Error fetching admin unread count:', e);
+    }
+  },
+
+  markAsRead: async (id: string) => {
+    const original = get().notifications;
     set((state) => {
       const notifications = state.notifications.map((n) =>
         n.id === id ? { ...n, read: true } : n
@@ -155,16 +156,34 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set) =>
         unreadCount: notifications.filter((n) => !n.read).length,
       };
     });
+    
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      const targetId = original.find(n => n.id === id)?.id;
+      if (targetId) {
+        await apiClient.post(`/notifications/${targetId}/read`);
+      }
+    } catch (e) {
+      console.error('Error marking admin notification as read:', e);
+    }
   },
   
-  markAllAsRead: () => {
+  markAllAsRead: async () => {
     set((state) => ({
       notifications: state.notifications.map((n) => ({ ...n, read: true })),
       unreadCount: 0,
     }));
+    
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      await apiClient.post('/notifications/read-all');
+    } catch (e) {
+      console.error('Error marking all admin notifications as read:', e);
+    }
   },
   
-  deleteNotification: (id: number) => {
+  deleteNotification: async (id: string) => {
+    const original = get().notifications;
     set((state) => {
       const notifications = state.notifications.filter((n) => n.id !== id);
       return {
@@ -172,5 +191,33 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set) =>
         unreadCount: notifications.filter((n) => !n.read).length,
       };
     });
+    
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      const targetId = original.find(n => n.id === id)?.id;
+      if (targetId) {
+        await apiClient.delete(`/notifications/${targetId}`);
+      }
+    } catch (e) {
+      console.error('Error deleting admin notification:', e);
+    }
   },
+
+  initEcho: (userId: string) => {
+    import('@/lib/echo').then(({ getEcho }) => {
+      try {
+        const echo = getEcho();
+        const channel = echo.private(`users.${userId}`);
+        channel.listen('.NewNotification', () => {
+           get().fetchNotifications();
+        });
+      } catch (e) {
+        console.info('Reverb echo not active');
+      }
+    });
+  },
+
+  cleanupEcho: () => {
+    // Nothing needed to explicitly clean up
+  }
 }));

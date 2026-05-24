@@ -18,6 +18,7 @@ import {
   acceptOffer,
   rejectOffer,
 } from '@/lib/api/chat';
+import { uploadImage } from '@/lib/api/images';
 import { getEcho } from '@/lib/echo';
 import apiClient from '@/lib/api/client';
 import { useChatStore } from '@/lib/chat-store';
@@ -59,6 +60,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [showContextCard, setShowContextCard] = useState(false);
   const [showNegoModal, setShowNegoModal] = useState(false);
@@ -472,6 +474,26 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validasi Tipe File (MIME type & Ekstensi)
+    const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+    if (!validMimeTypes.includes(file.type) && (!fileExtension || !validExtensions.includes(fileExtension))) {
+      toast.error('Format gambar harus JPG, JPEG, PNG, atau WEBP');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Validasi Ukuran File (Maksimal 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran gambar maksimal 2 MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setAttachedImage(reader.result as string);
     reader.readAsDataURL(file);
@@ -481,32 +503,54 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     if (!chatDetail || (!newMessage.trim() && !attachedImage) || isSending) return;
     const content = newMessage.trim();
     setIsSending(true);
+    
+    const fileToUpload = imageFile;
+    
     setNewMessage('');
     setAttachedImage(null);
+    setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    // [REVISI] Tetap tampilkan context card sesuai request user
-    // setShowContextCard(false);
 
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {
       id: tempId, chatId: chatDetail.id, senderId: currentUserId, content,
-      type: attachedImage ? 'image' : 'text', offerPrice: null, offerStatus: null,
+      type: fileToUpload ? 'image' : 'text', offerPrice: null, offerStatus: null,
       imageUrls: attachedImage ? [attachedImage] : [], fileUrls: [], fileUrl: null,
       isRead: false, readAt: null, createdAt: new Date().toISOString(), _pending: true,
     };
     setMessages(prev => [...prev, optimistic]);
 
     try {
+      let uploadedUrls: string[] = [];
+      if (fileToUpload) {
+        const uploadResult = await uploadImage(fileToUpload, 'messages');
+        let relativePath = uploadResult.url;
+        if (relativePath.startsWith('/storage/')) {
+          relativePath = relativePath.substring(9);
+        } else if (relativePath.startsWith('storage/')) {
+          relativePath = relativePath.substring(8);
+        }
+        uploadedUrls = [relativePath];
+      }
+
       const sent = await sendMessage(chatDetail.id, {
-        content, type: attachedImage ? 'image' : 'text',
-        imageUrls: attachedImage ? [attachedImage] : undefined,
+        content: content || undefined,
+        type: fileToUpload ? 'image' : 'text',
+        imageUrls: fileToUpload ? uploadedUrls : undefined,
       });
       setMessages(prev => prev.map(m => m.id === tempId ? sent : m));
       setChats(prev => prev.map(c => c.id === chatDetail.id ? { ...c, lastMessage: content || '[gambar]', lastMessageAt: sent.createdAt } : c));
-    } catch {
+    } catch (error) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setNewMessage(content);
+      if (fileToUpload) {
+        setImageFile(fileToUpload);
+        const reader = new FileReader();
+        reader.onloadend = () => setAttachedImage(reader.result as string);
+        reader.readAsDataURL(fileToUpload);
+      }
       toast.error('Gagal mengirim pesan');
+      console.error('Send message failed:', error);
     } finally {
       setIsSending(false);
     }
@@ -717,7 +761,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onImageUpload={handleImageUpload}
           onToggleEmoji={() => setShowEmojiPicker(p => !p)}
           onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
-          onRemoveImage={() => { setAttachedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+          onRemoveImage={() => { setAttachedImage(null); setImageFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
           onToggleContextCard={() => setShowContextCard(p => !p)}
           onAcceptOffer={handleAcceptOffer}
           onRejectOffer={handleRejectOffer}

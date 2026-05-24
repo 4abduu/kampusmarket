@@ -31,16 +31,17 @@ class ImageController extends Controller
             $validated = $request->validate([
                 'image' => [
                     'required',
-                    'file',
                     'image',
-                    'mimes:jpeg,jpg,png,webp,gif',
+                    'mimes:jpg,jpeg,png,webp',
                     'max:2048', // 2MB
                 ],
                 'category' => ['nullable', 'string', 'in:products,ratings,profiles,messages'],
                 'alt' => ['sometimes', 'string', 'max:255'],
             ], [
+                'image.required' => 'File gambar wajib diunggah',
+                'image.image' => 'File harus berupa gambar',
                 'image.max' => 'Ukuran gambar maksimal 2MB',
-                'image.mimes' => 'Format gambar harus jpeg, png, webp, atau gif',
+                'image.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp',
             ]);
 
             $file = $request->file('image');
@@ -76,15 +77,15 @@ class ImageController extends Controller
             ]);
 
         } catch (Throwable $e) {
+            $file = $request->file('image');
             Log::error('Image upload failed', [
-                'error' => $e->getMessage(),
+                'file_name' => $file?->getClientOriginalName(),
+                'file_size' => $file?->getSize(),
+                'file_mime' => $file?->getMimeType(),
+                'error_message' => $e->getMessage(),
                 'class' => get_class($e),
                 'file'  => $e->getFile(),
                 'line'  => $e->getLine(),
-                'request_data' => [
-                    'has_image' => $request->hasFile('image'),
-                    'image_size' => $request->file('image')?->getSize(),
-                ],
             ]);
 
             return response()->json([

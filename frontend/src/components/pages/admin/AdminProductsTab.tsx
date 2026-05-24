@@ -111,7 +111,16 @@ export default function AdminProductsTab(props: Props) {
         ) : (
           <>
             <Table>
-              <TableHeader><TableRow><TableHead>Produk</TableHead><TableHead>Tipe</TableHead><TableHead>Harga</TableHead><TableHead>Penjual</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[35%]">Produk</TableHead>
+                  <TableHead className="w-[10%]">Tipe</TableHead>
+                  <TableHead className="w-[15%]">Harga</TableHead>
+                  <TableHead className="w-[20%]">Penjual</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[10%] text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {paginatedProducts.map((product) => (
                   <TableRow key={product.id} className={product.deletedAt ? "bg-red-50/50 dark:bg-red-950/20" : ""}>

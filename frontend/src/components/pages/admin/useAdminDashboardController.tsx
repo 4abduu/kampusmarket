@@ -232,6 +232,7 @@ export function useAdminDashboardController() {
   >("all");
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date>(new Date());
 
   const [userPage, setUserPage] = useState(1);
   const [productPage, setProductPage] = useState(1);
@@ -279,6 +280,51 @@ export function useAdminDashboardController() {
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [facultiesLoading, setFacultiesLoading] = useState(false);
+
+  // Track when the data was last updated dynamically by listening to transition completions
+  const prevLoadingRef = useRef({
+    overviewLoading,
+    usersLoading,
+    productsLoading,
+    reportsLoading,
+    withdrawalsLoading,
+    categoriesLoading,
+    facultiesLoading,
+  });
+
+  useEffect(() => {
+    const prev = prevLoadingRef.current;
+    const finished =
+      (prev.overviewLoading && !overviewLoading) ||
+      (prev.usersLoading && !usersLoading) ||
+      (prev.productsLoading && !productsLoading) ||
+      (prev.reportsLoading && !reportsLoading) ||
+      (prev.withdrawalsLoading && !withdrawalsLoading) ||
+      (prev.categoriesLoading && !categoriesLoading) ||
+      (prev.facultiesLoading && !facultiesLoading);
+
+    if (finished) {
+      setLastUpdatedAt(new Date());
+    }
+
+    prevLoadingRef.current = {
+      overviewLoading,
+      usersLoading,
+      productsLoading,
+      reportsLoading,
+      withdrawalsLoading,
+      categoriesLoading,
+      facultiesLoading,
+    };
+  }, [
+    overviewLoading,
+    usersLoading,
+    productsLoading,
+    reportsLoading,
+    withdrawalsLoading,
+    categoriesLoading,
+    facultiesLoading,
+  ]);
 
   // --- Per-resource/tab error states ---
   const [overviewError, setOverviewError] = useState<string | null>(null);
@@ -2134,6 +2180,7 @@ export function useAdminDashboardController() {
     activeTab,
     setActiveTab,
     successMessage,
+    lastUpdatedAt,
     stats: displayStats,
     activitySummary: displayActivitySummary,
     revenueChartData,

@@ -20,12 +20,32 @@ class MessageResource extends JsonResource
         $imageUrls = $this->attachments
             ->where('type', 'image')
             ->pluck('url')
+            ->map(function ($url) {
+                if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+                    return $url;
+                }
+                $cleanUrl = ltrim($url, '/');
+                if (str_starts_with($cleanUrl, 'storage/')) {
+                    $cleanUrl = substr($cleanUrl, 8);
+                }
+                return asset('storage/' . $cleanUrl);
+            })
             ->values()
             ->toArray();
 
         $fileUrls = $this->attachments
             ->where('type', 'file')
             ->pluck('url')
+            ->map(function ($url) {
+                if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+                    return $url;
+                }
+                $cleanUrl = ltrim($url, '/');
+                if (str_starts_with($cleanUrl, 'storage/')) {
+                    $cleanUrl = substr($cleanUrl, 8);
+                }
+                return asset('storage/' . $cleanUrl);
+            })
             ->values()
             ->toArray();
 
