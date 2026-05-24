@@ -17,6 +17,7 @@ import {
   confirmPaymentClient,
   type Order,
 } from "@/lib/api/orders";
+import { walletApi } from "@/lib/api/wallet";
 import OrderHistoryTimeline from "@/components/pages/user/order-detail/OrderHistoryTimeline";
 import {
   getOrderStatusConfig,
@@ -642,14 +643,33 @@ export default function OrderDetailPage({
       } else {
         // wallet payment
         const balance = currentUser?.walletBalance || 0;
-        if (balance < order.totalPrice) {
-          toast({
-            title: "Saldo tidak mencukupi",
-            description: `Saldo Anda (${formatPrice(balance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`,
-            variant: "destructive",
-          });
-          setActionLoading(false);
-          return;
+        
+        // For wallet payment, fetch real-time balance to ensure accuracy after top-up
+        try {
+          const balanceResponse = await walletApi.getBalance();
+          if (balanceResponse.success) {
+            const currentBalance = balanceResponse.data.balance;
+            if (currentBalance < order.totalPrice) {
+              toast({
+                title: "Saldo tidak mencukupi",
+                description: `Saldo Anda (${formatPrice(currentBalance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`,
+                variant: "destructive",
+              });
+              setActionLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("[OrderDetail] Failed to fetch balance, using cached value", e);
+          if (balance < order.totalPrice) {
+            toast({
+              title: "Saldo tidak mencukupi",
+              description: `Saldo Anda (${formatPrice(balance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`,
+              variant: "destructive",
+            });
+            setActionLoading(false);
+            return;
+          }
         }
 
         await payOrder(order.id, 'wallet');

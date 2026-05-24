@@ -41,7 +41,6 @@ export default function AdminDashboardPage({
     stats,
     revenueChartData,
     categoryChartData,
-    orders,
     users,
     withdrawals,
     cancelRequests,

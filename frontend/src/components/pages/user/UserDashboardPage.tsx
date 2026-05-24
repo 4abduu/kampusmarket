@@ -31,7 +31,9 @@ import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashbo
 import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar";
 import {
   UserDashboardOverviewSkeleton,
+  UserDashboardOverviewTabSkeleton,
   UserDashboardProductsTabSkeleton,
+  UserDashboardOrdersTabSkeleton,
   UserDashboardSettingsSkeleton,
   UserDashboardWalletSkeleton,
 } from "@/components/skeleton";
@@ -57,6 +59,7 @@ export default function UserDashboardPage({
   
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [isLoading, setIsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(authUser || null);
   const [ordersRefreshKey, setOrdersRefreshKey] = useState(0);
   const [dashboardStats, setDashboardStats] = useState<{
@@ -66,7 +69,7 @@ export default function UserDashboardPage({
     pendingOrders: number;
     walletBalance: number;
   } | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
+
 
   const handleOrderUpdated = () => {
     setOrdersRefreshKey((prev) => prev + 1);
@@ -239,17 +242,21 @@ export default function UserDashboardPage({
 
           <main className="lg:col-span-3 space-y-6 min-w-0">
             {activeTab === "overview" && (
-              <UserDashboardOverviewTab
-                onNavigate={onNavigate}
-                currentWalletBalance={stats.walletBalance}
-                formatPrice={products.formatPrice}
-                stats={stats}
-                userProducts={products.userProducts}
-                formatPriceRange={products.formatPriceRange}
-                setShowWithdrawDialog={wallet.setShowWithdrawDialog}
-                setActiveTab={handleTabChange}
-                adminFeePercentage={ADMIN_FEE_PERCENTAGE}
-              />
+              isLoading ? (
+                <UserDashboardOverviewTabSkeleton />
+              ) : (
+                <UserDashboardOverviewTab
+                  onNavigate={onNavigate}
+                  currentWalletBalance={wallet.currentBalance}
+                  formatPrice={products.formatPrice}
+                  stats={stats}
+                  userProducts={products.userProducts}
+                  formatPriceRange={products.formatPriceRange}
+                  setShowWithdrawDialog={wallet.setShowWithdrawDialog}
+                  setActiveTab={handleTabChange}
+                  adminFeePercentage={ADMIN_FEE_PERCENTAGE}
+                />
+              )
             )}
 
             {activeTab === "products" &&
@@ -273,28 +280,32 @@ export default function UserDashboardPage({
               ))}
 
             {activeTab === "orders" && (
-              <UserDashboardOrdersTab
-                key={`orders-tab-${ordersRefreshKey}`}
-                onNavigate={onNavigate}
-                formatPrice={products.formatPrice}
-                getStatusBadge={getStatusBadge}
-                setShowShippingDialog={orderActions.setShowShippingDialog}
-                handleOpenServicePriceDialog={
-                  orderActions.handleOpenServicePriceDialog
-                }
-                setShowOrderConfirmDialog={
-                  orderActions.setShowOrderConfirmDialog
-                }
-                handleRejectPrice={orderActions.handleRejectPrice}
-                handleAcceptPrice={orderActions.handleAcceptPrice}
-              />
+              isLoading ? (
+                <UserDashboardOrdersTabSkeleton />
+              ) : (
+                <UserDashboardOrdersTab
+                  key={`orders-tab-${ordersRefreshKey}`}
+                  onNavigate={onNavigate}
+                  formatPrice={products.formatPrice}
+                  getStatusBadge={getStatusBadge}
+                  setShowShippingDialog={orderActions.setShowShippingDialog}
+                  handleOpenServicePriceDialog={
+                    orderActions.handleOpenServicePriceDialog
+                  }
+                  setShowOrderConfirmDialog={
+                    orderActions.setShowOrderConfirmDialog
+                  }
+                  handleRejectPrice={orderActions.handleRejectPrice}
+                  handleAcceptPrice={orderActions.handleAcceptPrice}
+                />
+              )
             )}
 
             {activeTab === "wallet" && (
               <UserDashboardWalletTab
                 showBalance={wallet.showBalance}
                 setShowBalance={wallet.setShowBalance}
-                currentWalletBalance={stats.walletBalance}
+                currentWalletBalance={wallet.currentBalance}
                 totalIncome={wallet.totalIncome}
                 totalExpense={wallet.totalExpense}
                 setShowTopUpDialog={wallet.setShowTopUpDialog}
@@ -326,30 +337,35 @@ export default function UserDashboardPage({
                   income: { label: "Pendapatan" },
                   admin_fee: { label: "Biaya Admin" },
                 }}
+                isLoadingStats={statsLoading}
               />
             )}
 
             {activeTab === "settings" && (
-              <UserDashboardSettingsTab
-                currentUser={currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" } as any}
-                profileForm={settings.profileForm}
-                setProfileForm={settings.setProfileForm}
-                handleSaveProfile={settings.handleSaveProfile}
-                setShowPasswordDialog={settings.setShowPasswordDialog}
-                handleAddAddress={settings.handleAddAddress}
-                addresses={settings.addresses}
-                handleEditAddress={settings.handleEditAddress}
-                setAddressToDelete={settings.setAddressToDelete}
-                setShowDeleteAddressDialog={settings.setShowDeleteAddressDialog}
-                getFacultyName={getFacultyName}
-                isLoadingProfile={settings.isLoadingProfile}
-                profileError={settings.profileError}
-                isLoadingAddresses={settings.isLoadingAddresses}
-                addressError={settings.addressError}
-                showProfileSuccess={settings.showProfileSuccess}
-                onNavigate={onNavigate}
-                onProfilePictureUpdate={handleProfilePictureUpdate}
-              />
+              isLoading ? (
+                <UserDashboardSettingsSkeleton />
+              ) : (
+                <UserDashboardSettingsTab
+                  currentUser={currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" } as any}
+                  profileForm={settings.profileForm}
+                  setProfileForm={settings.setProfileForm}
+                  handleSaveProfile={settings.handleSaveProfile}
+                  setShowPasswordDialog={settings.setShowPasswordDialog}
+                  handleAddAddress={settings.handleAddAddress}
+                  addresses={settings.addresses}
+                  handleEditAddress={settings.handleEditAddress}
+                  setAddressToDelete={settings.setAddressToDelete}
+                  setShowDeleteAddressDialog={settings.setShowDeleteAddressDialog}
+                  getFacultyName={getFacultyName}
+                  isLoadingProfile={settings.isLoadingProfile}
+                  profileError={settings.profileError}
+                  isLoadingAddresses={settings.isLoadingAddresses}
+                  addressError={settings.addressError}
+                  showProfileSuccess={settings.showProfileSuccess}
+                  onNavigate={onNavigate}
+                  onProfilePictureUpdate={handleProfilePictureUpdate}
+                />
+              )
             )}
           </main>
         </div>
@@ -404,10 +420,10 @@ export default function UserDashboardPage({
         setShowWithdrawDialog={wallet.setShowWithdrawDialog}
         withdrawForm={wallet.withdrawForm}
         setWithdrawForm={wallet.setWithdrawForm}
-        currentWalletBalance={stats.walletBalance}
+        currentWalletBalance={wallet.currentBalance}
         isBankLainnya={wallet.isBankLainnya}
         isEwalletLainnya={wallet.isEwalletLainnya}
-        statsWalletBalance={stats.walletBalance}
+        statsWalletBalance={wallet.currentBalance}
         handleWithdraw={wallet.handleWithdraw}
         showShippingDialog={orderActions.showShippingDialog}
         setShowShippingDialog={orderActions.setShowShippingDialog}

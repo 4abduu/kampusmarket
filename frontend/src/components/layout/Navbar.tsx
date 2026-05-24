@@ -349,7 +349,7 @@ export default function Navbar({
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={displayAvatar} alt={displayName} />
-                      <AvatarFallback className={isCustomerOnly ? "bg-blue-100 text-blue-700" : "bg-primary-100 text-primary-700"}>
+                      <AvatarFallback className="bg-green-100 text-green-700">
                         {displayInitials}
                       </AvatarFallback>
                     </Avatar>
@@ -364,73 +364,47 @@ export default function Navbar({
                       <p className="text-xs leading-none text-muted-foreground">
                         {displayEmail}
                       </p>
-                      {isCustomerOnly && (
-                        <span className="text-xs text-blue-600 mt-1">Customer Only</span>
-                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   
-                  {/* Menu items for Customer Only */}
-                  {isCustomerOnly ? (
-                    <>
-                      <DropdownMenuItem onClick={() => onNavigate("orders")}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        <span>Pesanan Saya</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("notifications")}>
-                        <Bell className="mr-2 h-4 w-4" />
-                        <span>Notifikasi</span>
-                        {userUnreadCount > 0 && (
-                          <Badge className="ml-auto bg-red-500 text-white text-xs">{userUnreadCount}</Badge>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("settings")}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Pengaturan</span>
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      {/* Menu items for Seller */}
-                      <DropdownMenuItem onClick={() => onNavigate("dashboard")}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("favorites") }>
-                        <Heart className="mr-2 h-4 w-4" />
-                        <span>Favorit</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("notifications")}>
-                        <Bell className="mr-2 h-4 w-4" />
-                        <span>Notifikasi</span>
-                        {userUnreadCount > 0 && (
-                          <Badge className="ml-auto bg-red-500 text-white text-xs">{userUnreadCount}</Badge>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("my-products")}>
-                        <Package className="mr-2 h-4 w-4" />
-                        <span>Produk Saya</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("orders")}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        <span>Pesanan Saya</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("wallet")}>
-                        <Wallet className="mr-2 h-4 w-4" />
-                        <span>Dompet ({walletText})</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate("settings")}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Pengaturan</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => currentUser?.id && onNavigate("profile", currentUser.id)}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Lihat Profil Saya</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                  {/* Menu items */}
+                  <DropdownMenuItem onClick={() => onNavigate("dashboard")}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("favorites") }>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Favorit</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("notifications")}>
+                    <Bell className="mr-2 h-4 w-4" />
+                    <span>Notifikasi</span>
+                    {userUnreadCount > 0 && (
+                      <Badge className="ml-auto bg-red-500 text-white text-xs">{userUnreadCount}</Badge>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("my-products")}>
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>Produk Saya</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("orders")}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    <span>Pesanan Saya</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("wallet")}>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    <span>Dompet ({walletText})</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Pengaturan</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => currentUser?.id && onNavigate("profile", currentUser.id)}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Lihat Profil Saya</span>
+                  </DropdownMenuItem>
                   
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout}>

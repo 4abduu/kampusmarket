@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CancelRequestController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\WalletTopUpController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
@@ -212,6 +213,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/withdraw', [WalletController::class, 'withdraw']);
         Route::get('/withdrawals', [WalletController::class, 'withdrawals']);
         Route::get('/withdrawals/{id}', [WalletController::class, 'withdrawalDetail']);
+
+        // Wallet Top-Up via Midtrans
+        Route::prefix('topup')->group(function () {
+            Route::post('/midtrans/snap', [WalletTopUpController::class, 'createSnap']);
+            Route::post('/midtrans/confirm', [WalletTopUpController::class, 'confirmPayment']);
+        });
     });
 
     // ----------------------------------------
@@ -319,3 +326,4 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 
 // Public webhook endpoint for Midtrans notifications
 Route::post('/payments/midtrans/webhook', [PaymentController::class, 'webhook']);
+Route::post('/wallet/topup/midtrans/webhook', [WalletTopUpController::class, 'webhook']);

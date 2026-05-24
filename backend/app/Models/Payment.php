@@ -14,12 +14,14 @@ class Payment extends Model
     protected $fillable = [
         'uuid',
         'order_id',
+        'user_id',
         'payment_gateway',
         'payment_method',
         'transaction_id',
         'gross_amount',
         'currency',
         'status',
+        'type',
         'raw_response',
         'paid_at',
     ];
@@ -33,5 +35,10 @@ class Payment extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

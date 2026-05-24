@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Truck, MessageSquare, ImageIcon } from "lucide-react";
+import { Star, Truck, MessageSquare } from "lucide-react";
 import { getProductReviews, type Review, type ReviewsMeta } from "@/lib/api/reviews";
 import ImageLightbox from "@/components/common/ImageLightbox";
 

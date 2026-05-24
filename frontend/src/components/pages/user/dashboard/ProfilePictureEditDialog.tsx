@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 import { AlertCircle, Upload, Loader2 } from "lucide-react"
 import Cropper from "react-easy-crop"
 import "react-easy-crop/react-easy-crop.css"
@@ -28,7 +28,7 @@ type Props = {
 export default function ProfilePictureEditDialog({
   open,
   onOpenChange,
-  currentUser,
+  currentUser: _currentUser,
   onUploadSuccess,
   isLoading = false,
 }: Props) {
@@ -68,7 +68,7 @@ export default function ProfilePictureEditDialog({
     reader.readAsDataURL(file)
   }
 
-  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
     // Generate preview dari cropped area
     generateCroppedPreview(croppedAreaPixels)

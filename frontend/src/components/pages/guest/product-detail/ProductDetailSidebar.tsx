@@ -19,6 +19,7 @@ interface ProductSeller {
   id: string;
   name: string;
   isVerified?: boolean;
+  avatar?: string;
 }
 
 interface ProductShape {
@@ -311,7 +312,7 @@ export default function ProductDetailSidebar({
             onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}
           >
             <Avatar className="h-12 w-12">
-              <AvatarImage src={product.seller.avatar} alt={product.seller.name} />
+              {product.seller.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
               <AvatarFallback className="bg-primary-100 text-primary-700">
                 {product.seller.name.split(" ").map((n) => n[0]).join("")}
               </AvatarFallback>

@@ -121,14 +121,14 @@ export function renderPage(params: RenderPageParams) {
     case "favorites":
       return <FavoritesPage onNavigate={onNavigate} />;
     case "dashboard":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="dashboard" onSellerProductCountChange={onSellerProductCountChange} />;
+      return <UserDashboardPage onNavigate={onNavigate} onSellerProductCountChange={onSellerProductCountChange} />;
     case "my-products":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="my-products" onSellerProductCountChange={onSellerProductCountChange} />;
+      return <UserDashboardPage onNavigate={onNavigate} onSellerProductCountChange={onSellerProductCountChange} />;
     case "dashboard-wallet":
     case "wallet":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="wallet" onSellerProductCountChange={onSellerProductCountChange} />;
+      return <UserDashboardPage onNavigate={onNavigate} onSellerProductCountChange={onSellerProductCountChange} />;
     case "settings":
-      return <UserDashboardPage onNavigate={onNavigate} currentPage="settings" onSellerProductCountChange={onSellerProductCountChange} />;
+      return <UserDashboardPage onNavigate={onNavigate} onSellerProductCountChange={onSellerProductCountChange} />;
     case "chat":
       return <ChatPage onNavigate={onNavigate} initialContextId={selectedProductId || undefined} initialChatAction={chatAction || undefined} />;
     case "notifications":

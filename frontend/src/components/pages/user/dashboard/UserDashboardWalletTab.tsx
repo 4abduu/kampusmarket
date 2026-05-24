@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, Eye, EyeOff, Filter, Plus, Search, Wallet, X } from "lucide-react"
 import TransactionPagination from "@/components/pages/user/dashboard/TransactionPagination"
 
@@ -49,6 +50,7 @@ type Props = {
   getTransactionStatusBadge: (status: string) => React.ReactNode
   formatTransactionDate: (isoDate: string) => string
   transactionTypeLabels: Record<string, { label: string }>
+  isLoadingStats?: boolean
 }
 
 export default function UserDashboardWalletTab({
@@ -79,6 +81,7 @@ export default function UserDashboardWalletTab({
   getTransactionStatusBadge,
   formatTransactionDate,
   transactionTypeLabels,
+  isLoadingStats = false,
 }: Props) {
   return (
     <>
@@ -88,7 +91,11 @@ export default function UserDashboardWalletTab({
             <div>
               <p className="text-primary-100 text-sm">Saldo Tersedia</p>
               <div className="flex items-center gap-2 mt-1">
-                <h2 className="text-3xl font-bold">{showBalance ? formatPrice(currentWalletBalance) : "Rp ••••••••"}</h2>
+                {isLoadingStats ? (
+                  <Skeleton className="h-9 w-52 bg-white/20" />
+                ) : (
+                  <h2 className="text-3xl font-bold">{showBalance ? formatPrice(currentWalletBalance) : "Rp ••••••••"}</h2>
+                )}
                 <button onClick={() => setShowBalance(!showBalance)} className="p-1 hover:bg-primary-500/50 rounded transition-colors">
                   {showBalance ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -99,11 +106,19 @@ export default function UserDashboardWalletTab({
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 text-primary-100 text-sm mb-1"><ArrowDown className="h-4 w-4" />Masuk</div>
-              <p className="font-bold">{showBalance ? formatPrice(totalIncome) : "Rp ••••••••"}</p>
+              {isLoadingStats ? (
+                <Skeleton className="h-6 w-28 bg-white/20" />
+              ) : (
+                <p className="font-bold">{showBalance ? formatPrice(totalIncome) : "Rp ••••••••"}</p>
+              )}
             </div>
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 text-primary-100 text-sm mb-1"><ArrowUp className="h-4 w-4" />Keluar</div>
-              <p className="font-bold">{showBalance ? formatPrice(totalExpense) : "Rp ••••••••"}</p>
+              {isLoadingStats ? (
+                <Skeleton className="h-6 w-28 bg-white/20" />
+              ) : (
+                <p className="font-bold">{showBalance ? formatPrice(totalExpense) : "Rp ••••••••"}</p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -126,12 +141,25 @@ export default function UserDashboardWalletTab({
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Penjualan</p>
-              <p className="text-2xl font-bold text-primary-600">{formatPrice(stats.totalSales)}</p>
+              {isLoadingStats ? (
+                <Skeleton className="h-8 w-40 mt-1" />
+              ) : (
+                <p className="text-2xl font-bold text-primary-600">{formatPrice(stats.totalSales)}</p>
+              )}
             </div>
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-muted-foreground">Pendapatan Bersih</p>
-              <p className="text-2xl font-bold text-blue-600">{formatPrice(stats.netIncome)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Setelah potongan admin {adminFeePercentage * 100}%</p>
+              {isLoadingStats ? (
+                <>
+                  <Skeleton className="h-8 w-40 mt-1" />
+                  <Skeleton className="h-3 w-44 mt-1" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-blue-600">{formatPrice(stats.netIncome)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Setelah potongan admin {adminFeePercentage * 100}%</p>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
