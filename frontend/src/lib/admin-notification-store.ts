@@ -13,6 +13,17 @@ export interface AdminNotification {
   iconBg: string;
   action?: string;
   actionPage?: string;
+  actionTab?:
+    | "overview"
+    | "users"
+    | "products"
+    | "categories"
+    | "faculties"
+    | "reports"
+    | "cancel-requests"
+    | "orders"
+    | "finance"
+    | "addresses";
 }
 
 interface AdminNotificationState {
@@ -37,6 +48,7 @@ const initialAdminNotifications: AdminNotification[] = [
     iconBg: "bg-amber-100 dark:bg-amber-900/30",
     action: "Lihat Produk",
     actionPage: "admin",
+    actionTab: "products",
   },
   {
     id: 2,
@@ -50,6 +62,7 @@ const initialAdminNotifications: AdminNotification[] = [
     iconBg: "bg-red-100 dark:bg-red-900/30",
     action: "Lihat Dispute",
     actionPage: "admin",
+    actionTab: "reports",
   },
   {
     id: 3,
@@ -63,6 +76,7 @@ const initialAdminNotifications: AdminNotification[] = [
     iconBg: "bg-primary-100 dark:bg-primary-900/30",
     action: "Proses Penarikan",
     actionPage: "admin",
+    actionTab: "finance",
   },
   {
     id: 4,
@@ -74,6 +88,9 @@ const initialAdminNotifications: AdminNotification[] = [
     icon: UserPlus,
     iconColor: "text-blue-600",
     iconBg: "bg-blue-100 dark:bg-blue-900/30",
+    action: "Lihat User",
+    actionPage: "admin",
+    actionTab: "users",
   },
   {
     id: 5,
@@ -87,6 +104,7 @@ const initialAdminNotifications: AdminNotification[] = [
     iconBg: "bg-orange-100 dark:bg-orange-900/30",
     action: "Lihat Laporan",
     actionPage: "admin",
+    actionTab: "reports",
   },
   {
     id: 6,

@@ -326,6 +326,7 @@ export default function AdminDashboardPage({
                 categoryChartData={categoryChartData}
                 formatPrice={formatPrice}
                 onOpenTab={setActiveTab}
+                onOpenNotifications={() => _onNavigate("admin-notifications")}
               />
             )}
           </TabsContent>

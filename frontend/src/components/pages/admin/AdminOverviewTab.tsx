@@ -12,6 +12,7 @@ import {
   Clock,
   GraduationCap,
 } from "lucide-react";
+import AdminNotificationPanel from "@/components/pages/admin/AdminNotificationPanel";
 import {
   LineChart,
   Line,
@@ -51,6 +52,7 @@ interface AdminOverviewTabProps {
   categoryChartData?: Array<{ name: string; value: number; fill: string }>;
   formatPrice: (price: number) => string;
   onOpenTab: (tab: string) => void;
+  onOpenNotifications: () => void;
 }
 
 export default function AdminOverviewTab({
@@ -60,6 +62,7 @@ export default function AdminOverviewTab({
   categoryChartData,
   formatPrice,
   onOpenTab,
+  onOpenNotifications,
 }: AdminOverviewTabProps) {
   // Fallback to empty data if not provided
   const transactionTrendData = revenueChartData || [];
@@ -269,6 +272,11 @@ export default function AdminOverviewTab({
           </CardContent>
         </Card>
       </div>
+
+      <AdminNotificationPanel
+        onOpenTab={onOpenTab}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <Card>
         <CardHeader>
