@@ -40,6 +40,9 @@ interface RenderPageParams {
   chatAction: "chat" | "nego" | null;
   selectedSuccessType: "product" | "service" | null;
   registeredEmail: string | null;
+  emailVerificationSource: "register" | "settings" | "forgot-password" | null;
+  forgotPasswordEmail: string | null;
+  forgotPasswordSource: "register" | "settings" | null;
   googleUserData: { userName?: string; userEmail?: string } | null;
   isLoggedIn: boolean;
   onNavigate: NavigateFn;
@@ -60,6 +63,9 @@ export function renderPage(params: RenderPageParams) {
     chatAction,
     selectedSuccessType,
     registeredEmail,
+    emailVerificationSource,
+    forgotPasswordEmail,
+    forgotPasswordSource,
     googleUserData,
     isLoggedIn,
     onNavigate,
@@ -79,7 +85,7 @@ export function renderPage(params: RenderPageParams) {
       return <RegisterPage onNavigate={onNavigate} onLogin={onLogin} />;
     case "forgot-password":
       if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
-      return <ForgotPasswordPage onNavigate={onNavigate} />;
+      return <ForgotPasswordPage onNavigate={onNavigate} email={forgotPasswordEmail ?? undefined} source={forgotPasswordSource ?? (forgotPasswordEmail ? "settings" : "register")} />;
     case "faculty-selection":
       if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
       return (
@@ -91,7 +97,13 @@ export function renderPage(params: RenderPageParams) {
       );
     case "email-verification":
       if (isLoggedIn) return <LandingPage onNavigate={onNavigate} isLoggedIn={isLoggedIn} isCustomerOnly={isCustomerOnly} onStartSelling={onStartSelling} />;
-      return <EmailVerificationPage onNavigate={onNavigate} email={registeredEmail ?? undefined} />;
+      return (
+        <EmailVerificationPage
+          onNavigate={onNavigate}
+          email={registeredEmail ?? undefined}
+          source={emailVerificationSource ?? "register"}
+        />
+      );
     case "catalog":
       return <CatalogPage onNavigate={onNavigate} initialCategory={selectedCategory ?? undefined} />;
     case "services":

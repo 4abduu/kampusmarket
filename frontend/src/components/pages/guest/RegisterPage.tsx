@@ -10,9 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Package, Mail, Lock, User, Eye, EyeOff, Phone, Building2, AlertCircle, Loader2, Check } from "lucide-react";
 import { FACULTIES } from "@/lib/mock-data";
 import { API_BASE_URL } from "@/lib/config";
+import type { NavigateFn } from "@/app/navigation/types";
 
 interface RegisterPageProps {
-  onNavigate: (page: string, data?: { registeredEmail?: string }) => void;
+  onNavigate: NavigateFn;
   onLogin: (role?: "user" | "admin") => void;
 }
 
@@ -107,7 +108,10 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
       // Auth token is now stored as HttpOnly cookie automatically by the backend
       // No need to store in localStorage
       
-      onNavigate("email-verification", { registeredEmail: formData.email });
+      onNavigate("email-verification", {
+        registeredEmail: formData.email,
+        emailVerificationSource: "register",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat registrasi");
     } finally {

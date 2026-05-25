@@ -720,10 +720,20 @@ class AuthController extends Controller
         // Revoke all tokens
         $user->tokens()->delete();
 
-        return response()->json([
+        // Generate new token so user stays logged in / is automatically logged in
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        $response = response()->json([
             'success' => true,
             'message' => 'Password berhasil direset',
+            'data' => [
+                'user' => new UserResource($user->load('faculty')),
+                'token' => $token,
+                'tokenType' => 'Bearer',
+            ],
         ]);
+
+        return $this->attachAuthCookies($response, $token, false, false);
     }
 
     /**

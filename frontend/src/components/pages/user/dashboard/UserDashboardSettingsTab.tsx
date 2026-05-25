@@ -6,9 +6,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertCircle, Edit, Lock, MapPin, Plus, Save, Trash2, User, Loader2, Pencil } from "lucide-react"
 import type { Address as AddressType } from "@/lib/mock-data"
-import AccountCompletionSettings from "@/components/pages/user/AccountCompletionSettings"
-import ProfilePictureEditDialog from "@/components/pages/user/dashboard/ProfilePictureEditDialog"
 import { useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import ProfilePictureEditDialog from "@/components/pages/user/dashboard/ProfilePictureEditDialog"
+import { FACULTIES } from "@/lib/mock-data"
 import { userApi } from "@/lib/api/users"
 
 type ProfileForm = {
@@ -25,6 +33,7 @@ type CurrentUser = {
   phone?: string
   faculty: string | null
   avatar?: string
+  isVerified?: boolean
 }
 
 type Props = {
@@ -65,11 +74,25 @@ export default function UserDashboardSettingsTab({
   isLoadingAddresses = false,
   addressError = null,
   showProfileSuccess = false,
-  onNavigate = () => {},
   onProfilePictureUpdate,
 }: Props) {
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false)
   const [profilePictureUrl, setProfilePictureUrl] = useState(currentUser.avatar || "")
+  const [showFacultyConfirmDialog, setShowFacultyConfirmDialog] = useState(false)
+
+  const onSaveProfileClick = () => {
+    if (!profileForm.faculty) {
+      return
+    }
+
+    // If the user didn't have a faculty before, confirm the first permanent selection
+    if (!currentUser.faculty && profileForm.faculty) {
+      setShowFacultyConfirmDialog(true)
+    } else {
+      handleSaveProfile()
+    }
+  }
+
   return (
     <>
       <Card>
@@ -108,6 +131,7 @@ export default function UserDashboardSettingsTab({
                 type="text" 
                 value={profileForm.name} 
                 onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                aria-label="Nama Lengkap"
                 className="w-full border rounded-lg px-3 py-2" 
               />
             </div>
@@ -118,11 +142,22 @@ export default function UserDashboardSettingsTab({
                   type="email" 
                   value={profileForm.email} 
                   disabled 
+                  aria-label="Email"
                   className="w-full border rounded-lg px-3 py-2 pr-10 bg-slate-50 text-slate-600 cursor-not-allowed" 
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2"><Lock className="h-4 w-4 text-slate-400" /></div>
               </div>
-              <p className="text-xs text-amber-600 flex items-center gap-1"><AlertCircle className="h-3 w-3" />Email tidak dapat diubah setelah pendaftaran</p>
+              {currentUser.isVerified ? (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Email sudah terverifikasi dan tidak dapat diubah setelah pendaftaran
+                </p>
+              ) : (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Email belum diverifikasi. <a href="/email-verification" className="underline font-medium hover:text-red-800">Silakan verifikasi email di sini</a>
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Nomor HP</label>
@@ -130,21 +165,48 @@ export default function UserDashboardSettingsTab({
                 type="tel" 
                 value={profileForm.phone} 
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                aria-label="Nomor HP"
                 className="w-full border rounded-lg px-3 py-2" 
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Fakultas</label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  value={getFacultyName(currentUser.faculty)} 
-                  disabled 
-                  className="w-full border rounded-lg px-3 py-2 pr-10 bg-slate-50 text-slate-600 cursor-not-allowed" 
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2"><Lock className="h-4 w-4 text-slate-400" /></div>
-              </div>
-              <p className="text-xs text-amber-600 flex items-center gap-1"><AlertCircle className="h-3 w-3" />Fakultas tidak dapat diubah setelah pendaftaran</p>
+              <Label className="text-sm font-medium">Fakultas</Label>
+              {currentUser.faculty ? (
+                <>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={getFacultyName(currentUser.faculty)} 
+                      disabled 
+                      aria-label="Fakultas"
+                      className="w-full border rounded-lg px-3 py-2 pr-10 bg-slate-50 text-slate-600 cursor-not-allowed" 
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2"><Lock className="h-4 w-4 text-slate-400" /></div>
+                  </div>
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Fakultas sudah tersimpan dan bersifat tetap. Jika ada kendala, hubungi admin.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <select
+                    className="w-full border rounded-lg px-3 py-2 bg-white"
+                    aria-label="Pilih Fakultas"
+                    value={profileForm.faculty}
+                    onChange={(e) => setProfileForm({ ...profileForm, faculty: e.target.value })}
+                  >
+                    <option value="">Pilih fakultas wajib...</option>
+                    {FACULTIES.map(f => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Fakultas wajib dipilih sebelum menyimpan. Pilihan ini akan tetap.
+                  </p>
+                </>
+              )}
             </div>
           </div>
           <div>
@@ -164,13 +226,13 @@ export default function UserDashboardSettingsTab({
           )}
           {showProfileSuccess && (
             <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-              ✓ Profil berhasil diperbarui
+              Profil berhasil diperbarui
             </div>
           )}
           <Button 
             className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
-            onClick={handleSaveProfile}
-            disabled={isLoadingProfile}
+            onClick={onSaveProfileClick}
+            disabled={isLoadingProfile || (!currentUser.faculty && !profileForm.faculty)}
           >
             {isLoadingProfile ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             {isLoadingProfile ? "Menyimpan..." : "Simpan Perubahan"}
@@ -235,8 +297,6 @@ export default function UserDashboardSettingsTab({
         </CardContent>
       </Card>
 
-      <AccountCompletionSettings onNavigate={onNavigate} />
-
       <ProfilePictureEditDialog
         open={showProfilePictureDialog}
         onOpenChange={setShowProfilePictureDialog}
@@ -256,6 +316,31 @@ export default function UserDashboardSettingsTab({
           }
         }}
       />
+
+      <Dialog open={showFacultyConfirmDialog} onOpenChange={setShowFacultyConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Fakultas</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menetapkan fakultas <strong>{getFacultyName(profileForm.faculty)}</strong>?
+              <br/><br/>
+              Fakultas ini akan disimpan sebagai data tetap akun kamu.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFacultyConfirmDialog(false)}>Batal</Button>
+            <Button 
+              className="bg-primary-600 hover:bg-primary-700"
+              onClick={() => {
+                setShowFacultyConfirmDialog(false);
+                handleSaveProfile();
+              }}
+            >
+              Ya, Tetapkan Fakultas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

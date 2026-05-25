@@ -41,9 +41,10 @@ import { useDashboardProducts } from "@/components/pages/user/dashboard/useDashb
 import { useDashboardWallet } from "@/components/pages/user/dashboard/useDashboardWallet";
 import { useDashboardSettings } from "@/components/pages/user/dashboard/useDashboardSettings";
 import { useDashboardOrderActions } from "@/components/pages/user/dashboard/useDashboardOrderActions";
+import type { NavigateFn } from "@/app/navigation/types";
 
 interface UserDashboardPageProps {
-  onNavigate: (page: string, productId?: string) => void;
+  onNavigate: NavigateFn;
   onSellerProductCountChange?: (count: number) => void;
   currentUser?: User | null;
 }
@@ -92,6 +93,7 @@ export default function UserDashboardPage({
 
   const wallet = useDashboardWallet({
     userId: currentUser?.id || "",
+    initialBalance: currentUser?.walletBalance ?? authUser?.walletBalance ?? 0,
   });
 
   const settings = useDashboardSettings({
@@ -447,6 +449,8 @@ export default function UserDashboardPage({
         showPasswordSuccess={settings.showPasswordSuccess}
         showTopUpSuccess={wallet.showTopUpSuccess}
         showWithdrawSuccess={wallet.showWithdrawSuccess}
+        onNavigate={onNavigate}
+        currentUserEmail={currentUser?.email}
       />
     </div>
   );

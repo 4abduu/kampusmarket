@@ -13,6 +13,7 @@ import { BANK_OPTIONS, EWALLET_OPTIONS } from "@/components/pages/user/dashboard
 import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2 } from "lucide-react"
 import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 import AddProductImagesSection from "@/components/pages/user/add-product/AddProductImagesSection"
+import type { NavigateFn } from "@/app/navigation/types"
 
 type PasswordValidations = {
   minLength: boolean
@@ -140,6 +141,8 @@ type Props = {
   showPasswordSuccess: boolean
   showTopUpSuccess: boolean
   showWithdrawSuccess: boolean
+  onNavigate?: NavigateFn
+  currentUserEmail?: string
 }
 
 export default function UserDashboardDialogs({
@@ -218,6 +221,8 @@ export default function UserDashboardDialogs({
   showPasswordSuccess,
   showTopUpSuccess,
   showWithdrawSuccess,
+  onNavigate,
+  currentUserEmail,
 }: Props) {
   return (
     <>
@@ -689,6 +694,22 @@ export default function UserDashboardDialogs({
             {passwordError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{passwordError}</p>}
           </div>
           <DialogFooter>
+            <div className="mr-auto items-start text-left">
+              <span className="text-sm text-muted-foreground">Lupa password? </span>
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm font-medium text-primary-600"
+                onClick={() => {
+                  setShowPasswordDialog(false)
+                  if (onNavigate) {
+                    onNavigate("forgot-password", currentUserEmail ? { forgotPasswordEmail: currentUserEmail, forgotPasswordSource: "settings" } : { forgotPasswordSource: "settings" })
+                  }
+                }}
+              >
+                Reset disini
+              </Button>
+            </div>
             <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={isLoadingPassword}>Batal</Button>
             <Button className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleChangePassword} disabled={!isPasswordValid || passwordForm.newPassword !== passwordForm.confirmPassword || isLoadingPassword}>
               {isLoadingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
