@@ -673,6 +673,17 @@ export default function OrderDetailPage({
         }
 
         await payOrder(order.id, 'wallet');
+        try {
+          const balanceResponse = await walletApi.getBalance();
+          const balance = balanceResponse.data.balance;
+          window.dispatchEvent(
+            new CustomEvent("wallet-balance-updated", {
+              detail: { balance },
+            }),
+          );
+        } catch (e) {
+          console.warn("[OrderDetail] Failed to sync balance after wallet payment", e);
+        }
         toast({ title: "Pembayaran berhasil!" });
         await fetchOrder();
       }

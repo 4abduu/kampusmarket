@@ -9,9 +9,10 @@ import { USER_DASHBOARD_ITEMS_PER_PAGE } from "@/components/pages/user/dashboard
 
 interface UseDashboardWalletParams {
   userId: string
+  initialBalance?: number
 }
 
-export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
+export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardWalletParams) {
   const { toast } = useToast()
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
   const [withdrawForm, setWithdrawForm] = useState({
@@ -45,7 +46,19 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
   const [totalExpenseFetched, setTotalExpenseFetched] = useState(0)
   
   // Real-time balance tracking
-  const [currentBalance, setCurrentBalance] = useState(0)
+  const [currentBalance, setCurrentBalance] = useState(initialBalance)
+
+  const broadcastBalanceUpdate = (balance: number) => {
+    window.dispatchEvent(
+      new CustomEvent("wallet-balance-updated", {
+        detail: { balance },
+      }),
+    )
+  }
+
+  useEffect(() => {
+    setCurrentBalance(initialBalance)
+  }, [initialBalance])
 
   const fetchTransactions = async () => {
     setTransactionsLoading(true)
@@ -95,9 +108,9 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
   const fetchBalance = async () => {
     try {
       const response = await walletApi.getBalance()
-      if (response.success) {
-        setCurrentBalance(response.data.balance)
-      }
+      const balance = response.data.balance
+      setCurrentBalance(balance)
+      broadcastBalanceUpdate(balance)
     } catch (err: any) {
       console.warn('[Wallet] Failed to fetch balance:', err?.message)
     }
@@ -175,17 +188,9 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
               })
               try {
                 const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
-                if (confirmResponse.success && confirmResponse.status === 'paid') {
-                  // Fetch updated balance for real-time display
-                  try {
-                    const balanceResponse = await walletApi.getBalance()
-                    if (balanceResponse.success) {
-                      setCurrentBalance(balanceResponse.data.balance)
-                      console.log("[Wallet] Balance updated to:", balanceResponse.data.balance)
-                    }
-                  } catch (e) {
-                    console.warn("[Wallet] Failed to fetch updated balance:", e)
-                  }
+                if (confirmResponse.status === 'paid') {
+                  await fetchBalance()
+                  console.log("[Wallet] Balance refreshed after top-up")
                   
                   setShowTopUpSuccess(true)
                   setTimeout(() => setShowTopUpSuccess(false), 3000)
@@ -209,7 +214,10 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
                 description: "Selesaikan pembayaran Anda untuk melanjutkan.",
               })
               try {
-                await walletApi.confirmTopUpPayment(payment_uuid)
+                const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
+                if (confirmResponse.status === 'paid') {
+                  await fetchBalance()
+                }
                 void fetchTransactions()
               } catch (e) {
                 console.error("Failed to confirm payment", e)
@@ -336,6 +344,7 @@ export function useDashboardWallet({ userId }: UseDashboardWalletParams) {
       })
       setShowWithdrawSuccess(true)
       setTimeout(() => setShowWithdrawSuccess(false), 3000)
+      void fetchBalance()
       void fetchTransactions()
       toast({
         title: "Permintaan penarikan dibuat",

@@ -92,6 +92,7 @@ export default function UserDashboardPage({
 
   const wallet = useDashboardWallet({
     userId: currentUser?.id || "",
+    initialBalance: currentUser?.walletBalance ?? authUser?.walletBalance ?? 0,
   });
 
   const settings = useDashboardSettings({

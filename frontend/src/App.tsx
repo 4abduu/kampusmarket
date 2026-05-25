@@ -88,6 +88,21 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    const handleWalletBalanceUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ balance?: number }>).detail;
+      if (typeof detail?.balance !== "number") return;
+
+      setAuthUser((prev) =>
+        prev ? { ...prev, walletBalance: detail.balance } : prev,
+      );
+    };
+
+    window.addEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+    return () =>
+      window.removeEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+  }, []);
+
+  useEffect(() => {
     // REVISI: Saat token expired/invalid dari server, navigate ke home dulu
     // baru clear state, supaya tidak terlihat halaman /unauthorized sekilas
     const handleUnauthorized = () => {
