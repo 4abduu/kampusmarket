@@ -207,12 +207,24 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     try {
       setIsLoadingProfile(true)
       setProfileError(null)
+
+      if (!profileForm.faculty) {
+        throw new Error("Fakultas wajib dipilih sebelum menyimpan profil")
+      }
       
-      await userApi.updateProfile({
+      const updatedUser = await userApi.updateProfile({
         name: profileForm.name,
+        email: profileForm.email,
         phone: profileForm.phone,
         bio: profileForm.bio,
+        facultyId: profileForm.faculty,
       })
+
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", {
+          detail: updatedUser,
+        }),
+      )
       
       setShowProfileSuccess(true)
       setTimeout(() => setShowProfileSuccess(false), 3000)

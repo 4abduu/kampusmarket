@@ -204,3 +204,12 @@ body.no-chrome header,
 body.no-chrome footer {
   display: none !important;
 }
+
+/* Fix double eye icon in Edge/IE/Webkit for password inputs */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+input[type="password"]::-webkit-reveal {
+  display: none;
+}

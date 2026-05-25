@@ -43,6 +43,9 @@ function AppContent() {
     userEmail?: string;
   } | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [emailVerificationSource, setEmailVerificationSource] = useState<"register" | "settings" | "forgot-password" | null>(null);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState<string | null>(null);
+  const [forgotPasswordSource, setForgotPasswordSource] = useState<"register" | "settings" | null>(null);
 
   const syncAuthUser = async (): Promise<boolean> => {
     try {
@@ -97,9 +100,32 @@ function AppContent() {
       );
     };
 
+    const handleProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, any>>).detail;
+      if (!detail) return;
+
+      setAuthUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: detail.name ?? prev.name,
+              email: detail.email ?? prev.email,
+              phone: detail.phone ?? prev.phone,
+              bio: detail.bio ?? prev.bio,
+              faculty: detail.faculty ?? prev.faculty,
+              avatar: detail.avatar ?? prev.avatar,
+            }
+          : prev,
+      );
+    };
+
     window.addEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+    window.addEventListener("profile-updated", handleProfileUpdated);
     return () =>
-      window.removeEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+      {
+        window.removeEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+        window.removeEventListener("profile-updated", handleProfileUpdated);
+      };
   }, []);
 
   useEffect(() => {
@@ -174,6 +200,7 @@ function AppContent() {
   // Gabungan: format rapi dari main + chat support dari dev-abdu
   const handleNavigate = (page: string, data?: string | NavigationData) => {
     let url = `/${page === "landing" ? "" : page}`;
+    let params: URLSearchParams | null = null;
 
     // Handle simple string/number ID
     if (typeof data === "string" || typeof data === "number") {
@@ -181,7 +208,7 @@ function AppContent() {
         url = `/${page}/${data}`;
       }
     } else if (data) {
-      const params = new URLSearchParams();
+      params = new URLSearchParams();
 
       if ("category" in data && data.category) {
         params.set("category", data.category);
@@ -229,10 +256,35 @@ function AppContent() {
       if ("registeredEmail" in data && data.registeredEmail) {
         setRegisteredEmail(data.registeredEmail);
       }
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if ("forgotPasswordEmail" in data && data.forgotPasswordEmail) {
+        setForgotPasswordEmail(data.forgotPasswordEmail);
+      } else if (page === "forgot-password") {
+        setForgotPasswordEmail(authUser?.email ?? null);
+      } else {
+        setForgotPasswordEmail(null);
       }
+      if ("forgotPasswordSource" in data && data.forgotPasswordSource) {
+        setForgotPasswordSource(data.forgotPasswordSource);
+      } else if (page === "forgot-password") {
+        setForgotPasswordSource(authUser ? "settings" : "register");
+      } else {
+        setForgotPasswordSource(null);
+      }
+      if ("emailVerificationSource" in data) {
+        setEmailVerificationSource(data.emailVerificationSource ?? null);
+      } else if (page === "email-verification") {
+        setEmailVerificationSource(isLoggedIn ? "settings" : "register");
+      } else {
+        setEmailVerificationSource(null);
+      }
+    } else if (page === "email-verification") {
+      setEmailVerificationSource(isLoggedIn ? "settings" : "register");
+    } else {
+      setEmailVerificationSource(null);
+    }
+
+    if (params?.toString()) {
+      url += `?${params.toString()}`;
     }
 
     navigate(url);
@@ -261,16 +313,9 @@ function AppContent() {
   const handleLogout = async () => {
     // REVISI: Set flag isLoggingOut SEBELUM apapun agar ProtectedRoute tidak
     // mendeteksi isLoggedIn=false lalu redirect ke /unauthorized.
-    // Navigasi ke "/" dilakukan LEBIH DULU sebelum state di-clear.
     isLoggingOutRef.current = true;
-    // Navigasi ke landing dulu sebelum clear state
-    navigate("/");
-    try {
-      await userApi.logout();
-    } catch (err) {
-      // Silent error
-      console.debug("Logout error (ignored):", err);
-    }
+    
+    // Clear state IMMEDIATELY agar UI (seperti Navbar) langsung berubah menjadi guest
     setGoogleUserData(null);
     setAuthUser(null);
     setIsLoggedIn(false);
@@ -279,8 +324,19 @@ function AppContent() {
     useNotificationStore.getState().cleanupEcho();
     // Clear lastNonAuthPath to prevent redirect to protected pages
     sessionStorage.removeItem("lastNonAuthPath");
-    // REVISI: Reset flag setelah semua state bersih
-    isLoggingOutRef.current = false;
+
+    // Navigasi ke "/" dilakukan setelah state di-clear (aman karena isLoggingOutRef = true)
+    navigate("/");
+
+    try {
+      await userApi.logout();
+    } catch (err) {
+      // Silent error
+      console.debug("Logout error (ignored):", err);
+    } finally {
+      // REVISI: Reset flag setelah semua selesai
+      isLoggingOutRef.current = false;
+    }
   };
 
   const handleStartSelling = () => {
@@ -436,12 +492,16 @@ function AppContent() {
           isCustomerOnly={isCustomerOnly}
           onSellerProductCountChange={setSellerProductCount}
           registeredEmail={registeredEmail}
+          emailVerificationSource={emailVerificationSource}
+          forgotPasswordEmail={forgotPasswordEmail}
+          forgotPasswordSource={forgotPasswordSource}
           currentId={currentId}
           currentCategory={categoryParam}
           currentSuccessType={currentSuccessType}
           googleUserData={googleUserData}
           currentUser={authUser}
           userRole={userRole}
+          isLoggingOut={isLoggingOutRef}
         />
       </main>
 

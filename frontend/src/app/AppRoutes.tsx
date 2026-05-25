@@ -57,6 +57,9 @@ type AppRoutesProps = {
   isLoggedIn: boolean;
   isCustomerOnly: boolean;
   registeredEmail: string | null;
+  emailVerificationSource: "register" | "settings" | "forgot-password" | null;
+  forgotPasswordEmail: string | null;
+  forgotPasswordSource: "register" | "settings" | null;
   currentId: string | null;
   currentCategory: string | null;
   googleUserData: { userName?: string; userEmail?: string } | null;
@@ -180,8 +183,18 @@ function PublicRoute({
     isLoggedIn && 
     currentUser && 
     !currentUser.faculty;
+
+  // Allow logged-in users to open email verification page too
+  const isAccessingEmailVerification = location.pathname === "/email-verification";
+  const isAccessingForgotPassword = location.pathname === "/forgot-password";
   
-  if (isLoggedIn && !allowLoggedIn && !isAccessingFacultySelectionWithoutFaculty) {
+  if (
+    isLoggedIn &&
+    !allowLoggedIn &&
+    !isAccessingFacultySelectionWithoutFaculty &&
+    !isAccessingEmailVerification &&
+    !isAccessingForgotPassword
+  ) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
     // ✅ Dari dev-abdu: cegah redirect ke protected route setelah login
     let previousPath =
@@ -230,6 +243,9 @@ export default function AppRoutes({
   isLoggedIn,
   isCustomerOnly,
   registeredEmail,
+  emailVerificationSource,
+  forgotPasswordEmail,
+  forgotPasswordSource,
   currentId,
   currentCategory,
   googleUserData,
@@ -315,7 +331,8 @@ export default function AppRoutes({
             <PublicRoute
               isLoggedIn={isLoggedIn}
               userRole={userRole}
-              element={<ForgotPasswordPage onNavigate={onNavigate} />}
+              currentUser={currentUser}
+              element={<ForgotPasswordPage onNavigate={onNavigate} email={forgotPasswordEmail || currentUser?.email || undefined} source={forgotPasswordSource ?? (currentUser ? "settings" : "register")} />}
             />
           }
         />
@@ -358,7 +375,11 @@ export default function AppRoutes({
               element={
                 <EmailVerificationPage
                   onNavigate={onNavigate}
-                  email={registeredEmail || undefined}
+                  email={registeredEmail || currentUser?.email || undefined}
+                  source={
+                    emailVerificationSource ??
+                    (registeredEmail ? "register" : currentUser ? "settings" : "register")
+                  }
                 />
               }
             />

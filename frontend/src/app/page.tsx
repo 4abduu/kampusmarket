@@ -48,6 +48,9 @@ export default function Home() {
   const [showSellerWelcome, setShowSellerWelcome] = useState(false); // popup for new seller
   const [googleUserData, setGoogleUserData] = useState<{ userName?: string; userEmail?: string } | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [emailVerificationSource, setEmailVerificationSource] = useState<"register" | "settings" | "forgot-password" | null>(null);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState<string | null>(null);
+  const [forgotPasswordSource, setForgotPasswordSource] = useState<"register" | "settings" | null>(null);
 
   const handleNavigate = (page: string, data?: string | NavigationData) => {
     setCurrentPage(page);
@@ -112,11 +115,39 @@ export default function Home() {
       if ("registeredEmail" in data && data.registeredEmail) {
         setRegisteredEmail(data.registeredEmail);
       }
+      if ("forgotPasswordEmail" in data && data.forgotPasswordEmail) {
+        setForgotPasswordEmail(data.forgotPasswordEmail);
+      } else if (page === "forgot-password") {
+        setForgotPasswordEmail(null);
+      } else {
+        setForgotPasswordEmail(null);
+      }
+      if ("forgotPasswordSource" in data && data.forgotPasswordSource) {
+        setForgotPasswordSource(data.forgotPasswordSource);
+      } else if (page === "forgot-password") {
+        setForgotPasswordSource(isLoggedIn ? "settings" : "register");
+      } else {
+        setForgotPasswordSource(null);
+      }
+      if ("emailVerificationSource" in data) {
+        setEmailVerificationSource(data.emailVerificationSource ?? null);
+      } else if (page === "email-verification") {
+        setEmailVerificationSource(isLoggedIn ? "settings" : "register");
+      } else {
+        setEmailVerificationSource(null);
+      }
     } else {
       // No data - reset category
       setSelectedCategory(null);
       setChatAction(null);
       setSelectedSuccessType(null);
+      if (page === "email-verification") {
+        setEmailVerificationSource(isLoggedIn ? "settings" : "register");
+      } else if (page === "forgot-password") {
+        setForgotPasswordEmail(null);
+      } else {
+        setEmailVerificationSource(null);
+      }
     }
 
     if (page !== "chat") {
@@ -254,6 +285,9 @@ export default function Home() {
           chatAction,
           selectedSuccessType,
           registeredEmail,
+          emailVerificationSource,
+          forgotPasswordEmail,
+          forgotPasswordSource,
           googleUserData,
           isLoggedIn,
           onNavigate: handleNavigate,

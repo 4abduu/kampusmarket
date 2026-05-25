@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Building2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/config";
+import type { NavigateFn } from "@/app/navigation/types";
 
 interface AccountCompletionSettings {
   isEmailVerified: boolean;
@@ -15,7 +16,7 @@ interface AccountCompletionSettings {
 }
 
 interface AccountCompletionSettingsComponentProps {
-  onNavigate: (page: string) => void;
+  onNavigate: NavigateFn;
 }
 
 export default function AccountCompletionSettings({
@@ -130,7 +131,7 @@ export default function AccountCompletionSettings({
             </div>
 
             <Button
-              onClick={() => onNavigate("email-verification")}
+              onClick={() => onNavigate("email-verification", { emailVerificationSource: "settings" })}
               className="w-full"
             >
               <Mail className="mr-2 h-4 w-4" />

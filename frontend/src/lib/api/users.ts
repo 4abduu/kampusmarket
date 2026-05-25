@@ -1,6 +1,10 @@
 import type { User } from "@/lib/mock-data";
 import { API_BASE_URL } from "@/lib/config";
 
+type UpdateProfilePayload = Partial<User> & {
+  facultyId?: string;
+};
+
 type ApiEnvelope<T> = {
   success?: boolean;
   message?: string;
@@ -124,7 +128,7 @@ export const userApi = {
   /**
    * Update user profile.
    */
-  async updateProfile(data: Partial<User>): Promise<User> {
+  async updateProfile(data: UpdateProfilePayload): Promise<User> {
     return request("/profile", {
       method: "PUT",
       body: JSON.stringify(data),

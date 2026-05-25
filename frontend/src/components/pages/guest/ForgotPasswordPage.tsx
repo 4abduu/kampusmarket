@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Package } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import ForgotPasswordEmailStep from "@/components/pages/guest/forgot-password/ForgotPasswordEmailStep";
@@ -21,11 +21,23 @@ import { API_BASE_URL } from "@/lib/config";
 
 interface ForgotPasswordPageProps {
   onNavigate: (page: string) => void;
+  email?: string;
+  source?: "register" | "settings";
 }
 
-export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPageProps) {
+const FORGOT_PASSWORD_OTP_TTL_SECONDS = OTP_EXPIRATION_SECONDS;
+
+function getForgotPasswordOtpStorageKey(email: string) {
+  return `forgot-password-otp:${email.trim().toLowerCase()}`;
+}
+
+export default function ForgotPasswordPage({
+  onNavigate,
+  email: prefilledEmail = "",
+  source = "register",
+}: ForgotPasswordPageProps) {
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefilledEmail);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,39 +56,61 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
   const [countdown, setCountdown] = useState(OTP_EXPIRATION_SECONDS);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [canResend, setCanResend] = useState(false);
+  const hasAutoSentRef = useRef(false);
+
+  useEffect(() => {
+    if (prefilledEmail) {
+      setEmail(prefilledEmail);
+    }
+  }, [prefilledEmail]);
+
+  useEffect(() => {
+    if (!prefilledEmail || hasAutoSentRef.current) return;
+
+    const storageKey = getForgotPasswordOtpStorageKey(prefilledEmail);
+    const existingSentAt = Number(window.sessionStorage.getItem(storageKey) || 0);
+    const now = Date.now();
+    const elapsedSeconds = existingSentAt ? Math.floor((now - existingSentAt) / 1000) : Number.POSITIVE_INFINITY;
+
+    if (existingSentAt && elapsedSeconds < FORGOT_PASSWORD_OTP_TTL_SECONDS) {
+      hasAutoSentRef.current = true;
+      setStep("otp");
+      setEmail(prefilledEmail);
+      setOtpSent(true);
+      setCountdown(FORGOT_PASSWORD_OTP_TTL_SECONDS - elapsedSeconds);
+      setResendCooldown(FORGOT_PASSWORD_OTP_TTL_SECONDS - elapsedSeconds);
+      setCanResend(false);
+      return;
+    }
+
+    hasAutoSentRef.current = true;
+    void handleEmailSubmit({ preventDefault: () => {} } as React.FormEvent);
+  }, [prefilledEmail]);
 
   useEffect(() => {
     let expiryTimer: ReturnType<typeof setInterval> | undefined;
-    let resendTimer: ReturnType<typeof setInterval> | undefined;
 
     if (step === "otp" && countdown > 0) {
       expiryTimer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
+            setResendCooldown(0);
             return 0;
           }
+          setResendCooldown(prev - 1);
           return prev - 1;
         });
       }, 1000);
     }
 
-    if (step === "otp" && resendCooldown > 0) {
-      resendTimer = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) {
-            setCanResend(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (step === "otp" && countdown === 0) {
+      setCanResend(true);
     }
 
     return () => {
       if (expiryTimer) clearInterval(expiryTimer);
-      if (resendTimer) clearInterval(resendTimer);
     };
-  }, [step, countdown, resendCooldown]);
+  }, [step, countdown]);
 
   const formatCountdown = useCallback((seconds: number) => formatCountdownValue(seconds), []);
 
@@ -116,10 +150,11 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
       }
 
       setCountdown(OTP_EXPIRATION_SECONDS);
-      setResendCooldown(60); // 60 seconds resend cooldown
+      setResendCooldown(OTP_EXPIRATION_SECONDS);
       setCanResend(false);
       setOtpSent(true);
       setStep("otp");
+      window.sessionStorage.setItem(getForgotPasswordOtpStorageKey(email), String(Date.now()));
     } catch (error) {
       setEmailError(error instanceof Error ? error.message : "Terjadi kesalahan");
     } finally {
@@ -128,7 +163,7 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
   };
 
   const handleResendOtp = async () => {
-    if (!canResend) return;
+    if (!canResend || countdown > 0) return;
 
     setOtpError("");
     setOtp("");
@@ -153,8 +188,9 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
       }
 
       setCountdown(OTP_EXPIRATION_SECONDS);
-      setResendCooldown(60); // 60 seconds resend cooldown
+      setResendCooldown(OTP_EXPIRATION_SECONDS);
       setCanResend(false);
+      window.sessionStorage.setItem(getForgotPasswordOtpStorageKey(email), String(Date.now()));
     } catch (error) {
       setOtpError(error instanceof Error ? error.message : "Terjadi kesalahan");
     } finally {
@@ -213,6 +249,14 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     }
   };
 
+  useEffect(() => {
+    if (step !== "otp") return;
+    if (otp.length !== 6) return;
+    if (isVerifyingOtp || otpError) return;
+
+    void handleOtpSubmit({ preventDefault: () => {} } as React.FormEvent);
+  }, [step, otp, isVerifyingOtp, otpError]);
+
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
@@ -249,6 +293,7 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
       }
 
       setStep("success");
+      window.sessionStorage.removeItem(getForgotPasswordOtpStorageKey(email));
     } catch (error) {
       setPasswordError(error instanceof Error ? error.message : "Terjadi kesalahan");
     } finally {
@@ -344,18 +389,18 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
             />
           )}
 
-          {step === "success" && <ForgotPasswordSuccessStep email={email} onNavigate={onNavigate} />}
+          {step === "success" && <ForgotPasswordSuccessStep email={email} onNavigate={onNavigate} source={source} />}
         </CardContent>
 
         {step !== "success" && (
           <CardFooter className="flex justify-center">
             <button
               type="button"
-              onClick={() => onNavigate("login")}
+              onClick={() => onNavigate(source === "settings" ? "dashboard" : "login")}
               className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              Kembali ke Login
+              {source === "settings" ? "Kembali ke Dashboard" : "Kembali ke Login"}
             </button>
           </CardFooter>
         )}

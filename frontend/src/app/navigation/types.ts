@@ -3,6 +3,9 @@ export interface NavigationData {
   userName?: string;
   userEmail?: string;
   registeredEmail?: string;
+  emailVerificationSource?: "register" | "settings" | "forgot-password";
+  forgotPasswordEmail?: string;
+  forgotPasswordSource?: "register" | "settings";
   searchQuery?: string;
   userId?: string;
   productId?: string;

@@ -18,16 +18,25 @@ import {
   maskEmail,
 } from "@/components/pages/guest/email-verification/emailVerification.utils";
 import { API_BASE_URL } from "@/lib/config";
+import type { NavigateFn } from "@/app/navigation/types";
+
+const EMAIL_VERIFICATION_OTP_TTL_SECONDS = 10 * 60;
+
+function getEmailVerificationOtpStorageKey(email: string, source: string) {
+  return `email-verification-otp:${source}:${email.trim().toLowerCase()}`;
+}
 
 interface EmailVerificationPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: NavigateFn;
   email?: string;
+  source?: "register" | "settings" | "forgot-password";
   onVerified?: () => void;
 }
 
 export default function EmailVerificationPage({
   onNavigate,
   email = "user@email.com",
+  source = "register",
   onVerified
 }: EmailVerificationPageProps) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -39,12 +48,20 @@ export default function EmailVerificationPage({
   const [userEmail, setUserEmail] = useState(email);
 
   useEffect(() => {
-    // If email is passed via props, use it
-    if (email && email !== "user@email.com") {
-      setUserEmail(email);
-      // Optionally send verification OTP on mount
-      sendVerificationOtp(email);
+    if (!email || email === "user@email.com") return;
+
+    setUserEmail(email);
+
+    const storageKey = getEmailVerificationOtpStorageKey(email, source);
+    const lastSentAt = Number(window.sessionStorage.getItem(storageKey) || 0);
+    const elapsedSeconds = lastSentAt ? Math.floor((Date.now() - lastSentAt) / 1000) : Number.POSITIVE_INFINITY;
+
+    if (lastSentAt && elapsedSeconds < EMAIL_VERIFICATION_OTP_TTL_SECONDS) {
+      setResendCooldown(EMAIL_VERIFICATION_OTP_TTL_SECONDS - elapsedSeconds);
+      return;
     }
+
+    void sendVerificationOtp(email);
   }, [email]);
 
   // Handle input change for OTP
@@ -97,6 +114,9 @@ export default function EmailVerificationPage({
         setError(data.message || "Gagal mengirim kode verifikasi");
         return;
       }
+
+      window.sessionStorage.setItem(getEmailVerificationOtpStorageKey(emailToVerify, source), String(Date.now()));
+      setResendCooldown(EMAIL_VERIFICATION_OTP_TTL_SECONDS);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim kode");
     }
@@ -148,8 +168,9 @@ export default function EmailVerificationPage({
 
   // Resend code
   const handleResend = async () => {
+    if (resendCooldown > 0) return;
+
     setIsResending(true);
-    setResendCooldown(60);
 
     await sendVerificationOtp(userEmail);
     
@@ -166,15 +187,25 @@ export default function EmailVerificationPage({
       });
     }, 1000);
   };
+      window.sessionStorage.removeItem(getEmailVerificationOtpStorageKey(userEmail, source));
 
   // Handle continue after verified
   const handleContinue = () => {
     if (onVerified) {
       onVerified();
+    } else if (source === "settings") {
+      onNavigate("dashboard");
     } else {
       onNavigate("login");
     }
   };
+
+  const continueButtonLabel = source === "settings" ? "Kembali ke Dashboard" : "Lanjut Login";
+  const verifiedMessage =
+    source === "settings"
+      ? "Email kamu sudah aktif. Kembali ke dashboard untuk melanjutkan."
+      : "Akun kamu sudah aktif dan siap digunakan. Silakan login untuk melanjutkan.";
+  const backButtonLabel = source === "settings" ? "Kembali ke Dashboard" : "Kembali ke Login";
 
   // Masked email display
   const maskedEmail = maskEmail(userEmail);
@@ -191,13 +222,13 @@ export default function EmailVerificationPage({
             </div>
             <h2 className="text-2xl font-bold mb-2">Email Terverifikasi!</h2>
             <p className="text-muted-foreground mb-6">
-              Akun kamu sudah aktif dan siap digunakan. Silakan login untuk melanjutkan.
+              {verifiedMessage}
             </p>
             <Button
               className="w-full bg-primary-600 hover:bg-primary-700"
               onClick={handleContinue}
             >
-              Lanjut Login
+              {continueButtonLabel}
             </Button>
           </CardContent>
         </Card>
@@ -318,10 +349,10 @@ export default function EmailVerificationPage({
           <Button
             variant="ghost"
             className="w-full"
-            onClick={() => onNavigate("login")}
+            onClick={() => onNavigate(source === "settings" ? "dashboard" : "login")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali ke Login
+            {backButtonLabel}
           </Button>
         </CardContent>
       </Card>
