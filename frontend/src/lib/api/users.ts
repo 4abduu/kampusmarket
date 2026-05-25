@@ -166,6 +166,6 @@ export const userApi = {
   async searchUsers(query: string): Promise<any[]> {
     if (query.length < 2) return [];
     const res = await apiClient.get('/users/search', { params: { q: query } });
-    return res.data?.data ?? [];
+    return res.data ?? [];
   },
 };

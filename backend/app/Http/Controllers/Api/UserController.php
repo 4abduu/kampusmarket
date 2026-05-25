@@ -81,7 +81,7 @@ class UserController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $users = \App\Models\User::where('role', 'student')
+        $users = \App\Models\User::where('role', \App\Enums\UserRole::USER)
             ->where('is_banned', false)
             ->where(function($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
