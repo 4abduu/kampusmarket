@@ -33,9 +33,11 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userProducts, setUserProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
   useEffect(() => {
     setLoading(true);
+    setIsLoadingProducts(true);
     if (userId) {
       const loadPublicProfile = async () => {
         try {
@@ -56,6 +58,7 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
           setUserProducts([]);
         } finally {
           setLoading(false);
+          setIsLoadingProducts(false);
         }
       };
       void loadPublicProfile();
@@ -72,6 +75,7 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
           setAuthUser(null);
         } finally {
           setLoading(false);
+          setIsLoadingProducts(false);
         }
       };
       void loadAuthUser();
@@ -269,7 +273,31 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
             totalReviews={totalReviews}
             memberSince={memberSince}
             userBio={user.bio}
-            onNavigate={onNavigate}
+            isLoadingProducts={isLoadingProducts}
+            hasProducts={userProducts.length > 0}
+            onNavigate={(page, data) => {
+              if (
+                page === "chat" &&
+                typeof data === "object" &&
+                data !== null &&
+                "userId" in data
+              ) {
+                // Cari produk aktif penjual
+                const firstActive = userProducts.find((p) => p.stock > 0) ?? userProducts[0];
+
+                if (!firstActive) {
+                  // Penjual tidak punya produk — jangan navigasi
+                  return;
+                }
+
+                // Disable tombol saat products masih loading
+                onNavigate("chat", {
+                  productId: firstActive.uuid || firstActive.id,
+                });
+                return;
+              }
+              onNavigate(page, data);
+            }}
           />
 
           <div className="lg:col-span-2 space-y-4">

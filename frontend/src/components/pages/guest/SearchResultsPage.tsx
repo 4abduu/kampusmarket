@@ -12,7 +12,9 @@ import {
   Users,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import { mockUsers } from "@/lib/mock-data";
+// @mock-flagged — user search sudah pakai API
+// import { mockUsers } from "@/lib/mock-data";
+import { userApi } from "@/lib/api/users";
 import type { Product } from "@/lib/mock-data";
 import { productsApi } from "@/lib/api/products";
 import {
@@ -41,6 +43,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
 
   // API-fetched products
   const [apiProducts, setApiProducts] = useState<Product[]>([]);
+  const [apiUsers, setApiUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch products from API when query changes
@@ -67,6 +70,16 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
     void fetchProducts(query);
   }, [query, fetchProducts]);
 
+  useEffect(() => {
+    if (!query || query.length < 2) {
+      setApiUsers([]);
+      return;
+    }
+    userApi.searchUsers(query)
+      .then(setApiUsers)
+      .catch(() => setApiUsers([]));
+  }, [query]);
+
   const results = useMemo<SearchResultsPayload>(() => {
     const searchTerm = query.toLowerCase().trim();
     if (!searchTerm) {
@@ -77,13 +90,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
     const matchedProducts = apiProducts.filter((p) => p.type === "barang");
     const matchedServices = apiProducts.filter((p) => p.type === "jasa");
 
-    // Users still from mock (no user search API yet)
-    const matchedUsers = mockUsers.filter(
-      (u) =>
-        u.name.toLowerCase().includes(searchTerm) ||
-        u.email.toLowerCase().includes(searchTerm) ||
-        (u.faculty && u.faculty.toLowerCase().includes(searchTerm)),
-    );
+    const matchedUsers = apiUsers;
 
     return {
       products: matchedProducts,
@@ -91,7 +98,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
       users: matchedUsers,
       userProducts: [],
     };
-  }, [query, apiProducts]);
+  }, [query, apiProducts, apiUsers]);
 
   const totalResults = results.products.length + results.services.length + results.users.length;
 

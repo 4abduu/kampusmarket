@@ -76,6 +76,7 @@ Route::get('/products/seller/{sellerId}', [ProductController::class, 'bySeller']
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 // Users (Public Profiles)
+Route::get('/users/search', [UserController::class, 'search']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::get('/users/{id}/products', [UserController::class, 'products']);
 Route::get('/users/{id}/reviews', [UserController::class, 'reviews']);

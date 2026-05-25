@@ -73,6 +73,36 @@ class UserController extends Controller
         ]);
     }
 
+    public function search(Request $request): JsonResponse
+    {
+        $query = trim($request->query('q', ''));
+
+        if (strlen($query) < 2) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $users = \App\Models\User::where('role', 'student')
+            ->where('is_banned', false)
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->with('faculty')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $users->map(fn($u) => [
+                'id'         => $u->uuid,
+                'name'       => $u->name,
+                'avatar'     => $u->avatar,
+                'faculty'    => $u->faculty?->name,
+                'isVerified' => (bool) $u->is_verified,
+            ]),
+        ]);
+    }
+
     /**
      * Display the specified user (Public profile).
      */

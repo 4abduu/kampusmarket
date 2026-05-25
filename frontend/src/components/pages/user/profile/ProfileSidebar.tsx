@@ -23,6 +23,8 @@ interface ProfileSidebarProps {
   memberSince: string;
   userBio?: string | null;
   onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
+  isLoadingProducts?: boolean;
+  hasProducts?: boolean;
 }
 
 export default function ProfileSidebar({
@@ -34,6 +36,8 @@ export default function ProfileSidebar({
   memberSince,
   userBio,
   onNavigate,
+  isLoadingProducts = false,
+  hasProducts = false,
 }: ProfileSidebarProps) {
   return (
     <div className="lg:col-span-1 space-y-4">
@@ -98,7 +102,11 @@ export default function ProfileSidebar({
               </>
             ) : (
               <>
-                <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("chat", { userId: user.id })}>
+                <Button
+                  className="w-full bg-primary-600 hover:bg-primary-700"
+                  onClick={() => onNavigate("chat", { userId: user.id })}
+                  disabled={isLoadingProducts || !hasProducts}
+                >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Hubungi Penjual
                 </Button>

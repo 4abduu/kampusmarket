@@ -1,5 +1,6 @@
 import type { User } from "@/lib/mock-data";
 import { API_BASE_URL } from "@/lib/config";
+import apiClient from "./client";
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -160,5 +161,11 @@ export const userApi = {
    */
   async getPublicProfile(userId: string): Promise<User> {
     return request(`/users/${userId}`);
+  },
+
+  async searchUsers(query: string): Promise<any[]> {
+    if (query.length < 2) return [];
+    const res = await apiClient.get('/users/search', { params: { q: query } });
+    return res.data?.data ?? [];
   },
 };
