@@ -59,6 +59,63 @@ class PasswordResetOtp extends Model
     }
 
     /**
+     * Check if OTP request is allowed based on rate limiting and exponential backoff.
+     * Returns array: ['allowed' => bool, 'cooldown' => int, 'message' => string]
+     */
+    public static function checkRateLimit(string $email, string $type = 'general', int $maxPerDay = 5): array
+    {
+        $cacheKey = "otp_limit_{$type}_" . md5($email);
+        $data = \Illuminate\Support\Facades\Cache::get($cacheKey, ['attempts' => 0, 'last_sent_at' => null]);
+        
+        $attempts = $data['attempts'];
+        $lastSentAt = $data['last_sent_at'] ? \Carbon\Carbon::parse($data['last_sent_at']) : null;
+        
+        if ($attempts >= $maxPerDay) {
+            return [
+                'allowed' => false, 
+                'cooldown' => 0, 
+                'message' => 'Anda telah mencapai batas maksimal permintaan OTP harian. Silakan coba lagi besok.'
+            ];
+        }
+        
+        if ($lastSentAt) {
+            // Calculate required cooldown: 1, 2, 4, 8, 16 minutes
+            $cooldownMinutes = pow(2, $attempts - 1);
+            $nextAllowedAt = $lastSentAt->copy()->addMinutes($cooldownMinutes);
+            
+            if (now()->lessThan($nextAllowedAt)) {
+                $remainingSeconds = now()->diffInSeconds($nextAllowedAt);
+                return [
+                    'allowed' => false, 
+                    'cooldown' => $remainingSeconds, 
+                    'message' => "Harap tunggu {$remainingSeconds} detik sebelum mengirim ulang OTP."
+                ];
+            }
+        }
+        
+        return ['allowed' => true, 'cooldown' => 0];
+    }
+
+    /**
+     * Record OTP sent to update rate limit cache.
+     * Returns the NEXT cooldown in seconds.
+     */
+    public static function recordOtpSent(string $email, string $type = 'general'): int
+    {
+        $cacheKey = "otp_limit_{$type}_" . md5($email);
+        $data = \Illuminate\Support\Facades\Cache::get($cacheKey, ['attempts' => 0, 'last_sent_at' => null]);
+        
+        $data['attempts'] += 1;
+        $data['last_sent_at'] = now()->toDateTimeString();
+        
+        // Cache until end of day
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $data, now()->endOfDay());
+        
+        // Return the NEXT cooldown in seconds
+        return pow(2, $data['attempts'] - 1) * 60; 
+    }
+
+    /**
      * Create or get fresh OTP for email.
      */
     public static function createForEmail(string $email, int $validityMinutes = 10): self

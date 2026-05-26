@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WalletTransaction;
 use App\Models\Withdrawal;
 use App\Models\User;
+use App\Models\PasswordResetOtp;
 use App\Http\Resources\WalletTransactionResource;
 use App\Http\Resources\WithdrawalResource;
 use App\Http\Requests\StoreWithdrawalRequest;
@@ -15,6 +16,10 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
+use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
 {
@@ -34,7 +39,27 @@ class WalletController extends Controller
                         ->whereIn('status', ['pending', 'approved', 'processing'])
                         ->sum('amount')
                 ),
+                'hasPin' => !is_null($user->wallet_pin),
             ],
+        ]);
+    }
+
+    /**
+     * Set or update wallet PIN.
+     */
+    public function setPin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'pin' => 'required|string|size:6|regex:/^[0-9]+$/',
+        ]);
+
+        $user = $request->user();
+        $user->wallet_pin = Hash::make($request->pin);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'PIN Wallet berhasil diatur',
         ]);
     }
 
@@ -469,6 +494,172 @@ class WalletController extends Controller
                 'success' => false,
                 'message' => $e->getMessage() ?: 'Gagal menyelesaikan withdrawal',
             ], $code);
+        }
+    }
+
+    /**
+     * Send forgot PIN OTP to authenticated user's email.
+     */
+    public function forgotPin(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            
+            $rateLimit = PasswordResetOtp::checkRateLimit($user->email, 'forgot_pin');
+            if (!$rateLimit['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $rateLimit['message'],
+                    'data' => [
+                        'resendCooldownSeconds' => $rateLimit['cooldown']
+                    ]
+                ], 429);
+            }
+
+            Log::info('Wallet forgot PIN requested', ['user_id' => $user->id, 'email' => $user->email]);
+
+            // Create OTP
+            $otp = PasswordResetOtp::createForEmail($user->email);
+
+            // Send email
+            try {
+                Mail::to($user->email)->send(new OtpMail(
+                    $otp->otp,
+                    $user->name,
+                    'forgot_pin',
+                    10
+                ));
+
+                Log::info('Wallet forgot PIN OTP sent', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'otp_id' => $otp->id,
+                ]);
+            } catch (\Throwable $mailError) {
+                Log::error('Wallet forgot PIN email failed', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'otp_id' => $otp->id,
+                    'error' => $mailError->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mohon maaf, kode OTP gagal dikirim. Silakan coba lagi dalam beberapa saat.',
+                ], 500);
+            }
+
+            $nextCooldown = PasswordResetOtp::recordOtpSent($user->email, 'forgot_pin');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode OTP telah dikirim ke email Anda',
+                'data' => [
+                    'email' => $user->email,
+                    'resendCooldownSeconds' => $nextCooldown,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Wallet forgot PIN failed', [
+                'user_id' => $request->user()->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon maaf, terjadi kesalahan. Silakan coba lagi.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify wallet PIN OTP without consuming it.
+     */
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'otp' => 'required|string|size:6',
+        ]);
+
+        try {
+            $user = $request->user();
+
+            $record = PasswordResetOtp::verify($user->email, $request->otp);
+
+            if (!$record) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode OTP tidak valid atau sudah kedaluwarsa',
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode OTP valid',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Wallet verify OTP failed', [
+                'user_id' => $request->user()->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memverifikasi OTP.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset wallet PIN after OTP verification.
+     */
+    public function resetPin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'otp' => 'required|string|size:6',
+            'pin' => 'required|string|size:6|regex:/^[0-9]+$/',
+        ]);
+
+        try {
+            $user = $request->user();
+
+            // Verify OTP
+            $record = PasswordResetOtp::verify($user->email, $request->otp);
+
+            if (!$record) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode OTP tidak valid atau sudah kedaluwarsa',
+                ], 400);
+            }
+
+            // Update PIN
+            $user->wallet_pin = Hash::make($request->pin);
+            $user->save();
+
+            // Mark OTP as used
+            $record->markAsUsed();
+
+            Log::info('Wallet PIN reset successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'otp_id' => $record->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'PIN Wallet berhasil direset',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Wallet PIN reset failed', [
+                'user_id' => $request->user()->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon maaf, terjadi kesalahan. Silakan coba lagi.',
+            ], 500);
         }
     }
 }

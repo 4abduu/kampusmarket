@@ -614,6 +614,17 @@ class AuthController extends Controller
         try {
             Log::info('Auth forgot password requested', ['email' => $request->email]);
 
+            $rateLimit = PasswordResetOtp::checkRateLimit($request->email, 'forgot_password');
+            if (!$rateLimit['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $rateLimit['message'],
+                    'data' => [
+                        'resendCooldownSeconds' => $rateLimit['cooldown']
+                    ]
+                ], 429);
+            }
+
             // Create OTP
             $otp = PasswordResetOtp::createForEmail($request->email);
 
@@ -647,11 +658,14 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            $nextCooldown = PasswordResetOtp::recordOtpSent($request->email, 'forgot_password');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Kode OTP telah dikirim ke email Anda',
                 'data' => [
                     'email' => $request->email,
+                    'resendCooldownSeconds' => $nextCooldown,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -819,6 +833,17 @@ class AuthController extends Controller
         try {
             Log::info('Auth send email verification OTP requested', ['email' => $request->email]);
 
+            $rateLimit = PasswordResetOtp::checkRateLimit($request->email, 'verify_email');
+            if (!$rateLimit['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $rateLimit['message'],
+                    'data' => [
+                        'resendCooldownSeconds' => $rateLimit['cooldown']
+                    ]
+                ], 429);
+            }
+
             // Create OTP
             $otp = PasswordResetOtp::createForEmail($request->email);
 
@@ -852,11 +877,14 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            $nextCooldown = PasswordResetOtp::recordOtpSent($request->email, 'verify_email');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Kode OTP verifikasi telah dikirim ke email Anda',
                 'data' => [
                     'email' => $request->email,
+                    'resendCooldownSeconds' => $nextCooldown,
                 ],
             ]);
         } catch (\Throwable $e) {

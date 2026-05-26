@@ -28,6 +28,8 @@ import OrderDetailStatusSection from "@/components/pages/user/order-detail/Order
 import OrderDetailProductCard from "@/components/pages/user/order-detail/OrderDetailProductCard";
 import OrderDetailSummaryColumn from "@/components/pages/user/order-detail/OrderDetailSummaryColumn";
 import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
+import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
+import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrderDetailPageProps {
@@ -63,6 +65,13 @@ export default function OrderDetailPage({
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDescription, setCancelDescription] = useState("");
   const [otherReasonText, setOtherReasonText] = useState("");
+
+  // PIN states
+  const [showVerifyPinDialog, setShowVerifyPinDialog] = useState(false);
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
+  const [isSettingPin, setIsSettingPin] = useState(false);
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState<PaymentMethod | null>(null);
+  // PIN verification handled in VerifyPinDialog during payment
 
   // Fetch order
   const fetchOrder = useCallback(async () => {
@@ -603,7 +612,7 @@ export default function OrderDetailPage({
     }
   };
 
-  const handlePayment = async (method: PaymentMethod) => {
+  const handlePayment = async (method: PaymentMethod, walletPin?: string) => {
     setShowPaymentDialog(false);
     setActionLoading(true);
     try {
@@ -672,7 +681,7 @@ export default function OrderDetailPage({
           }
         }
 
-        await payOrder(order.id, 'wallet');
+        await payOrder(order.id, 'wallet', walletPin);
         try {
           const balanceResponse = await walletApi.getBalance();
           const balance = balanceResponse.data.balance;
@@ -695,6 +704,56 @@ export default function OrderDetailPage({
       });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Wallet PIN-aware payment handler
+  const handlePaymentWithPin = async (method: PaymentMethod) => {
+    if (method === 'wallet') {
+      // Check if user has PIN
+      try {
+        const balanceRes = await walletApi.getBalance();
+        if (!balanceRes.data.hasPin) {
+          setShowPaymentDialog(false);
+          setShowSetPinDialog(true);
+          return;
+        }
+      } catch {
+        // fallback: let backend validate
+      }
+      setPendingPaymentMethod('wallet');
+      setShowPaymentDialog(false);
+      setShowVerifyPinDialog(true);
+    } else {
+      handlePayment(method);
+    }
+  };
+
+  const handleVerifyPinSuccess = (pin: string) => {
+    setShowVerifyPinDialog(false);
+    if (pendingPaymentMethod === 'wallet') {
+      handlePayment('wallet', pin);
+    }
+    setPendingPaymentMethod(null);
+  };
+
+  const handleSetPinSuccess = async (pin: string) => {
+    setIsSettingPin(true);
+    try {
+      await walletApi.setWalletPin(pin);
+      setShowSetPinDialog(false);
+      toast({ title: "PIN berhasil diatur" });
+      // After setting PIN, show verify dialog for the payment
+      setPendingPaymentMethod('wallet');
+      setShowVerifyPinDialog(true);
+    } catch (err: any) {
+      toast({
+        title: "Gagal mengatur PIN",
+        description: err?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingPin(false);
     }
   };
 
@@ -925,7 +984,7 @@ export default function OrderDetailPage({
         totalPayment={totalPayment}
         walletBalance={currentUser?.walletBalance}
         formatPrice={formatPrice}
-        handlePayment={handlePayment}
+        handlePayment={handlePaymentWithPin}
         showRejectDialog={showRejectDialog}
         setShowRejectDialog={setShowRejectDialog}
         isService={isService}
@@ -948,6 +1007,21 @@ export default function OrderDetailPage({
         actionLoading={actionLoading}
         otherReasonText={otherReasonText}
         setOtherReasonText={setOtherReasonText}
+      />
+
+      <VerifyPinDialog
+        open={showVerifyPinDialog}
+        onOpenChange={setShowVerifyPinDialog}
+        onSuccess={handleVerifyPinSuccess}
+        isLoading={actionLoading}
+        description="Masukkan 6 digit PIN Dompet untuk memverifikasi pembayaran."
+      />
+
+      <SetPinDialog
+        open={showSetPinDialog}
+        onOpenChange={setShowSetPinDialog}
+        onSuccess={handleSetPinSuccess}
+        isLoading={isSettingPin}
       />
     </div>
   );

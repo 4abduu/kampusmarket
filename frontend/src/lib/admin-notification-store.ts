@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ShieldAlert, AlertTriangle, DollarSign, UserPlus, CheckCircle, Ban } from "lucide-react";
+import { ShieldAlert, AlertTriangle, DollarSign, UserPlus, CheckCircle } from "lucide-react";
 
 export interface AdminNotification {
   id: string; // UUID string from backend

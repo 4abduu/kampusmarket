@@ -144,13 +144,23 @@ export default function ForgotPasswordPage({
       const data = await response.json();
 
       if (!response.ok) {
-        setEmailError(data.message || "Gagal mengirim kode OTP");
+        if (response.status === 429 && data.data?.resendCooldownSeconds) {
+          setResendCooldown(data.data.resendCooldownSeconds);
+          setCanResend(false);
+          setEmailError(data.message || "Terlalu banyak percobaan");
+        } else {
+          setEmailError(data.message || "Gagal mengirim kode OTP");
+        }
         setIsSendingOtp(false);
         return;
       }
 
       setCountdown(OTP_EXPIRATION_SECONDS);
-      setResendCooldown(OTP_EXPIRATION_SECONDS);
+      if (data.data?.resendCooldownSeconds) {
+        setResendCooldown(data.data.resendCooldownSeconds);
+      } else {
+        setResendCooldown(60);
+      }
       setCanResend(false);
       setOtpSent(true);
       setStep("otp");
@@ -183,12 +193,22 @@ export default function ForgotPasswordPage({
       const data = await response.json();
 
       if (!response.ok) {
-        setOtpError(data.message || "Gagal mengirim ulang kode OTP");
+        if (response.status === 429 && data.data?.resendCooldownSeconds) {
+          setResendCooldown(data.data.resendCooldownSeconds);
+          setCanResend(false);
+          setOtpError(data.message || "Terlalu banyak percobaan");
+        } else {
+          setOtpError(data.message || "Gagal mengirim ulang kode OTP");
+        }
         return;
       }
 
       setCountdown(OTP_EXPIRATION_SECONDS);
-      setResendCooldown(OTP_EXPIRATION_SECONDS);
+      if (data.data?.resendCooldownSeconds) {
+        setResendCooldown(data.data.resendCooldownSeconds);
+      } else {
+        setResendCooldown(60);
+      }
       setCanResend(false);
       window.sessionStorage.setItem(getForgotPasswordOtpStorageKey(email), String(Date.now()));
     } catch (error) {

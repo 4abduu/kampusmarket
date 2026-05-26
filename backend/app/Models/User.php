@@ -41,6 +41,7 @@ class User extends Authenticatable
         'rating',
         'review_count',
         'wallet_balance',
+        'wallet_pin',
         'joined_at',
         'last_seen', // [BARU] untuk status online
     ];
@@ -49,6 +50,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'google_id',
+        'wallet_pin',
     ];
 
     protected $casts = [

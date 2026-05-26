@@ -182,9 +182,10 @@ export const getOrderDetail = async (orderId: string): Promise<Order> => {
   return unwrapApiData<Order>(response);
 };
 
-export const payOrder = async (orderId: string, paymentMethod?: string): Promise<PaymentResponse & { order?: Order }> => {
+export const payOrder = async (orderId: string, paymentMethod?: string, walletPin?: string): Promise<PaymentResponse & { order?: Order }> => {
   const response = await apiClient.post(`/orders/${orderId}/pay`, {
-    ...(paymentMethod ? { paymentMethod } : {})
+    ...(paymentMethod ? { paymentMethod } : {}),
+    ...(walletPin ? { wallet_pin: walletPin } : {}),
   });
   return unwrapApiData<PaymentResponse & { order?: Order }>(response);
 };

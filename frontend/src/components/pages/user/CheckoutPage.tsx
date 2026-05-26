@@ -6,12 +6,17 @@ import { ChevronRight, Truck, Home, Store, Monitor, Clock } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
 import { createOrder } from "@/lib/api/orders";
 import { getAddresses, createAddress, updateAddress, deleteAddress, setPrimaryAddress } from "@/lib/api/addresses";
+import { walletApi } from "@/lib/api/wallet";
+import { useToast } from "@/hooks/use-toast";
 import AddressSection from "@/components/pages/user/checkout/AddressSection";
 import CheckoutAddressDialogs from "@/components/pages/user/checkout/CheckoutAddressDialogs";
 import CheckoutContactSellerCard from "@/components/pages/user/checkout/CheckoutContactSellerCard";
 import CheckoutOrderSummaryColumn from "@/components/pages/user/checkout/CheckoutOrderSummaryColumn";
 import CheckoutShippingMethodSection from "@/components/pages/user/checkout/CheckoutShippingMethodSection";
 import ServiceBookingSection from "@/components/pages/user/checkout/ServiceBookingSection";
+import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog";
+import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
+import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
 import { CheckoutPageSkeleton } from "@/components/skeleton";
 import {
   createDefaultAddressForm,
@@ -26,15 +31,25 @@ import type {
   Address,
   CartItem,
 } from "@/components/pages/user/checkout/checkout.types";
+import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProps) {
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState<{ product: any; quantity: number }[]>([]);
+
+  // [NEW] Payment method dialog and PIN verification
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showVerifyPinDialog, setShowVerifyPinDialog] = useState(false);
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [hasWalletPin, setHasWalletPin] = useState(false);
+  const [isSettingPin, setIsSettingPin] = useState(false);
 
   // [NEW] negotiated price dari offer/nego dalam chat
   const negotiatedPrice = searchParams.get("price") ? parseInt(searchParams.get("price") || "0", 10) : null;
@@ -145,6 +160,22 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
       }
     };
     fetchAddresses();
+  }, []);
+
+  // Fetch wallet balance and PIN status on mount
+  useEffect(() => {
+    const fetchWalletInfo = async () => {
+      try {
+        const response = await walletApi.getBalance();
+        if (response.success) {
+          setWalletBalance(response.data.balance);
+          setHasWalletPin(response.data.hasPin);
+        }
+      } catch (err) {
+        console.error("[Checkout] Failed to fetch wallet info:", err);
+      }
+    };
+    fetchWalletInfo();
   }, []);
 
   // Derived values
@@ -281,39 +312,73 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     }
   };
 
-  const handleCreateOrder = async () => {
-    // Clear previous validation errors
+  // Handle payment method selection
+  const handlePaymentMethodClick = (method: PaymentMethod) => {
+    if (method === 'wallet') {
+      // Check if user has PIN
+      if (!hasWalletPin) {
+        setShowPaymentDialog(false);
+        setShowSetPinDialog(true);
+        return;
+      }
+      setShowPaymentDialog(false);
+      setShowVerifyPinDialog(true);
+    } else {
+      // For midtrans, just create order with midtrans method
+      handleCreateOrderWithMethod('midtrans');
+    }
+  };
+
+  // Handle PIN verification success
+  const handleVerifyPinSuccess = (pin: string) => {
+    setShowVerifyPinDialog(false);
+    handleCreateOrderWithMethod('wallet', pin);
+  };
+
+  // Handle Set PIN success
+  const handleSetPinSuccess = async (pin: string) => {
+    setIsSettingPin(true);
+    try {
+      await walletApi.setWalletPin(pin);
+      setHasWalletPin(true);
+      setShowSetPinDialog(false);
+      toast({ title: "PIN berhasil diatur" });
+      // After setting PIN, show verify dialog for payment
+      setShowVerifyPinDialog(true);
+    } catch (err: any) {
+      toast({
+        title: "Gagal mengatur PIN",
+        description: err?.message || "Terjadi kesalahan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingPin(false);
+    }
+  };
+
+  // Create order with specific payment method
+  const handleCreateOrderWithMethod = async (paymentMethod: PaymentMethod, walletPin?: string) => {
+    // Clear validation errors
     setValidationError(null);
 
     if (isService && !bookingDate) {
-      const msg = "Tanggal booking harus dipilih";
-      console.warn('[CheckoutPage] Validation error:', msg);
-      setValidationError(msg);
+      setValidationError("Tanggal booking harus dipilih");
       return;
     }
     if (isService && isVariablePricing && !serviceRequirements.trim()) {
-      const msg = "Deskripsi kebutuhan harus diisi";
-      console.warn('[CheckoutPage] Validation error:', msg);
-      setValidationError(msg);
+      setValidationError("Deskripsi kebutuhan harus diisi");
       return;
     }
     if (requiresAddress && !selectedAddressId && addresses.length === 0) {
-      console.log('[CheckoutPage] No address selected, showing dialog');
       setShowSaveAddressDialog(true);
       return;
     }
-
     if (!hasShippingIntersection) {
-      const msg = "Tidak ada metode pengiriman yang tersedia untuk kombinasi produk ini. Silakan checkout secara terpisah.";
-      console.warn('[CheckoutPage] Validation error:', msg);
-      setValidationError(msg);
+      setValidationError("Tidak ada metode pengiriman yang tersedia untuk kombinasi produk ini");
       return;
     }
-
     if (!product || !selectedShipping) {
-      const msg = "Silakan pilih metode pengiriman";
-      console.warn('[CheckoutPage] Validation error:', msg, { product: !!product, selectedShipping: !!selectedShipping });
-      setValidationError(msg);
+      setValidationError("Silakan pilih metode pengiriman");
       return;
     }
 
@@ -321,8 +386,6 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     const successfulOrderIds: string[] = [];
     const failedItems: { title: string; reason: string }[] = [];
 
-    // Loop through all items — each order is individually try-caught
-    // so one failure doesn't block the rest
     for (const item of checkoutItems) {
       const itemProduct = item.product;
       const productDbId = itemProduct?.uuid || itemProduct?.id;
@@ -330,8 +393,6 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
 
       if (!productDbId) continue;
 
-      // Find shipping option for this specific product if possible,
-      // otherwise use the general selectedShipping
       const itemShippingOpts = (itemProduct as any).shippingOptions || (itemProduct as any).shipping_options || [];
       let shippingOptionId: string | undefined;
 
@@ -351,51 +412,29 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         selectedAddressId: requiresAddress ? selectedAddressId : undefined,
         serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
         serviceNotes: isService ? serviceNotes : undefined,
-        paymentMethod: "midtrans",
+        paymentMethod: paymentMethod,
+        wallet_pin: walletPin,
         notes: isService ? serviceRequirements : undefined,
         selectedShippingOptionId: shippingOptionId,
       };
 
       try {
-        console.log(`[CheckoutPage] Creating order for product ${productDbId}...`, orderPayload);
         const order = await createOrder(orderPayload);
         const orderId = order?.uuid || order?.id || "";
         if (orderId) successfulOrderIds.push(orderId);
       } catch (err: any) {
         const reason = err?.message || "Gagal membuat pesanan";
-        console.error(`[CheckoutPage] Order failed for "${productTitle}":`, reason);
         failedItems.push({ title: productTitle, reason });
       }
     }
 
-    // Decide what to do based on results
     if (successfulOrderIds.length > 0) {
-      // At least some orders succeeded — navigate to success page
       localStorage.setItem("recentCheckoutOrderIds", JSON.stringify(successfulOrderIds));
-
-      if (failedItems.length > 0) {
-        // Partial success — show warning about failed items
-        const failedNames = failedItems.map(f => `${f.title} (${f.reason})`).join(", ");
-        console.warn(`[CheckoutPage] Partial success. Failed: ${failedNames}`);
-        setValidationError(
-          `${successfulOrderIds.length} pesanan berhasil, tetapi ${failedItems.length} gagal: ${failedNames}`
-        );
-        // Still navigate after a short delay so user can see the message
-        setTimeout(() => {
-          const firstOrderId = successfulOrderIds[0] || "";
-          onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
-        }, 2500);
-      } else {
-        // All succeeded
-        console.log('[CheckoutPage] All orders created successfully:', successfulOrderIds);
-        const firstOrderId = successfulOrderIds[0] || "";
-        onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
-      }
+      const firstOrderId = successfulOrderIds[0] || "";
+      onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
     } else {
-      // All failed
       const reasons = failedItems.map(f => f.reason).filter((v, i, a) => a.indexOf(v) === i);
       const msg = reasons.join(" | ") || "Gagal membuat pesanan. Silakan coba lagi.";
-      console.error("[CheckoutPage] All orders failed:", failedItems);
       setValidationError(msg);
     }
 
@@ -597,7 +636,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
               basePrice={basePrice}
               totalPayment={totalPayment}
               formatPrice={formatPrice}
-              handleCreateOrder={handleCreateOrder}
+              handleCreateOrder={() => setShowPaymentDialog(true)}
               isBookingDateMissing={isBookingDateMissing}
               isServiceRequirementsMissing={isServiceRequirementsMissing}
               isDeliveryAddressMissing={isDeliveryAddressMissing}
@@ -621,6 +660,36 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         newAddress={newAddress}
         setNewAddress={setNewAddress}
         handleSaveAddress={handleSaveAddress}
+      />
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        totalPayment={totalPayment}
+        formatPrice={formatPrice}
+        title="Pilih Metode Pembayaran"
+        description="Pilih cara terbaik untuk membayar pesanan Anda"
+        summaryLabel="Total Pembayaran"
+        onPayWithWallet={() => handlePaymentMethodClick('wallet')}
+        onPayWithMidtrans={() => handlePaymentMethodClick('midtrans')}
+        walletBalance={walletBalance}
+      />
+
+      {/* Verify PIN Dialog */}
+      <VerifyPinDialog
+        open={showVerifyPinDialog}
+        onOpenChange={setShowVerifyPinDialog}
+        onSuccess={handleVerifyPinSuccess}
+        description="Masukkan PIN Dompet untuk menyelesaikan pembayaran"
+      />
+
+      {/* Set PIN Dialog */}
+      <SetPinDialog
+        open={showSetPinDialog}
+        onOpenChange={setShowSetPinDialog}
+        onSuccess={handleSetPinSuccess}
+        isLoading={isSettingPin}
       />
     </div>
   );

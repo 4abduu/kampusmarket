@@ -95,9 +95,12 @@ function AppContent() {
       const detail = (event as CustomEvent<{ balance?: number }>).detail;
       if (typeof detail?.balance !== "number") return;
 
-      setAuthUser((prev) =>
-        prev ? { ...prev, walletBalance: detail.balance } : prev,
-      );
+      console.log('[App] Received wallet-balance-updated event:', detail.balance);
+      setAuthUser((prev) => {
+        const newState = prev ? { ...prev, walletBalance: detail.balance } : prev;
+        console.log('[App] Updated authUser.walletBalance to:', newState?.walletBalance);
+        return newState;
+      });
     };
 
     const handleProfileUpdated = (event: Event) => {

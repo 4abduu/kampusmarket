@@ -62,7 +62,6 @@ export default function AdminOverviewTab({
   categoryChartData,
   formatPrice,
   onOpenTab,
-  onOpenNotifications,
 }: AdminOverviewTabProps) {
   // Fallback to empty data if not provided
   const transactionTrendData = revenueChartData || [];

@@ -29,6 +29,8 @@ import UserDashboardOverviewTab from "@/components/pages/user/dashboard/UserDash
 import UserDashboardProductsTab from "@/components/pages/user/dashboard/UserDashboardProductsTab";
 import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashboardWalletTab";
 import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar";
+import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
+import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
 import {
   UserDashboardOverviewSkeleton,
   UserDashboardOverviewTabSkeleton,
@@ -312,6 +314,8 @@ export default function UserDashboardPage({
                 totalExpense={wallet.totalExpense}
                 setShowTopUpDialog={wallet.setShowTopUpDialog}
                 setShowWithdrawDialog={wallet.setShowWithdrawDialog}
+                hasPin={wallet.hasPin}
+                setShowSetPinDialog={wallet.setShowSetPinDialog}
                 stats={stats}
                 adminFeePercentage={ADMIN_FEE_PERCENTAGE}
                 formatPrice={products.formatPrice}
@@ -418,6 +422,7 @@ export default function UserDashboardPage({
         setTopUpAmount={wallet.setTopUpAmount}
         formatPrice={products.formatPrice}
         handleTopUp={wallet.handleTopUp}
+        isLoadingTopUp={wallet.isLoadingTopUp}
         showWithdrawDialog={wallet.showWithdrawDialog}
         setShowWithdrawDialog={wallet.setShowWithdrawDialog}
         withdrawForm={wallet.withdrawForm}
@@ -451,6 +456,21 @@ export default function UserDashboardPage({
         showWithdrawSuccess={wallet.showWithdrawSuccess}
         onNavigate={onNavigate}
         currentUserEmail={currentUser?.email}
+      />
+
+      <SetPinDialog
+        open={wallet.showSetPinDialog}
+        onOpenChange={wallet.setShowSetPinDialog}
+        onSuccess={wallet.handleSetPin}
+        isLoading={wallet.isSettingPin}
+      />
+
+      <VerifyPinDialog
+        open={wallet.showVerifyPinDialog}
+        onOpenChange={wallet.setShowVerifyPinDialog}
+        onSuccess={wallet.handleWithdrawWithPin}
+        isLoading={wallet.isWithdrawing}
+        description="Masukkan 6 digit PIN untuk memverifikasi penarikan dana."
       />
     </div>
   );
