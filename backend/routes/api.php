@@ -305,6 +305,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::get('/stats', [AdminUserController::class, 'stats']);
     });
 
+    Route::get('/addresses', [AdminUserController::class, 'addresses']);
+
     // ── REPORTS ────────────────────────────────────────────────────────────
     Route::get('/reports', [ReportController::class, 'adminIndex']);
     Route::put('/reports/{id}/review', [ReportController::class, 'review']);

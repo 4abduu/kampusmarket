@@ -370,4 +370,61 @@ class AdminUserController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Get all user addresses for admin.
+     */
+    public function addresses(Request $request): JsonResponse
+    {
+        try {
+            // 1. Ambil pengguna reguler yang memiliki minimal satu alamat, urutkan A-Z berdasarkan nama
+            $users = User::where('role', \App\Enums\UserRole::USER->value)
+                ->whereHas('addresses')
+                ->with(['addresses'])
+                ->orderBy('name', 'asc')
+                ->get();
+
+            $formatted = $users->map(function ($user) {
+                // 2. Urutkan alamat dengan callback universal: Utama (is_primary) dahulu, kemudian Label A-Z
+                $sortedAddresses = $user->addresses->sort(function ($a, $b) {
+                    if ($a->is_primary !== $b->is_primary) {
+                        return $b->is_primary <=> $a->is_primary;
+                    }
+                    return strcasecmp($a->label, $b->label);
+                });
+
+                return [
+                    'user' => [
+                        'id' => $user->uuid,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ],
+                    'addresses' => $sortedAddresses->map(function ($address) {
+                        return [
+                            'id' => $address->uuid,
+                            'label' => $address->label,
+                            'recipient_name' => $address->recipient,
+                            'phone' => $address->phone,
+                            'address' => $address->address,
+                            'note' => $address->notes,
+                            'is_primary' => (bool)$address->is_primary,
+                        ];
+                    })->values()->all(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formatted,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[AdminUserController] Error fetching all user addresses', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data alamat',
+            ], 500);
+        }
+    }
 }

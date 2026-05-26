@@ -1,8 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 /** Wrapper untuk memberikan layout vertikal konsisten setinggi tab asli */
 function SkeletonSection({ children }: { children: React.ReactNode }) {

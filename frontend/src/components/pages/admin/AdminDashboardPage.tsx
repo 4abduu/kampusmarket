@@ -41,7 +41,6 @@ export default function AdminDashboardPage({
     stats,
     revenueChartData,
     categoryChartData,
-    users,
     withdrawals,
     cancelRequests,
     platformRevenue,
@@ -58,6 +57,9 @@ export default function AdminDashboardPage({
     filteredReports,
     filteredWithdrawals,
     filteredAddresses,
+    addressesLoading,
+    addressesError,
+    loadAddressesData,
     filteredOrders,
     filteredCategories,
     filteredFaculties,
@@ -563,10 +565,12 @@ export default function AdminDashboardPage({
           <TabsContent value="addresses" className="space-y-6 py-2">
             <AdminAddressesTab
               filteredAddresses={filteredAddresses}
-              users={users}
               addressSearchTerm={addressSearchTerm}
               setAddressSearchTerm={setAddressSearchTerm}
               getInitials={getInitials}
+              isLoading={addressesLoading}
+              error={addressesError}
+              onRetry={loadAddressesData}
             />
           </TabsContent>
         </Tabs>

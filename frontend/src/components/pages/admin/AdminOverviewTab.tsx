@@ -65,6 +65,7 @@ export default function AdminOverviewTab({
   onOpenNotifications,
 }: AdminOverviewTabProps) {
   // Fallback to empty data if not provided
+  void onOpenNotifications;
   const transactionTrendData = revenueChartData || [];
   const categoryDistributionData = categoryChartData || [];
   return (

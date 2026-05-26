@@ -1,5 +1,24 @@
 import { API_BASE_URL } from "@/lib/config";
 
+export interface AdminAddress {
+  id: string;
+  label: string;
+  recipient_name: string;
+  phone: string;
+  address: string;
+  note?: string;
+  is_primary: boolean;
+}
+
+export interface AdminAddressUser {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  addresses: AdminAddress[];
+}
+
 type ApiEnvelope<T> = {
   success?: boolean;
   message?: string;
@@ -414,6 +433,17 @@ export const adminUsersApi = {
 
   async getUserStats() {
     return request(`${API_BASE_URL}/admin/users/stats`, {
+      method: "GET",
+    });
+  },
+};
+
+// ============================================================
+// ADMIN ADDRESSES
+// ============================================================
+export const adminAddressesApi = {
+  async getAddresses(): Promise<AdminAddressUser[]> {
+    return request<AdminAddressUser[]>(`${API_BASE_URL}/admin/addresses`, {
       method: "GET",
     });
   },

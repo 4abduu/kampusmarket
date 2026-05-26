@@ -12,7 +12,6 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
-  mockAddresses,
   platformRevenue,
   getFacultyName,
   CANCEL_REASONS,
@@ -41,7 +40,9 @@ import {
   adminUsersApi,
   adminReportsApi,
   adminWithdrawalsApi,
+  adminAddressesApi,
 } from "@/lib/api/admin";
+import type { AdminAddressUser } from "@/lib/api/admin";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -182,6 +183,9 @@ export function useAdminDashboardController() {
     useState<string>("all");
 
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
+  const [addressesData, setAddressesData] = useState<AdminAddressUser[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressesError, setAddressesError] = useState<string | null>(null);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<{
@@ -875,6 +879,25 @@ export function useAdminDashboardController() {
     }
   };
 
+  const loadAddressesData = async () => {
+    setAddressesLoading(true);
+    setAddressesError(null);
+    try {
+      const res = await adminAddressesApi.getAddresses();
+      if (Array.isArray(res)) {
+        setAddressesData(res);
+      }
+      markResourceLoaded("addresses");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat data alamat";
+      setAddressesError(msg);
+      setAddressesData([]);
+      console.error("Failed to load admin addresses:", err);
+    } finally {
+      setAddressesLoading(false);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Lazy-fetch effect: fires only when activeTab changes.
   // Guard: skip if the primary resource for this tab is already loaded.
@@ -919,8 +942,11 @@ export function useAdminDashboardController() {
             await loadOrdersData();
           }
           break;
-        // TODO: integrate admin addresses API when backend is ready
-        // addresses — currently mock data, no fetch
+        case "addresses":
+          if (!isResourceLoaded("addresses")) {
+            await loadAddressesData();
+          }
+          break;
         default:
           break;
       }
@@ -1122,28 +1148,36 @@ export function useAdminDashboardController() {
     withdrawalProviderFilter,
   ]);
 
-  const filteredAddresses = useMemo(
-    () =>
-      mockAddresses.filter((address) => {
-        const matchesSearch =
-          addressSearchTerm === "" ||
-          address.recipient
-            .toLowerCase()
-            .includes(addressSearchTerm.toLowerCase()) ||
-          address.address
-            .toLowerCase()
-            .includes(addressSearchTerm.toLowerCase()) ||
-          address.label
-            .toLowerCase()
-            .includes(addressSearchTerm.toLowerCase()) ||
-          (address.notes &&
-            address.notes
-              .toLowerCase()
-              .includes(addressSearchTerm.toLowerCase()));
-        return matchesSearch;
-      }),
-    [addressSearchTerm],
-  );
+  const filteredAddresses = useMemo<AdminAddressUser[]>(() => {
+    if (!addressSearchTerm.trim()) return addressesData;
+
+    const query = addressSearchTerm.toLowerCase().trim();
+    return addressesData
+      .map((item) => {
+        const userMatches =
+          item.user.name.toLowerCase().includes(query) ||
+          item.user.email.toLowerCase().includes(query);
+
+        const matchingAddresses = item.addresses.filter(
+          (addr) =>
+            userMatches ||
+            addr.label.toLowerCase().includes(query) ||
+            addr.recipient_name.toLowerCase().includes(query) ||
+            addr.phone.toLowerCase().includes(query) ||
+            addr.address.toLowerCase().includes(query) ||
+            (addr.note && addr.note.toLowerCase().includes(query)),
+        );
+
+        if (matchingAddresses.length > 0) {
+          return {
+            ...item,
+            addresses: matchingAddresses,
+          };
+        }
+        return null;
+      })
+      .filter((item): item is AdminAddressUser => item !== null);
+  }, [addressesData, addressSearchTerm]);
 
   const filteredOrders = useMemo(
     () =>
@@ -2213,6 +2247,9 @@ export function useAdminDashboardController() {
     filteredReports,
     filteredWithdrawals,
     filteredAddresses,
+    addressesLoading,
+    addressesError,
+    loadAddressesData,
     filteredOrders,
     filteredCategories,
     filteredFaculties,
