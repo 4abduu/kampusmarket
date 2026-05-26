@@ -47,31 +47,34 @@ export default function AdminAddressesTab({
             <div className="h-10 w-full max-w-md bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border rounded-xl p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                  <div className="h-3 w-48 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+            <div key={i} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 bg-background shadow-sm space-y-2.5">
+              {/* User Section Header Skeleton */}
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800/50">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 w-28 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                    <div className="h-2.5 w-40 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                  </div>
                 </div>
-                <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                <div className="h-4.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
               </div>
-              <div className="flex gap-4 overflow-hidden pb-2">
+              
+              {/* Card List Row Skeleton */}
+              <div className="flex gap-3 overflow-hidden pb-1 flex-nowrap">
                 {Array.from({ length: 2 }).map((_, j) => (
-                  <div key={j} className="w-[340px] min-w-[340px] flex-shrink-0 border rounded-xl p-4 space-y-3 bg-slate-50/50 dark:bg-slate-800/20">
-                    <div className="flex gap-2">
-                      <div className="h-8 w-8 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                        <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                      </div>
+                  <div key={j} className="w-[calc(50%-6px)] flex-1 min-w-[520px] max-w-full flex-shrink-0 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 space-y-2 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6.5 w-6.5 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                      <div className="h-3.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                      <div className="h-3 w-[80%] bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                    <div className="space-y-1 mt-1">
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
+                      <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
                     </div>
+                    <div className="h-2.5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded mt-1" />
                   </div>
                 ))}
               </div>
@@ -103,6 +106,22 @@ export default function AdminAddressesTab({
 
   return (
     <Card className="border-slate-200 dark:border-slate-800">
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 8px;
+          display: block;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgb(203 213 225);
+          border-radius: 4px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgb(71 85 105);
+        }
+      `}</style>
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -164,37 +183,37 @@ export default function AdminAddressesTab({
           )
         ) : (
           // 5. Daftar Alamat Pengguna (Grouped by User)
-          <div className="space-y-6">
+          <div className="space-y-5">
             {filteredAddresses.map((item) => {
               const { user, addresses } = item;
               return (
-                <div key={user.id} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-4 bg-background shadow-sm space-y-4">
-                  {/* User Section Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/50">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-slate-100 dark:ring-slate-800">
-                        <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-950 dark:text-primary-400 text-sm font-semibold">
+                <div key={user.id} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 bg-background shadow-sm space-y-2.5">
+                  {/* User Section Header (Compact Spacing) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800/50">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-7 w-7 ring-2 ring-slate-100 dark:ring-slate-800">
+                        <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-950 dark:text-primary-400 text-[10px] font-bold">
                           {getInitials(user.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-bold text-sm text-slate-800 dark:text-slate-200">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <p className="font-bold text-xs text-slate-800 dark:text-slate-200 leading-none">{user.name}</p>
+                        <p className="text-[10.5px] text-muted-foreground leading-none mt-0.5">{user.email}</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-950/50 dark:text-primary-400 dark:border-primary-900 text-xs px-2.5 py-1">
+                    <Badge variant="secondary" className="bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-950/50 dark:text-primary-400 dark:border-primary-900 text-[10px] px-2 py-0.5">
                       {addresses.length} alamat
                     </Badge>
                   </div>
-
+ 
                   {/* Empty Address Handling inside User */}
                   {addresses.length === 0 ? (
                     <div className="border border-dashed rounded-xl p-4 bg-slate-50 dark:bg-slate-800 text-center py-6 text-muted-foreground text-sm font-medium">
                       Belum memiliki alamat tersimpan
                     </div>
                   ) : (
-                    /* Horizontal Scrollable Address Row */
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+                    /* Consistent Horizontal Scrollable Address Row */
+                    <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar flex-nowrap scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
                       {addresses.map((address) => {
                         // Tentukan Icon berdasarkan Label Alamat
                         const labelLower = address.label.toLowerCase();
@@ -203,49 +222,47 @@ export default function AdminAddressesTab({
                           : (labelLower === "rumah" || labelLower === "kantor") 
                             ? Building 
                             : MapPinned;
-
+ 
                         return (
                           <div
                             key={address.id}
-                            className={`w-[340px] min-w-[340px] flex-shrink-0 border rounded-xl p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 transition-colors break-words overflow-hidden flex flex-col justify-between ${
+                            className={`w-[calc(50%-6px)] flex-1 min-w-[520px] max-w-full flex-shrink-0 border rounded-xl p-3 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/50 dark:hover:bg-slate-800/60 transition-colors break-words overflow-hidden flex flex-col gap-1.5 ${
                               address.is_primary 
                                 ? "border-primary-500/50 shadow-sm" 
                                 : "border-slate-200 dark:border-slate-800/80"
                             }`}
                           >
-                            <div className="space-y-3">
-                              {/* Header Alamat: Label dan Badge Utama */}
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <div className={`p-1.5 rounded ${address.is_primary ? "bg-primary-100 dark:bg-primary-900/50" : "bg-slate-200 dark:bg-slate-700"}`}>
-                                    <AddressIcon className={`h-4 w-4 ${address.is_primary ? "text-primary-600 dark:text-primary-400" : "text-slate-500"}`} />
-                                  </div>
-                                  <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{address.label}</span>
+                            <div className="space-y-1.5">
+                              {/* Header Alamat: Label dan Badge Utama (Compact Figma Layout) */}
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1 rounded ${address.is_primary ? "bg-primary-100 dark:bg-primary-900/50" : "bg-slate-200 dark:bg-slate-700"}`}>
+                                  <AddressIcon className={`h-3.5 w-3.5 ${address.is_primary ? "text-primary-600 dark:text-primary-400" : "text-slate-500"}`} />
                                 </div>
+                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{address.label}</span>
                                 {address.is_primary && (
-                                  <Badge variant="secondary" className="bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/50 dark:text-green-400 dark:border-green-900 text-[10px] font-semibold px-2 py-0.5">
+                                  <Badge variant="secondary" className="bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/50 dark:text-green-400 dark:border-green-900 text-[10px] font-semibold px-1.5 py-0.5 ml-1">
                                     Utama
                                   </Badge>
                                 )}
                               </div>
                               
                               {/* Info Penerima */}
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{address.recipient_name}</p>
+                              <div>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-tight">{address.recipient_name}</p>
                                 {address.phone && (
-                                  <p className="text-xs text-muted-foreground font-mono">{address.phone}</p>
+                                  <p className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">{address.phone}</p>
                                 )}
                               </div>
-
+ 
                               {/* Alamat Lengkap */}
-                              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3" title={address.address}>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2" title={address.address}>
                                 {address.address}
                               </p>
                             </div>
-
+ 
                             {/* Catatan Tambahan (Optional) */}
                             {address.note && (
-                              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/50 text-[11px] text-amber-700 dark:text-amber-500/90 italic flex items-start gap-1">
+                              <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/40 text-[11px] text-amber-700 dark:text-amber-500/90 italic flex items-start gap-1">
                                 <span className="flex-shrink-0">📍</span>
                                 <span className="line-clamp-2" title={address.note}>{address.note}</span>
                               </div>
