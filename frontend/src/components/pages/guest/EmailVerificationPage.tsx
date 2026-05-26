@@ -20,8 +20,6 @@ import {
 import { API_BASE_URL } from "@/lib/config";
 import type { NavigateFn } from "@/app/navigation/types";
 
-const EMAIL_VERIFICATION_OTP_TTL_SECONDS = 10 * 60;
-
 function getEmailVerificationOtpStorageKey(email: string, source: string) {
   return `email-verification-otp:${source}:${email.trim().toLowerCase()}`;
 }
@@ -51,15 +49,6 @@ export default function EmailVerificationPage({
     if (!email || email === "user@email.com") return;
 
     setUserEmail(email);
-
-    const storageKey = getEmailVerificationOtpStorageKey(email, source);
-    const lastSentAt = Number(window.sessionStorage.getItem(storageKey) || 0);
-    const elapsedSeconds = lastSentAt ? Math.floor((Date.now() - lastSentAt) / 1000) : Number.POSITIVE_INFINITY;
-
-    if (lastSentAt && elapsedSeconds < EMAIL_VERIFICATION_OTP_TTL_SECONDS) {
-      setResendCooldown(EMAIL_VERIFICATION_OTP_TTL_SECONDS - elapsedSeconds);
-      return;
-    }
 
     void sendVerificationOtp(email);
   }, [email]);
@@ -111,12 +100,22 @@ export default function EmailVerificationPage({
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Gagal mengirim kode verifikasi");
+        if (response.status === 429 && data.data?.resendCooldownSeconds) {
+          setResendCooldown(data.data.resendCooldownSeconds);
+          setError(data.message || "Terlalu banyak percobaan");
+        } else {
+          setError(data.message || "Gagal mengirim kode verifikasi");
+        }
         return;
       }
 
       window.sessionStorage.setItem(getEmailVerificationOtpStorageKey(emailToVerify, source), String(Date.now()));
-      setResendCooldown(EMAIL_VERIFICATION_OTP_TTL_SECONDS);
+      
+      if (data.data?.resendCooldownSeconds) {
+        setResendCooldown(data.data.resendCooldownSeconds);
+      } else {
+        setResendCooldown(60);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim kode");
     }

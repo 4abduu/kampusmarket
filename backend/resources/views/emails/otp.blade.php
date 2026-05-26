@@ -1,5 +1,5 @@
 <x-mail::message>
-{{-- OTP Email Template untuk Email Verification dan Forgot Password --}}
+{{-- OTP Email Template untuk Email Verification, Forgot Password, dan Forgot PIN --}}
 
 @if($type === 'email_verification')
 # Verifikasi Email Anda
@@ -7,6 +7,12 @@
 Halo **{{ $recipientName }}**, 
 
 Terima kasih telah mendaftar di **KampusMarket**! Untuk menyelesaikan verifikasi email Anda, gunakan kode di bawah:
+@elseif($type === 'forgot_pin')
+# Reset PIN Wallet Anda
+
+Halo **{{ $recipientName }}**, 
+
+Kami menerima permintaan untuk mereset PIN Wallet Anda. Gunakan kode OTP di bawah untuk melanjutkan:
 @else
 # Perbarui Password Anda
 
@@ -31,6 +37,8 @@ Kami menerima permintaan untuk mereset password akun Anda. Gunakan kode OTP di b
 - Jangan bagikan kode ini kepada siapapun
 @if($type === 'email_verification')
 - Kode ini hanya untuk verifikasi email Anda
+@elseif($type === 'forgot_pin')
+- Kode ini hanya untuk reset PIN Wallet Anda
 @else
 - Kode ini hanya untuk reset password Anda
 @endif
@@ -39,6 +47,8 @@ Kami menerima permintaan untuk mereset password akun Anda. Gunakan kode OTP di b
 Setelah verifikasi, Anda dapat mulai menjual atau membeli di KampusMarket!
 
 Masukkan kode OTP di halaman verifikasi email untuk melanjutkan.
+@elseif($type === 'forgot_pin')
+Masukkan kode OTP di halaman reset PIN Wallet untuk membuat PIN baru.
 @else
 Masukkan kode OTP di halaman reset password untuk melanjutkan.
 @endif

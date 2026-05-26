@@ -209,6 +209,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('wallet')->group(function () {
         Route::get('/balance', [WalletController::class, 'balance']);
+        Route::post('/pin', [WalletController::class, 'setPin']);
+        Route::post('/forgot-pin', [WalletController::class, 'forgotPin']);
+        Route::post('/verify-otp', [WalletController::class, 'verifyOtp']);
+        Route::post('/reset-pin', [WalletController::class, 'resetPin']);
         Route::get('/transactions', [WalletController::class, 'transactions']);
         Route::post('/top-up', [WalletController::class, 'topUp']);
         Route::post('/withdraw', [WalletController::class, 'withdraw']);

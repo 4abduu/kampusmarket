@@ -737,6 +737,13 @@ class OrderController extends Controller
 
         // Balance payment — deduct from buyer, hold in escrow (NOT transferred to seller yet)
         if ($order->payment_method === 'balance') {
+            if (!$buyer->wallet_pin) {
+                return response()->json(['success' => false, 'message' => 'PIN Wallet belum diatur'], 400);
+            }
+            if (!\Illuminate\Support\Facades\Hash::check($request->input('wallet_pin'), $buyer->wallet_pin)) {
+                return response()->json(['success' => false, 'message' => 'PIN Wallet salah'], 400);
+            }
+
             if ($buyer->wallet_balance < $totalPrice) {
                 return response()->json(['success' => false, 'message' => 'Saldo tidak mencukupi'], 400);
             }

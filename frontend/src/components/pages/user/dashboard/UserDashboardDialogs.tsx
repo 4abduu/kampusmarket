@@ -104,6 +104,7 @@ type Props = {
   setTopUpAmount: (amount: string) => void
   formatPrice: (price: number) => string
   handleTopUp: () => void
+  isLoadingTopUp?: boolean
 
   showWithdrawDialog: boolean
   setShowWithdrawDialog: (open: boolean) => void
@@ -190,6 +191,7 @@ export default function UserDashboardDialogs({
   setTopUpAmount,
   formatPrice,
   handleTopUp,
+  isLoadingTopUp = false,
   showWithdrawDialog,
   setShowWithdrawDialog,
   withdrawForm,
@@ -736,11 +738,27 @@ export default function UserDashboardDialogs({
             </div>
             <div className="space-y-2">
               <Label htmlFor="topUpAmount">Atau masukkan nominal</Label>
-              <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input id="topUpAmount" type="number" placeholder="Minimal Rp 10.000" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} className="pl-10" /></div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
+                <Input 
+                  id="topUpAmount" 
+                  type="text" 
+                  placeholder="Minimal Rp 10.000" 
+                  value={topUpAmount ? formatPrice(parseInt(topUpAmount)).replace(/^Rp\s/, "") : ""} 
+                  onChange={(e) => {
+                    // Remove all non-digits from the formatted input
+                    const digits = e.target.value.replace(/\D/g, "")
+                    setTopUpAmount(digits)
+                  }} 
+                  className="pl-10"
+                  maxLength={15}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">Minimal top up Rp 10.000</p>
             </div>
             {topUpAmount && parseInt(topUpAmount) >= 10000 && (
               <div className="p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+                <p className="text-sm text-primary-700 dark:text-primary-300 font-medium mb-2">Total: {formatPrice(parseInt(topUpAmount))}</p>
                 <p className="text-sm text-primary-700 dark:text-primary-300 flex items-start gap-2"><AlertCircle className="h-4 w-4 mt-0.5 shrink-0" /><span>Setelah klik "Top Up Sekarang", Anda akan diarahkan ke halaman pembayaran Midtrans untuk memilih metode pembayaran.</span></p>
               </div>
             )}
@@ -782,7 +800,7 @@ export default function UserDashboardDialogs({
               <div><Label>Nama Pemilik Rekening</Label><Input placeholder="Nama sesuai buku rekening" value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} /></div>
               <div>
                 <Label>Jumlah Penarikan</Label>
-                <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="number" placeholder="0" className="pl-10" value={withdrawForm.amount} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} /></div>
+                <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="text" placeholder="10.000" className="pl-10" value={withdrawForm.amount ? formatPrice(parseInt(withdrawForm.amount)).replace(/^Rp\s/, "") : ""} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value.replace(/\D/g, "") })} /></div>
                 <div className="flex justify-between text-xs mt-1"><span className="text-muted-foreground">Min: Rp 10.000</span><button className="text-primary-600 hover:underline" onClick={() => setWithdrawForm({ ...withdrawForm, amount: statsWalletBalance.toString() })}>Tarik semua</button></div>
               </div>
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"><div className="flex items-start gap-2"><AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" /><div className="text-xs text-blue-700 dark:text-blue-300"><p className="font-medium">Transfer Bank</p><p className="mt-1">• Proses 1x24 jam kerja</p><p>• Pastikan data rekening benar</p></div></div></div>
@@ -806,7 +824,7 @@ export default function UserDashboardDialogs({
               <div><Label>Nama Pemilik E-Wallet</Label><Input placeholder="Nama sesuai akun e-wallet" value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} /></div>
               <div>
                 <Label>Jumlah Penarikan</Label>
-                <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="number" placeholder="0" className="pl-10" value={withdrawForm.amount} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} /></div>
+                <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="text" placeholder="10.000" className="pl-10" value={withdrawForm.amount ? formatPrice(parseInt(withdrawForm.amount)).replace(/^Rp\s/, "") : ""} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value.replace(/\D/g, "") })} /></div>
                 <div className="flex justify-between text-xs mt-1"><span className="text-muted-foreground">Min: Rp 10.000</span><button className="text-primary-600 hover:underline" onClick={() => setWithdrawForm({ ...withdrawForm, amount: statsWalletBalance.toString() })}>Tarik semua</button></div>
               </div>
               <div className="p-3 rounded-lg bg-secondary-50 dark:bg-secondary-900/20 border border-secondary-200 dark:border-secondary-800"><div className="flex items-start gap-2"><AlertCircle className="h-4 w-4 text-secondary-600 mt-0.5 shrink-0" /><div className="text-xs text-secondary-700 dark:text-secondary-300"><p className="font-medium">Transfer E-Wallet</p><p className="mt-1">• Proses instan (5-30 menit)</p><p>• Pastikan nomor HP aktif</p></div></div></div>
@@ -893,6 +911,20 @@ export default function UserDashboardDialogs({
         onPayWithWallet={handlePayWithWallet}
         onPayWithMidtrans={handlePayWithMidtrans}
       />
+
+      {isLoadingTopUp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-lg p-8 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary-600"></div>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Membuka Payment Gateway</p>
+              <p className="text-sm text-muted-foreground">Mohon tunggu sebentar...</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showProfileSuccess && (
         <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">

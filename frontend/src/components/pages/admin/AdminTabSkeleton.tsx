@@ -490,7 +490,7 @@ export function ReportsTabSkeleton() {
                         <Skeleton className="h-4 w-12 rounded" />
                       </div>
                       <Skeleton className="h-4 w-3/4 text-muted-foreground mt-1" />
-                      
+
                       {/* Product reported box visual replication */}
                       {i % 3 === 0 && (
                         <div className="mt-2 text-sm p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800">
@@ -498,7 +498,7 @@ export function ReportsTabSkeleton() {
                           <Skeleton className="h-4 w-56" />
                         </div>
                       )}
-                      
+
                       <div className="flex items-center gap-4 mt-2">
                         <Skeleton className="h-3 w-28" />
                         <Skeleton className="h-3 w-28" />

@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, Eye, EyeOff, Filter, Plus, Search, Wallet, X } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, Eye, EyeOff, Filter, Plus, Search, Wallet, X, AlertCircle } from "lucide-react"
 import TransactionPagination from "@/components/pages/user/dashboard/TransactionPagination"
 
 type Stats = {
@@ -30,6 +36,8 @@ type Props = {
   totalExpense: number
   setShowTopUpDialog: (open: boolean) => void
   setShowWithdrawDialog: (open: boolean) => void
+  hasPin: boolean
+  setShowSetPinDialog: (open: boolean) => void
   stats: Stats
   adminFeePercentage: number
   formatPrice: (price: number) => string
@@ -61,6 +69,8 @@ export default function UserDashboardWalletTab({
   totalExpense,
   setShowTopUpDialog,
   setShowWithdrawDialog,
+  hasPin,
+  setShowSetPinDialog,
   stats,
   adminFeePercentage,
   formatPrice,
@@ -85,6 +95,21 @@ export default function UserDashboardWalletTab({
 }: Props) {
   return (
     <>
+      {!hasPin && !isLoadingStats && (
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-amber-800">PIN Dompet Belum Diatur</h3>
+              <p className="text-sm text-amber-700">Atur PIN dompet Anda sekarang untuk mengamankan transaksi pembayaran dan penarikan dana.</p>
+            </div>
+          </div>
+          <Button className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap shrink-0" onClick={() => setShowSetPinDialog(true)}>
+            Atur PIN Sekarang
+          </Button>
+        </div>
+      )}
+
       <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white">
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
@@ -128,9 +153,29 @@ export default function UserDashboardWalletTab({
         <Button className="h-20 flex-col gap-2 bg-primary-600 hover:bg-primary-700" onClick={() => setShowTopUpDialog(true)}>
           <Plus className="h-6 w-6" />Top Up
         </Button>
-        <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setShowWithdrawDialog(true)} disabled={currentWalletBalance < 10000}>
-          <ArrowUpRight className="h-6 w-6" />Tarik Dana
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2" 
+                onClick={() => setShowWithdrawDialog(true)} 
+                disabled={currentWalletBalance < 10000 || !hasPin}
+              >
+                <ArrowUpRight className="h-6 w-6" />Tarik Dana
+              </Button>
+            </TooltipTrigger>
+            {(currentWalletBalance < 10000 || !hasPin) && (
+              <TooltipContent className="max-w-xs">
+                {!hasPin ? (
+                  <p>Atur PIN Wallet terlebih dahulu untuk melakukan penarikan dana</p>
+                ) : (
+                  <p>Saldo minimal untuk penarikan adalah Rp 10.000</p>
+                )}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <Card>

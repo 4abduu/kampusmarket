@@ -26,6 +26,7 @@ class StoreWithdrawalRequest extends FormRequest
             'bankName' => ['required', 'string', 'max:50'],
             'accountNumber' => ['required', 'string', 'max:50'],
             'accountName' => ['required', 'string', 'max:100'],
+            'wallet_pin' => ['required', 'string', 'size:6'],
         ];
     }
 
@@ -42,6 +43,8 @@ class StoreWithdrawalRequest extends FormRequest
             'bankName.required' => 'Nama bank/e-wallet wajib diisi',
             'accountNumber.required' => 'Nomor rekening wajib diisi',
             'accountName.required' => 'Nama pemilik rekening wajib diisi',
+            'wallet_pin.required' => 'PIN Wallet wajib diisi',
+            'wallet_pin.size' => 'PIN Wallet harus 6 digit',
         ];
     }
 
@@ -60,6 +63,13 @@ class StoreWithdrawalRequest extends FormRequest
                     'amount',
                     'Saldo tidak mencukupi untuk penarikan ini'
                 );
+            }
+
+            // Check PIN
+            if (!$user->wallet_pin) {
+                $validator->errors()->add('wallet_pin', 'PIN Wallet belum diatur');
+            } elseif (!\Illuminate\Support\Facades\Hash::check($this->wallet_pin, $user->wallet_pin)) {
+                $validator->errors()->add('wallet_pin', 'PIN Wallet salah');
             }
         });
     }

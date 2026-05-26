@@ -15,7 +15,7 @@ class OtpMail extends Mailable
 
     public string $otp;
     public string $recipientName;
-    public string $type; // 'email_verification' or 'forgot_password'
+    public string $type; // 'email_verification', 'forgot_password', or 'forgot_pin'
     public int $validityMinutes;
 
     /**
@@ -23,7 +23,7 @@ class OtpMail extends Mailable
      * 
      * @param string $otp The OTP code
      * @param string $recipientName The recipient's name
-     * @param string $type Type of OTP: 'email_verification' or 'forgot_password'
+     * @param string $type Type of OTP: 'email_verification', 'forgot_password', or 'forgot_pin'
      * @param int $validityMinutes OTP validity in minutes (default 10)
      */
     public function __construct(string $otp, string $recipientName, string $type = 'forgot_password', int $validityMinutes = 10)
@@ -39,9 +39,13 @@ class OtpMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $subject = $this->type === 'email_verification' 
-            ? 'Verifikasi Email - KampusMarket'
-            : 'Reset Password - KampusMarket';
+        $subjects = [
+            'email_verification' => 'Verifikasi Email - KampusMarket',
+            'forgot_password' => 'Reset Password - KampusMarket',
+            'forgot_pin' => 'Reset PIN Wallet - KampusMarket',
+        ];
+        
+        $subject = $subjects[$this->type] ?? 'Verifikasi - KampusMarket';
             
         return new Envelope(
             subject: $subject,

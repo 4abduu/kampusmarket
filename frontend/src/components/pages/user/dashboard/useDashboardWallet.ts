@@ -31,6 +31,13 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
   const [showTopUpDialog, setShowTopUpDialog] = useState(false)
   const [topUpAmount, setTopUpAmount] = useState("")
   const [showTopUpSuccess, setShowTopUpSuccess] = useState(false)
+  const [isLoadingTopUp, setIsLoadingTopUp] = useState(false)
+
+  const [hasPin, setHasPin] = useState(false)
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false)
+  const [showVerifyPinDialog, setShowVerifyPinDialog] = useState(false)
+  const [isSettingPin, setIsSettingPin] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
 
   const [transactionSearchTerm, setTransactionSearchTerm] = useState("")
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "top_up" | "withdrawal" | "payment" | "refund" | "income" | "admin_fee">("all")
@@ -49,6 +56,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
   const [currentBalance, setCurrentBalance] = useState(initialBalance)
 
   const broadcastBalanceUpdate = (balance: number) => {
+    console.log('[Wallet] Broadcasting balance update event:', balance)
     window.dispatchEvent(
       new CustomEvent("wallet-balance-updated", {
         detail: { balance },
@@ -109,10 +117,13 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
     try {
       const response = await walletApi.getBalance()
       const balance = response.data.balance
+      const hasPinValue = response.data.hasPin
+      console.log('[Wallet] Fetched balance:', balance, 'hasPin:', hasPinValue)
       setCurrentBalance(balance)
+      setHasPin(hasPinValue)
       broadcastBalanceUpdate(balance)
     } catch (err: any) {
-      console.warn('[Wallet] Failed to fetch balance:', err?.message)
+      console.error('[Wallet] Failed to fetch balance:', err?.message)
     }
   }
 
@@ -123,12 +134,24 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
     }
   }, [userId, transactionPage, transactionTypeFilter, transactionStatusFilter, transactionSearchTerm])
 
+  useEffect(() => {
+    const handlePinUpdated = () => {
+      console.log('[Wallet] PIN updated event received, refetching balance/hasPin...')
+      void fetchBalance()
+    }
+    window.addEventListener("wallet-pin-updated", handlePinUpdated)
+    return () => {
+      window.removeEventListener("wallet-pin-updated", handlePinUpdated)
+    }
+  }, [])
+
   const quickAmounts = [50000, 100000, 200000, 500000, 1000000]
 
   const handleTopUp = async () => {
     if (!topUpAmount || parseInt(topUpAmount, 10) < 10000) return
     
-    // Close dialog immediately like in OrderDetailPage (patokan)
+    // Show loading state
+    setIsLoadingTopUp(true)
     setShowTopUpDialog(false)
     
     try {
@@ -151,6 +174,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             "Midtrans client key tidak ditemukan. Hubungi administrator.",
           variant: "destructive",
         })
+        setIsLoadingTopUp(false)
         setShowTopUpDialog(true)
         return
       }
@@ -164,6 +188,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               "Payment gateway belum siap. Silakan refresh dan coba lagi.",
             variant: "destructive",
           })
+          setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
           return
         }
@@ -182,6 +207,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             onSuccess: async (result: any) => {
               console.log("[Midtrans] Top-up success:", result)
               console.warn = originalWarn
+              setIsLoadingTopUp(false)
               toast({
                 title: "✅ Pembayaran berhasil!",
                 description: "Mengonfirmasi top-up...",
@@ -189,7 +215,13 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               try {
                 const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
                 if (confirmResponse.status === 'paid') {
+                  // Fetch balance immediately and with retry
                   await fetchBalance()
+                  // Add additional fetch after short delay to ensure DB updated
+                  setTimeout(() => {
+                    void fetchBalance()
+                  }, 1000)
+                  
                   console.log("[Wallet] Balance refreshed after top-up")
                   
                   setShowTopUpSuccess(true)
@@ -199,6 +231,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
                 }
               } catch (e) {
                 console.error("Failed to confirm payment", e)
+                setIsLoadingTopUp(false)
                 toast({
                   title: "⚠️ Pembayaran Terkirim",
                   description: "Pembayaran diproses tetapi konfirmasi gagal. Silakan refresh halaman.",
@@ -209,6 +242,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             onPending: async (result: any) => {
               console.log("[Midtrans] Top-up pending:", result)
               console.warn = originalWarn
+              setIsLoadingTopUp(false)
               toast({
                 title: "⏳ Pembayaran pending",
                 description: "Selesaikan pembayaran Anda untuk melanjutkan.",
@@ -217,6 +251,9 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
                 const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
                 if (confirmResponse.status === 'paid') {
                   await fetchBalance()
+                  setTimeout(() => {
+                    void fetchBalance()
+                  }, 1000)
                 }
                 void fetchTransactions()
               } catch (e) {
@@ -226,6 +263,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             onError: (result: any) => {
               console.error("[Midtrans] Top-up error:", result)
               console.warn = originalWarn
+              setIsLoadingTopUp(false)
               toast({
                 title: "❌ Pembayaran gagal",
                 description: "Terjadi kesalahan. Silakan coba lagi.",
@@ -235,6 +273,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             onClose: () => {
               console.log("[Midtrans] Payment popup closed by user")
               console.warn = originalWarn
+              setIsLoadingTopUp(false)
             },
           })
         } catch (error) {
@@ -244,6 +283,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
             description: "Gagal membuka payment gateway. Coba lagi.",
             variant: "destructive",
           })
+          setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
         }
       }
@@ -273,6 +313,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               "Gagal memuat payment gateway. Coba refresh halaman.",
             variant: "destructive",
           })
+          setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
         }
 
@@ -288,11 +329,12 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
         description: err?.message || "Terjadi kesalahan",
         variant: "destructive",
       })
+      setIsLoadingTopUp(false)
       setShowTopUpDialog(true)
     }
   }
 
-  const handleWithdraw = async () => {
+  const handleWithdrawClick = () => {
     const amount = parseInt(withdrawForm.amount, 10)
     if (!amount || amount < 10000) {
       toast({
@@ -322,15 +364,44 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
       return
     }
 
+    // Instead of calling API directly, show PIN dialog
+    setShowVerifyPinDialog(true)
+  }
+
+  const handleWithdrawWithPin = async (pin: string) => {
+    setIsWithdrawing(true)
+    const amount = parseInt(withdrawForm.amount, 10)
+
+    const accountType = withdrawForm.type === "ewallet" ? "e_wallet" : "bank"
+    const bankName =
+      accountType === "bank"
+        ? (withdrawForm.bankType === "lainnya"
+          ? withdrawForm.customBankName
+          : withdrawForm.bankType)
+        : (withdrawForm.ewalletType === "lainnya"
+          ? withdrawForm.customEwalletName
+          : withdrawForm.ewalletType)
+
+    if (!bankName || !withdrawForm.accountNumber || !withdrawForm.accountName) {
+      toast({
+        title: "Data belum lengkap",
+        description: "Lengkapi detail rekening/e-wallet",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
-      await apiClient.post("/wallet/withdraw", {
+      await walletApi.requestWithdrawal({
         amount,
         accountType,
         bankName,
         accountNumber: withdrawForm.accountNumber,
         accountName: withdrawForm.accountName,
+        wallet_pin: pin,
       })
 
+      setShowVerifyPinDialog(false)
       setShowWithdrawDialog(false)
       setWithdrawForm({
         type: "bank",
@@ -356,6 +427,30 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
         description: err?.message || "Terjadi kesalahan",
         variant: "destructive",
       })
+    } finally {
+      setIsWithdrawing(false)
+    }
+  }
+
+  const handleSetPin = async (pin: string) => {
+    setIsSettingPin(true)
+    try {
+      await walletApi.setWalletPin(pin)
+      setHasPin(true)
+      setShowSetPinDialog(false)
+      window.dispatchEvent(new CustomEvent("wallet-pin-updated"))
+      toast({
+        title: "Berhasil",
+        description: "PIN dompet berhasil diatur",
+      })
+    } catch (err: any) {
+      toast({
+        title: "Gagal",
+        description: err?.message || "Gagal mengatur PIN",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSettingPin(false)
     }
   }
 
@@ -375,6 +470,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
     topUpAmount,
     setTopUpAmount,
     showTopUpSuccess,
+    isLoadingTopUp,
     currentBalance,
     transactionSearchTerm,
     setTransactionSearchTerm,
@@ -393,10 +489,19 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
     totalExpense: totalExpenseFetched,
     quickAmounts,
     handleTopUp,
-    handleWithdraw,
+    handleWithdraw: handleWithdrawClick,
+    handleWithdrawWithPin,
+    handleSetPin,
     isBankLainnya,
     isEwalletLainnya,
     transactionsLoading,
     transactionsError,
+    hasPin,
+    showSetPinDialog,
+    setShowSetPinDialog,
+    showVerifyPinDialog,
+    setShowVerifyPinDialog,
+    isSettingPin,
+    isWithdrawing,
   }
 }
