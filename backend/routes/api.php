@@ -341,7 +341,7 @@ Route::post('/wallet/topup/midtrans/webhook', [WalletTopUpController::class, 'we
 
 Route::get('/debug-mail', function () {
     try {
-        \Mail::raw('test', fn($m) => $m->to('abdurrahmanichwan77@gmail.com')->subject('test'));
+        \Mail::raw('test', fn($m) => $m->to('abdurrahmanichwan5@gmail.com')->subject('test'));
         return 'OK';
     } catch (\Throwable $e) {
         return $e->getMessage();
