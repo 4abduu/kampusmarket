@@ -148,6 +148,18 @@ export default function AdminDashboardPage({
     setFacultyStatusFilter,
     financeSubTab,
     setFinanceSubTab,
+    topups,
+    topupLoading,
+    topupError,
+    topupSearchTerm,
+    setTopupSearchTerm,
+    topupStatusFilter,
+    setTopupStatusFilter,
+    topupPage,
+    setTopupPage,
+    topupTotalItems,
+    topupTotalPages,
+    topupStats,
     showUserDetail,
     setShowUserDetail,
     selectedUser,
@@ -357,7 +369,6 @@ export default function AdminDashboardPage({
                 categoryChartData={categoryChartData}
                 formatPrice={formatPrice}
                 onOpenTab={setActiveTab}
-                onOpenNotifications={() => _onNavigate("admin-notifications")}
               />
             )}
           </TabsContent>
@@ -559,6 +570,19 @@ export default function AdminDashboardPage({
                 handleProcessWithdrawal={handleProcessWithdrawal}
                 handleCompleteWithdrawal={handleCompleteWithdrawal}
                 handleFailWithdrawal={handleFailWithdrawal}
+                // New Top Up Props
+                topups={topups}
+                topupLoading={topupLoading}
+                topupError={topupError}
+                topupSearchTerm={topupSearchTerm}
+                setTopupSearchTerm={setTopupSearchTerm}
+                topupStatusFilter={topupStatusFilter}
+                setTopupStatusFilter={setTopupStatusFilter}
+                topupPage={topupPage}
+                setTopupPage={setTopupPage}
+                topupTotalPages={topupTotalPages}
+                topupStats={topupStats}
+                topupTotalItems={topupTotalItems}
               />
             )}
           </TabsContent>

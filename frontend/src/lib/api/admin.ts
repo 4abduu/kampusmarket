@@ -589,3 +589,66 @@ export const adminWithdrawalsApi = {
     });
   },
 };
+
+// ============================================================
+// ADMIN TOP UPS
+// ============================================================
+export interface AdminTopUp {
+  id: number;
+  uuid: string;
+  order_id: string | null;
+  user_id: string;
+  payment_gateway: string;
+  payment_method: string | null;
+  transaction_id: string | null;
+  gross_amount: number;
+  currency: string;
+  status: "pending" | "paid" | "failed";
+  type: "wallet_topup";
+  raw_response?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  paid_at: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+export interface AdminTopUpStats {
+  total_amount: number;
+  successful_amount: number;
+  pending_amount: number;
+  failed_amount: number;
+}
+
+export interface AdminTopUpResponse {
+  topups: AdminTopUp[];
+  stats: AdminTopUpStats;
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export const adminTopUpsApi = {
+  async getTopUps(params?: {
+    status?: string;
+    search?: string;
+    per_page?: number;
+    page?: number;
+  }): Promise<AdminTopUpResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/topups${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<AdminTopUpResponse>(url);
+  },
+};

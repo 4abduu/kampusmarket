@@ -329,6 +329,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/withdrawals/{id}/reject', [WalletController::class, 'rejectWithdrawal']);
     Route::put('/withdrawals/{id}/fail', [WalletController::class, 'failWithdrawal']);
     Route::put('/withdrawals/{id}/complete', [WalletController::class, 'completeWithdrawal']);
+
+    // ── TOP UPS ────────────────────────────────────────────────────────────
+    Route::get('/topups', [WalletController::class, 'adminTopUps']);
 });
 
 // Public webhook endpoint for Midtrans notifications

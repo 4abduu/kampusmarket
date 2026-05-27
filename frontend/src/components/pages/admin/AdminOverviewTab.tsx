@@ -52,7 +52,6 @@ interface AdminOverviewTabProps {
   categoryChartData?: Array<{ name: string; value: number; fill: string }>;
   formatPrice: (price: number) => string;
   onOpenTab: (tab: string) => void;
-  onOpenNotifications: () => void;
 }
 
 export default function AdminOverviewTab({
@@ -64,7 +63,6 @@ export default function AdminOverviewTab({
   onOpenTab,
 }: AdminOverviewTabProps) {
   // Fallback to empty data if not provided
-  void onOpenNotifications;
   const transactionTrendData = revenueChartData || [];
   const categoryDistributionData = categoryChartData || [];
   return (

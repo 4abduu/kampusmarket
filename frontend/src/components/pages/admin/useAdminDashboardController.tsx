@@ -41,8 +41,9 @@ import {
   adminReportsApi,
   adminWithdrawalsApi,
   adminAddressesApi,
+  adminTopUpsApi,
 } from "@/lib/api/admin";
-import type { AdminAddressUser } from "@/lib/api/admin";
+import type { AdminAddressUser, AdminTopUp, AdminTopUpStats } from "@/lib/api/admin";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -97,9 +98,9 @@ export function useAdminDashboardController() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [failureReason, setFailureReason] = useState("");
 
-  const [financeSubTab, setFinanceSubTab] = useState<"withdrawals" | "revenue">(
-    "withdrawals",
-  );
+  const [financeSubTab, setFinanceSubTab] = useState<
+    "withdrawals" | "revenue" | "topups"
+  >("withdrawals");
 
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
   const [showCancelApproveDialog, setShowCancelApproveDialog] = useState(false);
@@ -181,6 +182,40 @@ export function useAdminDashboardController() {
     useState<"all" | "bank" | "e_wallet">("all");
   const [withdrawalProviderFilter, setWithdrawalProviderFilter] =
     useState<string>("all");
+
+  // Top Up States
+  const [topups, setTopups] = useState<AdminTopUp[]>([]);
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [topupError, setTopupError] = useState<string | null>(null);
+  const [topupSearchTerm, setTopupSearchTerm] = useState("");
+  const [debouncedTopupSearch, setDebouncedTopupSearch] = useState("");
+  const [topupStatusFilter, setTopupStatusFilter] = useState<"all" | "pending" | "paid" | "failed">("all");
+  const [topupPage, setTopupPage] = useState(1);
+  const [topupTotalItems, setTopupTotalItems] = useState(0);
+  const [topupTotalPages, setTopupTotalPages] = useState(1);
+  const [topupStats, setTopupStats] = useState<AdminTopUpStats>({
+    total_amount: 0,
+    successful_amount: 0,
+    pending_amount: 0,
+    failed_amount: 0,
+  });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedTopupSearch(topupSearchTerm);
+      setTopupPage(1);
+    }, 400);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [topupSearchTerm]);
+
+  useEffect(() => {
+    if (activeTab === "finance" && financeSubTab === "topups") {
+      loadTopupsData(topupPage, debouncedTopupSearch, topupStatusFilter);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, financeSubTab, topupPage, debouncedTopupSearch, topupStatusFilter]);
 
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
   const [addressesData, setAddressesData] = useState<AdminAddressUser[]>([]);
@@ -853,6 +888,41 @@ export function useAdminDashboardController() {
     }
   };
 
+  const loadTopupsData = async (
+    page = topupPage,
+    search = debouncedTopupSearch,
+    status = topupStatusFilter
+  ) => {
+    setTopupLoading(true);
+    setTopupError(null);
+    try {
+      const res = await adminTopUpsApi.getTopUps({
+        page,
+        search,
+        status,
+        per_page: ITEMS_PER_PAGE,
+      });
+      if (res) {
+        setTopups(res.topups || []);
+        setTopupStats(res.stats || {
+          total_amount: 0,
+          successful_amount: 0,
+          pending_amount: 0,
+          failed_amount: 0,
+        });
+        setTopupTotalItems(res.meta?.total || 0);
+        setTopupTotalPages(res.meta?.last_page || 1);
+      }
+      markResourceLoaded("topups");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat transaksi top up";
+      setTopupError(msg);
+      console.error("Failed to load topups data:", err);
+    } finally {
+      setTopupLoading(false);
+    }
+  };
+
   const loadOrdersData = async () => {
     try {
       const res = await adminOrdersApi.getOrders({ per_page: 100 });
@@ -932,6 +1002,9 @@ export function useAdminDashboardController() {
         case "finance":
           if (!isResourceLoaded("withdrawals")) {
             await loadWithdrawalsData();
+          }
+          if (financeSubTab === "topups" && !isResourceLoaded("topups")) {
+            await loadTopupsData();
           }
           break;
         case "cancel-requests":
@@ -2338,6 +2411,20 @@ export function useAdminDashboardController() {
     setFacultyStatusFilter,
     financeSubTab,
     setFinanceSubTab,
+    // Top Up Exports
+    topups,
+    topupLoading,
+    topupError,
+    topupSearchTerm,
+    setTopupSearchTerm,
+    topupStatusFilter,
+    setTopupStatusFilter,
+    topupPage,
+    setTopupPage,
+    topupTotalItems,
+    topupTotalPages,
+    topupStats,
+    loadTopupsData,
     showUserDetail,
     setShowUserDetail,
     selectedUser,

@@ -662,4 +662,61 @@ class WalletController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get all wallet topups (Admin).
+     */
+    public function adminTopUps(Request $request): JsonResponse
+    {
+        $query = \App\Models\Payment::where('type', 'wallet_topup')->with(['user']);
+
+        // Search by user name/email, transaction_id, or payment uuid
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('uuid', $search)
+                  ->orWhere('transaction_id', $search)
+                  ->orWhereHas('user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $query->latest();
+
+        // Paginate
+        $perPage = $request->get('per_page', 20);
+        $topups = $query->paginate($perPage);
+
+        // Calculate statistics (Rupiah totals, not counts)
+        $totalAmount = \App\Models\Payment::where('type', 'wallet_topup')->sum('gross_amount');
+        $successfulAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'paid')->sum('gross_amount');
+        $pendingAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'pending')->sum('gross_amount');
+        $failedAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'failed')->sum('gross_amount');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'topups' => $topups->items(),
+                'stats' => [
+                    'total_amount' => (int) $totalAmount,
+                    'successful_amount' => (int) $successfulAmount,
+                    'pending_amount' => (int) $pendingAmount,
+                    'failed_amount' => (int) $failedAmount,
+                ],
+                'meta' => [
+                    'current_page' => $topups->currentPage(),
+                    'last_page' => $topups->lastPage(),
+                    'per_page' => $topups->perPage(),
+                    'total' => $topups->total(),
+                ]
+            ]
+        ]);
+    }
 }
