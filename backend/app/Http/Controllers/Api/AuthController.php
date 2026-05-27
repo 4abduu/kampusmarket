@@ -28,7 +28,7 @@ class AuthController extends Controller
     private function getAuthCookieConfig(): array
     {
         $isSecure = config('app.env') === 'production';
-        $cookieDomain = config('app.env') === 'production' ? env('COOKIE_DOMAIN', 'localhost') : 'localhost';
+        $cookieDomain = config('app.env') === 'production' ? env('COOKIE_DOMAIN', null) : null;
 
         return [$cookieDomain, $isSecure];
     }

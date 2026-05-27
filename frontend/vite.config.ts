@@ -10,24 +10,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
-    server: {
-      proxy: {
-        '/api': {
-          target: backendUrl,
-          changeOrigin: true,
-          timeout: 60000, // 60 seconds
-          proxyTimeout: 60000,
-        },
-        '/storage': {
-          target: backendUrl,
-          changeOrigin: true,
-        },
-        '/broadcasting': {
-          target: backendUrl,
-          changeOrigin: true,
-        },
-      },
-    },
   build: {
     // Tailwind v4 emits custom at-rules that LightningCSS warns about.
     cssMinify: 'esbuild',
