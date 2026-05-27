@@ -30,6 +30,9 @@ function AppContent() {
   const [authReady, setAuthReady] = useState(false);
   // REVISI: Flag untuk mencegah ProtectedRoute redirect ke /unauthorized saat logout berlangsung
   const isLoggingOutRef = useRef(false);
+  // FIX: Flag untuk mencegah syncAuthUser override state saat user baru saja login
+  // (race condition antara handleLogin dan background syncAuthUser)
+  const isJustLoggedInRef = useRef(false);
   // REVISI: Flag untuk mencegah infinite redirect loop saat user tidak punya faculty
   const hasRedirectedToFacultyRef = useRef(false);
   const [sellerProductCount, setSellerProductCount] = useState(
@@ -48,6 +51,8 @@ function AppContent() {
   const [forgotPasswordSource, setForgotPasswordSource] = useState<"register" | "settings" | null>(null);
 
   const syncAuthUser = async (): Promise<boolean> => {
+    // FIX: Jangan override state kalau user baru saja login (cegah race condition)
+    if (isJustLoggedInRef.current) return true;
     try {
       const user = await userApi.me();
       if (user) {
@@ -79,8 +84,22 @@ function AppContent() {
   };
 
   useEffect(() => {
-    void syncAuthUser();
-    
+    const searchParams = new URLSearchParams(window.location.search);
+    const isGoogleCallback = searchParams.has("userName") || searchParams.has("userEmail");
+
+    if (isGoogleCallback) {
+      // FIX: Google OAuth callback — cookie baru saja di-set oleh backend redirect.
+      // Set flag dulu biar syncAuthUser pertama tidak override, lalu sync ulang
+      // setelah delay singkat biar cookie sempat setteled di browser.
+      isJustLoggedInRef.current = true;
+      setTimeout(() => {
+        isJustLoggedInRef.current = false;
+        void syncAuthUser();
+      }, 500);
+    } else {
+      void syncAuthUser();
+    }
+
     // Initialize Echo for real-time updates
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -299,16 +318,24 @@ function AppContent() {
     setIsLoggedIn(true);
     setUserRole(role);
     setAuthReady(true);
-    // Sync user data in background tanpa override isLoggedIn jika gagal
-    // karena cookie sudah di-set oleh backend saat login
+    // FIX: Set flag dulu biar syncAuthUser tidak race-condition override state ini
+    isJustLoggedInRef.current = true;
+    // Sync user data in background — cookie sudah di-set oleh backend saat login
     userApi.me().then((user) => {
       if (user) {
         setAuthUser(user);
         setUserRole(user.role === "admin" ? "admin" : "user");
         void useCartStore.getState().fetchCount();
+        void useNotificationStore.getState().fetchNotifications();
+        useNotificationStore.getState().initEcho(user.id);
+        void useChatStore.getState().fetchUnreadCount();
+        useChatStore.getState().initEcho(user.id);
       }
     }).catch(() => {
-      // Ignore - user tetap login, me() akan dicoba ulang saat refresh
+      // Ignore - user tetap login, cookie valid, me() akan retry saat refresh
+    }).finally(() => {
+      // FIX: Clear flag setelah me() selesai (berhasil atau gagal)
+      isJustLoggedInRef.current = false;
     });
     navigate(role === "admin" ? "/admin" : "/");
   };
