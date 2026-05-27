@@ -46,6 +46,17 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            /* TAMBAHKAN KODE DI BAWAH INI */
+            'stream' => [
+                'ssl' => [
+                    'allow_self_signed' => true,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ],
+                'socket' => [
+                    'bindto' => '0.0.0.0:0', // <--- Ini kunci buat paksa pakai IPv4!
+                ],
+            ],
         ],
 
         'ses' => [
