@@ -37,9 +37,13 @@ class AuthController extends Controller
     {
         [$cookieDomain, $isSecure] = $this->getAuthCookieConfig();
 
-        $response->cookie('authToken', $token, 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
-        $response->cookie('requiresFacultySelection', $needsFacultySelection ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
-        $response->cookie('isNewUser', $isNewUser ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, 'Lax');
+        // Production (vercel.app -> railway.app): cross-site, wajib SameSite=None + Secure=true
+        // Local (localhost -> localhost): same-site, SameSite=Lax cukup
+        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
+        $response->cookie('authToken', $token, 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, $sameSite);
+        $response->cookie('requiresFacultySelection', $needsFacultySelection ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, $sameSite);
+        $response->cookie('isNewUser', $isNewUser ? 'true' : 'false', 60 * 24 * 7, '/', $cookieDomain, $isSecure, true, false, $sameSite);
 
         return $response;
     }
@@ -480,9 +484,9 @@ class AuthController extends Controller
             $request->user()->currentAccessToken()->delete();
         }
 
-        // Determine cookie settings
-        $isSecure = config('app.env') === 'production';
-        $cookieDomain = config('app.env') === 'production' ? env('COOKIE_DOMAIN', 'localhost') : 'localhost';
+        // FIX: Gunakan getAuthCookieConfig() supaya domain konsisten dengan waktu set cookie
+        // Sebelumnya hardcode 'localhost' tapi attachAuthCookies pakai null — beda cookie di browser
+        [$cookieDomain, $isSecure] = $this->getAuthCookieConfig();
 
         // Clear auth cookies by setting them with empty value and immediate expiry
         $response = response()->json([
@@ -490,44 +494,12 @@ class AuthController extends Controller
             'message' => 'Logout berhasil',
         ]);
 
+        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
         // Clear authToken cookie
-        $response->cookie(
-            'authToken',
-            '',
-            -1, // Expired
-            '/',
-            $cookieDomain,
-            $isSecure,
-            true,
-            false,
-            'Lax'
-        );
-
-        // Clear requiresFacultySelection cookie
-        $response->cookie(
-            'requiresFacultySelection',
-            '',
-            -1,
-            '/',
-            $cookieDomain,
-            $isSecure,
-            true,
-            false,
-            'Lax'
-        );
-
-        // Clear isNewUser cookie
-        $response->cookie(
-            'isNewUser',
-            '',
-            -1,
-            '/',
-            $cookieDomain,
-            $isSecure,
-            true,
-            false,
-            'Lax'
-        );
+        $response->cookie('authToken', '', -1, '/', $cookieDomain, $isSecure, true, false, $sameSite);
+        $response->cookie('requiresFacultySelection', '', -1, '/', $cookieDomain, $isSecure, true, false, $sameSite);
+        $response->cookie('isNewUser', '', -1, '/', $cookieDomain, $isSecure, true, false, $sameSite);
 
         return $response;
     }
