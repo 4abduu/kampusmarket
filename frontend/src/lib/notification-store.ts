@@ -26,6 +26,9 @@ interface NotificationState {
 
 // Initial notifications removed
 
+let pollingIntervalId: any = null;
+let activeEchoUserId: string | null = null;
+
 export const useNotificationStore = create<NotificationState & {
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
@@ -162,6 +165,7 @@ export const useNotificationStore = create<NotificationState & {
   },
 
   initEcho: (userId: string) => {
+    activeEchoUserId = userId;
     import('@/lib/echo').then(({ getEcho }) => {
       try {
         const echo = getEcho();
@@ -173,11 +177,32 @@ export const useNotificationStore = create<NotificationState & {
         console.info('Reverb echo not active');
       }
     });
+
+    // Polling fallback: fetch unread count every 30 seconds as a defensive safety net
+    if (pollingIntervalId) clearInterval(pollingIntervalId);
+    pollingIntervalId = setInterval(() => {
+      get().fetchUnreadCount();
+    }, 30000);
   },
 
   cleanupEcho: () => {
-    import('@/lib/echo').then(() => {
-      // Nothing needed to explicitly clean up unless we want to unlisten
-    });
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId);
+      pollingIntervalId = null;
+    }
+
+    if (activeEchoUserId) {
+      const userId = activeEchoUserId;
+      activeEchoUserId = null;
+      import('@/lib/echo').then(({ getEcho }) => {
+        try {
+          const echo = getEcho();
+          echo.private(`users.${userId}`).stopListening('.NewNotification');
+          echo.leave(`users.${userId}`);
+        } catch (e) {
+          // Ignore
+        }
+      });
+    }
   }
 }));

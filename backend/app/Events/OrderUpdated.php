@@ -37,6 +37,14 @@ class OrderUpdated implements ShouldBroadcastNow
     }
 
     /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'OrderUpdated';
+    }
+
+    /**
      * Get the data to broadcast.
      *
      * @return array<string, mixed>

@@ -104,13 +104,13 @@ export default function OrderDetailPage({
     const channelName = `order.${orderId}`;
     const channel = (window as any).Echo.private(channelName);
 
-    channel.listen("OrderUpdated", (e: any) => {
+    channel.listen(".OrderUpdated", (e: any) => {
       console.log("[Midtrans] Real-time OrderUpdated event:", e);
       fetchOrder(); // Re-fetch to get latest status
     });
 
     return () => {
-      channel.stopListening("OrderUpdated");
+      channel.stopListening(".OrderUpdated");
       (window as any).Echo.leave(channelName);
     };
   }, [orderId, fetchOrder]);

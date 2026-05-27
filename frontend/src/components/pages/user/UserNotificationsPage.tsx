@@ -25,12 +25,14 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const unreadIds = notifications.filter((notification) => !notification.read).map((notification) => notification.id);
-      unreadIds.forEach((id) => markAsRead(id));
+      const hasUnread = notifications.some((notification) => !notification.read);
+      if (hasUnread) {
+        markAllAsRead();
+      }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [notifications, markAsRead]);
+  }, [notifications, markAllAsRead]);
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notification) => {
