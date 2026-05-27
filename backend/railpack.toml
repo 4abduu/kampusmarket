@@ -1,0 +1,2 @@
+[providers.php]
+extensions = ["bz2", "curl", "fileinfo", "gd", "intl", "mbstring", "exif", "mysqli", "pdo_mysql", "pdo_sqlite", "sqlite3", "xsl", "zip"]
