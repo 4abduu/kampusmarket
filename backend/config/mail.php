@@ -44,7 +44,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'timeout' => 10, // FIX: Fail fast jika SMTP tidak konek dalam 10 detik
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
             /* TAMBAHKAN KODE DI BAWAH INI */
             'stream' => [
