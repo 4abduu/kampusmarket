@@ -30,6 +30,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return response()->json([
-        'app' => 'KampusMarket API'
+        'app' => 'KampusMarket API - test v1'
     ]);
 });
