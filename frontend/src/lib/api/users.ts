@@ -112,7 +112,7 @@ export const userApi = {
    */
   async completeGoogleFacultySelection(
     facultyId: string
-  ): Promise<{ data: User }> {
+  ): Promise<User> {
     return request("/auth/google/complete-faculty", {
       method: "POST",
       body: JSON.stringify({ facultyId }),

@@ -110,10 +110,11 @@ export default function FacultySelectionPage({ onLogin, userName }: FacultySelec
     setIsLoading(true);
 
     try {
-      const result = await userApi.completeGoogleFacultySelection(selectedFaculty);
+      const user = await userApi.completeGoogleFacultySelection(selectedFaculty);
 
-      if (result?.data) {
-        const nextRole = result.data.role === "admin" ? "admin" : "user";
+      // FIX: request() sudah unwrap payload.data, jadi result langsung User object
+      if (user?.role) {
+        const nextRole = user.role === "admin" ? "admin" : "user";
         onLogin(nextRole);
         return;
       }
