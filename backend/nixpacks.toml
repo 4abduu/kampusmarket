@@ -1,0 +1,2 @@
+[providers.php]
+extensions = ["gd", "exif", "intl", "mysqli", "xsl"]
