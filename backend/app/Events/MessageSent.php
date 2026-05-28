@@ -52,7 +52,7 @@ class MessageSent implements ShouldBroadcastNow
         $this->message->loadMissing(['sender', 'chat', 'attachments']);
 
         return [
-            'message' => (new MessageResource($this->message))->toArray(request()),
+            'message' => (new MessageResource($this->message))->resolve(request()),
         ];
     }
 }
