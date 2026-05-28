@@ -24,7 +24,6 @@ use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminFacultyController;
 use App\Http\Controllers\Admin\AdminUserController;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -338,12 +337,3 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 // Public webhook endpoint for Midtrans notifications
 Route::post('/payments/midtrans/webhook', [PaymentController::class, 'webhook']);
 Route::post('/wallet/topup/midtrans/webhook', [WalletTopUpController::class, 'webhook']);
-
-Route::get('/debug-mail', function () {
-    try {
-        \Mail::raw('test', fn($m) => $m->to('abdurrahmanichwan5@gmail.com')->subject('test'));
-        return 'OK';
-    } catch (\Throwable $e) {
-        return $e->getMessage();
-    }
-});
