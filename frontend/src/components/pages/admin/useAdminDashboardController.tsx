@@ -95,6 +95,9 @@ export function useAdminDashboardController() {
   const [financialLoading, setFinancialLoading] = useState(false);
   const [financialError, setFinancialError] = useState<string | null>(null);
 
+  const [revenueModalOpen, setRevenueModalOpen] = useState(false);
+  const [selectedRevenueTransaction, setSelectedRevenueTransaction] = useState<any | null>(null);
+
   const [financeSubTab, setFinanceSubTab] = useState<
     "withdrawals" | "revenue" | "topups"
   >("withdrawals");
@@ -1905,6 +1908,11 @@ export function useAdminDashboardController() {
     setFinancialModalOpen(true);
   };
 
+  const handleViewRevenueTransaction = (transaction: any) => {
+    setSelectedRevenueTransaction(transaction);
+    setRevenueModalOpen(true);
+  };
+
   const filteredCategories = useMemo(
     () =>
       categories
@@ -2510,6 +2518,10 @@ export function useAdminDashboardController() {
     financialError,
     selectedWithdrawal,
     setSelectedWithdrawal,
+    revenueModalOpen,
+    setRevenueModalOpen,
+    selectedRevenueTransaction,
+    setSelectedRevenueTransaction,
     showCategoryDialog,
     setShowCategoryDialog,
     selectedCategory,
@@ -2567,6 +2579,7 @@ export function useAdminDashboardController() {
     handleCompleteWithdrawal,
     handleFailWithdrawal,
     handleViewWithdrawal,
+    handleViewRevenueTransaction,
     confirmApproveWithdrawal,
     confirmRejectWithdrawal,
     confirmCompleteWithdrawal,

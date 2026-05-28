@@ -194,6 +194,9 @@ export default function AdminDashboardPage({
     financialLoading,
     financialError,
     selectedWithdrawal,
+    revenueModalOpen,
+    setRevenueModalOpen,
+    selectedRevenueTransaction,
     showCategoryDialog,
     setShowCategoryDialog,
     selectedCategory,
@@ -253,6 +256,7 @@ export default function AdminDashboardPage({
     confirmCompleteWithdrawal,
     confirmFailWithdrawal,
     handleViewWithdrawal,
+    handleViewRevenueTransaction,
     handleAddCategory,
     handleEditCategory,
     handleSaveCategory,
@@ -574,6 +578,10 @@ export default function AdminDashboardPage({
                 financialError={financialError}
                 selectedWithdrawal={selectedWithdrawal}
                 handleViewWithdrawal={handleViewWithdrawal}
+                revenueModalOpen={revenueModalOpen}
+                setRevenueModalOpen={setRevenueModalOpen}
+                selectedRevenueTransaction={selectedRevenueTransaction}
+                handleViewRevenueTransaction={handleViewRevenueTransaction}
                 confirmApproveWithdrawal={confirmApproveWithdrawal}
                 confirmRejectWithdrawal={confirmRejectWithdrawal}
                 confirmCompleteWithdrawal={confirmCompleteWithdrawal}

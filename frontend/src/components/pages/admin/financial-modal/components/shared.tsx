@@ -55,20 +55,38 @@ export const FinancialUserCard: React.FC<FinancialUserCardProps> = ({ user }) =>
 export interface FinancialAmountCardProps {
   amount: number;
   totalDeduction?: number;
+  label?: string;
+  variant?: "success" | "danger" | "neutral";
 }
 
 export const FinancialAmountCard: React.FC<FinancialAmountCardProps> = ({
   amount,
   totalDeduction = 0,
+  label = "Total Penarikan",
+  variant = "success"
 }) => {
   const netAmount = amount - totalDeduction;
+  const isDanger = variant === "danger";
+  const isSuccess = variant === "success";
+
+  const textClass = isSuccess 
+    ? "text-emerald-600 dark:text-emerald-400" 
+    : isDanger 
+    ? "text-red-600 dark:text-red-400" 
+    : "text-slate-900 dark:text-slate-100";
+    
+  const bgClass = isSuccess 
+    ? "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border-emerald-100/50 dark:border-emerald-800/30" 
+    : isDanger 
+    ? "bg-red-50/50 dark:bg-red-950/20 border-red-100/50 dark:border-red-900/30" 
+    : "bg-slate-50/50 dark:bg-slate-900/50 border-slate-100/50 dark:border-slate-800/30";
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 md:p-5 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl border border-emerald-100/50 dark:border-emerald-800/30 shadow-sm text-center">
-      <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-emerald-800/70 dark:text-emerald-300/70 mb-0.5">
-        Total Penarikan
+    <div className={`flex flex-col items-center justify-center p-4 md:p-5 rounded-xl border shadow-sm text-center ${bgClass}`}>
+      <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
+        {label}
       </span>
-      <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 select-all tracking-tight">
+      <span className={`text-2xl sm:text-3xl font-extrabold select-all tracking-tight ${textClass}`}>
         {formatPrice(amount)}
       </span>
       {totalDeduction > 0 && (

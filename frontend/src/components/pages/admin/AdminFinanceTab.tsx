@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import FinancialActionModal from "./financial-modal/FinancialActionModal";
+import { RevenueDetailModal } from "./financial-modal/RevenueDetailModal";
 import { 
   Wallet, 
   Clock, 
@@ -71,6 +72,12 @@ interface Props {
   selectedWithdrawal: any;
   handleViewWithdrawal: (withdrawal: any) => void;
 
+  // Platform Revenue Modal Props
+  revenueModalOpen: boolean;
+  setRevenueModalOpen: (open: boolean) => void;
+  selectedRevenueTransaction: any;
+  handleViewRevenueTransaction: (transaction: any) => void;
+
   // New Top Up Props
   topups: any[];
   topupLoading: boolean;
@@ -130,6 +137,12 @@ export default function AdminFinanceTab(props: Props) {
     financialError,
     selectedWithdrawal,
     handleViewWithdrawal,
+
+    // Platform Revenue Modal Props
+    revenueModalOpen,
+    setRevenueModalOpen,
+    selectedRevenueTransaction,
+    handleViewRevenueTransaction,
     confirmApproveWithdrawal,
     confirmRejectWithdrawal,
     confirmCompleteWithdrawal,
@@ -662,12 +675,27 @@ export default function AdminFinanceTab(props: Props) {
               <p className="font-medium mb-2">Transaksi Terbaru dengan Potongan:</p>
               <div className="space-y-2">
                 {platformRevenue.transactions.map((tx: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <p className="font-medium">{tx.productTitle}</p>
-                      <p className="text-xs text-muted-foreground">{tx.orderNumber} • {tx.createdAt}</p>
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800/60 hover:border-primary-100 dark:hover:border-primary-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/30 cursor-pointer transition-all duration-200 group"
+                    onClick={() => handleViewRevenueTransaction(tx)}
+                  >
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                        {tx.productTitle}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {tx.orderNumber} • {tx.createdAt}
+                      </p>
                     </div>
-                    <p className="font-bold text-primary-600">+{formatPrice(tx.adminFee)}</p>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <p className="font-bold text-primary-600 dark:text-primary-400 text-sm">
+                        +{formatPrice(tx.adminFee)}
+                      </p>
+                      <div className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:border-primary-200 dark:hover:border-primary-900">
+                        <Eye className="h-3.5 w-3.5 text-slate-500 hover:text-primary-600 dark:hover:text-primary-400" />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -678,7 +706,7 @@ export default function AdminFinanceTab(props: Props) {
 
       {/* Premium Detail Modal Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[480px] w-full max-h-[85vh] overflow-y-auto p-5 md:p-6 transition-all duration-300 ease-in-out scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ArrowUpCircle className="h-5 w-5 text-emerald-600" />
@@ -800,6 +828,13 @@ export default function AdminFinanceTab(props: Props) {
         onComplete={confirmCompleteWithdrawal}
         onFail={confirmFailWithdrawal}
         onProcess={() => handleProcessWithdrawal(selectedWithdrawal)}
+      />
+
+      <RevenueDetailModal
+        open={revenueModalOpen}
+        onOpenChange={setRevenueModalOpen}
+        transaction={selectedRevenueTransaction}
+        formatPrice={formatPrice}
       />
     </>
   );
