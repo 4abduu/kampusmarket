@@ -51,3 +51,32 @@ export const getInitials = (name: string | undefined | null): string => {
     .toUpperCase()
     .slice(0, 2) || "?";
 };
+
+export const formatAdminDate = (
+  dateVal: string | Date | undefined | null,
+  includeTime: boolean = false
+): string => {
+  if (!dateVal) return "-";
+  try {
+    const date = typeof dateVal === "string" ? new Date(dateVal) : dateVal;
+    if (isNaN(date.getTime())) return "-";
+    
+    const dateStr = date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+    
+    if (includeTime) {
+      const timeStr = date.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      return `${dateStr} ${timeStr}`;
+    }
+    
+    return dateStr;
+  } catch (e) {
+    return "-";
+  }
+};

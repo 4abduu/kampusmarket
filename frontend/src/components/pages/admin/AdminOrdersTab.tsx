@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, Package, ShoppingCart, Search, Filter, ChevronDown, ChevronUp, X } from "lucide-react";
+import { formatAdminDate } from "./admin-dashboard.shared";
 
 interface Props {
   orders: any[];
@@ -274,7 +275,7 @@ export default function AdminOrdersTab({
                           variant="secondary" 
                           className="text-[10px] py-0.5 px-2 bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-100 dark:border-slate-700/50"
                         >
-                          {order.product?.category || "-"}
+                          {order.product?.category || order.category || "-"}
                         </Badge>
                       </TableCell>
 
@@ -328,7 +329,7 @@ export default function AdminOrdersTab({
                       
                       {/* Date */}
                       <TableCell className="text-xs text-slate-500">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "-"}
+                        {formatAdminDate(order.createdAt)}
                       </TableCell>
                     </TableRow>
                   ))}

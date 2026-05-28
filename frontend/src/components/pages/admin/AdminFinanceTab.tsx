@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatAdminDate } from "./admin-dashboard.shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -456,7 +457,7 @@ export default function AdminFinanceTab(props: Props) {
                           <p className="text-xs text-muted-foreground">a.n {withdrawal.accountName}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{withdrawal.createdAt ? new Date(withdrawal.createdAt).toLocaleDateString("id-ID") : "-"}</TableCell>
+                      <TableCell className="text-sm">{formatAdminDate(withdrawal.createdAt)}</TableCell>
                       <TableCell>{getWithdrawalStatusBadge(withdrawal.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -619,11 +620,7 @@ export default function AdminFinanceTab(props: Props) {
                         {topup.transaction_id || topup.uuid}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {topup.created_at ? new Date(topup.created_at).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric"
-                        }) : "-"}
+                        {formatAdminDate(topup.created_at)}
                       </TableCell>
                       <TableCell>{getTopUpStatusBadge(topup)}</TableCell>
                       <TableCell className="text-right">
@@ -779,13 +776,7 @@ export default function AdminFinanceTab(props: Props) {
                     <Calendar className="h-3 w-3" /> Tanggal Dibuat
                   </span>
                   <span className="text-xs font-medium">
-                    {selectedTopup.created_at ? new Date(selectedTopup.created_at).toLocaleString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    }) : "-"}
+                    {formatAdminDate(selectedTopup.created_at, true)}
                   </span>
                 </div>
 
@@ -794,13 +785,7 @@ export default function AdminFinanceTab(props: Props) {
                     <Calendar className="h-3 w-3" /> Tanggal Dibayar
                   </span>
                   <span className="text-xs font-medium">
-                    {selectedTopup.status === "paid" && selectedTopup.paid_at ? new Date(selectedTopup.paid_at).toLocaleString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    }) : <span className="text-muted-foreground font-normal">Belum dibayar</span>}
+                    {selectedTopup.status === "paid" && selectedTopup.paid_at ? formatAdminDate(selectedTopup.paid_at, true) : <span className="text-muted-foreground font-normal">Belum dibayar</span>}
                   </span>
                 </div>
               </div>

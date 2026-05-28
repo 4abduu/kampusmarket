@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, X, Pencil, Trash2, GraduationCap } from "lucide-react";
 import type { Faculty as BaseFaculty } from "./admin-dashboard.shared";
+import { formatAdminDate } from "./admin-dashboard.shared";
 
 type Faculty = BaseFaculty & {
   description?: string;
@@ -179,7 +180,7 @@ export default function AdminFacultiesTab({
                       </button>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {faculty.createdAt ? new Date(faculty.createdAt).toLocaleDateString("id-ID") : "-"}
+                      {formatAdminDate(faculty.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
