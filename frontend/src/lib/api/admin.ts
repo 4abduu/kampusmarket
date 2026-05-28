@@ -203,6 +203,12 @@ export const adminOrdersApi = {
     const url = `${API_BASE_URL}/admin/orders${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
     return request<PaginatedResponse<any>>(url);
   },
+
+  async getOrder(id: string) {
+    return request(`${API_BASE_URL}/orders/${id}`, {
+      method: "GET",
+    });
+  },
 };
 
 // ============================================================

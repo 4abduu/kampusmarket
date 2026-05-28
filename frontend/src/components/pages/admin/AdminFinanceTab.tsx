@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import FinancialActionModal from "./financial-modal/FinancialActionModal";
 import { 
   Wallet, 
   Clock, 
@@ -53,10 +54,22 @@ interface Props {
   getWithdrawalStatusBadge: (status: string) => React.ReactNode;
   getInitials: (value?: string | null) => string;
   handleApproveWithdrawal: (withdrawal: any) => void;
-  handleRejectWithdrawal: (withdrawal: any) => void;
   handleProcessWithdrawal: (withdrawal: any) => void;
   handleCompleteWithdrawal: (withdrawal: any) => void;
-  handleFailWithdrawal: (withdrawal: any) => void;
+  confirmApproveWithdrawal: () => void;
+  confirmRejectWithdrawal: (reason: string) => void;
+  confirmCompleteWithdrawal: () => void;
+  confirmFailWithdrawal: (reason: string) => void;
+
+  // Unified Modal Props
+  financialModalOpen: boolean;
+  setFinancialModalOpen: (open: boolean) => void;
+  financialModalVariant: 'detail' | 'approve' | 'reject' | 'finish' | 'failed';
+  setFinancialModalVariant: (variant: 'detail' | 'approve' | 'reject' | 'finish' | 'failed') => void;
+  financialLoading: boolean;
+  financialError: string | null;
+  selectedWithdrawal: any;
+  handleViewWithdrawal: (withdrawal: any) => void;
 
   // New Top Up Props
   topups: any[];
@@ -105,10 +118,22 @@ export default function AdminFinanceTab(props: Props) {
     getWithdrawalStatusBadge,
     getInitials,
     handleApproveWithdrawal,
-    handleRejectWithdrawal,
     handleProcessWithdrawal,
     handleCompleteWithdrawal,
-    handleFailWithdrawal,
+
+    // Unified Modal Props
+    financialModalOpen,
+    setFinancialModalOpen,
+    financialModalVariant,
+    setFinancialModalVariant,
+    financialLoading,
+    financialError,
+    selectedWithdrawal,
+    handleViewWithdrawal,
+    confirmApproveWithdrawal,
+    confirmRejectWithdrawal,
+    confirmCompleteWithdrawal,
+    confirmFailWithdrawal,
 
     // Top Up Props
     topups,
@@ -421,54 +446,51 @@ export default function AdminFinanceTab(props: Props) {
                       <TableCell className="text-sm">{withdrawal.createdAt ? new Date(withdrawal.createdAt).toLocaleDateString("id-ID") : "-"}</TableCell>
                       <TableCell>{getWithdrawalStatusBadge(withdrawal.status)}</TableCell>
                       <TableCell className="text-right">
-                        {withdrawal.status === "pending" && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm" className="text-red-500" onClick={() => handleRejectWithdrawal(withdrawal)}>
-                              <XCircle className="h-3 w-3 mr-1" />Tolak
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 border-slate-200 hover:border-primary-200 hover:bg-primary-50/40 hover:text-primary-600 dark:hover:bg-primary-950/20 dark:hover:border-primary-900 transition-all duration-200 group/eye"
+                            onClick={() => handleViewWithdrawal(withdrawal)}
+                            title="Lihat Detail"
+                          >
+                            <Eye className="h-4 w-4 text-slate-500 group-hover/eye:text-primary-600 group-hover/eye:scale-110 transition-transform" />
+                          </Button>
+                          
+                          {withdrawal.status === "pending" && (
+                            <Button 
+                              size="sm" 
+                              className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
+                              onClick={() => handleApproveWithdrawal(withdrawal)}
+                            >
+                              Approve
                             </Button>
-                            <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => handleApproveWithdrawal(withdrawal)}>
-                              <CheckCircle2 className="h-3 w-3 mr-1" />Approve
+                          )}
+                          {(withdrawal.status === "approved" || withdrawal.status === "processing") && (
+                            <Button 
+                              size="sm" 
+                              className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
+                              onClick={() => handleCompleteWithdrawal(withdrawal)}
+                            >
+                              Selesai
                             </Button>
-                          </div>
-                        )}
-                        {withdrawal.status === "approved" && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleProcessWithdrawal(withdrawal)}>
-                              <Clock className="h-3 w-3 mr-1" />Proses
-                            </Button>
-                            <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => handleCompleteWithdrawal(withdrawal)}>
-                              <CheckCircle2 className="h-3 w-3 mr-1" />Selesai
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleFailWithdrawal(withdrawal)}>
-                              <XCircle className="h-3 w-3 mr-1" />Gagal
-                            </Button>
-                          </div>
-                        )}
-                        {withdrawal.status === "processing" && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => handleCompleteWithdrawal(withdrawal)}>
-                              <CheckCircle2 className="h-3 w-3 mr-1" />Selesai
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleFailWithdrawal(withdrawal)}>
-                              <XCircle className="h-3 w-3 mr-1" />Gagal
-                            </Button>
-                          </div>
-                        )}
-                        {withdrawal.status === "completed" && withdrawal.processedAt && (
-                          <span className="text-xs text-primary-600">Selesai: {new Date(withdrawal.processedAt).toLocaleDateString("id-ID")}</span>
-                        )}
-                        {withdrawal.status === "failed" && withdrawal.failureReason && (
-                          <div className="text-xs max-w-[200px]">
-                            <p className="text-red-500 font-medium">Gagal</p>
-                            <p className="text-muted-foreground mt-1 line-clamp-2">{withdrawal.failureReason}</p>
-                          </div>
-                        )}
-                        {withdrawal.status === "rejected" && withdrawal.rejectionReason && (
-                          <div className="text-xs max-w-[200px]">
-                            <p className="text-red-500 font-medium">Ditolak</p>
-                            <p className="text-muted-foreground mt-1 line-clamp-2">{withdrawal.rejectionReason}</p>
-                          </div>
-                        )}
+                          )}
+                          {withdrawal.status === "completed" && withdrawal.processedAt && (
+                            <span className="text-xs text-muted-foreground mr-1.5">
+                              Selesai
+                            </span>
+                          )}
+                          {withdrawal.status === "failed" && (
+                            <span className="text-xs text-red-500 font-medium mr-1.5">
+                              Gagal
+                            </span>
+                          )}
+                          {withdrawal.status === "rejected" && (
+                            <span className="text-xs text-slate-400 font-medium mr-1.5">
+                              Ditolak
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -764,6 +786,21 @@ export default function AdminFinanceTab(props: Props) {
           )}
         </DialogContent>
       </Dialog>
+
+      <FinancialActionModal
+        open={financialModalOpen}
+        onOpenChange={setFinancialModalOpen}
+        variant={financialModalVariant}
+        setVariant={setFinancialModalVariant}
+        withdrawal={selectedWithdrawal}
+        loading={financialLoading}
+        error={financialError}
+        onApprove={confirmApproveWithdrawal}
+        onReject={confirmRejectWithdrawal}
+        onComplete={confirmCompleteWithdrawal}
+        onFail={confirmFailWithdrawal}
+        onProcess={() => handleProcessWithdrawal(selectedWithdrawal)}
+      />
     </>
   );
 }

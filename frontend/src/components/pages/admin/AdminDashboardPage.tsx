@@ -60,14 +60,12 @@ export default function AdminDashboardPage({
     addressesLoading,
     addressesError,
     loadAddressesData,
-    filteredOrders,
     filteredCategories,
     filteredFaculties,
     paginatedUsers,
     paginatedProducts,
     paginatedReports,
     paginatedWithdrawals,
-    paginatedOrders,
     paginatedFaculties,
     userTotalItems,
     userTotalPages,
@@ -189,19 +187,13 @@ export default function AdminDashboardPage({
     showBanReportDialog,
     setShowBanReportDialog,
     selectedReport,
-    showApproveDialog,
-    setShowApproveDialog,
-    showRejectDialog,
-    setShowRejectDialog,
-    showCompleteDialog,
-    setShowCompleteDialog,
-    showFailDialog,
-    setShowFailDialog,
+    financialModalOpen,
+    setFinancialModalOpen,
+    financialModalVariant,
+    setFinancialModalVariant,
+    financialLoading,
+    financialError,
     selectedWithdrawal,
-    rejectionReason,
-    setRejectionReason,
-    failureReason,
-    setFailureReason,
     showCategoryDialog,
     setShowCategoryDialog,
     selectedCategory,
@@ -254,14 +246,13 @@ export default function AdminDashboardPage({
     confirmSendWarning,
     confirmBanFromReport,
     handleApproveWithdrawal,
-    handleRejectWithdrawal,
     handleProcessWithdrawal,
     handleCompleteWithdrawal,
-    handleFailWithdrawal,
     confirmApproveWithdrawal,
     confirmRejectWithdrawal,
     confirmCompleteWithdrawal,
     confirmFailWithdrawal,
+    handleViewWithdrawal,
     handleAddCategory,
     handleEditCategory,
     handleSaveCategory,
@@ -280,6 +271,10 @@ export default function AdminDashboardPage({
     handleToggleFacultyActive,
     handleRestoreProduct,
     lastUpdatedAt,
+    orders,
+    ordersLoading,
+    orderTotalItems,
+    orderTotalPages,
   } = useAdminDashboardController();
 
   const formatLastUpdated = (date: Date) => {
@@ -512,9 +507,11 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="orders" className="space-y-6 py-2">
             <AdminOrdersTab
-              filteredOrders={filteredOrders}
-              paginatedOrders={paginatedOrders}
+              orders={orders}
               currentPage={orderPage}
+              totalOrders={orderTotalItems}
+              totalPages={orderTotalPages}
+              isLoading={ordersLoading}
               orderSearchTerm={orderSearchTerm}
               setOrderSearchTerm={setOrderSearchTerm}
               orderStatusFilter={orderStatusFilter}
@@ -528,12 +525,13 @@ export default function AdminDashboardPage({
               showOrderFilters={showOrderFilters}
               setShowOrderFilters={setShowOrderFilters}
               setOrderPage={setOrderPage}
-              getTotalPages={getTotalPages}
               renderPagination={renderPagination}
               getInitials={getInitials}
               formatPrice={formatPrice}
               getOrderStatusBadge={getOrderStatusBadge}
               getPaymentStatusBadge={getPaymentStatusBadge}
+              handleViewUser={handleViewUser}
+              handleViewProduct={handleViewProduct}
             />
           </TabsContent>
           <TabsContent value="finance" className="space-y-6 py-2">
@@ -566,10 +564,20 @@ export default function AdminDashboardPage({
                 getWithdrawalStatusBadge={getWithdrawalStatusBadge}
                 getInitials={getInitials}
                 handleApproveWithdrawal={handleApproveWithdrawal}
-                handleRejectWithdrawal={handleRejectWithdrawal}
                 handleProcessWithdrawal={handleProcessWithdrawal}
                 handleCompleteWithdrawal={handleCompleteWithdrawal}
-                handleFailWithdrawal={handleFailWithdrawal}
+                financialModalOpen={financialModalOpen}
+                setFinancialModalOpen={setFinancialModalOpen}
+                financialModalVariant={financialModalVariant}
+                setFinancialModalVariant={setFinancialModalVariant}
+                financialLoading={financialLoading}
+                financialError={financialError}
+                selectedWithdrawal={selectedWithdrawal}
+                handleViewWithdrawal={handleViewWithdrawal}
+                confirmApproveWithdrawal={confirmApproveWithdrawal}
+                confirmRejectWithdrawal={confirmRejectWithdrawal}
+                confirmCompleteWithdrawal={confirmCompleteWithdrawal}
+                confirmFailWithdrawal={confirmFailWithdrawal}
                 // New Top Up Props
                 topups={topups}
                 topupLoading={topupLoading}
@@ -635,23 +643,6 @@ export default function AdminDashboardPage({
         selectedReport={selectedReport}
         confirmSendWarning={confirmSendWarning}
         confirmBanFromReport={confirmBanFromReport}
-        showApproveDialog={showApproveDialog}
-        setShowApproveDialog={setShowApproveDialog}
-        showRejectDialog={showRejectDialog}
-        setShowRejectDialog={setShowRejectDialog}
-        showCompleteDialog={showCompleteDialog}
-        setShowCompleteDialog={setShowCompleteDialog}
-        showFailDialog={showFailDialog}
-        setShowFailDialog={setShowFailDialog}
-        selectedWithdrawal={selectedWithdrawal}
-        confirmApproveWithdrawal={confirmApproveWithdrawal}
-        confirmRejectWithdrawal={confirmRejectWithdrawal}
-        confirmCompleteWithdrawal={confirmCompleteWithdrawal}
-        confirmFailWithdrawal={confirmFailWithdrawal}
-        rejectionReason={rejectionReason}
-        setRejectionReason={setRejectionReason}
-        failureReason={failureReason}
-        setFailureReason={setFailureReason}
         showCategoryDialog={showCategoryDialog}
         setShowCategoryDialog={setShowCategoryDialog}
         selectedCategory={selectedCategory}

@@ -89,14 +89,11 @@ export function useAdminDashboardController() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [showApproveDialog, setShowApproveDialog] = useState(false);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
-  const [showFailDialog, setShowFailDialog] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] =
-    useState<Withdrawal | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [failureReason, setFailureReason] = useState("");
+  const [financialModalOpen, setFinancialModalOpen] = useState(false);
+  const [financialModalVariant, setFinancialModalVariant] = useState<'detail' | 'approve' | 'reject' | 'finish' | 'failed'>('detail');
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [financialLoading, setFinancialLoading] = useState(false);
+  const [financialError, setFinancialError] = useState<string | null>(null);
 
   const [financeSubTab, setFinanceSubTab] = useState<
     "withdrawals" | "revenue" | "topups"
@@ -282,8 +279,17 @@ export function useAdminDashboardController() {
   const [userTotalPages, setUserTotalPages] = useState(1);
   const [productTotalItems, setProductTotalItems] = useState(0);
   const [productTotalPages, setProductTotalPages] = useState(1);
+  
+  // Server-Side Orders Pagination States
+  const [orderTotalItems, setOrderTotalItems] = useState(0);
+  const [orderTotalPages, setOrderTotalPages] = useState(1);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [debouncedOrderSearch, setDebouncedOrderSearch] = useState("");
+
   const userRequestRef = useRef(0);
   const productRequestRef = useRef(0);
+  const orderRequestRef = useRef(0);
   const userDetailRequestRef = useRef(0);
   const productDetailRequestRef = useRef(0);
 
@@ -924,14 +930,38 @@ export function useAdminDashboardController() {
   };
 
   const loadOrdersData = async () => {
+    const requestId = ++orderRequestRef.current;
+    setOrdersLoading(true);
+    setOrdersError(null);
     try {
-      const res = await adminOrdersApi.getOrders({ per_page: 100 });
+      const params: Parameters<typeof adminOrdersApi.getOrders>[0] = {
+        per_page: ITEMS_PER_PAGE,
+        page: orderPage,
+      };
+
+      if (debouncedOrderSearch.trim()) params.search = debouncedOrderSearch.trim();
+      if (orderStatusFilter !== "all") params.status = orderStatusFilter;
+      if (orderTypeFilter !== "all") params.type = orderTypeFilter;
+      if (orderCategoryFilter !== "all") params.category_id = orderCategoryFilter;
+      if (orderPaymentFilter !== "all") params.payment_status = orderPaymentFilter;
+
+      const res = await adminOrdersApi.getOrders(params);
+      if (requestId !== orderRequestRef.current) return;
       if (res?.data && Array.isArray(res.data)) {
         setOrders(mapOrders(res.data));
       }
+      setOrderTotalItems(res?.meta?.total ?? 0);
+      setOrderTotalPages(res?.meta?.last_page ?? 1);
       markResourceLoaded("orders");
     } catch (err) {
-      console.error("Failed to load orders:", err);
+      if (requestId !== orderRequestRef.current) return;
+      const msg = err instanceof Error ? err.message : "Gagal memuat data transaksi";
+      setOrdersError(msg);
+      console.error("Failed to load orders data:", err);
+    } finally {
+      if (requestId === orderRequestRef.current) {
+        setOrdersLoading(false);
+      }
     }
   };
 
@@ -1011,8 +1041,8 @@ export function useAdminDashboardController() {
           await loadCancelRequestsData();
           break;
         case "orders":
-          if (!isResourceLoaded("orders")) {
-            await loadOrdersData();
+          if (!isResourceLoaded("categories")) {
+            await fetchCategoriesResource();
           }
           break;
         case "addresses":
@@ -1058,6 +1088,30 @@ export function useAdminDashboardController() {
     productPriceMin,
     productPriceMax,
     productSellerFilter,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedOrderSearch(orderSearchTerm);
+      setOrderPage(1);
+    }, 400);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [orderSearchTerm]);
+
+  useEffect(() => {
+    if (activeTab !== "orders") return;
+    void loadOrdersData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    orderPage,
+    debouncedOrderSearch,
+    orderStatusFilter,
+    orderTypeFilter,
+    orderCategoryFilter,
+    orderPaymentFilter,
   ]);
 
   const renderPagination = (
@@ -1252,50 +1306,7 @@ export function useAdminDashboardController() {
       .filter((item): item is AdminAddressUser => item !== null);
   }, [addressesData, addressSearchTerm]);
 
-  const filteredOrders = useMemo(
-    () =>
-      orders.filter((order) => {
-        const matchesSearch =
-          orderSearchTerm === "" ||
-          order.orderNumber
-            .toLowerCase()
-            .includes(orderSearchTerm.toLowerCase()) ||
-          order.productTitle
-            .toLowerCase()
-            .includes(orderSearchTerm.toLowerCase()) ||
-          (order.buyer?.name || "")
-            .toLowerCase()
-            .includes(orderSearchTerm.toLowerCase()) ||
-          (order.seller?.name || "")
-            .toLowerCase()
-            .includes(orderSearchTerm.toLowerCase());
-        const matchesStatus =
-          orderStatusFilter === "all" || order.status === orderStatusFilter;
-        const matchesType =
-          orderTypeFilter === "all" || order.productType === orderTypeFilter;
-        const matchesCategory =
-          orderCategoryFilter === "all" ||
-          order.product?.categoryId === orderCategoryFilter;
-        const matchesPayment =
-          orderPaymentFilter === "all" ||
-          order.paymentStatus === orderPaymentFilter;
-        return (
-          matchesSearch &&
-          matchesStatus &&
-          matchesType &&
-          matchesCategory &&
-          matchesPayment
-        );
-      }),
-    [
-      orders,
-      orderSearchTerm,
-      orderStatusFilter,
-      orderTypeFilter,
-      orderCategoryFilter,
-      orderPaymentFilter,
-    ],
-  );
+  const filteredOrders = useMemo(() => orders, [orders]);
 
   const filteredFaculties = useMemo(
     () =>
@@ -1330,8 +1341,8 @@ export function useAdminDashboardController() {
     [filteredWithdrawals, withdrawalPage],
   );
   const paginatedOrders = useMemo(
-    () => getPaginatedData(filteredOrders, orderPage),
-    [filteredOrders, orderPage],
+    () => filteredOrders,
+    [filteredOrders],
   );
   const paginatedFaculties = useMemo(
     () => getPaginatedData(filteredFaculties, facultyPage),
@@ -1638,11 +1649,14 @@ export function useAdminDashboardController() {
 
   const handleApproveWithdrawal = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
-    setShowApproveDialog(true);
+    setFinancialModalVariant("approve");
+    setFinancialModalOpen(true);
   };
   const confirmApproveWithdrawal = () => {
     if (selectedWithdrawal) {
       const run = async () => {
+        setFinancialLoading(true);
+        setFinancialError(null);
         try {
           const updated = await adminWithdrawalsApi.approveWithdrawal(
             selectedWithdrawal.id,
@@ -1654,14 +1668,17 @@ export function useAdminDashboardController() {
           showSuccess(
             `Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil disetujui`,
           );
+          setFinancialModalOpen(false);
+          setSelectedWithdrawal(null);
         } catch (err) {
           console.error(err);
+          const msg = err instanceof Error ? err.message : "Gagal menyetujui penarikan";
+          setFinancialError(msg);
           showSuccess(
             `Gagal menyetujui penarikan ${formatPrice(selectedWithdrawal.amount)}`,
           );
         } finally {
-          setShowApproveDialog(false);
-          setSelectedWithdrawal(null);
+          setFinancialLoading(false);
         }
       };
       void run();
@@ -1669,16 +1686,18 @@ export function useAdminDashboardController() {
   };
   const handleRejectWithdrawal = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
-    setRejectionReason("");
-    setShowRejectDialog(true);
+    setFinancialModalVariant("reject");
+    setFinancialModalOpen(true);
   };
-  const confirmRejectWithdrawal = () => {
-    if (selectedWithdrawal && rejectionReason.trim()) {
+  const confirmRejectWithdrawal = (reason: string) => {
+    if (selectedWithdrawal && reason.trim()) {
       const run = async () => {
+        setFinancialLoading(true);
+        setFinancialError(null);
         try {
           const updated = await adminWithdrawalsApi.rejectWithdrawal(
             selectedWithdrawal.id,
-            { rejectionReason: rejectionReason.trim() },
+            { rejectionReason: reason.trim() },
           );
           const mapped = mapWithdrawals([updated])[0];
           setWithdrawals(
@@ -1687,15 +1706,17 @@ export function useAdminDashboardController() {
           showSuccess(
             `Penarikan ${formatPrice(selectedWithdrawal.amount)} ditolak`,
           );
+          setFinancialModalOpen(false);
+          setSelectedWithdrawal(null);
         } catch (err) {
           console.error(err);
+          const msg = err instanceof Error ? err.message : "Gagal menolak penarikan";
+          setFinancialError(msg);
           showSuccess(
             `Gagal menolak penarikan ${formatPrice(selectedWithdrawal.amount)}`,
           );
         } finally {
-          setShowRejectDialog(false);
-          setSelectedWithdrawal(null);
-          setRejectionReason("");
+          setFinancialLoading(false);
         }
       };
       void run();
@@ -1775,11 +1796,14 @@ export function useAdminDashboardController() {
 
   const handleCompleteWithdrawal = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
-    setShowCompleteDialog(true);
+    setFinancialModalVariant("finish");
+    setFinancialModalOpen(true);
   };
   const confirmCompleteWithdrawal = () => {
     if (selectedWithdrawal) {
       const run = async () => {
+        setFinancialLoading(true);
+        setFinancialError(null);
         try {
           const updated = await adminWithdrawalsApi.completeWithdrawal(
             selectedWithdrawal.id,
@@ -1791,14 +1815,17 @@ export function useAdminDashboardController() {
           showSuccess(
             `Penarikan ${formatPrice(selectedWithdrawal.amount)} berhasil diselesaikan`,
           );
+          setFinancialModalOpen(false);
+          setSelectedWithdrawal(null);
         } catch (err) {
           console.error(err);
+          const msg = err instanceof Error ? err.message : "Gagal menyelesaikan penarikan";
+          setFinancialError(msg);
           showSuccess(
             `Gagal menyelesaikan penarikan ${formatPrice(selectedWithdrawal.amount)}`,
           );
         } finally {
-          setShowCompleteDialog(false);
-          setSelectedWithdrawal(null);
+          setFinancialLoading(false);
         }
       };
       void run();
@@ -1806,16 +1833,18 @@ export function useAdminDashboardController() {
   };
   const handleFailWithdrawal = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
-    setFailureReason("");
-    setShowFailDialog(true);
+    setFinancialModalVariant("failed");
+    setFinancialModalOpen(true);
   };
-  const confirmFailWithdrawal = () => {
-    if (selectedWithdrawal && failureReason.trim()) {
+  const confirmFailWithdrawal = (reason: string) => {
+    if (selectedWithdrawal && reason.trim()) {
       const run = async () => {
+        setFinancialLoading(true);
+        setFinancialError(null);
         try {
           const updated = await adminWithdrawalsApi.failWithdrawal(
             selectedWithdrawal.id,
-            { failureReason: failureReason.trim() },
+            { failureReason: reason.trim() },
           );
           const mapped = mapWithdrawals([updated])[0];
           setWithdrawals(
@@ -1824,15 +1853,17 @@ export function useAdminDashboardController() {
           showSuccess(
             `Penarikan ${formatPrice(selectedWithdrawal.amount)} ditandai gagal`,
           );
+          setFinancialModalOpen(false);
+          setSelectedWithdrawal(null);
         } catch (err) {
           console.error(err);
+          const msg = err instanceof Error ? err.message : "Gagal menandai gagal penarikan";
+          setFinancialError(msg);
           showSuccess(
             `Gagal menandai penarikan ${formatPrice(selectedWithdrawal.amount)} sebagai gagal`,
           );
         } finally {
-          setShowFailDialog(false);
-          setSelectedWithdrawal(null);
-          setFailureReason("");
+          setFinancialLoading(false);
         }
       };
       void run();
@@ -1840,6 +1871,8 @@ export function useAdminDashboardController() {
   };
   const handleProcessWithdrawal = (withdrawal: Withdrawal) => {
     const run = async () => {
+      setFinancialLoading(true);
+      setFinancialError(null);
       try {
         const updated = await adminWithdrawalsApi.processWithdrawal(
           withdrawal.id,
@@ -1851,14 +1884,25 @@ export function useAdminDashboardController() {
         showSuccess(
           `Penarikan ${formatPrice(withdrawal.amount)} sedang diproses`,
         );
+        if (selectedWithdrawal && selectedWithdrawal.id === withdrawal.id) {
+          setSelectedWithdrawal(mapped);
+        }
       } catch (err) {
         console.error(err);
         showSuccess(
           `Gagal memproses penarikan ${formatPrice(withdrawal.amount)}`,
         );
+      } finally {
+        setFinancialLoading(false);
       }
     };
     void run();
+  };
+
+  const handleViewWithdrawal = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setFinancialModalVariant("detail");
+    setFinancialModalOpen(true);
   };
 
   const filteredCategories = useMemo(
@@ -2425,6 +2469,10 @@ export function useAdminDashboardController() {
     topupTotalPages,
     topupStats,
     loadTopupsData,
+    ordersLoading,
+    ordersError,
+    orderTotalItems,
+    orderTotalPages,
     showUserDetail,
     setShowUserDetail,
     selectedUser,
@@ -2454,19 +2502,14 @@ export function useAdminDashboardController() {
     showBanReportDialog,
     setShowBanReportDialog,
     selectedReport,
-    showApproveDialog,
-    setShowApproveDialog,
-    showRejectDialog,
-    setShowRejectDialog,
-    showCompleteDialog,
-    setShowCompleteDialog,
-    showFailDialog,
-    setShowFailDialog,
+    financialModalOpen,
+    setFinancialModalOpen,
+    financialModalVariant,
+    setFinancialModalVariant,
+    financialLoading,
+    financialError,
     selectedWithdrawal,
-    rejectionReason,
-    setRejectionReason,
-    failureReason,
-    setFailureReason,
+    setSelectedWithdrawal,
     showCategoryDialog,
     setShowCategoryDialog,
     selectedCategory,
@@ -2523,6 +2566,7 @@ export function useAdminDashboardController() {
     handleProcessWithdrawal,
     handleCompleteWithdrawal,
     handleFailWithdrawal,
+    handleViewWithdrawal,
     confirmApproveWithdrawal,
     confirmRejectWithdrawal,
     confirmCompleteWithdrawal,

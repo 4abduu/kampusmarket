@@ -33,7 +33,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import type { CancelRequest, Category, Product, Report, User, Withdrawal } from "@/lib/mock-data";
+import type { CancelRequest, Category, Product, Report, User } from "@/lib/mock-data";
 
 type CancelReasonItem = {
   value: string;
@@ -87,23 +87,7 @@ type Props = {
   confirmSendWarning: () => void;
   confirmBanFromReport: () => void;
 
-  showApproveDialog: boolean;
-  setShowApproveDialog: (open: boolean) => void;
-  showRejectDialog: boolean;
-  setShowRejectDialog: (open: boolean) => void;
-  showCompleteDialog: boolean;
-  setShowCompleteDialog: (open: boolean) => void;
-  showFailDialog: boolean;
-  setShowFailDialog: (open: boolean) => void;
-  selectedWithdrawal: Withdrawal | null;
-  confirmApproveWithdrawal: () => void;
-  confirmRejectWithdrawal: () => void;
-  confirmCompleteWithdrawal: () => void;
-  confirmFailWithdrawal: () => void;
-  rejectionReason: string;
-  setRejectionReason: (value: string) => void;
-  failureReason: string;
-  setFailureReason: (value: string) => void;
+
 
   showCategoryDialog: boolean;
   setShowCategoryDialog: (open: boolean) => void;
@@ -171,23 +155,7 @@ export default function AdminActionDialogs({
   selectedReport,
   confirmSendWarning,
   confirmBanFromReport,
-  showApproveDialog,
-  setShowApproveDialog,
-  showRejectDialog,
-  setShowRejectDialog,
-  showCompleteDialog,
-  setShowCompleteDialog,
-  showFailDialog,
-  setShowFailDialog,
-  selectedWithdrawal,
-  confirmApproveWithdrawal,
-  confirmRejectWithdrawal,
-  confirmCompleteWithdrawal,
-  confirmFailWithdrawal,
-  rejectionReason,
-  setRejectionReason,
-  failureReason,
-  setFailureReason,
+
   showCategoryDialog,
   setShowCategoryDialog,
   selectedCategory,
@@ -400,37 +368,7 @@ export default function AdminActionDialogs({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-primary-600"><CheckCircle2 className="h-5 w-5" />Setujui Penarikan</DialogTitle><DialogDescription>Dana akan ditransfer ke rekening user dalam 1x24 jam kerja.</DialogDescription></DialogHeader>
-          {selectedWithdrawal && <div className="space-y-3"><div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">Jumlah Penarikan:</p><p className="font-bold text-xl text-primary-600">{formatPrice(selectedWithdrawal.amount)}</p></div><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedWithdrawal.user?.name)}</AvatarFallback></Avatar><span className="font-medium">{selectedWithdrawal.user?.name || "-"}</span></div><p className="text-sm text-muted-foreground">{selectedWithdrawal.bankName} - {selectedWithdrawal.accountNumber}</p><p className="text-sm text-muted-foreground">a.n {selectedWithdrawal.accountName}</p></div></div>}
-          <DialogFooter><Button variant="outline" onClick={() => setShowApproveDialog(false)}>Batal</Button><Button className="bg-primary-600 hover:bg-primary-700" onClick={confirmApproveWithdrawal}><CheckCircle2 className="h-4 w-4 mr-2" />Setujui</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-600"><XCircle className="h-5 w-5" />Tolak Penarikan</DialogTitle><DialogDescription>Dana akan dikembalikan ke saldo user. User akan menerima notifikasi.</DialogDescription></DialogHeader>
-          {selectedWithdrawal && <div className="space-y-3"><div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">Jumlah Penarikan:</p><p className="font-bold text-xl text-red-600">{formatPrice(selectedWithdrawal.amount)}</p></div><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedWithdrawal.user?.name)}</AvatarFallback></Avatar><span className="font-medium">{selectedWithdrawal.user?.name || "-"}</span></div><p className="text-sm text-muted-foreground">{selectedWithdrawal.bankName} - {selectedWithdrawal.accountNumber}</p></div><div className="space-y-2"><label className="text-sm font-medium">Alasan Penolakan <span className="text-red-500">*</span></label><textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Contoh: Nomor rekening tidak sesuai dengan nama pemilik akun..." className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500" /><p className="text-xs text-muted-foreground">Alasan ini akan ditampilkan ke user.</p></div></div>}
-          <DialogFooter><Button variant="outline" onClick={() => setShowRejectDialog(false)}>Batal</Button><Button variant="destructive" onClick={confirmRejectWithdrawal} disabled={!rejectionReason.trim()}><XCircle className="h-4 w-4 mr-2" />Tolak</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-primary-600"><CheckCircle2 className="h-5 w-5" />Selesaikan Penarikan</DialogTitle><DialogDescription>Konfirmasi bahwa dana telah berhasil ditransfer ke rekening user.</DialogDescription></DialogHeader>
-          {selectedWithdrawal && <div className="space-y-3"><div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">Jumlah Penarikan:</p><p className="font-bold text-xl text-primary-600">{formatPrice(selectedWithdrawal.amount)}</p></div><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedWithdrawal.user?.name)}</AvatarFallback></Avatar><span className="font-medium">{selectedWithdrawal.user?.name || "-"}</span></div><p className="text-sm text-muted-foreground">{selectedWithdrawal.bankName} - {selectedWithdrawal.accountNumber}</p><p className="text-sm text-muted-foreground">a.n {selectedWithdrawal.accountName}</p></div></div>}
-          <DialogFooter><Button variant="outline" onClick={() => setShowCompleteDialog(false)}>Batal</Button><Button className="bg-primary-600 hover:bg-primary-700" onClick={confirmCompleteWithdrawal}><CheckCircle2 className="h-4 w-4 mr-2" />Selesaikan</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showFailDialog} onOpenChange={setShowFailDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-600"><XCircle className="h-5 w-5" />Penarikan Gagal</DialogTitle><DialogDescription>Dana akan dikembalikan ke saldo user. User akan menerima notifikasi.</DialogDescription></DialogHeader>
-          {selectedWithdrawal && <div className="space-y-3"><div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">Jumlah Penarikan:</p><p className="font-bold text-xl text-red-600">{formatPrice(selectedWithdrawal.amount)}</p></div><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedWithdrawal.user?.name)}</AvatarFallback></Avatar><span className="font-medium">{selectedWithdrawal.user?.name || "-"}</span></div><p className="text-sm text-muted-foreground">{selectedWithdrawal.bankName} - {selectedWithdrawal.accountNumber}</p></div><div className="space-y-2"><label className="text-sm font-medium">Alasan Kegagalan <span className="text-red-500">*</span></label><textarea value={failureReason} onChange={(e) => setFailureReason(e.target.value)} placeholder="Contoh: Transfer gagal karena rekening tujuan tidak aktif..." className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500" /><p className="text-xs text-muted-foreground">Alasan ini akan ditampilkan ke user.</p></div></div>}
-          <DialogFooter><Button variant="outline" onClick={() => setShowFailDialog(false)}>Batal</Button><Button variant="destructive" onClick={confirmFailWithdrawal} disabled={!failureReason.trim()}><XCircle className="h-4 w-4 mr-2" />Tandai Gagal</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
