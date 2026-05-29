@@ -14,6 +14,7 @@ import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Share2, Shiel
 import { addToCart } from "@/lib/api/cart";
 import { toast } from "sonner";
 import { useCartStore } from "@/lib/cart-store";
+import { getEcho } from "@/lib/echo";
 
 interface ProductSeller {
   id: string;
@@ -65,6 +66,26 @@ export default function ProductDetailSidebar({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showSuccessAnim, setShowSuccessAnim] = useState(false);
   const [showErrorAnim, setShowErrorAnim] = useState(false);
+  const [liveRating, setLiveRating] = useState(product.rating || 0);
+
+  // Listen to realtime review updates to update rating
+  useEffect(() => {
+    if (!product?.id) return;
+    
+    // Also initialize with current prop value in case it changes
+    setLiveRating(product.rating || 0);
+
+    const channel = getEcho().channel(`product.${product.id}`);
+    channel.listen('.NewReviewCreated', (event: any) => {
+      if (event.stats && event.stats.averageRating !== undefined) {
+        setLiveRating(event.stats.averageRating);
+      }
+    });
+
+    return () => {
+      getEcho().leaveChannel(`product.${product.id}`);
+    };
+  }, [product?.id, product?.rating]);
 
   const productShareUrl = `https://kampusmarket.id/p/${product.id}`;
 
@@ -186,7 +207,7 @@ export default function ProductDetailSidebar({
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{product.rating}</span>
+                <span>{Number(liveRating).toFixed(1)}</span>
               </div>
               <span>•</span>
               <div className="flex items-center gap-1">
@@ -342,7 +363,7 @@ export default function ProductDetailSidebar({
             <div>
               <p className="font-bold text-lg flex items-center justify-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                {product.rating}
+                {Number(liveRating).toFixed(1)}
               </p>
               <p className="text-muted-foreground">Rating</p>
             </div>

@@ -42,7 +42,7 @@ class NewMessageNotification implements ShouldBroadcastNow
         $chat = $this->message->chat()->first();
 
         return [
-            'message' => (new MessageResource($this->message))->toArray(request()),
+            'message' => (new MessageResource($this->message))->resolve(request()),
             'chatId' => $chat?->uuid,
             'chatInfo' => [
                 'lastMessage' => $chat?->last_message,
