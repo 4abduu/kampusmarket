@@ -243,6 +243,7 @@ export function useAdminDashboardController() {
     pendingReports: number;
     totalFaculties: number;
     activeFaculties: number;
+    pendingCancellations: number;
   } | null>(null);
   const [activitySummary, setActivitySummary] = useState<{
     newUsersThisWeek: number;
@@ -735,6 +736,7 @@ export function useAdminDashboardController() {
           pendingReports: statsData.reports?.pending || 0,
           totalFaculties: statsData.faculties?.total || 0,
           activeFaculties: statsData.faculties?.active || 0,
+          pendingCancellations: statsData.pending_cancellations || 0,
         });
         setPlatformRevenue((prev) => ({
           ...prev,
@@ -1441,6 +1443,7 @@ export function useAdminDashboardController() {
     pendingReports: 0,
     totalFaculties: faculties.length,
     activeFaculties: faculties.filter((faculty) => faculty.isActive).length,
+    pendingCancellations: 0,
   };
 
   const displayActivitySummary = activitySummary || {

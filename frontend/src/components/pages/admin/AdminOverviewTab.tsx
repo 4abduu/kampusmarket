@@ -10,7 +10,7 @@ import {
   PieChartIcon as PieChartLucide,
   Activity,
   Clock,
-  GraduationCap,
+  XOctagon,
 } from "lucide-react";
 
 import {
@@ -35,7 +35,7 @@ interface AdminOverviewTabProps {
     platformRevenue: number;
     pendingReports: number;
     pendingWithdrawals: number;
-    totalFaculties: number;
+    pendingCancellations: number;
   };
   activitySummary: {
     newUsersThisWeek: number;
@@ -254,18 +254,18 @@ export default function AdminOverviewTab({
         <Card className="border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-800 flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-cyan-600" />
+              <XOctagon className="h-6 w-6 text-cyan-600" />
             </div>
             <div>
-              <p className="font-bold text-2xl">{stats.totalFaculties}</p>
-              <p className="text-sm text-muted-foreground">Fakultas</p>
+              <p className="font-bold text-2xl">{stats.pendingCancellations}</p>
+              <p className="text-sm text-muted-foreground">Pembatalan Pending</p>
             </div>
             <Button
               size="sm"
               className="ml-auto"
-              onClick={() => onOpenTab("faculties")}
+              onClick={() => onOpenTab("cancel-requests")}
             >
-              Kelola
+              Tinjau
             </Button>
           </CardContent>
         </Card>

@@ -12,6 +12,8 @@ use App\Models\Report;
 use App\Models\Withdrawal;
 use App\Enums\PaymentStatus;
 use App\Enums\OrderStatus;
+use App\Models\CancelRequest;
+use App\Enums\CancelRequestStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -69,6 +71,9 @@ class AdminDashboardController extends Controller
             // Faculty Statistics
             $totalFaculties = Faculty::count();
             $activeFaculties = Faculty::where('is_active', true)->count();
+
+            // Cancel Request Statistics
+            $pendingCancellations = CancelRequest::where('status', CancelRequestStatus::PENDING)->count();
 
             // Report Statistics
             $totalReports = Report::count();
@@ -132,6 +137,7 @@ class AdminDashboardController extends Controller
                         'total' => $totalFaculties,
                         'active' => $activeFaculties,
                     ],
+                    'pending_cancellations' => $pendingCancellations,
                     'reports' => [
                         'total' => $totalReports,
                         'pending' => $pendingReports,
