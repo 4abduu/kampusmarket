@@ -208,7 +208,7 @@ class OrderController extends Controller
             'service_date' => $request->serviceDate,
             'service_time' => $request->serviceTime,
             'service_notes' => $request->serviceNotes,
-            'payment_method' => $request->paymentMethod,
+            'payment_method' => $request->paymentMethod ?? ($selectedShippingType === 'cod' ? 'cod' : 'balance'),
             'payment_status' => PaymentStatus::PENDING,
             'status' => $initialStatus,
             'notes' => $request->notes,
@@ -244,7 +244,7 @@ class OrderController extends Controller
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $order = Order::with(['product.images', 'buyer', 'seller', 'history.actor', 'selectedAddress', 'selectedShippingOption'])
+        $order = Order::with(['product.images', 'buyer', 'seller', 'history.actor', 'selectedAddress', 'selectedShippingOption', 'reviews'])
             ->where('uuid', $id)
             ->firstOrFail();
 

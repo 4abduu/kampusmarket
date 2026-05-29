@@ -786,7 +786,7 @@ export default function UserDashboardDialogs({
                 <Label>Pilih Bank</Label>
                 <Select value={withdrawForm.bankType} onValueChange={(v) => setWithdrawForm({ ...withdrawForm, bankType: v, customBankName: "" })}>
                   <SelectTrigger><SelectValue placeholder="Pilih bank tujuan" /></SelectTrigger>
-                  <SelectContent>{BANK_OPTIONS.map(bank => <SelectItem key={bank.id} value={bank.id}>{bank.logo} {bank.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{BANK_OPTIONS.map(bank => <SelectItem key={bank.id} value={bank.id}>{bank.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               {isBankLainnya && (
@@ -810,7 +810,7 @@ export default function UserDashboardDialogs({
                 <Label>Pilih E-Wallet</Label>
                 <Select value={withdrawForm.ewalletType} onValueChange={(v) => setWithdrawForm({ ...withdrawForm, ewalletType: v, customEwalletName: "" })}>
                   <SelectTrigger><SelectValue placeholder="Pilih e-wallet" /></SelectTrigger>
-                  <SelectContent>{EWALLET_OPTIONS.map(ew => <SelectItem key={ew.id} value={ew.id}>{ew.logo} {ew.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{EWALLET_OPTIONS.map(ew => <SelectItem key={ew.id} value={ew.id}>{ew.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               {isEwalletLainnya && (

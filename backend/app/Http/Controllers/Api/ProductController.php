@@ -693,7 +693,7 @@ class ProductController extends Controller
      */
     public function getCart(Request $request): JsonResponse
     {
-        $cartItems = Cart::with(['product.category', 'product.images', 'product.seller'])
+        $cartItems = Cart::with(['product.category', 'product.images', 'product.seller', 'product.shippingOptions'])
             ->where('user_id', $request->user()->id)
             ->get();
 

@@ -91,6 +91,11 @@ class OrderResource extends JsonResource
             'cancelledAt' => $this->cancelled_at?->toISOString(),
             'sellerConfirmedAt' => $this->seller_confirmed_at?->toISOString(),
             'autoConfirmDeadline' => $this->auto_confirm_deadline?->toISOString(),
+            
+            // Reviews
+            'isRated' => $this->relationLoaded('reviews') 
+                ? $this->reviews->where('reviewer_id', $this->buyer_id)->count() > 0 
+                : false,
         ];
     }
 

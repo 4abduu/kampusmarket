@@ -60,6 +60,15 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const initialRatingParam = searchParams.get("rating");
+    if (initialRatingParam) {
+      const parsedRating = parseInt(initialRatingParam, 10);
+      if (!isNaN(parsedRating) && parsedRating >= 1 && parsedRating <= 5) {
+        setRating(parsedRating);
+      }
+    }
+
     const fetchData = async () => {
       try {
         setIsLoading(true);

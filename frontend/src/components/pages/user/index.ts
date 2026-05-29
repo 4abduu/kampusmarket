@@ -9,6 +9,4 @@ export { default as RatingPage } from "./RatingPage";
 export { default as FavoritesPage } from "./FavoritesPage";
 export { default as UserNotificationsPage } from "./UserNotificationsPage";
 export { default as CheckoutSuccessPage } from "./CheckoutSuccessPage";
-export { default as PaymentSuccessPage } from "./PaymentSuccessPage";
-export { default as BookingSuccessPage } from "./BookingSuccessPage";
 export { default as ProfilePage } from "./ProfilePage";

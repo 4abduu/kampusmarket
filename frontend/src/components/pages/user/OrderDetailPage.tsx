@@ -30,6 +30,7 @@ import OrderDetailSummaryColumn from "@/components/pages/user/order-detail/Order
 import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
 import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
 import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
+import RatingPromptDialog from "@/components/pages/user/order-detail/RatingPromptDialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrderDetailPageProps {
@@ -66,12 +67,15 @@ export default function OrderDetailPage({
   const [cancelDescription, setCancelDescription] = useState("");
   const [otherReasonText, setOtherReasonText] = useState("");
 
-  // PIN states
   const [showVerifyPinDialog, setShowVerifyPinDialog] = useState(false);
   const [showSetPinDialog, setShowSetPinDialog] = useState(false);
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState<PaymentMethod | null>(null);
   // PIN verification handled in VerifyPinDialog during payment
+
+  // Rating states
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [hasShownRatingPrompt, setHasShownRatingPrompt] = useState(false);
 
   // Fetch order
   const fetchOrder = useCallback(async () => {
@@ -96,6 +100,24 @@ export default function OrderDetailPage({
   useEffect(() => {
     fetchOrder();
   }, [fetchOrder]);
+
+  // Auto trigger rating prompt
+  useEffect(() => {
+    if (!order || hasShownRatingPrompt) return;
+    
+    const isBuyerView = currentUser?.id === order?.buyer?.id;
+    // (order as any).isRated is our proxy for hasRated. 
+    // Ideally we check if reviewId exists or similar. The API should return `isRated` or `hasReview`.
+    const isRated = (order as any).isRated || (order as any).hasReview;
+
+    if (order.status === "completed" && isBuyerView && !isRated) {
+      const timer = setTimeout(() => {
+        setShowRatingPrompt(true);
+        setHasShownRatingPrompt(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [order?.status, order?.buyer?.id, currentUser?.id, hasShownRatingPrompt]);
 
   // Listen to real-time order updates
   useEffect(() => {
@@ -239,7 +261,7 @@ export default function OrderDetailPage({
   const formatDate = (dateString: string) =>
     new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
-      month: "short",
+      month: "long",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -248,7 +270,7 @@ export default function OrderDetailPage({
   const formatShortDate = (dateString: string) =>
     new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
-      month: "short",
+      month: "long",
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(dateString));
@@ -276,6 +298,9 @@ export default function OrderDetailPage({
 
   // Has seller confirmed delivery/service?
   const sellerHasConfirmed = !!order.sellerConfirmedAt;
+
+  // Determine if cash payment option is available (jasa with cod/home_service/onsite)
+  const showCashOption = isService && ["cod", "home_service", "onsite"].includes(shippingMethod.toLowerCase());
 
   // Cancel logic
   const prePaidStatuses = [
@@ -431,6 +456,7 @@ export default function OrderDetailPage({
       await completeOrder(order.id);
       toast({ title: "Pesanan dikonfirmasi selesai!" });
       setShowCompleteConfirmDialog(false);
+      // Let the auto-trigger handle showing the rating prompt after refetch
       await fetchOrder();
     } catch (err: any) {
       toast({
@@ -649,6 +675,11 @@ export default function OrderDetailPage({
             variant: "destructive",
           });
         }
+      } else if (method === "cash") {
+        // Cash payment - langsung mark as processing
+        await payOrder(order.id, 'cash');
+        toast({ title: "Pembayaran cash diterima. Pesanan dalam proses!" });
+        await fetchOrder();
       } else {
         // wallet payment
         const balance = currentUser?.walletBalance || 0;
@@ -860,32 +891,6 @@ export default function OrderDetailPage({
           </div>
         </div>
 
-        {/* Role indicator */}
-        <div className="mb-4 flex items-center gap-2">
-          <span
-            className={`text-xs px-2 py-1 rounded-full font-medium ${
-              isSellerView
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-                : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-            }`}
-          >
-            {isSellerView
-              ? isService
-                ? "👤 Penyedia Jasa"
-                : "👤 Penjual"
-              : isService
-                ? "👤 Pemesan"
-                : "👤 Pembeli"}
-          </span>
-          {sellerHasConfirmed && orderStatus !== "completed" && (
-            <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-              ✓{" "}
-              {isService
-                ? "Penyedia konfirmasi selesai"
-                : "Penjual konfirmasi kirim"}
-            </span>
-          )}
-        </div>
 
         <OrderDetailStatusSection
           isService={isService}
@@ -932,12 +937,12 @@ export default function OrderDetailPage({
               toggleHistoryExpand={toggleHistoryExpand}
               getStatusConfig={getOrderStatusConfig}
               formatShortDate={formatShortDate}
-              formatDate={formatDate}
               sellerId={order.seller?.id}
               buyerId={order.buyer?.id}
             />
             <OrderDetailProductCard
               isService={isService}
+              isSellerView={isSellerView}
               order={order}
               offeredPrice={order.offeredPrice || null}
               formatPrice={formatPrice}
@@ -956,6 +961,10 @@ export default function OrderDetailPage({
             shippingFee={shippingFee}
             orderStatus={orderStatus}
             totalPayment={totalPayment}
+            productId={order.product?.id || order.product?.uuid}
+            partnerName={isSellerView ? order.buyer?.name : order.seller?.name}
+            partnerPhone={isSellerView ? order.buyer?.phone : order.seller?.phone}
+            productTitle={order.productTitle || order.product?.title || "Produk/Jasa"}
             netIncome={netIncome}
             adminFeeDeducted={adminFeeDeducted}
             formatPrice={formatPrice}
@@ -971,9 +980,18 @@ export default function OrderDetailPage({
                 setShowCancelRequestDialog(true);
             }}
             orderNumber={order.orderNumber}
-            createdAt={order.createdAt}
+            createdAt={formatDate(order.createdAt)}
             orderCompleted={orderStatus === "completed"}
-            onRating={() => onNavigate("rating")}
+            onRating={() => {
+              const isRated = (order as any).isRated || (order as any).hasReview;
+              if (isRated) {
+                // If already rated, go to product detail where rating is shown
+                onNavigate("product", order.product?.id || order.product?.uuid);
+              } else {
+                setShowRatingPrompt(true);
+              }
+            }}
+            isRated={(order as any).isRated || (order as any).hasReview}
           />
         </div>
       </div>
@@ -985,6 +1003,7 @@ export default function OrderDetailPage({
         walletBalance={currentUser?.walletBalance}
         formatPrice={formatPrice}
         handlePayment={handlePaymentWithPin}
+        showCashOption={showCashOption}
         showRejectDialog={showRejectDialog}
         setShowRejectDialog={setShowRejectDialog}
         isService={isService}
@@ -1022,6 +1041,18 @@ export default function OrderDetailPage({
         onOpenChange={setShowSetPinDialog}
         onSuccess={handleSetPinSuccess}
         isLoading={isSettingPin}
+      />
+
+      <RatingPromptDialog
+        open={showRatingPrompt}
+        onOpenChange={setShowRatingPrompt}
+        onSubmit={(rating) => {
+          // Pass the selected rating to the rating page
+          // Assuming `onNavigate` supports passing state via the second argument
+          onNavigate("rating", { orderId: order.id, initialRating: rating });
+        }}
+        productTitle={order.productTitle || order.product?.title || "Produk"}
+        isService={isService}
       />
     </div>
   );

@@ -242,6 +242,9 @@ function AppContent() {
       if ("successType" in data && data.successType) {
         params.set("successType", data.successType);
       }
+      if ("initialRating" in data && data.initialRating) {
+        params.set("rating", String(data.initialRating));
+      }
 
       // ✅ Chat support dari dev-abdu: gunakan query params
       if (page === "chat") {
@@ -262,8 +265,15 @@ function AppContent() {
             if ("negoPrice" in data && data.negoPrice) {
               params.set("price", String(data.negoPrice));
             }
+          } else if (page === "rating") {
+            url = `/rating/${data.productId}`;
           } else {
             url = `/product/${data.productId}`;
+          }
+        }
+        if ("orderId" in data && data.orderId) {
+          if (page === "rating") {
+            url = `/rating/${data.orderId}`;
           }
         }
       }
@@ -406,6 +416,7 @@ function AppContent() {
     "email-verification",
     "payment-success",
     "booking-success",
+    "checkout-success",
     "unauthorized",
     "not-found",
     "notfound",
@@ -421,6 +432,7 @@ function AppContent() {
     "email-verification",
     "chat",
     "checkout",
+    "checkout-success",
     "payment-success",
     "booking-success",
     "admin",

@@ -35,6 +35,7 @@ interface OrderDetailDialogsProps {
   walletBalance?: number
   formatPrice: (price: number) => string
   handlePayment: (method: PaymentMethod) => void
+  showCashOption?: boolean
   showRejectDialog: boolean
   setShowRejectDialog: (open: boolean) => void
   isService: boolean
@@ -67,6 +68,7 @@ export default function OrderDetailDialogs({
   walletBalance,
   formatPrice,
   handlePayment,
+  showCashOption = false,
   showRejectDialog,
   setShowRejectDialog,
   isService,
@@ -103,6 +105,8 @@ export default function OrderDetailDialogs({
         summaryLabel="Total pembayaran pesanan"
         onPayWithWallet={() => handlePayment("wallet")}
         onPayWithMidtrans={() => handlePayment("midtrans")}
+        onPayWithCash={showCashOption ? () => handlePayment("cash") : undefined}
+        showCashOption={showCashOption}
       />
 
       {/* Reject Price Dialog */}

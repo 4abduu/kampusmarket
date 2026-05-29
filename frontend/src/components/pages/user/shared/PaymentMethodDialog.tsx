@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowRight, Wallet, ShieldCheck } from "lucide-react"
+import { ArrowRight, Wallet, ShieldCheck, Banknote } from "lucide-react"
 
-export type PaymentMethod = "wallet" | "midtrans"
+export type PaymentMethod = "wallet" | "midtrans" | "cash"
 
 interface PaymentMethodDialogProps {
   open: boolean
@@ -13,7 +13,9 @@ interface PaymentMethodDialogProps {
   summaryLabel?: string
   onPayWithWallet: () => void
   onPayWithMidtrans: () => void
+  onPayWithCash?: () => void
   walletBalance?: number
+  showCashOption?: boolean
 }
 
 export default function PaymentMethodDialog({
@@ -26,7 +28,9 @@ export default function PaymentMethodDialog({
   summaryLabel,
   onPayWithWallet,
   onPayWithMidtrans,
+  onPayWithCash,
   walletBalance,
+  showCashOption = false,
 }: PaymentMethodDialogProps) {
   const isWalletInsufficient = walletBalance !== undefined && walletBalance < totalPayment;
   return (
@@ -100,6 +104,26 @@ export default function PaymentMethodDialog({
                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </button>
+
+            {showCashOption && onPayWithCash && (
+              <button
+                className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-amber-700 dark:hover:bg-amber-950/20"
+                onClick={onPayWithCash}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-amber-50 p-3 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                    <Banknote className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-900 dark:text-slate-100">Bayar Tunai Saat Ketemuan</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Selesaikan pembayaran saat bertemu dengan penyedia jasa.
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

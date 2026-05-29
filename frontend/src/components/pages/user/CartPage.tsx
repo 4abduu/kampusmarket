@@ -11,8 +11,11 @@ import { computeSubtotal } from "@/components/pages/user/cart/cart.utils";
 import type { CartItem, CartPageProps } from "@/components/pages/user/cart/cart.types";
 import { Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
+import { useToast } from "@/hooks/use-toast";
+import { validateMultipleCheckout } from "@/lib/checkout-validation";
 
 export default function CartPage({ onNavigate }: CartPageProps) {
+  const { toast } = useToast();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -173,8 +176,28 @@ export default function CartPage({ onNavigate }: CartPageProps) {
                   .map((item) => ({
                     productId: item.product.id,
                     quantity: item.quantity,
+                    product: item.product, // Required for validation
+                    cartItemId: item.id,
                   }));
-                localStorage.setItem("checkoutCartItems", JSON.stringify(checkoutCartItems));
+                
+                const validation = validateMultipleCheckout(checkoutCartItems as any);
+                if (!validation.valid) {
+                  toast({
+                    title: "Gagal Checkout",
+                    description: validation.error,
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                // Strip the product object back out before storing in localStorage to save space, or just keep it since CheckoutPage needs it.
+                // Actually CheckoutPage fetches data anyway, so we just map to productId and quantity.
+                const storageItems = checkoutCartItems.map(item => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  cartItemId: item.cartItemId
+                }));
+                localStorage.setItem("checkoutCartItems", JSON.stringify(storageItems));
                 onNavigate("checkout");
               }}
               onContinueShopping={() => onNavigate("catalog")}

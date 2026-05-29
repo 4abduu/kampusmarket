@@ -2,21 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, Truck, Home, Store, Monitor, Clock } from "lucide-react";
+import { ChevronRight, Truck, Home, Store, Monitor, Clock, Briefcase } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
 import { createOrder } from "@/lib/api/orders";
+import { removeFromCart } from "@/lib/api/cart";
 import { getAddresses, createAddress, updateAddress, deleteAddress, setPrimaryAddress } from "@/lib/api/addresses";
-import { walletApi } from "@/lib/api/wallet";
-import { useToast } from "@/hooks/use-toast";
+
 import AddressSection from "@/components/pages/user/checkout/AddressSection";
 import CheckoutAddressDialogs from "@/components/pages/user/checkout/CheckoutAddressDialogs";
 import CheckoutContactSellerCard from "@/components/pages/user/checkout/CheckoutContactSellerCard";
 import CheckoutOrderSummaryColumn from "@/components/pages/user/checkout/CheckoutOrderSummaryColumn";
 import CheckoutShippingMethodSection from "@/components/pages/user/checkout/CheckoutShippingMethodSection";
 import ServiceBookingSection from "@/components/pages/user/checkout/ServiceBookingSection";
-import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog";
-import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
-import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
+import { getCommonMethods } from "@/lib/checkout-validation";
 import { CheckoutPageSkeleton } from "@/components/skeleton";
 import {
   createDefaultAddressForm,
@@ -31,25 +29,15 @@ import type {
   Address,
   CartItem,
 } from "@/components/pages/user/checkout/checkout.types";
-import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethodDialog";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProps) {
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState<{ product: any; quantity: number }[]>([]);
-
-  // [NEW] Payment method dialog and PIN verification
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [showVerifyPinDialog, setShowVerifyPinDialog] = useState(false);
-  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [hasWalletPin, setHasWalletPin] = useState(false);
-  const [isSettingPin, setIsSettingPin] = useState(false);
 
   // [NEW] negotiated price dari offer/nego dalam chat
   const negotiatedPrice = searchParams.get("price") ? parseInt(searchParams.get("price") || "0", 10) : null;
@@ -61,10 +49,23 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const [showSaveAddressDialog, setShowSaveAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
-  const [bookingDate, setBookingDate] = useState<Date | undefined>(undefined);
-  const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
-  const [serviceNotes, setServiceNotes] = useState("");
-  const [serviceRequirements, setServiceRequirements] = useState("");
+  interface ServiceDetail {
+    bookingDate?: Date;
+    deadlineDate?: Date;
+    serviceNotes: string;
+    serviceRequirements: string;
+  }
+  const [serviceDetails, setServiceDetails] = useState<Record<string, ServiceDetail>>({});
+
+  const updateServiceDetail = (productId: string, field: keyof ServiceDetail, value: any) => {
+    setServiceDetails(prev => ({
+      ...prev,
+      [productId]: {
+        ...(prev[productId] || { serviceNotes: "", serviceRequirements: "" }),
+        [field]: value
+      }
+    }));
+  };
 
   const [newAddress, setNewAddress] = useState<NewAddressForm>(createDefaultAddressForm());
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -108,24 +109,17 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         const resolvedItems = await Promise.all(
           items.map(async (item) => {
             const data = await getProductDetail(item.productId);
-            return { product: data, quantity: item.quantity };
+            return { product: data, quantity: item.quantity, cartItemId: (item as any).cartItemId };
           })
         );
 
         setCheckoutItems(resolvedItems);
         
-        // SUCCESS: Now we can clear localStorage
-        if (stored) {
-          localStorage.removeItem("checkoutCartItems");
-        }
+        // We DON'T remove localStorage here so that page refreshes work.
+        // It will be removed after a successful checkout.
         
         // Use intersected items to set default shipping method
-        const intersectedTypes = resolvedItems.reduce<string[]>((acc, item, index) => {
-          const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
-          const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
-          if (index === 0) return itemTypes;
-          return acc.filter(type => itemTypes.includes(type));
-        }, []);
+        const intersectedTypes = getCommonMethods(resolvedItems as any);
 
         if (intersectedTypes.length > 0) {
           setShippingMethod(intersectedTypes[0]);
@@ -162,39 +156,28 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     fetchAddresses();
   }, []);
 
-  // Fetch wallet balance and PIN status on mount
-  useEffect(() => {
-    const fetchWalletInfo = async () => {
-      try {
-        const response = await walletApi.getBalance();
-        if (response.success) {
-          setWalletBalance(response.data.balance);
-          setHasWalletPin(response.data.hasPin);
-        }
-      } catch (err) {
-        console.error("[Checkout] Failed to fetch wallet info:", err);
-      }
-    };
-    fetchWalletInfo();
-  }, []);
-
-  // Derived values
   const isService = product?.type === "jasa";
-  const priceType = product?.priceType || product?.price_type;
-  const isVariablePricing = isService && (priceType === "starting" || priceType === "range");
+
   
   // Calculate intersected shipping types across all products
-  const intersectedShippingTypes = checkoutItems.reduce<string[]>((acc, item, index) => {
-    const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
-    const itemTypes = itemShippingOpts.map((opt: any) => String(opt.type || opt.id || ""));
-    if (index === 0) return itemTypes;
-    return acc.filter(type => itemTypes.includes(type));
-  }, []);
+  const intersectedShippingTypes = getCommonMethods(checkoutItems as any);
 
   const hasShippingIntersection = checkoutItems.length === 0 || intersectedShippingTypes.length > 0;
 
+  const getFallbackLabel = (type: string) => {
+    switch (type) {
+      case 'cod': return 'COD / Bayar di Tempat';
+      case 'pickup': return 'Ambil Sendiri';
+      case 'delivery': return 'Antar ke Lokasi';
+      case 'online': return 'Layanan Online';
+      case 'onsite': return 'Datang ke Lokasi Provider';
+      case 'home_service': return 'Provider Datang ke Lokasi';
+      default: return 'Metode Pengiriman';
+    }
+  };
+
   const normalizedShippingOpts = intersectedShippingTypes.map(type => {
-    let label = "Metode";
+    let label = getFallbackLabel(type);
     let optionId = type;
     let totalPrice = 0;
     
@@ -202,7 +185,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
       const itemShippingOpts = (item.product as any)?.shippingOptions || (item.product as any)?.shipping_options || [];
       const opt = itemShippingOpts.find((o: any) => String(o.type || o.id || "") === type);
       if (opt) {
-        if (label === "Metode" && (opt.label || opt.name)) {
+        if (opt.label || opt.name) {
           label = String(opt.label || opt.name);
           optionId = String(opt.uuid || opt.id || type);
         }
@@ -268,8 +251,19 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   const shippingFeeAmount = selectedShipping?.price || 0;
   const totalPayment = basePrice + shippingFeeAmount;
 
-  const isBookingDateMissing = isService && !bookingDate;
-  const isServiceRequirementsMissing = isService && isVariablePricing && !serviceRequirements.trim();
+  // Validation checks
+  const isBookingDateMissing = isService && checkoutItems.some(item => {
+    const details = serviceDetails[item.product.id || item.product.uuid];
+    return !details?.bookingDate;
+  });
+
+  const isServiceRequirementsMissing = isService && checkoutItems.some(item => {
+    const pType = item.product.priceType || item.product.price_type;
+    const isVar = pType === "starting" || pType === "range";
+    const details = serviceDetails[item.product.id || item.product.uuid];
+    return isVar && !(details?.serviceRequirements?.trim());
+  });
+
   const requiresAddress = ["delivery", "home_service"].includes(shippingMethod);
   const isDeliveryAddressMissing = requiresAddress && !selectedAddressId && addresses.length === 0;
 
@@ -312,61 +306,17 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     }
   };
 
-  // Handle payment method selection
-  const handlePaymentMethodClick = (method: PaymentMethod) => {
-    if (method === 'wallet') {
-      // Check if user has PIN
-      if (!hasWalletPin) {
-        setShowPaymentDialog(false);
-        setShowSetPinDialog(true);
-        return;
-      }
-      setShowPaymentDialog(false);
-      setShowVerifyPinDialog(true);
-    } else {
-      // For midtrans, just create order with midtrans method
-      handleCreateOrderWithMethod('midtrans');
-    }
-  };
-
-  // Handle PIN verification success
-  const handleVerifyPinSuccess = (pin: string) => {
-    setShowVerifyPinDialog(false);
-    handleCreateOrderWithMethod('wallet', pin);
-  };
-
-  // Handle Set PIN success
-  const handleSetPinSuccess = async (pin: string) => {
-    setIsSettingPin(true);
-    try {
-      await walletApi.setWalletPin(pin);
-      setHasWalletPin(true);
-      setShowSetPinDialog(false);
-      toast({ title: "PIN berhasil diatur" });
-      // After setting PIN, show verify dialog for payment
-      setShowVerifyPinDialog(true);
-    } catch (err: any) {
-      toast({
-        title: "Gagal mengatur PIN",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSettingPin(false);
-    }
-  };
-
-  // Create order with specific payment method
-  const handleCreateOrderWithMethod = async (paymentMethod: PaymentMethod, walletPin?: string) => {
+  // Create order - langsung tanpa dialog metode pembayaran
+  const handleCreateOrder = async () => {
     // Clear validation errors
     setValidationError(null);
 
-    if (isService && !bookingDate) {
-      setValidationError("Tanggal booking harus dipilih");
+    if (isBookingDateMissing) {
+      setValidationError("Tanggal booking harus dipilih untuk semua jasa");
       return;
     }
-    if (isService && isVariablePricing && !serviceRequirements.trim()) {
-      setValidationError("Deskripsi kebutuhan harus diisi");
+    if (isServiceRequirementsMissing) {
+      setValidationError("Deskripsi kebutuhan harus diisi untuk semua jasa dengan harga fleksibel");
       return;
     }
     if (requiresAddress && !selectedAddressId && addresses.length === 0) {
@@ -403,6 +353,8 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         shippingOptionId = matched?.uuid || matched?.id;
       }
 
+      const details = serviceDetails[productDbId] || {};
+
       const orderPayload: any = {
         productId: productDbId,
         quantity: item.quantity,
@@ -410,11 +362,10 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         shippingType: selectedShipping?.id,
         shippingNotes: "",
         selectedAddressId: requiresAddress ? selectedAddressId : undefined,
-        serviceDate: isService ? bookingDate?.toISOString().split("T")[0] : undefined,
-        serviceNotes: isService ? serviceNotes : undefined,
-        paymentMethod: paymentMethod,
-        wallet_pin: walletPin,
-        notes: isService ? serviceRequirements : undefined,
+        serviceDate: isService && details.bookingDate ? details.bookingDate.toISOString().split("T")[0] : undefined,
+        serviceDeadline: isService && details.deadlineDate ? details.deadlineDate.toISOString().split("T")[0] : undefined,
+        serviceNotes: isService ? details.serviceNotes : undefined,
+        notes: isService ? details.serviceRequirements : undefined,
         selectedShippingOptionId: shippingOptionId,
       };
 
@@ -429,9 +380,21 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
     }
 
     if (successfulOrderIds.length > 0) {
+      // Remove successfully checked out items from cart
+      for (const item of checkoutItems) {
+        if ((item as any).cartItemId) {
+          try {
+            await removeFromCart((item as any).cartItemId);
+          } catch (e) {
+            console.error("Failed to remove item from cart", e);
+          }
+        }
+      }
+      
+      // Set recent orders in localStorage for the success page to pick up
       localStorage.setItem("recentCheckoutOrderIds", JSON.stringify(successfulOrderIds));
-      const firstOrderId = successfulOrderIds[0] || "";
-      onNavigate(isService ? "booking-success" : "payment-success", firstOrderId);
+      localStorage.removeItem("checkoutCartItems"); // Clear checkout items
+      onNavigate("checkout-success");
     } else {
       const reasons = failedItems.map(f => f.reason).filter((v, i, a) => a.indexOf(v) === i);
       const msg = reasons.join(" | ") || "Gagal membuat pesanan. Silakan coba lagi.";
@@ -532,27 +495,43 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                 </Card>
               )}
 
-              {isService && (
-                <ServiceBookingSection
-                  bookingDate={bookingDate}
-                  deadlineDate={deadlineDate}
-                  setBookingDate={setBookingDate}
-                  setDeadlineDate={setDeadlineDate}
-                  serviceNotes={serviceNotes}
-                  setServiceNotes={setServiceNotes}
-                  isVariablePricing={isVariablePricing}
-                  serviceRequirements={serviceRequirements}
-                  setServiceRequirements={setServiceRequirements}
-                  priceType={product.priceType || product.price_type}
-                  price={product.price}
-                  priceMin={product.priceMin || product.price_min}
-                  priceMax={product.priceMax || product.price_max}
-                  durationMin={product.durationMin || product.duration_min}
-                  durationMax={product.durationMax || product.duration_max}
-                  durationUnit={product.durationUnit || product.duration_unit}
-                  formatPrice={formatPrice}
-                />
-              )}
+              {isService && checkoutItems.map((item, index) => {
+                const itemProduct = item.product;
+                const productId = itemProduct.id || itemProduct.uuid;
+                const details = serviceDetails[productId] || { serviceNotes: "", serviceRequirements: "" };
+                const pType = itemProduct.priceType || itemProduct.price_type;
+                const isVar = pType === "starting" || pType === "range";
+                
+                return (
+                  <div key={productId} className={index > 0 ? "mt-6" : ""}>
+                    {isMultipleItems && (
+                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-purple-600" />
+                        {itemProduct.title}
+                      </h3>
+                    )}
+                    <ServiceBookingSection
+                      bookingDate={details.bookingDate}
+                      deadlineDate={details.deadlineDate}
+                      setBookingDate={(val) => updateServiceDetail(productId, "bookingDate", val)}
+                      setDeadlineDate={(val) => updateServiceDetail(productId, "deadlineDate", val)}
+                      serviceNotes={details.serviceNotes}
+                      setServiceNotes={(val) => updateServiceDetail(productId, "serviceNotes", val)}
+                      isVariablePricing={isVar}
+                      serviceRequirements={details.serviceRequirements}
+                      setServiceRequirements={(val) => updateServiceDetail(productId, "serviceRequirements", val)}
+                      priceType={pType}
+                      price={itemProduct.price}
+                      priceMin={itemProduct.priceMin || itemProduct.price_min}
+                      priceMax={itemProduct.priceMax || itemProduct.price_max}
+                      durationMin={itemProduct.durationMin || itemProduct.duration_min}
+                      durationMax={itemProduct.durationMax || itemProduct.duration_max}
+                      durationUnit={itemProduct.durationUnit || itemProduct.duration_unit}
+                      formatPrice={formatPrice}
+                    />
+                  </div>
+                );
+              })}
 
               {requiresAddress && (
                 <AddressSection
@@ -630,13 +609,13 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
               isService={isService}
               quantity={checkoutItems[0]?.quantity || 1}
               displayPrice={displayPrice}
-              bookingDate={bookingDate}
-              serviceNotes={serviceNotes}
+              bookingDate={!isMultipleItems ? serviceDetails[checkoutItems[0]?.product?.id || checkoutItems[0]?.product?.uuid]?.bookingDate : undefined}
+              serviceNotes={!isMultipleItems ? serviceDetails[checkoutItems[0]?.product?.id || checkoutItems[0]?.product?.uuid]?.serviceNotes || "" : ""}
               shippingMethod={shippingMethod}
               basePrice={basePrice}
               totalPayment={totalPayment}
               formatPrice={formatPrice}
-              handleCreateOrder={() => setShowPaymentDialog(true)}
+              handleCreateOrder={handleCreateOrder}
               isBookingDateMissing={isBookingDateMissing}
               isServiceRequirementsMissing={isServiceRequirementsMissing}
               isDeliveryAddressMissing={isDeliveryAddressMissing}
@@ -660,36 +639,6 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         newAddress={newAddress}
         setNewAddress={setNewAddress}
         handleSaveAddress={handleSaveAddress}
-      />
-
-      {/* Payment Method Dialog */}
-      <PaymentMethodDialog
-        open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
-        totalPayment={totalPayment}
-        formatPrice={formatPrice}
-        title="Pilih Metode Pembayaran"
-        description="Pilih cara terbaik untuk membayar pesanan Anda"
-        summaryLabel="Total Pembayaran"
-        onPayWithWallet={() => handlePaymentMethodClick('wallet')}
-        onPayWithMidtrans={() => handlePaymentMethodClick('midtrans')}
-        walletBalance={walletBalance}
-      />
-
-      {/* Verify PIN Dialog */}
-      <VerifyPinDialog
-        open={showVerifyPinDialog}
-        onOpenChange={setShowVerifyPinDialog}
-        onSuccess={handleVerifyPinSuccess}
-        description="Masukkan PIN Dompet untuk menyelesaikan pembayaran"
-      />
-
-      {/* Set PIN Dialog */}
-      <SetPinDialog
-        open={showSetPinDialog}
-        onOpenChange={setShowSetPinDialog}
-        onSuccess={handleSetPinSuccess}
-        isLoading={isSettingPin}
       />
     </div>
   );

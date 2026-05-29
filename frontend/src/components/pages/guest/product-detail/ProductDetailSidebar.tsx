@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
 import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
-import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Share2, Shield, Star, Truck, User, ShoppingCart, Loader2 } from "lucide-react";
+import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Phone, Share2, Shield, Star, Truck, User, ShoppingCart, Loader2 } from "lucide-react";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { addToCart } from "@/lib/api/cart";
 import { toast } from "sonner";
 import { useCartStore } from "@/lib/cart-store";
@@ -21,6 +22,7 @@ interface ProductSeller {
   name: string;
   isVerified?: boolean;
   avatar?: string;
+  phone?: string;
 }
 
 interface ProductShape {
@@ -373,17 +375,37 @@ export default function ProductDetailSidebar({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {/* [REVISI] Tombol Chat — gunakan handleChatWithSeller */}
-            <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Chat
-            </Button>
-            <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
-              <User className="h-4 w-4 mr-2" />
-              Lihat Profil
-            </Button>
-          </div>
+          {product.canNego ? (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                  <Phone className="h-4 w-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                  <User className="h-4 w-4 mr-2" />
+                  Lihat Profil
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat
+                </Button>
+                <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                  <User className="h-4 w-4 mr-2" />
+                  Lihat Profil
+                </Button>
+              </div>
+              <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                <Phone className="h-4 w-4 mr-2" />
+                WhatsApp
+              </Button>
+            </>
+          )}
 
           <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => onAction(onOpenReport)}>
             <Flag className="h-4 w-4 mr-2" />

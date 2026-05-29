@@ -35,8 +35,8 @@ class StoreOrderRequest extends FormRequest
             'selectedAddressId' => ['required_if:shippingType,delivery', 'exists:addresses,uuid'],
             'shippingNotes' => ['nullable', 'string', 'max:500'],
 
-            // Payment
-            'paymentMethod' => ['required', 'in:balance,cod,transfer,midtrans'],
+            // Payment method is now selected in Order Detail page
+            'paymentMethod' => ['nullable', 'in:balance,cod,transfer,midtrans'],
 
             // Notes
             'notes' => ['nullable', 'string', 'max:500'],
@@ -68,8 +68,6 @@ class StoreOrderRequest extends FormRequest
             'selectedShippingOptionId.exists' => 'Opsi pengiriman tidak ditemukan',
             'selectedAddressId.required_if' => 'Alamat pengiriman wajib dipilih',
             'selectedAddressId.exists' => 'Alamat tidak ditemukan',
-            'paymentMethod.required' => 'Metode pembayaran wajib dipilih',
-            'paymentMethod.in' => 'Metode pembayaran tidak valid',
             'serviceDate.after' => 'Tanggal layanan harus setelah hari ini',
         ];
     }
