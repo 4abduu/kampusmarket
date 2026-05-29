@@ -25,6 +25,7 @@ import {
   User,
   Wallet,
 } from "lucide-react";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 interface ServiceDetailSidebarProps {
   service: any;
@@ -299,11 +300,15 @@ export default function ServiceDetailSidebar({
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat
             </Button>
-            <Button variant="outline">
-              <Phone className="h-4 w-4 mr-2" />
-              WhatsApp
+            <Button variant="outline" onClick={() => onNavigate("profile", service.seller?.id)}>
+              <User className="h-4 w-4 mr-2" />
+              Lihat Profil
             </Button>
           </div>
+          <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(service.seller?.phone, service.seller?.name || 'Penyedia', service.title, true)}>
+            <Phone className="h-4 w-4 mr-2" />
+            WhatsApp
+          </Button>
 
           <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50">
             <Flag className="h-4 w-4 mr-2" />

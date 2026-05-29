@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronUp, History } from "lucide-react"
+import { ChevronDown, ChevronUp, History, CheckCircle2 } from "lucide-react"
 
 interface HistoryEntry {
   id?: string
@@ -19,7 +19,6 @@ interface Props {
   toggleHistoryExpand: (id: string) => void
   getStatusConfig: (status: string) => { label: string; color: string; bgColor: string; dotColor: string; icon: any }
   formatShortDate: (d: string) => string
-  formatDate: (d: string) => string
   sellerId?: string
   buyerId?: string
 }
@@ -31,7 +30,6 @@ export default function OrderHistoryTimeline({
   toggleHistoryExpand,
   getStatusConfig,
   formatShortDate,
-  formatDate,
   sellerId,
   buyerId,
 }: Props) {
@@ -61,7 +59,27 @@ export default function OrderHistoryTimeline({
           {orderHistory.map((entry, index) => {
             const id = entry.id || entry.uuid || `h-${index}`
             const dateStr = entry.createdAt || entry.created_at || ""
-            const config = getStatusConfig(entry.status)
+            let config = getStatusConfig(entry.status)
+            
+            // Fix double "Sedang Diproses" or "Siap Diambil" for COD/Pickup/Service
+            const notesLower = entry.notes?.toLowerCase() || "";
+            if (notesLower.includes("pembayaran") && notesLower.includes("berhasil")) {
+              config = {
+                ...config,
+                label: "Pembayaran Berhasil",
+                icon: CheckCircle2,
+              }
+            } else if (
+              notesLower.includes("mengkonfirmasi barang diserahkan") ||
+              notesLower.includes("mengkonfirmasi layanan selesai") ||
+              notesLower.includes("barang diserahkan/dikirim")
+            ) {
+              config = {
+                ...config,
+                label: isService ? "Layanan Telah Diberikan" : "Barang Telah Diserahkan",
+                icon: CheckCircle2,
+              }
+            }
             const isExpanded = expandedHistory.includes(id)
 
             return (
@@ -93,7 +111,6 @@ export default function OrderHistoryTimeline({
                       {entry.notes && <p>{entry.notes}</p>}
                       <p className="text-xs">
                         Oleh: {getActorLabel(entry)}
-                        {dateStr && ` • ${formatDate(dateStr)}`}
                       </p>
                     </div>
                   )}

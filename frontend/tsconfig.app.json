@@ -30,5 +30,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../zfinal_checkout_complete/src/components/pages/user/order-detail/RatingPromptDialog.tsx"]
 }

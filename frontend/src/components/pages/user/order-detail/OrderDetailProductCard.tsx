@@ -1,9 +1,12 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Briefcase, Calendar, FileText, MessageCircle, Package, Timer } from "lucide-react"
+import { useState } from "react"
+import { Briefcase, Calendar, FileText, MessageCircle, Package, Timer, Maximize2 } from "lucide-react"
+import ProductImage from "@/components/common/ProductImage"
+import ImageLightbox from "@/components/common/ImageLightbox"
 import type { Order } from "@/lib/api/orders"
 
 type ServiceData = {
@@ -14,21 +17,26 @@ type ServiceData = {
 
 interface Props {
   isService: boolean
+  isSellerView?: boolean
   order: Order
   offeredPrice: number | null
   formatPrice: (price: number) => string
   serviceData: ServiceData
-  onNavigate: (page: string) => void
+  onNavigate: (page: string, data?: any) => void
 }
 
 export default function OrderDetailProductCard({
   isService,
+  isSellerView,
   order,
   offeredPrice,
   formatPrice,
   serviceData,
   onNavigate,
 }: Props) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const imageUrl = order.product?.images?.[0] || order.product?.image;
+
   return (
     <Card>
       <CardHeader>
@@ -36,8 +44,24 @@ export default function OrderDetailProductCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-4">
-          <div className={`w-20 h-20 rounded-lg flex items-center justify-center shrink-0 ${isService ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
-            {isService ? (
+          <div 
+            className="w-20 h-20 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 relative group overflow-hidden cursor-pointer"
+            onClick={() => imageUrl && setLightboxOpen(true)}
+          >
+            {imageUrl ? (
+              <>
+                <ProductImage
+                  src={imageUrl}
+                  alt={order.productTitle || order.product?.title || "Product Image"}
+                  className="w-full h-full"
+                  imageClassName="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  preferredSize="thumbnail"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <Maximize2 className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                </div>
+              </>
+            ) : isService ? (
               <Briefcase className="h-8 w-8 text-emerald-600/70" />
             ) : (
               <Package className="h-8 w-8 text-muted-foreground/30" />
@@ -92,20 +116,29 @@ export default function OrderDetailProductCard({
 
         <div className="flex items-center gap-3">
           <Avatar>
+            <AvatarImage src={isSellerView ? order.buyer?.avatar : order.seller?.avatar} alt={isSellerView ? order.buyer?.name : order.seller?.name} />
             <AvatarFallback className={isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}>
-              {(order.seller?.name || "S").split(" ").map((name: string) => name[0]).join("")}
+              {((isSellerView ? order.buyer?.name : order.seller?.name) || "U").split(" ").map((name: string) => name[0]).join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-medium">{order.seller?.name || "Penjual"}</p>
-            <p className="text-sm text-muted-foreground">{order.seller?.phone || order.seller?.email || ""}</p>
+            <p className="font-medium">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
+            <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => onNavigate("chat")}>
+          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid })}>
             <MessageCircle className="h-4 w-4 mr-1" />
-            Chat
+            Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
           </Button>
         </div>
       </CardContent>
+
+      {lightboxOpen && imageUrl && (
+        <ImageLightbox
+          src={imageUrl}
+          alt={order.productTitle || order.product?.title || "Product Image"}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </Card>
   )
 }

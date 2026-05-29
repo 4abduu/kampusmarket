@@ -20,7 +20,7 @@ class Order extends Model
     {
         static::updated(function ($order) {
             // Broadcast if status, price, or shipping fee changed
-            if ($order->wasChanged(['status', 'offered_price', 'shipping_fee', 'final_price'])) {
+            if ($order->wasChanged(['status', 'offered_price', 'shipping_fee', 'final_price', 'seller_confirmed_at', 'payment_status'])) {
                 broadcast(new \App\Events\OrderUpdated($order));
             }
         });

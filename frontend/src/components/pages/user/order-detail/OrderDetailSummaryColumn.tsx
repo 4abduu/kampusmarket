@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, DollarSign, Info, MessageCircle, Phone, Star, Truck, Briefcase, XCircle } from "lucide-react"
+import { openWhatsApp } from "@/lib/whatsapp"
 
 type ShippingMethodConfig = {
   label: string
@@ -13,7 +14,7 @@ interface Props {
   isSellerView: boolean
   shippingMethodConfig: ShippingMethodConfig
   shippingAddress?: string
-  onNavigate: (page: string) => void
+  onNavigate: (page: string, data?: any) => void
   basePrice: number
   shippingFee: number
   orderStatus: string
@@ -32,6 +33,11 @@ interface Props {
   createdAt: string
   orderCompleted?: boolean
   onRating?: () => void
+  isRated?: boolean
+  productId?: string
+  partnerName?: string
+  partnerPhone?: string
+  productTitle?: string
 }
 
 export default function OrderDetailSummaryColumn({
@@ -58,6 +64,11 @@ export default function OrderDetailSummaryColumn({
   createdAt,
   orderCompleted,
   onRating,
+  isRated,
+  productId,
+  partnerName,
+  partnerPhone,
+  productTitle,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -89,11 +100,11 @@ export default function OrderDetailSummaryColumn({
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => onNavigate("chat")}>
+            <Button variant="outline" className="flex-1" onClick={() => onNavigate("chat", { productId })}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
             </Button>
-            <Button variant="outline" className="flex-1">
+            <Button variant="outline" className="flex-1" onClick={() => openWhatsApp(partnerPhone, partnerName || (isSellerView ? 'Pembeli' : 'Penjual'), productTitle || 'Pesanan', isService)}>
               <Phone className="h-4 w-4 mr-2" />
               WhatsApp
             </Button>
@@ -179,9 +190,14 @@ export default function OrderDetailSummaryColumn({
           {!isSellerView && (
           <>
             {orderCompleted && onRating && (
-              <Button className="w-full bg-primary-600 hover:bg-primary-700" size="lg" onClick={onRating}>
+              <Button 
+                variant={isRated ? "outline" : "default"}
+                className={isRated ? "w-full" : "w-full bg-primary-600 hover:bg-primary-700"} 
+                size="lg" 
+                onClick={onRating}
+              >
                 <Star className="h-4 w-4 mr-2" />
-                Beri Rating & Ulasan
+                {isRated ? "Lihat Rating" : "Beri Rating & Ulasan"}
               </Button>
             )}
 
@@ -191,11 +207,6 @@ export default function OrderDetailSummaryColumn({
                 {canCancelDirectly ? "Batalkan Pesanan" : "Ajukan Pembatalan"}
               </Button>
             )}
-
-            <Button variant="outline" className="w-full" onClick={() => onNavigate("chat")}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Hubungi {isService ? "Penyedia" : "Penjual"}
-            </Button>
           </>
         )}
 
@@ -217,11 +228,6 @@ export default function OrderDetailSummaryColumn({
                 {sellerCanCancelDirectly ? "Batalkan Pesanan" : "Ajukan Pembatalan"}
               </Button>
             )}
-
-            <Button variant="outline" className="w-full" onClick={() => onNavigate("chat")}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Chat {isService ? "Pemesan" : "Pembeli"}
-            </Button>
           </>
         )}
       </div>

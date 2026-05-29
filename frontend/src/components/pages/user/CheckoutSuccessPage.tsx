@@ -1,5 +1,4 @@
-import BookingSuccessPage from "@/components/pages/user/BookingSuccessPage";
-import PaymentSuccessPage from "@/components/pages/user/PaymentSuccessPage";
+import CheckoutSuccessfulPage from "@/components/pages/user/CheckoutSuccessfulPage";
 import type { NavigationData } from "@/app/navigation/types";
 
 interface CheckoutSuccessPageProps {
@@ -8,10 +7,6 @@ interface CheckoutSuccessPageProps {
   orderId?: string;
 }
 
-export default function CheckoutSuccessPage({ onNavigate, successType = "product", orderId }: CheckoutSuccessPageProps) {
-  if (successType === "service") {
-    return <BookingSuccessPage onNavigate={onNavigate} orderId={orderId} />;
-  }
-
-  return <PaymentSuccessPage onNavigate={onNavigate} orderId={orderId} />;
+export default function CheckoutSuccessPage({ onNavigate, orderId }: CheckoutSuccessPageProps) {
+  return <CheckoutSuccessfulPage onNavigate={onNavigate} orderId={orderId} />;
 }
