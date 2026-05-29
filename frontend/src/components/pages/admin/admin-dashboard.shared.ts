@@ -2,6 +2,7 @@ export interface Faculty {
   id: string;
   code: string;
   name: string;
+  description?: string;
   sortOrder: number;
   isActive: boolean;
   studentCount?: number;
@@ -11,6 +12,7 @@ export type FacultyApiItem = {
   id?: string;
   code?: string;
   name?: string;
+  description?: string;
   sortOrder?: number;
   sort_order?: number;
   isActive?: boolean;

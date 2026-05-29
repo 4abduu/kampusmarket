@@ -21,6 +21,7 @@ class FacultyResource extends JsonResource
             'id' => $this->code,
             'code' => $this->code,
             'name' => $this->name,
+            'description' => $this->description,
             'sortOrder' => $this->sort_order,
             'isActive' => $this->is_active,
             'studentCount' => $this->users_count ?? $this->users()->count(),

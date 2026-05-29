@@ -85,6 +85,7 @@ class AdminFacultyController extends Controller
             $validated = $request->validate([
                 'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'not_in:admin', 'unique:faculties,code'],
                 'name' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:1000'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
                 'is_active' => ['nullable', 'boolean'],
             ]);
@@ -92,6 +93,7 @@ class AdminFacultyController extends Controller
             $faculty = Faculty::create([
                 'code' => Str::of($validated['code'])->lower()->trim()->toString(),
                 'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
                 'sort_order' => $validated['sort_order'] ?? 0,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
@@ -151,6 +153,7 @@ class AdminFacultyController extends Controller
             $validated = $request->validate([
                 'code' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'not_in:admin', Rule::unique('faculties', 'code')->ignore($faculty->id)],
                 'name' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:1000'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
                 'is_active' => ['nullable', 'boolean'],
             ]);
@@ -158,6 +161,7 @@ class AdminFacultyController extends Controller
             $faculty->update([
                 'code' => Str::of($validated['code'])->lower()->trim()->toString(),
                 'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
                 'sort_order' => $validated['sort_order'] ?? $faculty->sort_order,
                 'is_active' => $validated['is_active'] ?? $faculty->is_active,
             ]);

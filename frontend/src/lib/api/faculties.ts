@@ -14,6 +14,7 @@ const mapFacultyFromApi = (faculty: FacultyApiItem): Faculty => {
     id: rawCode || "faculty",
     code: rawCode,
     name: faculty.name || rawCode || "Fakultas",
+    description: faculty.description || "",
     sortOrder: Number(faculty.sortOrder ?? faculty.sort_order ?? 0),
     isActive: Boolean(faculty.isActive ?? faculty.is_active ?? true),
     studentCount: Number(faculty.studentCount ?? faculty.student_count ?? 0),
@@ -50,12 +51,13 @@ export const facultiesApi = {
     return Array.isArray(data) ? data.map(mapFacultyFromApi) : [];
   },
 
-  async create(input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive">): Promise<Faculty> {
+  async create(input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive" | "description">): Promise<Faculty> {
     const data = await request<FacultyApiItem>(`${API_BASE_URL}/admin/faculties`, {
       method: "POST",
       body: JSON.stringify({
         code: input.code,
         name: input.name,
+        description: input.description,
         sort_order: input.sortOrder,
         is_active: input.isActive,
       }),
@@ -64,12 +66,13 @@ export const facultiesApi = {
     return mapFacultyFromApi(data);
   },
 
-  async update(code: string, input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive">): Promise<Faculty> {
+  async update(code: string, input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive" | "description">): Promise<Faculty> {
     const data = await request<FacultyApiItem>(`${API_BASE_URL}/admin/faculties/${encodeURIComponent(code)}`, {
       method: "PUT",
       body: JSON.stringify({
         code: input.code,
         name: input.name,
+        description: input.description,
         sort_order: input.sortOrder,
         is_active: input.isActive,
       }),
