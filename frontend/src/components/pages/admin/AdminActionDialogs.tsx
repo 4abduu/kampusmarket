@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ImageGallery from "@/components/common/ImageGallery";
+import ImageLightbox from "@/components/common/ImageLightbox";
 import {
   Dialog,
   DialogContent,
@@ -187,6 +188,7 @@ export default function AdminActionDialogs({
   cancelReasons,
 }: Props) {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setSelectedImageIndex(0);
@@ -323,6 +325,11 @@ export default function AdminActionDialogs({
                     condition={selectedProduct.condition}
                     price={selectedProduct.price}
                     originalPrice={selectedProduct.originalPrice}
+                    disableInternalLightbox={true}
+                    onImageClick={() => {
+                      setShowProductDetail(false);
+                      setLightboxOpen(true);
+                    }}
                   />
                 </div>
               ) : (
@@ -450,6 +457,38 @@ export default function AdminActionDialogs({
           <DialogFooter><Button variant="outline" onClick={() => setShowCancelRejectDialog(false)}>Batal</Button><Button variant="destructive" onClick={confirmRejectCancelRequest} disabled={!cancelRejectReasonInput.trim()}><XCircle className="h-4 w-4 mr-2" />Tolak Permintaan</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Lightbox for Admin Detail Dialog */}
+      {lightboxOpen && selectedProduct && selectedProduct.images && (
+        <ImageLightbox
+          src={
+            selectedProduct.imagesDetail?.[selectedImageIndex]?.variants?.original ??
+            selectedProduct.imagesDetail?.[selectedImageIndex]?.variants?.large ??
+            selectedProduct.imagesDetail?.[selectedImageIndex]?.url ??
+            selectedProduct.images?.[selectedImageIndex]
+          }
+          alt={
+            selectedProduct.imagesDetail?.[selectedImageIndex]?.alt ??
+            `Gambar produk ${selectedImageIndex + 1}`
+          }
+          onClose={() => {
+            setLightboxOpen(false);
+            setShowProductDetail(true); // Re-open the detail modal!
+          }}
+          onPrev={
+            selectedImageIndex > 0
+              ? () => setSelectedImageIndex(selectedImageIndex - 1)
+              : null
+          }
+          onNext={
+            selectedImageIndex < (selectedProduct.imagesDetail?.length ?? selectedProduct.images.length) - 1
+              ? () => setSelectedImageIndex(selectedImageIndex + 1)
+              : null
+          }
+          currentIndex={selectedImageIndex}
+          totalCount={selectedProduct.imagesDetail?.length ?? selectedProduct.images.length}
+        />
+      )}
     </>
   );
 }

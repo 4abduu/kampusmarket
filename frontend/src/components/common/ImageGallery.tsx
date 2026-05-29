@@ -30,6 +30,8 @@ interface ImageGalleryProps {
   selectedImage: number;
   setSelectedImage: (value: number) => void;
   customBadge?: React.ReactNode;
+  disableInternalLightbox?: boolean;
+  onImageClick?: () => void;
 }
 
 /* ──────────────────────────────────────────────
@@ -45,6 +47,8 @@ export default function ImageGallery({
   selectedImage,
   setSelectedImage,
   customBadge,
+  disableInternalLightbox = false,
+  onImageClick,
 }: ImageGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -79,12 +83,18 @@ export default function ImageGallery({
         <Card className="overflow-hidden group relative">
           <div
             className="relative bg-slate-100 dark:bg-slate-800 h-96 flex items-center justify-center overflow-hidden cursor-pointer"
-            onClick={openLightbox}
+            onClick={disableInternalLightbox ? onImageClick : openLightbox}
             role="button"
             tabIndex={0}
             aria-label="Klik untuk memperbesar gambar"
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") openLightbox();
+              if (e.key === "Enter" || e.key === " ") {
+                if (disableInternalLightbox) {
+                  onImageClick?.();
+                } else {
+                  openLightbox();
+                }
+              }
             }}
           >
             <ProductImage
