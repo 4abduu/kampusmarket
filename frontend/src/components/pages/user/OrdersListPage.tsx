@@ -40,10 +40,6 @@ export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
       const ordersData = (response as any)?.data || (Array.isArray(response) ? response : []);
       setOrders(ordersData);
 
-      toast({
-        title: "Pembaruan Data",
-        description: `Berhasil mengambil ${ordersData.length} pesanan sebagai ${viewMode === "buyer" ? "pembeli" : "penjual"}.`,
-      });
     } catch (err: any) {
       toast({
         title: "Gagal memuat pesanan",

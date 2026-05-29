@@ -7,6 +7,7 @@ import AppRoutes from "@/app/AppRoutes";
 import type { GoogleAuthSession, NavigationData } from "@/app/navigation";
 import { userApi } from "@/lib/api/users";
 import { useCartStore } from "@/lib/cart-store";
+import { useFavoritesStore } from "@/lib/favorites-store";
 import type { User } from "@/lib/mock-data";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useChatStore } from "@/lib/chat-store";
@@ -60,6 +61,7 @@ function AppContent() {
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
         void useCartStore.getState().fetchCount();
+        void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
         useNotificationStore.getState().initEcho(user.id);
         void useChatStore.getState().fetchUnreadCount();
@@ -70,6 +72,7 @@ function AppContent() {
         setIsLoggedIn(false);
         setUserRole(null);
         useCartStore.getState().setCount(0);
+        useFavoritesStore.getState().setCount(0);
         return false;
       }
     } catch (err) {
@@ -77,6 +80,7 @@ function AppContent() {
       setIsLoggedIn(false);
       setUserRole(null);
       useCartStore.getState().setCount(0);
+      useFavoritesStore.getState().setCount(0);
       return false;
     } finally {
       setAuthReady(true);
@@ -336,6 +340,7 @@ function AppContent() {
         setAuthUser(user);
         setUserRole(user.role === "admin" ? "admin" : "user");
         void useCartStore.getState().fetchCount();
+        void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
         useNotificationStore.getState().initEcho(user.id);
         void useChatStore.getState().fetchUnreadCount();

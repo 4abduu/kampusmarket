@@ -12,6 +12,7 @@ import { getSavings } from "@/components/pages/user/favorites/favorites.helpers"
 import { INITIAL_FAVORITES } from "@/components/pages/user/favorites/favorites.mock";
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 import { getFavorites, removeFavorite } from "@/lib/api/products";
+import { useFavoritesStore } from "@/lib/favorites-store";
 
 const INITIAL_FAVORITE_PRODUCTS: Product[] = INITIAL_FAVORITES
   .map((favorite) => favorite.product)
@@ -37,6 +38,7 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
       try {
         const favoritesData = await getFavorites();
         setFavorites(favoritesData);
+        void useFavoritesStore.getState().fetchCount();
       } catch (err: any) {
         console.error("[FavoritesPage] Failed to load favorites", err);
         setError(err?.message || "Gagal memuat favorit dari server.");
@@ -95,6 +97,7 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
     try {
       await removeFavorite(productUuid);
       setFavorites((prev) => prev.filter((product) => (product.uuid || product.id) !== productUuid));
+      void useFavoritesStore.getState().fetchCount();
     } catch (err: any) {
       console.error("[FavoritesPage] Failed to remove favorite", err);
     }
@@ -143,7 +146,7 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
             </CardContent>
           </Card>
         ) : filtered.length > 0 ? (
-          <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-4" : "space-y-4"}>
             {filtered.map((product, index) => (
               <FavoriteProductCard
                 key={product.uuid || index}
