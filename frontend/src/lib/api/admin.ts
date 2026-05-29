@@ -15,6 +15,7 @@ export interface AdminAddressUser {
     id: string;
     name: string;
     email: string;
+    avatar?: string;
   };
   addresses: AdminAddress[];
 }

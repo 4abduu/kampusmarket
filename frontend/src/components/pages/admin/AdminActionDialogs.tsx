@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -204,6 +204,7 @@ export default function AdminActionDialogs({
               )}
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
+                  {selectedUser.avatar && <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} className="object-cover" />}
                   <AvatarFallback className={`text-lg ${selectedUser.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>
                     {getInitials(selectedUser.name)}
                   </AvatarFallback>
@@ -304,7 +305,13 @@ export default function AdminActionDialogs({
               {productDetailError && (
                 <p className="text-sm text-red-600">{productDetailError}</p>
               )}
-              <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">{selectedProduct.type === "jasa" ? <CalendarDays className="h-12 w-12 text-muted-foreground/30" /> : <Package className="h-12 w-12 text-muted-foreground/30" />}</div>
+              <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                  <img src={selectedProduct.images[0]} alt={selectedProduct.title} className="w-full h-full object-cover" />
+                ) : (
+                  selectedProduct.type === "jasa" ? <CalendarDays className="h-12 w-12 text-muted-foreground/30" /> : <Package className="h-12 w-12 text-muted-foreground/30" />
+                )}
+              </div>
               <div><p className="font-bold text-lg">{selectedProduct.title}</p><p className="text-sm text-muted-foreground mt-1">{selectedProduct.description}</p></div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-muted-foreground">Harga</p><p className="font-bold text-primary-600">{formatProductPrice(selectedProduct)}</p></div>
@@ -313,7 +320,7 @@ export default function AdminActionDialogs({
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-muted-foreground">{selectedProduct.type === "jasa" ? "Dipesan" : "Terjual"}</p><p className="font-medium">{selectedProduct.soldCount} item</p></div>
               </div>
               {selectedProduct.type === "jasa" && selectedProduct.durationMin && selectedProduct.durationUnit && <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">Estimasi Durasi</p><p className="font-medium text-purple-700 dark:text-purple-300">{selectedProduct.durationMin === selectedProduct.durationMax ? `${selectedProduct.durationMin} ${selectedProduct.durationUnit}` : `${selectedProduct.durationMin} - ${selectedProduct.durationMax} ${selectedProduct.durationUnit}`}</p></div>}
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">{selectedProduct.type === "jasa" ? "Penyedia Jasa" : "Penjual"}</p><div className="flex items-center gap-2 mt-1"><Avatar className="h-6 w-6"><AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedProduct.seller?.name)}</AvatarFallback></Avatar><span className="font-medium text-sm">{selectedProduct.seller?.name || "-"}</span></div></div>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">{selectedProduct.type === "jasa" ? "Penyedia Jasa" : "Penjual"}</p><div className="flex items-center gap-2 mt-1"><Avatar className="h-6 w-6">{selectedProduct.seller?.avatar && <AvatarImage src={selectedProduct.seller.avatar} alt={selectedProduct.seller.name} className="object-cover" />}<AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(selectedProduct.seller?.name)}</AvatarFallback></Avatar><span className="font-medium text-sm">{selectedProduct.seller?.name || "-"}</span></div></div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" /><span>{selectedProduct.location}</span></div>
             </div>
           )}
@@ -330,8 +337,12 @@ export default function AdminActionDialogs({
           {productToDelete && (
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 flex items-center gap-3">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
-                  {productToDelete.type === "jasa" ? <CalendarDays className="h-6 w-6 text-muted-foreground/30" /> : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center overflow-hidden shrink-0">
+                  {productToDelete.images && productToDelete.images.length > 0 ? (
+                    <img src={productToDelete.images[0]} alt={productToDelete.title} className="w-full h-full object-cover" />
+                  ) : (
+                    productToDelete.type === "jasa" ? <CalendarDays className="h-6 w-6 text-muted-foreground/30" /> : <Package className="h-6 w-6 text-muted-foreground/30" />
+                  )}
                 </div>
                 <div>
                   <p className="font-medium">{productToDelete.title}</p>

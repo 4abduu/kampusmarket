@@ -1,5 +1,5 @@
 import React from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { User as UserIcon } from "lucide-react";
 
@@ -35,6 +35,7 @@ export const FinancialUserCard: React.FC<FinancialUserCardProps> = ({ user }) =>
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
       <Avatar className="h-10 w-10">
+        {user.avatar && <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />}
         <AvatarFallback className="bg-primary-100 text-primary-700 font-medium text-sm">
           {getInitials(user.name)}
         </AvatarFallback>

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { MapPin, Home, Building, MapPinned, Search, X, RefreshCw, AlertCircle } from "lucide-react";
 import type { AdminAddressUser } from "@/lib/api/admin";
@@ -192,6 +192,7 @@ export default function AdminAddressesTab({
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800/50">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-7 w-7 ring-2 ring-slate-100 dark:ring-slate-800">
+                        {user.avatar && <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />}
                         <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-950 dark:text-primary-400 text-[10px] font-bold">
                           {getInitials(user.name)}
                         </AvatarFallback>

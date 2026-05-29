@@ -398,6 +398,7 @@ class AdminUserController extends Controller
                         'id' => $user->uuid,
                         'name' => $user->name,
                         'email' => $user->email,
+                        'avatar' => $user->avatar,
                     ],
                     'addresses' => $sortedAddresses->map(function ($address) {
                         return [

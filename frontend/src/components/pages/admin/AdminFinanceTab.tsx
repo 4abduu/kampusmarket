@@ -3,7 +3,7 @@ import { formatAdminDate } from "./admin-dashboard.shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -439,6 +439,7 @@ export default function AdminFinanceTab(props: Props) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
+                            {withdrawal.user?.avatar && <AvatarImage src={withdrawal.user.avatar} alt={withdrawal.user.name} className="object-cover" />}
                             <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(withdrawal.user?.name)}</AvatarFallback>
                           </Avatar>
                           <span className="font-medium text-sm">{withdrawal.user?.name || "-"}</span>
@@ -600,6 +601,7 @@ export default function AdminFinanceTab(props: Props) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
+                            {topup.user?.avatar && <AvatarImage src={topup.user.avatar} alt={topup.user.name} className="object-cover" />}
                             <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
                               {getInitials(topup.user?.name)}
                             </AvatarFallback>
@@ -719,6 +721,7 @@ export default function AdminFinanceTab(props: Props) {
               {/* User Header Section */}
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
                 <Avatar className="h-10 w-10">
+                  {selectedTopup.user?.avatar && <AvatarImage src={selectedTopup.user.avatar} alt={selectedTopup.user.name} className="object-cover" />}
                   <AvatarFallback className="bg-primary-100 text-primary-700 font-medium">
                     {getInitials(selectedTopup.user?.name)}
                   </AvatarFallback>

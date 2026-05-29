@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -286,6 +286,7 @@ export default function AdminOrdersTab({
                           onClick={() => order.buyer && handleViewUser?.(order.buyer)}
                         >
                           <Avatar className="h-7 w-7 ring-2 ring-transparent group-hover:ring-primary-200 transition-shadow">
+                            {order.buyer?.avatar && <AvatarImage src={order.buyer.avatar} alt={order.buyer.name} className="object-cover" />}
                             <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">
                               {getInitials(order.buyer?.name)}
                             </AvatarFallback>
@@ -303,6 +304,7 @@ export default function AdminOrdersTab({
                           onClick={() => order.seller && handleViewUser?.(order.seller)}
                         >
                           <Avatar className="h-7 w-7 ring-2 ring-transparent group-hover:ring-primary-200 transition-shadow">
+                            {order.seller?.avatar && <AvatarImage src={order.seller.avatar} alt={order.seller.name} className="object-cover" />}
                             <AvatarFallback className="bg-primary-100 text-primary-700 text-xs font-semibold">
                               {getInitials(order.seller?.name)}
                             </AvatarFallback>

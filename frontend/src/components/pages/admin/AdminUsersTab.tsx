@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -121,7 +121,7 @@ export default function AdminUsersTab({
                 {paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2"><Avatar className="h-8 w-8"><AvatarFallback className={`text-xs ${user.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>{getInitials(user.name)}</AvatarFallback></Avatar><div><p className="font-medium text-sm">{user.name}</p><p className="text-xs text-muted-foreground">{user.phone || "-"}</p></div></div>
+                      <div className="flex items-center gap-2"><Avatar className="h-8 w-8">{user.avatar && <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />}<AvatarFallback className={`text-xs ${user.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>{getInitials(user.name)}</AvatarFallback></Avatar><div><p className="font-medium text-sm">{user.name}</p><p className="text-xs text-muted-foreground">{user.phone || "-"}</p></div></div>
                     </TableCell>
                     <TableCell className="text-sm">{user.email}</TableCell>
                     <TableCell className="text-sm">{getFacultyName(user.faculty ?? null)}</TableCell>

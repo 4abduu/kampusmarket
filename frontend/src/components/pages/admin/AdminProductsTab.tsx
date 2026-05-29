@@ -124,7 +124,24 @@ export default function AdminProductsTab(props: Props) {
               <TableBody>
                 {paginatedProducts.map((product) => (
                   <TableRow key={product.id} className={product.deletedAt ? "bg-red-50/50 dark:bg-red-950/20" : ""}>
-                    <TableCell><div className="flex items-center gap-2"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">{product.type === "jasa" ? <CalendarDays className="h-5 w-5 text-muted-foreground" /> : <Package className="h-5 w-5 text-muted-foreground" />}</div><div><div className="flex items-center gap-2"><p className="font-medium text-sm line-clamp-1">{product.title}</p>{product.deletedAt && <Badge variant={product.deletedBy === 'user' ? 'secondary' : 'destructive'} className={`text-[10px] px-1 py-0 h-4 ${product.deletedBy === 'user' ? 'bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200' : ''}`}>Dihapus ({product.deletedBy === 'user' ? 'User' : 'Admin'})</Badge>}</div><p className="text-xs text-muted-foreground">{product.category}</p></div></div></TableCell>
+                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center overflow-hidden shrink-0">
+                          {product.images && product.images.length > 0 ? (
+                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                          ) : (
+                            product.type === "jasa" ? <CalendarDays className="h-5 w-5 text-muted-foreground" /> : <Package className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm line-clamp-1">{product.title}</p>
+                            {product.deletedAt && <Badge variant={product.deletedBy === 'user' ? 'secondary' : 'destructive'} className={`text-[10px] px-1 py-0 h-4 ${product.deletedBy === 'user' ? 'bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200' : ''}`}>Dihapus ({product.deletedBy === 'user' ? 'User' : 'Admin'})</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{product.category}</p>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell><Badge variant={product.type === "jasa" ? "secondary" : "outline"} className={product.type === "jasa" ? "bg-purple-50 text-purple-700 border-purple-200" : ""}>{product.type === "jasa" ? "Jasa" : "Barang"}</Badge></TableCell>
                     <TableCell className="font-medium text-primary-600">{formatProductPrice(product)}</TableCell>
                     <TableCell className="text-sm">{product.seller?.name}</TableCell>
