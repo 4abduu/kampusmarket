@@ -292,7 +292,7 @@ export default function AdminActionDialogs({
       </Dialog>
 
       <Dialog open={showProductDetail} onOpenChange={setShowProductDetail}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-full max-h-[85vh] overflow-y-auto p-5 md:p-6 transition-all duration-300 ease-in-out scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">{selectedProduct?.type === "jasa" ? <><CalendarDays className="h-5 w-5" />Detail Jasa</> : <><Package className="h-5 w-5" />Detail Produk</>}</DialogTitle>
           </DialogHeader>

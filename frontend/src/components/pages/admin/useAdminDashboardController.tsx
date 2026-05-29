@@ -415,9 +415,9 @@ export function useAdminDashboardController() {
       priceMin: product.price_min || product.priceMin || 0,
       priceMax: product.price_max || product.priceMax || 0,
       priceType: product.price_type || product.priceType || "fixed",
-      category: product.category?.name || product.category_name || "",
+      category: typeof product.category === "string" ? product.category : (product.category?.name || product.category_name || ""),
       categoryId:
-        product.category?.uuid || product.category_id?.toString() || "",
+        product.categoryId || product.category?.uuid || product.category_id?.toString() || "",
       description: product.description || "",
       condition: product.condition || "baru",
       stock: product.stock || 0,
@@ -2298,17 +2298,17 @@ export function useAdminDashboardController() {
         </Badge>
       ),
       processing: (
-        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+        <Badge variant="outline" className="bg-white border-blue-500 text-blue-600 hover:bg-slate-50 dark:bg-slate-900/10 dark:border-blue-400 dark:text-blue-400">
           Diproses
         </Badge>
       ),
       ready_pickup: (
-        <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+        <Badge variant="outline" className="bg-white border-purple-500 text-purple-600 hover:bg-slate-50 dark:bg-slate-900/10 dark:border-purple-400 dark:text-purple-400">
           Siap Ambil
         </Badge>
       ),
       in_delivery: (
-        <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">
+        <Badge variant="outline" className="bg-white border-cyan-500 text-cyan-600 hover:bg-slate-50 dark:bg-slate-900/10 dark:border-cyan-400 dark:text-cyan-400">
           Dalam Pengiriman
         </Badge>
       ),
