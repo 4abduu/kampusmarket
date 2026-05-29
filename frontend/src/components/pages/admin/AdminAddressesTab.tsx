@@ -176,7 +176,7 @@ export default function AdminAddressesTab({
           ) : (
             // 4. Status Data Kosong (Empty Data State)
             <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border border-dashed rounded-xl bg-slate-50/30 dark:bg-slate-900/10">
-              <MapPin className="h-12 w-12 mb-3 text-slate-300 dark:text-slate-700 animate-bounce" />
+              <MapPin className="h-12 w-12 mb-3 text-slate-300 dark:text-slate-700" />
               <p className="text-base font-semibold text-slate-800 dark:text-slate-200">Belum memiliki alamat tersimpan</p>
               <p className="text-sm mt-1 font-medium">Tidak ada data alamat yang terdaftar di platform saat ini.</p>
             </div>

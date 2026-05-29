@@ -125,7 +125,7 @@ export default function AdminUsersTab({
                     </TableCell>
                     <TableCell className="text-sm">{user.email}</TableCell>
                     <TableCell className="text-sm">{getFacultyName(user.faculty ?? null)}</TableCell>
-                    <TableCell>{user.isBanned ? <Badge variant="destructive">Diblokir</Badge> : user.isWarned ? <Badge variant="outline" className="border-amber-500 text-amber-600">Warning</Badge> : user.isVerified ? <Badge variant="default" className="bg-primary-500">Aktif</Badge> : <Badge variant="secondary">Belum Verif</Badge>}</TableCell>
+                    <TableCell>{user.isBanned ? <Badge variant="destructive">Diblokir</Badge> : user.isWarned ? <Badge variant="outline" className="border-amber-500 text-amber-600">Warning</Badge> : user.isVerified ? <Badge variant="default" className="bg-primary-500">Aktif</Badge> : <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">Belum Verif</Badge>}</TableCell>
                     <TableCell className="text-sm">{user.joinedAt}</TableCell>
                     <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewUser(user)}><Eye className="h-4 w-4" /></Button>{user.isBanned ? <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-600" onClick={() => handleUnbanUser(user)}><UserCheck className="h-4 w-4" /></Button> : <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleBanUser(user)}><Ban className="h-4 w-4" /></Button>}</div></TableCell>
                   </TableRow>

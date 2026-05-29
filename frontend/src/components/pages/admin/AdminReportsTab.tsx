@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, MessageCircle, Ban, Search, X, XCircle } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X } from "lucide-react";
 import { formatAdminDate } from "./admin-dashboard.shared";
 
 interface Props {
@@ -20,27 +19,9 @@ interface Props {
   getReportStatusBadge: (status: string) => React.ReactNode;
   handleSendWarning: (report: any) => void;
   handleBanFromReport: (report: any) => void;
-  handleDismissReport: (report: any) => void;
 }
 
-export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleDismissReport }: Props) {
-  
-  // Unified Warning Icon configuration color-coded by type
-  const getReportTypeIcon = (type: string) => {
-    switch(type) {
-      case 'product': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
-      case 'chat': return <AlertTriangle className="h-5 w-5 text-blue-600" />;
-      case 'user': default: return <AlertTriangle className="h-5 w-5 text-red-600" />;
-    }
-  };
-
-  const getReportTypeBg = (type: string) => {
-    switch(type) {
-      case 'product': return 'bg-amber-100 dark:bg-amber-900/30';
-      case 'chat': return 'bg-blue-100 dark:bg-blue-900/30';
-      case 'user': default: return 'bg-red-100 dark:bg-red-900/30';
-    }
-  };
+export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport }: Props) {
 
   return (
     <Card>
@@ -69,8 +50,8 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                     
                     {/* Visual Spacing and Layout alignment */}
                     <div className="flex items-start gap-4 flex-1 min-w-0">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getReportTypeBg(report.reportType)}`}>
-                        {getReportTypeIcon(report.reportType)}
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400">
+                        <AlertTriangle className="h-5 w-5" />
                       </div>
                       
                       <div className="flex-1 min-w-0 space-y-2.5">
@@ -78,49 +59,19 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                           <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                             {report.reason}
                           </p>
-                          <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
-                            {report.reportType}
-                          </Badge>
                         </div>
                         
                         <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
                           {report.description}
                         </p>
                         
-                        {/* Context data if any */}
-                        {report.reportType === 'product' && report.productTitle && (
-                          <div className="text-xs p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800/80 max-w-xl">
-                            <span className="font-bold text-[9px] text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">
-                              Produk Dilaporkan:
-                            </span>
-                            <span className="text-slate-700 dark:text-slate-300 font-medium">{report.productTitle}</span>
-                          </div>
-                        )}
-                        {report.reportType === 'chat' && report.chatMessage && (
-                          <div className="text-xs p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800/80 max-w-xl">
-                            <span className="font-bold text-[9px] text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">
-                              Pesan Dilaporkan:
-                            </span>
-                            <span className="text-slate-700 dark:text-slate-300 italic">"{report.chatMessage}"</span>
-                          </div>
-                        )}
-                        
                         {/* Spacing & Metadata Info (Pelapor, Dilaporkan, Tanggal) */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-400 dark:text-slate-500">Pelapor:</span>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{report.reporter?.name || "-"}</span>
-                          </div>
-                          <span className="text-slate-300 dark:text-slate-800 hidden sm:inline">•</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-400 dark:text-slate-500">Dilaporkan:</span>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{report.reportedUser?.name || "-"}</span>
-                          </div>
-                          <span className="text-slate-300 dark:text-slate-800 hidden sm:inline">•</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-400 dark:text-slate-500">Tanggal:</span>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatAdminDate(report.createdAt)}</span>
-                          </div>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-[12px] text-slate-500 dark:text-slate-400">
+                          <span>Pelapor: <span className="font-medium text-slate-700 dark:text-slate-300">{report.reporter?.name || "-"}</span></span>
+                          <span className="text-slate-300 dark:text-slate-800">•</span>
+                          <span>Dilaporkan: <span className="font-medium text-slate-700 dark:text-slate-300">{report.reportedUser?.name || "-"}</span></span>
+                          <span className="text-slate-300 dark:text-slate-800">•</span>
+                          <span>{formatAdminDate(report.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -131,14 +82,12 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                       
                       {report.status === "pending" && (
                         <div className="flex gap-1 sm:mt-2">
-                          <Button variant="outline" size="sm" className="h-8 text-xs text-amber-600 border-amber-200 hover:bg-amber-50/50" onClick={() => handleSendWarning(report)}>
-                            <MessageCircle className="h-3.5 w-3.5 mr-1" />Warning
+                          <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/50" onClick={() => handleSendWarning(report)}>
+                            <MessageCircle className="h-3.5 w-3.5 mr-1 text-slate-800 dark:text-slate-200" />Warning
                           </Button>
-                          <Button variant="destructive" size="sm" className="h-8 text-xs bg-red-600 hover:bg-red-700" onClick={() => handleBanFromReport(report)}>
-                            <Ban className="h-3.5 w-3.5 mr-1" />Ban
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground" onClick={() => handleDismissReport(report)}>
-                            <XCircle className="h-3.5 w-3.5 mr-1" />Abaikan
+                          <Button variant="destructive" size="sm" className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
+                            <Ban className="h-3.5 w-3.5 mr-1 text-white" />
+                            <span className="text-white font-medium">Ban</span>
                           </Button>
                         </div>
                       )}

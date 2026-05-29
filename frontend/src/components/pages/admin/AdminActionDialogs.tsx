@@ -211,7 +211,7 @@ export default function AdminActionDialogs({
                 <div>
                   <p className="font-bold text-lg">{selectedUser.name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    {selectedUser.isBanned ? <Badge variant="destructive">Diblokir</Badge> : selectedUser.isVerified ? <Badge variant="default">Aktif</Badge> : <Badge variant="secondary">Belum Verifikasi</Badge>}
+                    {selectedUser.isBanned ? <Badge variant="destructive">Diblokir</Badge> : selectedUser.isVerified ? <Badge variant="default">Aktif</Badge> : <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">Belum Verifikasi</Badge>}
                   </div>
                 </div>
               </div>

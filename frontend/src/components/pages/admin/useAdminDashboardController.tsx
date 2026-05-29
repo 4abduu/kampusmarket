@@ -473,20 +473,39 @@ export function useAdminDashboardController() {
       (report) =>
         ({
           id: report.id?.toString() || "",
-          reportNumber: `RPT-${report.id}`,
+          reportNumber: report.reportNumber || `RPT-${report.id}`,
           reason: report.reason || "",
           description: report.description || "",
           status: report.status || "pending",
-          priority: "normal",
-          reporter: {
-            id: report.reporter_id?.toString() || "",
-            name: report.reporter_name || "",
-          },
-          reportedUser: {
-            id: report.reported_user_id?.toString() || "",
-            name: report.reported_user_name || "",
-          },
-          createdAt: report.created_at || new Date().toISOString(),
+          priority: report.priority || "normal",
+          reporter: report.reporter
+            ? {
+                id: report.reporter.id?.toString() || report.reporter.uuid || "",
+                name: report.reporter.name || "Unknown",
+                email: report.reporter.email || "",
+              }
+            : {
+                id: report.reporter_id?.toString() || "",
+                name: report.reporter_name || "Unknown",
+                email: "",
+              },
+          reportedUser: report.reportedUser
+            ? {
+                id: report.reportedUser.id?.toString() || report.reportedUser.uuid || "",
+                name: report.reportedUser.name || "Unknown",
+                email: report.reportedUser.email || "",
+              }
+            : {
+                id: report.reported_user_id?.toString() || "",
+                name: report.reported_user_name || "Unknown",
+                email: "",
+              },
+          productId: report.productId || report.product_id || "",
+          productTitle: report.productTitle || "",
+          chatId: report.chatId || report.chat_id || "",
+          chatMessage: report.chatMessage || "",
+          reportType: report.reportType || "user",
+          createdAt: report.createdAt || report.created_at || new Date().toISOString(),
         }) as unknown as Report,
     );
 
@@ -1564,6 +1583,9 @@ export function useAdminDashboardController() {
       const run = async () => {
         try {
           await adminReportsApi.reviewReport(selectedReport.id);
+          if (selectedReport.reportedUser?.id) {
+            await adminUsersApi.warnUser(selectedReport.reportedUser.id, selectedReport.reason);
+          }
           setReports(
             reports.map((r) =>
               r.id === selectedReport.id
@@ -1632,23 +1654,6 @@ export function useAdminDashboardController() {
     }
   };
 
-  const handleDismissReport = (report: Report) => {
-    const run = async () => {
-      try {
-        await adminReportsApi.dismissReport(report.id);
-        setReports(
-          reports.map((r) =>
-            r.id === report.id ? { ...r, status: "resolved" as const } : r,
-          ),
-        );
-        showSuccess(`Laporan dari ${report.reporter.name} diabaikan`);
-      } catch (err) {
-        console.error(err);
-        showSuccess("Gagal mengabaikan laporan, coba lagi");
-      }
-    };
-    void run();
-  };
 
   const handleApproveWithdrawal = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
@@ -2213,14 +2218,31 @@ export function useAdminDashboardController() {
       {
         variant: "default" | "secondary" | "destructive" | "outline";
         label: string;
+        className?: string;
       }
     > = {
-      pending: { variant: "outline", label: "Menunggu" },
-      reviewed: { variant: "secondary", label: "Ditinjau" },
-      resolved: { variant: "default", label: "Selesai" },
+      pending: {
+        variant: "outline",
+        label: "Menunggu",
+        className: "border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400",
+      },
+      reviewed: {
+        variant: "default",
+        label: "Ditinjau",
+        className: "bg-secondary text-white hover:bg-secondary/90 border-transparent",
+      },
+      resolved: {
+        variant: "default",
+        label: "Selesai",
+        className: "bg-primary text-white hover:bg-primary/90 border-transparent",
+      },
     };
     const statusConfig = config[status] || config.pending;
-    return <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>;
+    return (
+      <Badge variant={statusConfig.variant} className={statusConfig.className}>
+        {statusConfig.label}
+      </Badge>
+    );
   };
 
   const getWithdrawalStatusBadge = (status: string) => {
@@ -2328,7 +2350,11 @@ export function useAdminDashboardController() {
         </Badge>
       ),
       failed: <Badge variant="destructive">Gagal</Badge>,
-      refunded: <Badge variant="secondary">Dikembalikan</Badge>,
+      refunded: (
+        <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">
+          Dikembalikan
+        </Badge>
+      ),
     };
     return badges[status] || <Badge variant="outline">{status}</Badge>;
   };
@@ -2570,7 +2596,6 @@ export function useAdminDashboardController() {
     confirmDeleteProduct,
     handleSendWarning,
     handleBanFromReport,
-    handleDismissReport,
     confirmSendWarning,
     confirmBanFromReport,
     handleApproveWithdrawal,
