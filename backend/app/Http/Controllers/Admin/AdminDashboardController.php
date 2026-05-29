@@ -236,4 +236,61 @@ class AdminDashboardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get platform revenue details (5% admin fee).
+     */
+    public function platformRevenue(): JsonResponse
+    {
+        try {
+            $total = Order::where('status', 'completed')
+                ->sum('admin_fee_deducted');
+
+            $thisMonth = Order::where('status', 'completed')
+                ->whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
+                ->sum('admin_fee_deducted');
+
+            $lastMonth = Order::where('status', 'completed')
+                ->whereYear('created_at', now()->subMonth()->year)
+                ->whereMonth('created_at', now()->subMonth()->month)
+                ->sum('admin_fee_deducted');
+
+            $pendingClearance = Order::whereIn('status', ['processing', 'ready_pickup', 'in_delivery'])
+                ->sum('admin_fee_deducted');
+
+            $transactions = Order::where('status', 'completed')
+                ->latest()
+                ->limit(50)
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'orderId' => $order->uuid,
+                        'orderNumber' => $order->order_number,
+                        'productTitle' => $order->product_title,
+                        'adminFee' => (int) $order->admin_fee_deducted,
+                        'createdAt' => $order->created_at->toDateString(),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total' => (int) $total,
+                    'thisMonth' => (int) $thisMonth,
+                    'lastMonth' => (int) $lastMonth,
+                    'pendingClearance' => (int) $pendingClearance,
+                    'transactions' => $transactions,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[AdminDashboardController] Error getting platform revenue', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data pendapatan platform',
+            ], 500);
+        }
+    }
 }

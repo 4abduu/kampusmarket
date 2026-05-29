@@ -44,6 +44,8 @@ export default function AdminDashboardPage({
     withdrawals,
     cancelRequests,
     platformRevenue,
+    platformRevenueLoading,
+    platformRevenueError,
     activitySummary,
     overviewLoading,
     usersLoading,
@@ -563,6 +565,8 @@ export default function AdminDashboardPage({
                 formatPrice={formatPrice}
                 stats={stats}
                 platformRevenue={platformRevenue}
+                platformRevenueLoading={platformRevenueLoading}
+                platformRevenueError={platformRevenueError}
                 getWithdrawalStatusBadge={getWithdrawalStatusBadge}
                 getInitials={getInitials}
                 handleApproveWithdrawal={handleApproveWithdrawal}

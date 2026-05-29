@@ -261,6 +261,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
     Route::get('/dashboard/revenue', [AdminDashboardController::class, 'revenueStats']);
     Route::get('/dashboard/activity', [AdminDashboardController::class, 'activitySummary']);
+    Route::get('/dashboard/platform-revenue', [AdminDashboardController::class, 'platformRevenue']);
 
     // ── PRODUCTS ───────────────────────────────────────────────────────────
     Route::prefix('products')->group(function () {

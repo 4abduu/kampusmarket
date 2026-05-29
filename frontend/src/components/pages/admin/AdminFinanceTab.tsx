@@ -53,6 +53,8 @@ interface Props {
   formatPrice: (value: number) => string;
   stats: any;
   platformRevenue: any;
+  platformRevenueLoading?: boolean;
+  platformRevenueError?: string | null;
   getWithdrawalStatusBadge: (status: string) => React.ReactNode;
   getInitials: (value?: string | null) => string;
   handleApproveWithdrawal: (withdrawal: any) => void;
@@ -123,6 +125,8 @@ export default function AdminFinanceTab(props: Props) {
     formatPrice,
     stats,
     platformRevenue,
+    platformRevenueLoading = false,
+    platformRevenueError = null,
     getWithdrawalStatusBadge,
     getInitials,
     handleApproveWithdrawal,
@@ -303,7 +307,7 @@ export default function AdminFinanceTab(props: Props) {
                 <span className="text-sm text-muted-foreground">Pendapatan Platform (5%)</span>
                 <BarChart3 className="h-4 w-4 text-primary-600" />
               </div>
-              <p className="text-2xl font-bold text-primary-600">{formatPrice(platformRevenue.total)}</p>
+              <p className="text-2xl font-bold text-primary-600">{formatPrice(stats.platformRevenue || 0)}</p>
               <p className="text-xs text-muted-foreground mt-1">Dari potongan penjualan seller</p>
             </CardContent>
           </Card>
@@ -656,49 +660,72 @@ export default function AdminFinanceTab(props: Props) {
             <CardDescription>Potongan 5% dari setiap transaksi penjualan seller</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">Bulan Ini</p>
-                <p className="text-xl font-bold text-primary-600">{formatPrice(platformRevenue.thisMonth)}</p>
+            {platformRevenueLoading ? (
+              <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+                <p className="text-sm">Memuat data rincian pendapatan platform...</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">Bulan Lalu</p>
-                <p className="text-xl font-bold">{formatPrice(platformRevenue.lastMonth)}</p>
+            ) : platformRevenueError ? (
+              <div className="py-12 text-center text-red-500">
+                <XCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p className="font-semibold">Terjadi Kesalahan</p>
+                <p className="text-sm text-muted-foreground mt-1">{platformRevenueError}</p>
               </div>
-              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">Pending Clearance</p>
-                <p className="text-xl font-bold text-amber-600">{formatPrice(platformRevenue.pendingClearance)}</p>
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium mb-2">Transaksi Terbaru dengan Potongan:</p>
-              <div className="space-y-2">
-                {platformRevenue.transactions.map((tx: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800/60 hover:border-primary-100 dark:hover:border-primary-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/30 cursor-pointer transition-all duration-200 group"
-                    onClick={() => handleViewRevenueTransaction(tx)}
-                  >
-                    <div className="flex-1 min-w-0 pr-4">
-                      <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                        {tx.productTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {tx.orderNumber} • {tx.createdAt}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <p className="font-bold text-primary-600 dark:text-primary-400 text-sm">
-                        +{formatPrice(tx.adminFee)}
-                      </p>
-                      <div className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:border-primary-200 dark:hover:border-primary-900">
-                        <Eye className="h-3.5 w-3.5 text-slate-500 hover:text-primary-600 dark:hover:text-primary-400" />
-                      </div>
-                    </div>
+            ) : (
+              <>
+                <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Bulan Ini</p>
+                    <p className="text-xl font-bold text-primary-600">{formatPrice(platformRevenue.thisMonth)}</p>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Bulan Lalu</p>
+                    <p className="text-xl font-bold">{formatPrice(platformRevenue.lastMonth)}</p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Pending Clearance</p>
+                    <p className="text-xl font-bold text-amber-600">{formatPrice(platformRevenue.pendingClearance)}</p>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium mb-2">Transaksi Terbaru dengan Potongan:</p>
+                  {platformRevenue.transactions.length === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground border rounded-lg border-dashed bg-slate-50/40 dark:bg-slate-900/10 dark:border-slate-300 dark:border-slate-800">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30 text-slate-400" />
+                      <p className="font-medium">Belum ada pendapatan platform</p>
+                      <p className="text-xs text-muted-foreground mt-1">Pendapatan potongan fee 5% akan muncul saat ada transaksi penjualan yang selesai</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {platformRevenue.transactions.map((tx: any, idx: number) => (
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800/60 hover:border-primary-100 dark:hover:border-primary-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/30 cursor-pointer transition-all duration-200 group"
+                          onClick={() => handleViewRevenueTransaction(tx)}
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                              {tx.productTitle}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {tx.orderNumber} • {tx.createdAt}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <p className="font-bold text-primary-600 dark:text-primary-400 text-sm">
+                              +{formatPrice(tx.adminFee)}
+                            </p>
+                            <div className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:border-primary-200 dark:hover:border-primary-900">
+                              <Eye className="h-3.5 w-3.5 text-slate-500 hover:text-primary-600 dark:hover:text-primary-400" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

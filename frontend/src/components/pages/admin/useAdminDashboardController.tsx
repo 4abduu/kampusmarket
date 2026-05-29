@@ -12,7 +12,6 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
-  platformRevenue,
   getFacultyName,
   CANCEL_REASONS,
 } from "@/lib/mock-data";
@@ -214,8 +213,18 @@ export function useAdminDashboardController() {
     if (activeTab === "finance" && financeSubTab === "topups") {
       loadTopupsData(topupPage, debouncedTopupSearch, topupStatusFilter);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, financeSubTab, topupPage, debouncedTopupSearch, topupStatusFilter]);
+
+  useEffect(() => {
+    if (activeTab === "finance") {
+      if (financeSubTab === "withdrawals" && !isResourceLoaded("withdrawals")) {
+        void loadWithdrawalsData();
+      } else if (financeSubTab === "revenue" && !isResourceLoaded("revenue")) {
+        void loadPlatformRevenueData();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, financeSubTab]);
 
   const [addressSearchTerm, setAddressSearchTerm] = useState("");
   const [addressesData, setAddressesData] = useState<AdminAddressUser[]>([]);
@@ -247,6 +256,21 @@ export function useAdminDashboardController() {
   const [categoryChartData, setCategoryChartData] = useState<
     Array<{ name: string; value: number; fill: string }>
   >([]);
+  const [platformRevenue, setPlatformRevenue] = useState<{
+    total: number;
+    thisMonth: number;
+    lastMonth: number;
+    pendingClearance: number;
+    transactions: any[];
+  }>({
+    total: 0,
+    thisMonth: 0,
+    lastMonth: 0,
+    pendingClearance: 0,
+    transactions: [],
+  });
+  const [platformRevenueLoading, setPlatformRevenueLoading] = useState(false);
+  const [platformRevenueError, setPlatformRevenueError] = useState<string | null>(null);
   const [orderSearchTerm, setOrderSearchTerm] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<
     | "all"
@@ -710,6 +734,10 @@ export function useAdminDashboardController() {
           totalFaculties: statsData.faculties?.total || 0,
           activeFaculties: statsData.faculties?.active || 0,
         });
+        setPlatformRevenue((prev) => ({
+          ...prev,
+          total: statsData.platform_revenue || 0,
+        }));
       }
 
       if (apiRevenueStats) {
@@ -948,6 +976,30 @@ export function useAdminDashboardController() {
       console.error("Failed to load topups data:", err);
     } finally {
       setTopupLoading(false);
+    }
+  };
+
+  const loadPlatformRevenueData = async () => {
+    setPlatformRevenueLoading(true);
+    setPlatformRevenueError(null);
+    try {
+      const res = await adminDashboardApi.getPlatformRevenue();
+      if (res?.data) {
+        setPlatformRevenue({
+          total: res.data.total || 0,
+          thisMonth: res.data.thisMonth || 0,
+          lastMonth: res.data.lastMonth || 0,
+          pendingClearance: res.data.pendingClearance || 0,
+          transactions: Array.isArray(res.data.transactions) ? res.data.transactions : [],
+        });
+      }
+      markResourceLoaded("revenue");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat rincian pendapatan platform";
+      setPlatformRevenueError(msg);
+      console.error("Failed to load platform revenue data:", err);
+    } finally {
+      setPlatformRevenueLoading(false);
     }
   };
 
@@ -2381,6 +2433,7 @@ export function useAdminDashboardController() {
     productsLoading,
     reportsLoading,
     withdrawalsLoading,
+    platformRevenueLoading,
     categoriesLoading,
     facultiesLoading,
     // Per-resource error states
@@ -2389,6 +2442,7 @@ export function useAdminDashboardController() {
     productsError,
     reportsError,
     withdrawalsError,
+    platformRevenueError,
     categoriesError,
     facultiesError,
     // Resource cache map (true = successfully loaded at least once)

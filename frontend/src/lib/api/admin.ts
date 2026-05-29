@@ -91,6 +91,12 @@ export const adminDashboardApi = {
       method: "GET",
     });
   },
+
+  async getPlatformRevenue() {
+    return request<any>(`${API_BASE_URL}/admin/dashboard/platform-revenue`, {
+      method: "GET",
+    });
+  },
 };
 
 // ============================================================
