@@ -255,8 +255,6 @@ class AuthController extends Controller
     public function googleRedirect()
     {
 
-        dd(config('services.google.redirect'));
-
         Log::info('Auth Google redirect started');
 
         $query = http_build_query([
