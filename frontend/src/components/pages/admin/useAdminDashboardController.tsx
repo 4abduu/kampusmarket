@@ -238,6 +238,7 @@ export function useAdminDashboardController() {
     pendingOrders: number;
     totalRevenue: number;
     platformRevenue: number;
+    totalEscrow: number;
     pendingWithdrawals: number;
     pendingReports: number;
     totalFaculties: number;
@@ -729,6 +730,7 @@ export function useAdminDashboardController() {
           pendingOrders: statsData.orders?.pending || 0,
           totalRevenue: statsData.orders?.total_revenue || 0,
           platformRevenue: statsData.platform_revenue || 0,
+          totalEscrow: statsData.total_escrow || 0,
           pendingWithdrawals: statsData.withdrawals?.pending || 0,
           pendingReports: statsData.reports?.pending || 0,
           totalFaculties: statsData.faculties?.total || 0,
@@ -1434,6 +1436,7 @@ export function useAdminDashboardController() {
     pendingOrders: 0,
     totalRevenue: 0,
     platformRevenue: 0,
+    totalEscrow: 0,
     pendingWithdrawals: 0,
     pendingReports: 0,
     totalFaculties: faculties.length,

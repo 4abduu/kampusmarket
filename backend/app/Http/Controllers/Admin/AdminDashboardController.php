@@ -10,6 +10,8 @@ use App\Models\Category;
 use App\Models\Faculty;
 use App\Models\Report;
 use App\Models\Withdrawal;
+use App\Enums\PaymentStatus;
+use App\Enums\OrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -52,6 +54,12 @@ class AdminDashboardController extends Controller
                 ->sum(DB::raw('total_price + admin_fee_deducted'));
             $platformRevenue = Order::where('status', 'completed')
                 ->sum('admin_fee_deducted');
+
+            // Calculate Total Escrow: Paid digital orders not completed/cancelled
+            $totalEscrow = Order::where('payment_status', PaymentStatus::PAID)
+                ->where('payment_method', '!=', 'cod')
+                ->whereNotIn('status', [OrderStatus::COMPLETED, OrderStatus::CANCELLED])
+                ->sum('total_price');
 
             // Category Statistics
             $totalCategories = Category::count();
@@ -114,6 +122,7 @@ class AdminDashboardController extends Controller
                         'total_revenue' => $totalRevenue,
                     ],
                     'platform_revenue' => $platformRevenue,
+                    'total_escrow' => (int) $totalEscrow,
                     'categories' => [
                         'total' => $totalCategories,
                         'barang' => $barangCategories,

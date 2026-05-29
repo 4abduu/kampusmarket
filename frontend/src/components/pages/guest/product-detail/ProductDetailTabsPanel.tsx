@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Truck, MessageSquare } from "lucide-react";
 import { getProductReviews, type Review, type ReviewsMeta } from "@/lib/api/reviews";
 import ImageLightbox from "@/components/common/ImageLightbox";
+import { getEcho } from "@/lib/echo";
 
 interface ShippingOption {
   type: string;
@@ -39,15 +40,66 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" });
 }
 
+import { useLocation } from "react-router-dom";
+
 export default function ProductDetailTabsPanel({ productId, description, shippingOptions }: ProductDetailTabsPanelProps) {
+  const location = useLocation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [meta, setMeta] = useState<ReviewsMeta | null>(null);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewsError, setReviewsError] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.hash === "#reviews" ? "reviews" : "description";
+  });
+
+  useEffect(() => {
+    if (location.hash === "#reviews") {
+      setActiveTab("reviews");
+      // Delay scroll to ensure tab content is rendered
+      setTimeout(() => {
+        const el = document.getElementById("product-tabs");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  }, [location.hash]);
 
   const [activeReview, setActiveReview] = useState<Review | null>(null);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
+  const handleNewReview = useCallback((event: any) => {
+    console.log("[ProductDetailTabsPanel] Realtime review received:", event);
+    
+    // Update reviews list if we already have it loaded
+    setReviews(prev => {
+      // Prevent duplicates just in case
+      if (prev.some(r => r.id === event.review.id)) return prev;
+      return [event.review, ...prev];
+    });
+
+    // Update meta (total counts and distribution)
+    setMeta(prev => {
+      if (!prev) return event.stats;
+      return {
+        ...prev,
+        ...event.stats,
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    // Listen to public product channel for new reviews
+    const channel = getEcho().channel(`product.${productId}`);
+    
+    channel.listen('.NewReviewCreated', handleNewReview);
+
+    return () => {
+      getEcho().leaveChannel(`product.${productId}`);
+    };
+  }, [productId, handleNewReview]);
 
   useEffect(() => {
     if (!productId || activeTab !== "reviews") return;
@@ -72,7 +124,7 @@ export default function ProductDetailTabsPanel({ productId, description, shippin
 
   return (
     <Card>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs id="product-tabs" value={activeTab} onValueChange={setActiveTab}>
         <CardHeader className="pb-0">
           <TabsList className="w-full">
             <TabsTrigger value="description" className="flex-1">Deskripsi</TabsTrigger>

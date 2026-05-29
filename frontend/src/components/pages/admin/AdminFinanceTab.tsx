@@ -277,7 +277,7 @@ export default function AdminFinanceTab(props: Props) {
                 <span className="text-sm text-muted-foreground">Total Escrow</span>
                 <Wallet className="h-4 w-4 text-primary-600" />
               </div>
-              <p className="text-2xl font-bold">{formatPrice(2500000)}</p>
+              <p className="text-2xl font-bold">{formatPrice(stats?.totalEscrow || 0)}</p>
               <p className="text-xs text-muted-foreground mt-1">Dana ditahan dalam sistem</p>
             </CardContent>
           </Card>
