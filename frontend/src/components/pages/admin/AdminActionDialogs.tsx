@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ImageGallery from "@/components/common/ImageGallery";
 import {
   Dialog,
   DialogContent,
@@ -184,6 +186,12 @@ export default function AdminActionDialogs({
   getInitials,
   cancelReasons,
 }: Props) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [selectedProduct]);
+
   return (
     <>
       <Dialog open={showUserDetail} onOpenChange={setShowUserDetail}>
@@ -305,13 +313,27 @@ export default function AdminActionDialogs({
               {productDetailError && (
                 <p className="text-sm text-red-600">{productDetailError}</p>
               )}
-              <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
-                {selectedProduct.images && selectedProduct.images.length > 0 ? (
-                  <img src={selectedProduct.images[0]} alt={selectedProduct.title} className="w-full h-full object-cover" />
-                ) : (
-                  selectedProduct.type === "jasa" ? <CalendarDays className="h-12 w-12 text-muted-foreground/30" /> : <Package className="h-12 w-12 text-muted-foreground/30" />
-                )}
-              </div>
+              {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                <div className="w-full">
+                  <ImageGallery
+                    images={selectedProduct.images}
+                    imagesDetail={selectedProduct.imagesDetail}
+                    selectedImage={selectedImageIndex}
+                    setSelectedImage={setSelectedImageIndex}
+                    condition={selectedProduct.condition}
+                    price={selectedProduct.price}
+                    originalPrice={selectedProduct.originalPrice}
+                  />
+                </div>
+              ) : (
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                  {selectedProduct.type === "jasa" ? (
+                    <CalendarDays className="h-12 w-12 text-muted-foreground/30" />
+                  ) : (
+                    <Package className="h-12 w-12 text-muted-foreground/30" />
+                  )}
+                </div>
+              )}
               <div><p className="font-bold text-lg">{selectedProduct.title}</p><p className="text-sm text-muted-foreground mt-1">{selectedProduct.description}</p></div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-muted-foreground">Harga</p><p className="font-bold text-primary-600">{formatProductPrice(selectedProduct)}</p></div>

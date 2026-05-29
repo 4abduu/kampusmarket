@@ -99,6 +99,7 @@ export interface Product {
   soldCount: number;
   type: "barang" | "jasa";
   status?: "draft" | "active" | "sold_out" | "archived";
+  imagesDetail?: any[];
 }
 
 export interface ShippingOption {
