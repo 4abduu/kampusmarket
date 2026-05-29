@@ -17,10 +17,14 @@ export const getPriceLabel = (product: Product): string => {
   return formatIDR(product.price);
 };
 
-export const getPrimaryImage = (product: Product): string => {
+export const getPrimaryImage = (product: any): string => {
   if (product.images?.length) {
-    const primary = product.images.find((image) => image.is_primary);
-    return primary?.url ?? product.images[0].url;
+    const firstImage = product.images[0];
+    if (typeof firstImage === 'string') {
+      return firstImage;
+    }
+    const primary = product.images.find((image: any) => image.is_primary);
+    return primary?.url ?? firstImage?.url ?? "/placeholder-product.png";
   }
   return "/placeholder-product.png";
 };

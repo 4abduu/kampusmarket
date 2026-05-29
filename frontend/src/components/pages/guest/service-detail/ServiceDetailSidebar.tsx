@@ -25,9 +25,10 @@ import {
   User,
   Wallet,
 } from "lucide-react";
-
 import { getEcho } from "@/lib/echo";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { toast } from "sonner";
+import { useFavoritesStore } from "@/lib/favorites-store";
 
 interface ServiceDetailSidebarProps {
   service: any;
@@ -93,13 +94,26 @@ export default function ServiceDetailSidebar({
       if (isFavorited) {
         await removeFavorite(service.id);
         setIsFavorited(false);
+        toast.success("Dihapus dari favorit", {
+          description: `${service.title} telah dihapus dari favorit.`,
+        });
       } else {
         await addFavorite(service.id);
         setIsFavorited(true);
+        toast.success("Berhasil ditambahkan", {
+          description: `${service.title} telah masuk ke favorit.`,
+          action: {
+            label: "Lihat Favorit",
+            onClick: () => onNavigate("favorites")
+          },
+        });
       }
+      void useFavoritesStore.getState().fetchCount();
     } catch (err: any) {
       console.error("Failed to toggle favorite:", err);
-      alert(err?.message || "Gagal mengubah status favorit");
+      toast.error("Gagal mengubah status favorit", {
+        description: err?.message || "Silakan coba lagi nanti.",
+      });
     } finally {
       setIsLoadingFavorite(false);
     }

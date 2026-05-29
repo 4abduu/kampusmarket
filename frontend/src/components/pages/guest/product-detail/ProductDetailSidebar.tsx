@@ -15,6 +15,7 @@ import { openWhatsApp } from "@/lib/whatsapp";
 import { addToCart } from "@/lib/api/cart";
 import { toast } from "sonner";
 import { useCartStore } from "@/lib/cart-store";
+import { useFavoritesStore } from "@/lib/favorites-store";
 import { getEcho } from "@/lib/echo";
 
 interface ProductSeller {
@@ -113,13 +114,26 @@ export default function ProductDetailSidebar({
       if (isFavorited) {
         await removeFavorite(product.id);
         setIsFavorited(false);
+        toast.success("Dihapus dari favorit", {
+          description: `${product.title} telah dihapus dari favorit.`,
+        });
       } else {
         await addFavorite(product.id);
         setIsFavorited(true);
+        toast.success("Berhasil ditambahkan", {
+          description: `${product.title} telah masuk ke favorit.`,
+          action: {
+            label: "Lihat Favorit",
+            onClick: () => onNavigate("favorites")
+          },
+        });
       }
+      void useFavoritesStore.getState().fetchCount();
     } catch (err: any) {
       console.error("Failed to toggle favorite:", err);
-      alert(err?.message || "Gagal mengubah status favorit");
+      toast.error("Gagal mengubah status favorit", {
+        description: err?.message || "Silakan coba lagi nanti.",
+      });
     } finally {
       setIsLoadingFavorite(false);
     }

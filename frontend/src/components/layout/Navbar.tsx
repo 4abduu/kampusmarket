@@ -34,6 +34,7 @@ import { useNotificationStore } from "@/lib/notification-store";
 import { useChatStore } from "@/lib/chat-store";
 import { useAdminNotificationStore } from "@/lib/admin-notification-store";
 import { useCartStore } from "@/lib/cart-store";
+import { useFavoritesStore } from "@/lib/favorites-store";
 import type { User as AppUser } from "@/lib/mock-data";
 
 interface NavbarProps {
@@ -62,6 +63,7 @@ export default function Navbar({
   const chatUnreadCount = useChatStore((state) => state.unreadCount);
   const adminUnreadCount = useAdminNotificationStore((state) => state.unreadCount);
   const cartCount = useCartStore((state) => state.count);
+  const favoritesCount = useFavoritesStore((state) => state.count);
   const displayName = currentUser?.name || (isCustomerOnly ? "Rina Wulandari" : "Ahmad Santoso");
   const displayEmail = currentUser?.email || (isCustomerOnly ? "rina.wulandari@student.ac.id" : "ahmad@student.ac.id");
   const displayAvatar = currentUser?.avatar || "/avatar.png";
@@ -337,10 +339,15 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:flex text-slate-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
+                className="relative hidden sm:flex text-slate-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
                 onClick={() => onNavigate("favorites")}
               >
                 <Heart className="h-5 w-5" />
+                {favoritesCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white">
+                    {favoritesCount > 99 ? '99+' : favoritesCount}
+                  </Badge>
+                )}
               </Button>
 
               {/* User Menu */}
@@ -472,7 +479,18 @@ export default function Navbar({
                 </nav>
 
                 {isLoggedIn && (
-                  <div className="border-t pt-4 mt-2">
+                  <div className="border-t pt-4 mt-2 flex flex-col gap-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => onNavigate("favorites")}
+                      className="w-full justify-start"
+                    >
+                      <Heart className="h-4 w-4 mr-3" />
+                      Favorit
+                      {favoritesCount > 0 && (
+                        <Badge className="ml-auto bg-red-500 text-white text-xs">{favoritesCount > 99 ? '99+' : favoritesCount}</Badge>
+                      )}
+                    </Button>
                     <Button
                       variant="ghost"
                       onClick={() => onNavigate("notifications")}

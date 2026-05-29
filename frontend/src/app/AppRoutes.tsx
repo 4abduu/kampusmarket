@@ -399,12 +399,16 @@ export default function AppRoutes({
         <Route
           path="/"
           element={
-            <LandingPage
-              onNavigate={onNavigate}
-              isLoggedIn={isLoggedIn}
-              isCustomerOnly={isCustomerOnly}
-              onStartSelling={onStartSelling}
-            />
+            userRole === "admin" ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <LandingPage
+                onNavigate={onNavigate}
+                isLoggedIn={isLoggedIn}
+                isCustomerOnly={isCustomerOnly}
+                onStartSelling={onStartSelling}
+              />
+            )
           }
         />
         <Route
