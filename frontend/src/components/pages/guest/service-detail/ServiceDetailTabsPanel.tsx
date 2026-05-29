@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, MapPin, Smartphone, Home, MessageSquare } from "lucide-react";
 import { getProductReviews, type Review, type ReviewsMeta } from "@/lib/api/reviews";
 import ImageLightbox from "@/components/common/ImageLightbox";
+import { getEcho } from "@/lib/echo";
 
 interface ServiceDetailTabsPanelProps {
   description?: string;
@@ -45,6 +46,39 @@ export default function ServiceDetailTabsPanel({ description, service, productId
 
   // Use the passed productId or fallback to service.id
   const resolvedProductId = productId || service?.id;
+
+  const handleNewReview = useCallback((event: any) => {
+    console.log("[ServiceDetailTabsPanel] Realtime review received:", event);
+    
+    // Update reviews list if we already have it loaded
+    setReviews(prev => {
+      // Prevent duplicates just in case
+      if (prev.some(r => r.id === event.review.id)) return prev;
+      return [event.review, ...prev];
+    });
+
+    // Update meta (total counts and distribution)
+    setMeta(prev => {
+      if (!prev) return event.stats;
+      return {
+        ...prev,
+        ...event.stats,
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!resolvedProductId) return;
+
+    // Listen to public product channel for new reviews
+    const channel = getEcho().channel(`product.${resolvedProductId}`);
+    
+    channel.listen('.NewReviewCreated', handleNewReview);
+
+    return () => {
+      getEcho().leaveChannel(`product.${resolvedProductId}`);
+    };
+  }, [resolvedProductId, handleNewReview]);
 
   useEffect(() => {
     if (!resolvedProductId || activeTab !== "reviews") return;

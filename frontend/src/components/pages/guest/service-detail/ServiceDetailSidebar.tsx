@@ -25,6 +25,7 @@ import {
   User,
   Wallet,
 } from "lucide-react";
+import { getEcho } from "@/lib/echo";
 
 interface ServiceDetailSidebarProps {
   service: any;
@@ -45,6 +46,26 @@ export default function ServiceDetailSidebar({
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [liveRating, setLiveRating] = useState(service.rating || 0);
+
+  // Listen to realtime review updates to update rating
+  useEffect(() => {
+    if (!service?.id) return;
+    
+    // Also initialize with current prop value in case it changes
+    setLiveRating(service.rating || 0);
+
+    const channel = getEcho().channel(`product.${service.id}`);
+    channel.listen('.NewReviewCreated', (event: any) => {
+      if (event.stats && event.stats.averageRating !== undefined) {
+        setLiveRating(event.stats.averageRating);
+      }
+    });
+
+    return () => {
+      getEcho().leaveChannel(`product.${service.id}`);
+    };
+  }, [service?.id, service?.rating]);
 
   const serviceShareUrl = `https://kampusmarket.id/s/${service.id}`;
 
@@ -117,7 +138,7 @@ export default function ServiceDetailSidebar({
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{service.rating || 0}</span>
+                <span>{Number(liveRating).toFixed(1)}</span>
               </div>
               <span>•</span>
               <div className="flex items-center gap-1">
@@ -284,7 +305,7 @@ export default function ServiceDetailSidebar({
             <div>
               <p className="font-bold text-lg flex items-center justify-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                {service.rating || 0}
+                {Number(liveRating).toFixed(1)}
               </p>
               <p className="text-muted-foreground">Rating</p>
             </div>
