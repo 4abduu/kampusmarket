@@ -2049,8 +2049,8 @@ export function useAdminDashboardController() {
                   ...c,
                   name: updatedCat.name,
                   type: updatedCat.type,
-                  sortOrder: updatedCat.sort_order,
-                  isActive: updatedCat.is_active,
+                  sortOrder: updatedCat.sortOrder ?? updatedCat.sort_order ?? 0,
+                  isActive: updatedCat.isActive !== undefined ? updatedCat.isActive : updatedCat.is_active,
                   slug: updatedCat.slug,
                   description: updatedCat.description,
                 }
@@ -2074,8 +2074,8 @@ export function useAdminDashboardController() {
           slug: newCat.slug,
           type: newCat.type,
           description: newCat.description,
-          sortOrder: newCat.sort_order || 0,
-          isActive: newCat.is_active,
+          sortOrder: newCat.sortOrder ?? newCat.sort_order ?? 0,
+          isActive: newCat.isActive !== undefined ? newCat.isActive : newCat.is_active,
           createdAt:
             newCat.created_at || new Date().toISOString().split("T")[0],
         };
