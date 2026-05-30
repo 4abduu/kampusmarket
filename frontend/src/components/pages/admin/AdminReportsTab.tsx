@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, MessageCircle, Ban, Search, X, Check } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X, Check, Package, Briefcase, User } from "lucide-react";
 import { formatAdminDate } from "./admin-dashboard.shared";
 
 interface Props {
@@ -24,6 +24,56 @@ interface Props {
 }
 
 export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleResolveReport, handleDismissReport }: Props) {
+
+  const renderReportTypeBadge = (type: string) => {
+    switch (type) {
+      case "product":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-700 ml-2">
+            <Package className="h-3 w-3 mr-1" />
+            Barang
+          </span>
+        );
+      case "service":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-purple-200 bg-purple-50 text-purple-700 ml-2">
+            <Briefcase className="h-3 w-3 mr-1" />
+            Jasa
+          </span>
+        );
+      case "account":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 ml-2">
+            <User className="h-3 w-3 mr-1" />
+            Akun
+          </span>
+        );
+      case "chat":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 ml-2">
+            <MessageCircle className="h-3 w-3 mr-1" />
+            Chat
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderReportTarget = (report: any) => {
+    switch (report.reportType) {
+      case "product":
+        return report.productTitle ? `Target: ${report.productTitle}` : "Target: Produk (Tidak diketahui)";
+      case "service":
+        return report.productTitle ? `Target: ${report.productTitle}` : "Target: Layanan (Tidak diketahui)";
+      case "account":
+        return `Target: ${report.reportedUser?.name || "User (Tidak diketahui)"}`;
+      case "chat":
+        return "Target: Percakapan Chat";
+      default:
+        return null;
+    }
+  };
 
   return (
     <Card>
@@ -61,9 +111,14 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                           <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                             {report.reason}
                           </p>
+                          {renderReportTypeBadge(report.reportType)}
                         </div>
                         
-                        <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          {renderReportTarget(report)}
+                        </p>
+                        
+                        <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl mt-1">
                           {report.description}
                         </p>
                         

@@ -20,6 +20,10 @@ import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/Pr
 import { useToast } from "@/hooks/use-toast";
 import apiClient from "@/lib/api/client";
 
+type ActiveTab = "products" | "services" | "reviews";
+type ProductSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
+type ServiceSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
+
 interface ProfilePageProps {
   onNavigate: (
     page: string,
@@ -52,7 +56,6 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportOtherReason, setReportOtherReason] = useState("");
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const handleReportSubmit = async () => {
     if (!reportReason || !reportDescription) {
@@ -79,7 +82,6 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
 
     try {
-      setIsSubmittingReport(true);
       await apiClient.post("/reports", {
         reportedUserId: user.id,
         reason: finalReason,
@@ -101,8 +103,6 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
         description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmittingReport(false);
     }
   };
 

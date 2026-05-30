@@ -689,8 +689,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       await apiClient.post('/reports', {
         reason: reportReason,
         description: reportDescription,
-        reported_user_id: selectedReportMessage.senderId,
-        chat_id: chatDetail.id,
+        reportedUserId: selectedReportMessage.senderId,
+        chatId: chatDetail.id,
+        type: 'chat',
       });
       toast.success('Pesan berhasil dilaporkan');
       setShowReportModal(false);

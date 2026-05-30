@@ -152,7 +152,7 @@ export function renderPage(params: RenderPageParams) {
     case "search":
       return <SearchResultsPage onNavigate={onNavigate} />;
     case "profile":
-      return <ProfilePage onNavigate={onNavigate} userId={selectedUserId || undefined} />;
+      return <ProfilePage onNavigate={onNavigate} userId={selectedUserId || undefined} isLoggedIn={isLoggedIn} />;
     case "landing":
     default:
       return (

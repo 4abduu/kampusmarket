@@ -257,7 +257,11 @@ export interface Report {
   reportNumber: string;
   reporter: User;
   reportedUser: User;
+  reportType?: "product" | "service" | "account" | "chat";
   productId?: string;
+  productTitle?: string;
+  chatId?: string;
+  chatMessage?: string;
   reason: string;
   description: string;
   evidence?: string[];
