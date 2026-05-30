@@ -93,12 +93,25 @@ class Report extends Model
         return "RP-{$date}-{$random}";
     }
 
+
     /**
-     * Mark as reviewed.
+     * Mark as warning.
      */
-    public function markAsReviewed(): void
+    public function markAsWarning(): void
     {
-        $this->status = ReportStatus::REVIEWED;
+        $this->status = ReportStatus::WARNING;
+        $this->save();
+    }
+
+    /**
+     * Mark as banned.
+     */
+    public function markAsBanned(string $resolution, ?string $adminNotes = null): void
+    {
+        $this->status = ReportStatus::BANNED;
+        $this->resolution = $resolution;
+        $this->admin_notes = $adminNotes;
+        $this->resolved_at = now();
         $this->save();
     }
 

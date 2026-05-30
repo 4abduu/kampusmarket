@@ -349,6 +349,7 @@ class UserController extends Controller
         $user->update([
             'is_warned' => true,
             'warning_reason' => $request->warningReason,
+            'warning_count' => $user->warning_count + 1,
         ]);
 
         return response()->json([

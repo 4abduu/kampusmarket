@@ -1,17 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { XCircle, Check, X } from "lucide-react";
+import { XCircle, Check, X, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { formatAdminDate } from "./admin-dashboard.shared";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
   cancelRequests: any[];
+  cancelRequestRoleFilter: "all" | "pembeli" | "penjual";
+  setCancelRequestRoleFilter: (value: "all" | "pembeli" | "penjual") => void;
+  cancelRequestSearchTerm: string;
+  setCancelRequestSearchTerm: (value: string) => void;
   formatPrice: (value: number) => string;
   handleApproveCancelRequest: (request: any) => void;
   handleRejectCancelRequest: (request: any) => void;
 }
 
-export default function AdminCancelRequestsTab({ cancelRequests, formatPrice, handleApproveCancelRequest, handleRejectCancelRequest }: Props) {
+export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRoleFilter, setCancelRequestRoleFilter, cancelRequestSearchTerm, setCancelRequestSearchTerm, formatPrice, handleApproveCancelRequest, handleRejectCancelRequest }: Props) {
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -19,6 +25,33 @@ export default function AdminCancelRequestsTab({ cancelRequests, formatPrice, ha
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div><CardTitle>Permintaan Pembatalan</CardTitle><CardDescription>Permintaan pembatalan pesanan yang sudah dikonfirmasi</CardDescription></div>
             <div className="text-sm text-muted-foreground">{cancelRequests.length} permintaan</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Cari nomor request, alasan, atau nama pemohon..."
+                value={cancelRequestSearchTerm}
+                onChange={(e) => setCancelRequestSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={cancelRequestRoleFilter} onValueChange={(value: any) => setCancelRequestRoleFilter(value)}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Peran Pemohon" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Peran</SelectItem>
+                <SelectItem value="pembeli">Pembeli</SelectItem>
+                <SelectItem value="penjual">Penjual</SelectItem>
+              </SelectContent>
+            </Select>
+            {(cancelRequestSearchTerm !== "" || cancelRequestRoleFilter !== "all") && (
+              <Button variant="ghost" size="sm" onClick={() => { setCancelRequestSearchTerm(""); setCancelRequestRoleFilter("all"); }} className="text-xs text-muted-foreground">
+                <X className="h-3 w-3 mr-1" />Reset
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -57,6 +90,16 @@ export default function AdminCancelRequestsTab({ cancelRequests, formatPrice, ha
                             Ditolak
                           </Badge>
                         )}
+                        {cancelReq.status === "cancelled" && (
+                          <Badge variant="outline" className="text-[10px] bg-slate-50/50 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800">
+                            Dibatalkan
+                          </Badge>
+                        )}
+                        {cancelReq.status === "withdrawn" && (
+                          <Badge variant="outline" className="text-[10px] bg-slate-50/50 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800">
+                            Ditarik
+                          </Badge>
+                        )}
                       </div>
                       
                       <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
@@ -67,7 +110,10 @@ export default function AdminCancelRequestsTab({ cancelRequests, formatPrice, ha
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
                           <span className="text-slate-400 dark:text-slate-500">Pemohon:</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">{cancelReq.requester?.name || "Unknown"}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {cancelReq.requester?.name || "Unknown"}{" "}
+                            {cancelReq.requester?.id === cancelReq.order?.buyer?.id ? "(Pembeli)" : cancelReq.requester?.id === cancelReq.order?.seller?.id ? "(Penjual)" : ""}
+                          </span>
                         </div>
                         <span className="text-slate-300 dark:text-slate-800 hidden sm:inline">•</span>
                         <div className="flex items-center gap-1.5">

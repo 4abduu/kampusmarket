@@ -32,6 +32,8 @@ class UserResource extends JsonResource
             'isBanned'    => $this->is_banned,
             'banReason'   => $this->ban_reason,
             'isWarned'    => $this->is_warned,
+            'warningReason' => $this->warning_reason,
+            'warningCount'=> $this->warning_count,
             'role'        => $this->role?->value ?? $this->role,
 
             'rating'      => (float) $this->rating,

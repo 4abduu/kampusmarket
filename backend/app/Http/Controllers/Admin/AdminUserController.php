@@ -237,6 +237,7 @@ class AdminUserController extends Controller
             $user->update([
                 'is_warned' => true,
                 'warning_reason' => $validated['warning_reason'],
+                'warning_count' => $user->warning_count + 1,
             ]);
 
             \App\Models\Notification::create([

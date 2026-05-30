@@ -14,7 +14,7 @@ export default function AdminFooter() {
           </div>
 
           {/* Right - Copyright */}
-          <span>&copy; 2024 KampusMarket</span>
+          <span>&copy; 2026 KampusMarket</span>
         </div>
       </div>
     </footer>

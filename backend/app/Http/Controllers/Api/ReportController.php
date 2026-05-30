@@ -211,7 +211,8 @@ class ReportController extends Controller
                 'total' => $reports->total(),
                 'counts' => [
                     'pending' => Report::where('status', 'pending')->count(),
-                    'reviewed' => Report::where('status', 'reviewed')->count(),
+                    'warning' => Report::where('status', 'warning')->count(),
+                    'banned' => Report::where('status', 'banned')->count(),
                     'resolved' => Report::where('status', 'resolved')->count(),
                     'dismissed' => Report::where('status', 'dismissed')->count(),
                 ],
@@ -220,16 +221,16 @@ class ReportController extends Controller
     }
 
     /**
-     * Mark report as reviewed (Admin).
+     * Mark report as warning (Admin).
      */
-    public function review(string $id): JsonResponse
+    public function review(string $id, Request $request): JsonResponse
     {
         $report = Report::where('uuid', $id)->firstOrFail();
-        $report->markAsReviewed();
+        $report->markAsWarning();
 
         return response()->json([
             'success' => true,
-            'message' => 'Laporan ditandai sedang ditinjau',
+            'message' => 'Status laporan berhasil diperbarui',
             'data' => new ReportResource($report->fresh()),
         ]);
     }
@@ -248,8 +249,6 @@ class ReportController extends Controller
 
         $report = Report::where('uuid', $id)->firstOrFail();
 
-        $report->resolve($request->resolution, $request->adminNotes);
-
         // Optionally ban user
         if ($request->banUser) {
             $reportedUser = $report->reportedUser;
@@ -257,6 +256,9 @@ class ReportController extends Controller
                 'is_banned' => true,
                 'ban_reason' => $request->banReason,
             ]);
+            $report->markAsBanned($request->resolution, $request->adminNotes);
+        } else {
+            $report->resolve($request->resolution, $request->adminNotes);
         }
 
         return response()->json([

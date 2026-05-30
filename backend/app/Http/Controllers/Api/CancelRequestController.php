@@ -20,7 +20,7 @@ class CancelRequestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = CancelRequest::with(['order', 'requester'])
+        $query = CancelRequest::with(['order.product', 'order.buyer', 'order.seller', 'requester'])
             ->where('requester_id', $request->user()->id);
 
         if ($request->has('status')) {
@@ -115,7 +115,7 @@ class CancelRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Permintaan pembatalan berhasil dikirim',
-            'data' => new CancelRequestResource($cancelRequest->load(['order', 'requester'])),
+            'data' => new CancelRequestResource($cancelRequest->load(['order.product', 'order.buyer', 'order.seller', 'requester'])),
         ], 201);
     }
 
@@ -124,7 +124,7 @@ class CancelRequestController extends Controller
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $cancelRequest = CancelRequest::with(['order', 'requester'])
+        $cancelRequest = CancelRequest::with(['order.product', 'order.buyer', 'order.seller', 'requester'])
             ->where('uuid', $id)
             ->firstOrFail();
 
@@ -153,7 +153,7 @@ class CancelRequestController extends Controller
      */
     public function adminIndex(Request $request): JsonResponse
     {
-        $query = CancelRequest::with(['order.product', 'requester']);
+        $query = CancelRequest::with(['order.product', 'order.buyer', 'order.seller', 'requester']);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -240,7 +240,7 @@ class CancelRequestController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Permintaan pembatalan disetujui',
-                'data' => new CancelRequestResource($cancelRequest->fresh()),
+                'data' => new CancelRequestResource($cancelRequest->fresh(['order.product', 'order.buyer', 'order.seller', 'requester'])),
             ]);
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
@@ -275,7 +275,7 @@ class CancelRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Permintaan pembatalan ditolak',
-            'data' => new CancelRequestResource($cancelRequest->fresh()),
+            'data' => new CancelRequestResource($cancelRequest->fresh(['order.product', 'order.buyer', 'order.seller', 'requester'])),
         ]);
     }
 }

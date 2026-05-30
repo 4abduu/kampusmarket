@@ -109,6 +109,7 @@ export function useAdminDashboardController() {
     useState<CancelRequest | null>(null);
   const [cancelApproveNotes, setCancelApproveNotes] = useState("");
   const [cancelRejectReasonInput, setCancelRejectReasonInput] = useState("");
+  const [cancelRequestRoleFilter, setCancelRequestRoleFilter] = useState<"all" | "pembeli" | "penjual">("all");
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -301,8 +302,9 @@ export function useAdminDashboardController() {
 
   const [reportSearchTerm, setReportSearchTerm] = useState("");
   const [reportStatusFilter, setReportStatusFilter] = useState<
-    "all" | "pending" | "reviewed" | "resolved"
+    "all" | "pending" | "resolved" | "warning" | "banned"
   >("all");
+  const [cancelRequestSearchTerm, setCancelRequestSearchTerm] = useState("");
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date>(new Date());
@@ -430,8 +432,9 @@ export function useAdminDashboardController() {
       role: user.role || "student",
       isBanned: user.isBanned || false,
       isVerified: user.isVerified || false,
-      isWarned: user.isWarned || false,
-      warningReason: user.warningReason || "",
+      isWarned: user.isWarned || user.is_warned || false,
+      warningReason: user.warningReason || user.warning_reason || "",
+      warningCount: user.warningCount || user.warning_count || 0,
       joinedAt: user.joinedAt || user.created_at || new Date().toISOString(),
       createdAt: user.joinedAt || user.created_at || new Date().toISOString(),
       banReason: user.banReason || "",
@@ -528,6 +531,8 @@ export function useAdminDashboardController() {
                 id: report.reportedUser.id?.toString() || report.reportedUser.uuid || "",
                 name: report.reportedUser.name || "Unknown",
                 email: report.reportedUser.email || "",
+                warningCount: report.reportedUser.warningCount || report.reportedUser.warning_count || 0,
+                isBanned: report.reportedUser.isBanned || report.reportedUser.is_banned || false,
               }
             : {
                 id: report.reported_user_id?.toString() || "",
@@ -566,7 +571,13 @@ export function useAdminDashboardController() {
         request.order?.id ||
         request.order?.uuid ||
         "",
-      order: request.order,
+      order: request.order
+        ? {
+            ...request.order,
+            buyer: request.order.buyer ? mapUser(request.order.buyer) : undefined,
+            seller: request.order.seller ? mapUser(request.order.seller) : undefined,
+          }
+        : undefined,
       requester,
       reason: request.reason || "other",
       description: request.description || "",
@@ -1285,12 +1296,12 @@ export function useAdminDashboardController() {
           report.description
             .toLowerCase()
             .includes(reportSearchTerm.toLowerCase()) ||
-          report.reporter.name
-            .toLowerCase()
-            .includes(reportSearchTerm.toLowerCase()) ||
-          report.reportedUser.name
-            .toLowerCase()
-            .includes(reportSearchTerm.toLowerCase());
+          report.reporter?.name
+            ?.toLowerCase()
+            ?.includes(reportSearchTerm.toLowerCase()) ||
+          report.reportedUser?.name
+            ?.toLowerCase()
+            ?.includes(reportSearchTerm.toLowerCase());
         const matchesStatus =
           reportStatusFilter === "all" || report.status === reportStatusFilter;
         return matchesSearch && matchesStatus;
@@ -1658,14 +1669,14 @@ export function useAdminDashboardController() {
           setReports(
             reports.map((r) =>
               r.id === selectedReport.id
-                ? { ...r, status: "reviewed" as const }
+                ? { ...r, status: "warning" as const }
                 : r,
             ),
           );
           setUsers(
             users.map((u) =>
               u.id === selectedReport.reportedUser.id
-                ? { ...u, isWarned: true, warningReason: selectedReport.reason }
+                ? { ...u, isWarned: true, warningReason: selectedReport.reason, warningCount: (u.warningCount || 0) + 1 }
                 : u,
             ),
           );
@@ -1705,8 +1716,8 @@ export function useAdminDashboardController() {
           );
           setReports(
             reports.map((r) =>
-              r.id === selectedReport.id
-                ? { ...r, status: "resolved" as const }
+              r.reportedUser?.id === selectedReport.reportedUser.id
+                ? { ...r, status: "banned" as const }
                 : r,
             ),
           );
@@ -1720,6 +1731,41 @@ export function useAdminDashboardController() {
         }
       };
       void run();
+    }
+  };
+  const handleResolveReport = async (report: Report) => {
+    try {
+      await adminReportsApi.resolveReport(report.id, {
+        resolution: `Diselesaikan oleh admin: ${report.reason}`,
+        banUser: false,
+      });
+      setReports(
+        reports.map((r) =>
+          r.id === report.id
+            ? { ...r, status: "resolved" as const }
+            : r,
+        ),
+      );
+      showSuccess(`Laporan untuk "${report.reportedUser?.name || 'User'}" berhasil diselesaikan`);
+    } catch (err) {
+      console.error(err);
+      showSuccess("Gagal menyelesaikan laporan, coba lagi");
+    }
+  };
+  const handleDismissReport = async (report: Report) => {
+    try {
+      await adminReportsApi.dismissReport(report.id);
+      setReports(
+        reports.map((r) =>
+          r.id === report.id
+            ? { ...r, status: "dismissed" as const }
+            : r,
+        ),
+      );
+      showSuccess(`Laporan untuk "${report.reportedUser?.name || 'User'}" berhasil ditolak`);
+    } catch (err) {
+      console.error(err);
+      showSuccess("Gagal menolak laporan, coba lagi");
     }
   };
 
@@ -2303,15 +2349,21 @@ export function useAdminDashboardController() {
         label: "Menunggu",
         className: "border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400",
       },
-      reviewed: {
-        variant: "default",
-        label: "Ditinjau",
-        className: "bg-secondary text-white hover:bg-secondary/90 border-transparent",
-      },
+
       resolved: {
         variant: "default",
         label: "Selesai",
         className: "bg-primary text-white hover:bg-primary/90 border-transparent",
+      },
+      warning: {
+        variant: "secondary",
+        label: "Warning",
+        className: "bg-amber-500 text-white hover:bg-amber-600 border-transparent",
+      },
+      banned: {
+        variant: "destructive",
+        label: "Banned",
+        className: "bg-red-600 text-white hover:bg-red-700 border-transparent",
       },
     };
     const statusConfig = config[status] || config.pending;
@@ -2438,6 +2490,40 @@ export function useAdminDashboardController() {
 
   const facultyAccentClass = "bg-slate-700";
 
+  const filteredCancelRequests = useMemo(() => {
+    return cancelRequests.filter((cr) => {
+      const matchesRole = (() => {
+        if (cancelRequestRoleFilter === "all") return true;
+        const isBuyer = cr.requester?.id === cr.order?.buyer?.id;
+        const isSeller = cr.requester?.id === cr.order?.seller?.id;
+        if (cancelRequestRoleFilter === "pembeli" && isBuyer) return true;
+        if (cancelRequestRoleFilter === "penjual" && isSeller) return true;
+        return false;
+      })();
+      const matchesSearch =
+        cancelRequestSearchTerm === "" ||
+        cr.requestNumber
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase()) ||
+        cr.description
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase()) ||
+        cr.reason
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase()) ||
+        cr.requester?.name
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase()) ||
+        cr.orderId
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase()) ||
+        cr.order?.orderNumber
+          ?.toLowerCase()
+          ?.includes(cancelRequestSearchTerm.toLowerCase());
+      return matchesRole && matchesSearch;
+    });
+  }, [cancelRequests, cancelRequestRoleFilter, cancelRequestSearchTerm]);
+
   return {
     activeTab,
     setActiveTab,
@@ -2451,6 +2537,7 @@ export function useAdminDashboardController() {
     users,
     withdrawals,
     cancelRequests,
+    filteredCancelRequests,
     platformRevenue,
     // Per-resource loading states
     overviewLoading,
@@ -2646,6 +2733,10 @@ export function useAdminDashboardController() {
     setCancelApproveNotes,
     cancelRejectReasonInput,
     setCancelRejectReasonInput,
+    cancelRequestRoleFilter,
+    setCancelRequestRoleFilter,
+    cancelRequestSearchTerm,
+    setCancelRequestSearchTerm,
     showFacultyDialog,
     setShowFacultyDialog,
     selectedFaculty,
@@ -2678,6 +2769,8 @@ export function useAdminDashboardController() {
     handleBanFromReport,
     confirmSendWarning,
     confirmBanFromReport,
+    handleResolveReport,
+    handleDismissReport,
     handleApproveWithdrawal,
     handleRejectWithdrawal,
     handleProcessWithdrawal,

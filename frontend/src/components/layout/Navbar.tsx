@@ -26,7 +26,6 @@ import {
   LogOut,
   LayoutDashboard,
   Bell,
-  Home,
   ShieldCheck,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -180,10 +179,6 @@ export default function Navbar({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onNavigate("landing")}>
-                  <Home className="mr-2 h-4 w-4" />
-                  <span>Lihat Website</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onNavigate("admin-notifications")}>
                   <Bell className="mr-2 h-4 w-4" />
                   <span>Notifikasi</span>

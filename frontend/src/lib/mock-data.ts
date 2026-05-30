@@ -17,6 +17,7 @@ export interface User {
   banReason?: string;
   isWarned?: boolean;
   warningReason?: string;
+  warningCount?: number;
   role?: "user" | "admin";
   googleId?: string;
   joinedAt: string;
@@ -260,7 +261,7 @@ export interface Report {
   reason: string;
   description: string;
   evidence?: string[];
-  status: "pending" | "reviewed" | "resolved" | "dismissed";
+  status: "pending" | "resolved" | "dismissed" | "warning" | "banned";
   priority: "low" | "medium" | "high";
   adminNotes?: string;
   resolution?: string;
@@ -3237,7 +3238,7 @@ export const mockReports: Report[] = [
     reason: "Penjual tidak responsif",
     description: "Sudah bayar tapi penjual tidak merespons chat dan tidak mengirim barang selama 3 hari.",
     evidence: ["/evidence/chat1.png", "/evidence/payment1.png"],
-    status: "reviewed",
+    status: "warning",
     priority: "high",
     adminNotes: "Sudah dihubungi seller, ternyata sedang sakit. Akan dikirim dalam 2 hari.",
     createdAt: "2024-11-17T11:00:00",
@@ -3266,7 +3267,7 @@ export const mockReports: Report[] = [
     reason: "Barang rusak saat diterima",
     description: "Barang yang diterima dalam kondisi rusak, kemungkinan karena packing yang buruk.",
     evidence: ["/evidence/damaged1.jpg"],
-    status: "reviewed",
+    status: "warning",
     priority: "medium",
     adminNotes: "Seller dan buyer sudah dihubungi. Seller setuju mengganti barang.",
     createdAt: "2024-11-14T15:00:00",
@@ -3315,7 +3316,7 @@ export const mockReports: Report[] = [
     reportedUser: mockUsers[19],
     reason: "Seller tidak kooperatif",
     description: "Seller menolak menerima return padahal barang ada cacat produksi.",
-    status: "reviewed",
+    status: "warning",
     priority: "medium",
     adminNotes: "Sedang dalam proses mediasi antara kedua belah pihak.",
     createdAt: "2024-11-10T11:00:00",
@@ -3383,7 +3384,7 @@ export const mockReports: Report[] = [
     reason: "Transaksi mencurigakan",
     description: "Seller meminta pembayaran di luar aplikasi, mencurigakan.",
     evidence: ["/evidence/chat_suspicious1.jpg"],
-    status: "reviewed",
+    status: "warning",
     priority: "high",
     adminNotes: "Seller sudah diingatkan untuk transaksi di dalam aplikasi.",
     createdAt: "2024-11-05T08:00:00",
@@ -3421,7 +3422,7 @@ export const mockReports: Report[] = [
     reportedUser: mockUsers[35],
     reason: "Pengiriman ke alamat salah",
     description: "Barang dikirim ke alamat yang bukan milik saya.",
-    status: "reviewed",
+    status: "warning",
     priority: "medium",
     adminNotes: "Seller dan kurir sudah dihubungi untuk investigasi.",
     createdAt: "2024-11-02T11:00:00",

@@ -43,7 +43,6 @@ export default function AdminDashboardPage({
     revenueChartData,
     categoryChartData,
     withdrawals,
-    cancelRequests,
     platformRevenue,
     platformRevenueLoading,
     platformRevenueError,
@@ -202,6 +201,11 @@ export default function AdminDashboardPage({
     setRevenueModalOpen,
     selectedRevenueTransaction,
     showCategoryDialog,
+    cancelRequestRoleFilter,
+    setCancelRequestRoleFilter,
+    cancelRequestSearchTerm,
+    setCancelRequestSearchTerm,
+    filteredCancelRequests,
     setShowCategoryDialog,
     selectedCategory,
     categoryForm,
@@ -249,6 +253,8 @@ export default function AdminDashboardPage({
     confirmDeleteProduct,
     handleSendWarning,
     handleBanFromReport,
+    handleResolveReport,
+    handleDismissReport,
     confirmSendWarning,
     confirmBanFromReport,
     handleApproveWithdrawal,
@@ -500,6 +506,8 @@ export default function AdminDashboardPage({
                 getReportStatusBadge={getReportStatusBadge}
                 handleSendWarning={handleSendWarning}
                 handleBanFromReport={handleBanFromReport}
+                handleResolveReport={handleResolveReport}
+                handleDismissReport={handleDismissReport}
               />
             )}
           </TabsContent>
@@ -508,7 +516,11 @@ export default function AdminDashboardPage({
               <AdminCancelRequestsTabSkeleton />
             ) : (
               <AdminCancelRequestsTab
-                cancelRequests={cancelRequests}
+                cancelRequests={filteredCancelRequests}
+                cancelRequestRoleFilter={cancelRequestRoleFilter}
+                setCancelRequestRoleFilter={setCancelRequestRoleFilter}
+                cancelRequestSearchTerm={cancelRequestSearchTerm}
+                setCancelRequestSearchTerm={setCancelRequestSearchTerm}
                 formatPrice={formatPrice}
                 handleApproveCancelRequest={handleApproveCancelRequest}
                 handleRejectCancelRequest={handleRejectCancelRequest}

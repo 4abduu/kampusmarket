@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, MessageCircle, Ban, Search, X } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X, Check } from "lucide-react";
 import { formatAdminDate } from "./admin-dashboard.shared";
 
 interface Props {
@@ -19,9 +19,11 @@ interface Props {
   getReportStatusBadge: (status: string) => React.ReactNode;
   handleSendWarning: (report: any) => void;
   handleBanFromReport: (report: any) => void;
+  handleResolveReport: (report: any) => void;
+  handleDismissReport: (report: any) => void;
 }
 
-export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport }: Props) {
+export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleResolveReport, handleDismissReport }: Props) {
 
   return (
     <Card>
@@ -33,7 +35,7 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px] max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input type="search" placeholder="Cari alasan, pelapor, atau user dilaporkan..." value={reportSearchTerm} onChange={(e) => { setReportSearchTerm(e.target.value); setReportPage(1); }} className="pl-9" /></div>
-            <Select value={reportStatusFilter} onValueChange={(value) => { setReportStatusFilter(value); setReportPage(1); }}><SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Status</SelectItem><SelectItem value="pending">Menunggu</SelectItem><SelectItem value="reviewed">Ditinjau</SelectItem><SelectItem value="resolved">Selesai</SelectItem></SelectContent></Select>
+            <Select value={reportStatusFilter} onValueChange={(value) => { setReportStatusFilter(value); setReportPage(1); }}><SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Status</SelectItem><SelectItem value="pending">Menunggu</SelectItem><SelectItem value="warning">Warning</SelectItem><SelectItem value="banned">Banned</SelectItem><SelectItem value="resolved">Selesai</SelectItem></SelectContent></Select>
             {reportStatusFilter !== "all" && <Button variant="ghost" size="sm" onClick={() => { setReportSearchTerm(""); setReportStatusFilter("all"); setReportPage(1); }} className="text-xs text-muted-foreground"><X className="h-3 w-3 mr-1" />Reset</Button>}
           </div>
         </div>
@@ -69,7 +71,36 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-[12px] text-slate-500 dark:text-slate-400">
                           <span>Pelapor: <span className="font-medium text-slate-700 dark:text-slate-300">{report.reporter?.name || "-"}</span></span>
                           <span className="text-slate-300 dark:text-slate-800">•</span>
-                          <span>Dilaporkan: <span className="font-medium text-slate-700 dark:text-slate-300">{report.reportedUser?.name || "-"}</span></span>
+                          <span>
+                            Dilaporkan:{" "}
+                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                              {report.reportedUser?.name || "-"}
+                            </span>
+                            {/* Warning Bar Chart Visualization */}
+                            {report.reportedUser && (report.reportedUser.warningCount ?? 0) > 0 && (
+                              <div
+                                className="inline-flex items-center gap-0.5 ml-2 cursor-help"
+                                title={`Telah diberi peringatan: ${report.reportedUser.warningCount} kali`}
+                              >
+                                {[...Array(5)].map((_, i) => {
+                                  const isFilled = i < (report.reportedUser.warningCount ?? 0);
+                                  const isDanger = (report.reportedUser.warningCount ?? 0) >= 5 && isFilled;
+                                  return (
+                                    <div
+                                      key={i}
+                                      className={`w-1.5 h-3 rounded-sm border ${
+                                        isFilled
+                                          ? isDanger
+                                            ? "bg-red-500 border-red-500"
+                                            : "bg-amber-500 border-amber-500"
+                                          : "bg-transparent border-amber-500/40"
+                                      }`}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </span>
                           <span className="text-slate-300 dark:text-slate-800">•</span>
                           <span>{formatAdminDate(report.createdAt)}</span>
                         </div>
@@ -80,15 +111,25 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-slate-800/80">
                       {getReportStatusBadge(report.status)}
                       
-                      {report.status === "pending" && (
-                        <div className="flex gap-1 sm:mt-2">
-                          <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/50" onClick={() => handleSendWarning(report)}>
-                            <MessageCircle className="h-3.5 w-3.5 mr-1 text-slate-800 dark:text-slate-200" />Warning
-                          </Button>
-                          <Button variant="destructive" size="sm" className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
-                            <Ban className="h-3.5 w-3.5 mr-1 text-white" />
-                            <span className="text-white font-medium">Ban</span>
-                          </Button>
+                      {(report.status === "pending" || report.status === "warning") && (
+                        <div className="flex flex-col gap-1 sm:mt-2 w-full sm:w-auto">
+                          <div className="flex gap-1">
+                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-slate-200 text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/50" onClick={() => handleSendWarning(report)}>
+                              <MessageCircle className="h-3.5 w-3.5 mr-1 text-slate-800 dark:text-slate-200" />Warning
+                            </Button>
+                            <Button variant="destructive" size="sm" className="h-8 text-xs flex-1 sm:flex-initial bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
+                              <Ban className="h-3.5 w-3.5 mr-1 text-white" />
+                              <span className="text-white font-medium">Ban</span>
+                            </Button>
+                          </div>
+                          <div className="flex gap-1 mt-1">
+                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 dark:border-emerald-900/30 dark:text-emerald-400" onClick={() => handleResolveReport(report)}>
+                              <Check className="h-3.5 w-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />Selesaikan
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-rose-200 text-rose-600 hover:bg-rose-50/50 dark:border-rose-900/30 dark:text-rose-400" onClick={() => handleDismissReport(report)}>
+                              <X className="h-3.5 w-3.5 mr-1 text-rose-600 dark:text-rose-400" />Tolak
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
