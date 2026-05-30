@@ -1,5 +1,5 @@
 import React from "react";
-import { useFinancialModal } from "../FinancialActionModal";
+import { useFinancialModal } from "../FinancialContext";
 import { FinancialUserCard, FinancialAmountCard } from "../shared";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ChevronLeft, Landmark } from "lucide-react";

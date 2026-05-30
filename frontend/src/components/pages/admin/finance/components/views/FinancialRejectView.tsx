@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useFinancialModal } from "../FinancialActionModal";
+import { useFinancialModal } from "../FinancialContext";
 import { FinancialAmountCard } from "../shared";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

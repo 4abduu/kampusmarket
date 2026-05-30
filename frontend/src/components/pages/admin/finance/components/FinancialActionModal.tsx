@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FinancialDetailView } from "./views/FinancialDetailView";
 import { FinancialApproveView } from "./views/FinancialApproveView";
@@ -7,31 +7,13 @@ import { FinancialFinishView } from "./views/FinancialFinishView";
 import { FinancialFailedView } from "./views/FinancialFailedView";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-
-export type FinancialVariant = 'detail' | 'approve' | 'reject' | 'finish' | 'failed';
-
-interface FinancialModalContextType {
-  withdrawal: any;
-  loading: boolean;
-  error: string | null;
-  onClose: () => void;
-  onApprove: () => void;
-  onReject: (reason: string) => void;
-  onComplete: () => void;
-  onFail: (reason: string) => void;
-  onProcess: () => void;
-  setVariant: (variant: FinancialVariant) => void;
-}
-
-const FinancialModalContext = createContext<FinancialModalContextType | undefined>(undefined);
-
-export const useFinancialModal = () => {
-  const context = useContext(FinancialModalContext);
-  if (!context) {
-    throw new Error("useFinancialModal must be used within a FinancialModalContextProvider");
-  }
-  return context;
-};
+import { 
+  FinancialModalContext 
+} from "./FinancialContext";
+import type { 
+  FinancialVariant, 
+  FinancialModalContextType 
+} from "./FinancialContext";
 
 export interface FinancialActionModalProps {
   open: boolean;
