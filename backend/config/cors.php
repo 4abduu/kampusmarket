@@ -15,6 +15,9 @@ return [
         'http://127.0.0.1:3000',
         'https://kampusmarket.vercel.app',
         'https://kampusmarket.up.railway.app',
+        'https://www.kampusmarket.my.id',
+        'https://kampusmarket.my.id',
+        'https://api.kampusmarket.my.id',
     ],
 
     'allowed_origins_patterns' => [],
