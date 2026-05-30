@@ -3,13 +3,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Briefcase,
   Check,
   CheckCircle2,
   ChevronRight,
   DollarSign,
   MessageCircle,
-  Package,
   Star,
   Truck,
   Wallet,

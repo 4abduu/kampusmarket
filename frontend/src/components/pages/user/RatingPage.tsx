@@ -14,7 +14,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Briefcase,
   ChevronLeft,
   Eye,
   Image as ImageIcon,
