@@ -545,6 +545,7 @@ export function useAdminDashboardController() {
           productTitle: report.productTitle || "",
           chatId: report.chatId || report.chat_id || "",
           chatMessage: report.chatMessage || "",
+          chatAttachments: report.chatAttachments || [],
           reportType: report.reportType || "user",
           createdAt: report.createdAt || report.created_at || new Date().toISOString(),
         }) as unknown as Report,

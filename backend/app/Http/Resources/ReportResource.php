@@ -32,11 +32,13 @@ class ReportResource extends JsonResource
             // Target (optional)
             'productId' => $this->product?->uuid,
             'productTitle' => $this->product?->title,
-            'chatId' => $this->chat?->uuid,
-            'chatMessage' => $this->chat?->message,
+            'messageId' => $this->message?->uuid,
+            'chatId' => $this->message?->chat?->uuid,
+            'chatMessage' => $this->message?->content,
+            'chatAttachments' => $this->message ? $this->message->getImageUrls() : [],
             
             // Inferred or Stored Type
-            'reportType' => $this->type ?? ($this->chat_id ? 'chat' : ($this->product_id ? 'product' : 'user')),
+            'reportType' => $this->type ?? ($this->message_id ? 'chat' : ($this->product_id ? 'product' : 'user')),
             
             // Report details
             'reason' => $this->reason,

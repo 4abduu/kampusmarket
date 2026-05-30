@@ -37,6 +37,7 @@ import {
   Users,
   XCircle,
   Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import type { CancelRequest, Category, Product, Report, User } from "@/lib/mock-data";
@@ -202,6 +203,8 @@ export default function AdminActionDialogs({
 }: Props) {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
+  const [reportLightboxOpen, setReportLightboxOpen] = useState<boolean>(false);
+  const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>(0);
 
   const renderReportTypeBadge = (type?: string) => {
     switch (type) {
@@ -263,10 +266,39 @@ export default function AdminActionDialogs({
           </div>
         );
       case "chat":
+        if (report.chatAttachments && report.chatAttachments.length > 0) {
+          return (
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p className="text-sm font-medium mb-2 flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
+                <ImageIcon className="h-4 w-4" /> Gambar Dilampirkan:
+              </p>
+              <div className="flex gap-2">
+                {report.chatAttachments.map((url: string, idx: number) => (
+                  <div
+                    key={idx}
+                    className="relative h-16 w-16 overflow-hidden rounded-md border border-slate-200 cursor-zoom-in hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      setSelectedReportImageIndex(idx);
+                      setReportLightboxOpen(true);
+                    }}
+                  >
+                    <img src={url} alt={`Lampiran ${idx + 1}`} className="object-cover h-full w-full" />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Klik gambar untuk memperbesar</p>
+            </div>
+          );
+        }
+        
         return (
           <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-            <p className="text-sm font-medium mb-1">Chat Dilaporkan:</p>
-            <p className="text-sm text-muted-foreground">Percakapan Chat</p>
+            <p className="text-sm font-medium mb-1">Pesan yang Dilaporkan:</p>
+            {report.chatMessage ? (
+              <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{report.chatMessage}"</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Percakapan Chat</p>
+            )}
           </div>
         );
       default:
@@ -669,6 +701,27 @@ export default function AdminActionDialogs({
           }
           currentIndex={selectedImageIndex}
           totalCount={selectedProduct.imagesDetail?.length ?? selectedProduct.images.length}
+        />
+      )}
+
+      {/* Fullscreen Lightbox for Report Chat Attachments */}
+      {reportLightboxOpen && selectedReport && selectedReport.chatAttachments && (
+        <ImageLightbox
+          src={selectedReport.chatAttachments[selectedReportImageIndex]}
+          alt={`Lampiran chat ${selectedReportImageIndex + 1}`}
+          onClose={() => setReportLightboxOpen(false)}
+          onPrev={
+            selectedReportImageIndex > 0
+              ? () => setSelectedReportImageIndex(selectedReportImageIndex - 1)
+              : null
+          }
+          onNext={
+            selectedReportImageIndex < selectedReport.chatAttachments.length - 1
+              ? () => setSelectedReportImageIndex(selectedReportImageIndex + 1)
+              : null
+          }
+          currentIndex={selectedReportImageIndex}
+          totalCount={selectedReport.chatAttachments.length}
         />
       )}
     </>

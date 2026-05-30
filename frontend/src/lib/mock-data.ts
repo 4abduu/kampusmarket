@@ -257,11 +257,12 @@ export interface Report {
   reportNumber: string;
   reporter: User;
   reportedUser: User;
-  reportType?: "product" | "service" | "account" | "chat";
+  reportType?: "product" | "service" | "user" | "chat";
   productId?: string;
   productTitle?: string;
   chatId?: string;
   chatMessage?: string;
+  chatAttachments?: string[];
   reason: string;
   description: string;
   evidence?: string[];

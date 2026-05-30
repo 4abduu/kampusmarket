@@ -19,7 +19,7 @@ class Report extends Model
         'reporter_id',
         'reported_user_id',
         'product_id',
-        'chat_id',
+        'message_id',
         'type',
         'reason',
         'description',
@@ -61,11 +61,11 @@ class Report extends Model
     }
 
     /**
-     * Get the chat (if any).
+     * Get the message (if any).
      */
-    public function chat()
+    public function message()
     {
-        return $this->belongsTo(Chat::class);
+        return $this->belongsTo(Message::class);
     }
 
     /**

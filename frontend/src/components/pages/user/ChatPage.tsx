@@ -690,7 +690,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         reason: reportReason,
         description: reportDescription,
         reportedUserId: selectedReportMessage.senderId,
-        chatId: chatDetail.id,
+        messageId: selectedReportMessage.id,
         type: 'chat',
       });
       toast.success('Pesan berhasil dilaporkan');

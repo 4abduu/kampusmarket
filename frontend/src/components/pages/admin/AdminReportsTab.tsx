@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, MessageCircle, Ban, Search, X, Check, Package, Briefcase, User } from "lucide-react";
+import { AlertTriangle, MessageCircle, Ban, Search, X, Check, Package, Briefcase, User, Image as ImageIcon } from "lucide-react";
 import { formatAdminDate } from "./admin-dashboard.shared";
 
 interface Props {
@@ -69,7 +69,16 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
       case "account":
         return `Target: ${report.reportedUser?.name || "User (Tidak diketahui)"}`;
       case "chat":
-        return "Target: Percakapan Chat";
+        if (report.chatAttachments && report.chatAttachments.length > 0) {
+          return (
+            <span className="inline-flex items-center text-blue-600 dark:text-blue-400">
+              <ImageIcon className="h-3 w-3 mr-1" />
+              Gambar dilampirkan 
+            </span>
+          );
+        }
+        const snippet = report.chatMessage ? (report.chatMessage.length > 30 ? report.chatMessage.substring(0, 30) + '...' : report.chatMessage) : null;
+        return snippet ? `Target: Pesan "${snippet}"` : "Target: Percakapan Chat";
       default:
         return null;
     }
@@ -179,7 +188,7 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                                 <span className="text-white font-medium">Ban</span>
                               </Button>
                               <Button variant="outline" size="sm" className="h-8 text-xs w-full col-span-2 border-rose-200 text-rose-600 hover:bg-rose-50/50 dark:border-rose-900/30 dark:text-rose-400" onClick={() => handleDismissReport(report)}>
-                                <X className="h-3.5 w-3.5 mr-1.5 text-rose-600 dark:text-rose-400" />Tolak
+                                <X className="h-3.5 w-3.5 mr-1.5 text-rose-600 dark:text-rose-400" />Abaikan
                               </Button>
                             </>
                           )}

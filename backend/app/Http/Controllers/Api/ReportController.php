@@ -19,7 +19,7 @@ class ReportController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Report::with(['reporter', 'reportedUser', 'product', 'chat'])
+        $query = Report::with(['reporter', 'reportedUser', 'product', 'message', 'message.attachments'])
             ->where('reporter_id', $request->user()->id);
 
         if ($request->has('status')) {
@@ -63,11 +63,11 @@ class ReportController extends Controller
         if ($request->has('productId')) {
             $product = Product::where('uuid', $request->productId)->first();
             $query->where('product_id', $product?->id);
-        } elseif ($request->has('chatId')) {
-            $chat = \App\Models\Chat::where('uuid', $request->chatId)->first();
-            $query->where('chat_id', $chat?->id);
+        } elseif ($request->has('messageId')) {
+            $message = \App\Models\Message::where('uuid', $request->messageId)->first();
+            $query->where('message_id', $message?->id);
         } else {
-            $query->whereNull('product_id')->whereNull('chat_id');
+            $query->whereNull('product_id')->whereNull('message_id');
         }
 
         $existingReport = $query->first();
@@ -84,9 +84,9 @@ class ReportController extends Controller
             $product = Product::where('uuid', $request->productId)->first();
         }
 
-        $chat = null;
-        if ($request->has('chatId')) {
-            $chat = \App\Models\Chat::where('uuid', $request->chatId)->first();
+        $message = null;
+        if ($request->has('messageId')) {
+            $message = \App\Models\Message::where('uuid', $request->messageId)->first();
         }
 
         // Create report
@@ -95,7 +95,7 @@ class ReportController extends Controller
             'reporter_id' => $request->user()->id,
             'reported_user_id' => $reportedUser->id,
             'product_id' => $product?->id,
-            'chat_id' => $chat?->id,
+            'message_id' => $message?->id,
             'type' => $request->type,
             'reason' => $request->reason,
             'description' => $request->description,
@@ -127,7 +127,7 @@ class ReportController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Laporan berhasil dikirim',
-            'data' => new ReportResource($report->load(['reporter', 'reportedUser', 'product', 'chat'])),
+            'data' => new ReportResource($report->load(['reporter', 'reportedUser', 'product', 'message', 'message.attachments'])),
         ], 201);
     }
 
@@ -136,7 +136,7 @@ class ReportController extends Controller
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $report = Report::with(['reporter', 'reportedUser', 'product', 'chat'])
+        $report = Report::with(['reporter', 'reportedUser', 'product', 'message', 'message.attachments'])
             ->where('uuid', $id)
             ->firstOrFail();
 
@@ -160,7 +160,7 @@ class ReportController extends Controller
      */
     public function myReports(Request $request): JsonResponse
     {
-        $query = Report::with(['reportedUser', 'product', 'chat'])
+        $query = Report::with(['reportedUser', 'product', 'message', 'message.attachments'])
             ->where('reporter_id', $request->user()->id);
 
         if ($request->has('status')) {
@@ -190,7 +190,7 @@ class ReportController extends Controller
      */
     public function adminIndex(Request $request): JsonResponse
     {
-        $query = Report::with(['reporter', 'reportedUser', 'product', 'chat']);
+        $query = Report::with(['reporter', 'reportedUser', 'product', 'message', 'message.attachments']);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);

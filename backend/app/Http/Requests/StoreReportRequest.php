@@ -23,7 +23,7 @@ class StoreReportRequest extends FormRequest
         return [
             'reportedUserId' => ['required', 'exists:users,uuid'],
             'productId' => ['nullable', 'exists:products,uuid'],
-            'chatId' => ['nullable', 'exists:chats,uuid'],
+            'messageId' => ['nullable', 'exists:messages,uuid'],
             'type' => ['nullable', 'string', 'max:50'],
             'reason' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:2000'],
@@ -42,6 +42,7 @@ class StoreReportRequest extends FormRequest
             'reportedUserId.required' => 'Pengguna yang dilaporkan wajib dipilih',
             'reportedUserId.exists' => 'Pengguna tidak ditemukan',
             'productId.exists' => 'Produk tidak ditemukan',
+            'messageId.exists' => 'Pesan tidak ditemukan',
             'reason.required' => 'Alasan laporan wajib diisi',
             'reason.max' => 'Alasan maksimal 100 karakter',
             'description.required' => 'Deskripsi wajib diisi',
@@ -68,9 +69,9 @@ class StoreReportRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('chatId')) {
+        if ($this->has('messageId')) {
             $this->merge([
-                'chat_id' => $this->chatId,
+                'message_id' => $this->messageId,
             ]);
         }
     }
