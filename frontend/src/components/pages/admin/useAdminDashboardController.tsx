@@ -102,6 +102,7 @@ export function useAdminDashboardController() {
   >("withdrawals");
 
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
+  const [cancelRequestsLoading, setCancelRequestsLoading] = useState(false);
   const [showCancelApproveDialog, setShowCancelApproveDialog] = useState(false);
   const [showCancelRejectDialog, setShowCancelRejectDialog] = useState(false);
   const [selectedCancelRequest, setSelectedCancelRequest] =
@@ -1051,6 +1052,7 @@ export function useAdminDashboardController() {
   };
 
   const loadCancelRequestsData = async () => {
+    setCancelRequestsLoading(true);
     try {
       const res = await adminCancelRequestsApi.getCancelRequests({
         per_page: 100,
@@ -1061,6 +1063,8 @@ export function useAdminDashboardController() {
       markResourceLoaded("cancel-requests");
     } catch (err) {
       console.error("Failed to load cancel requests:", err);
+    } finally {
+      setCancelRequestsLoading(false);
     }
   };
 
@@ -2457,6 +2461,7 @@ export function useAdminDashboardController() {
     platformRevenueLoading,
     categoriesLoading,
     facultiesLoading,
+    cancelRequestsLoading,
     // Per-resource error states
     overviewError,
     usersError,

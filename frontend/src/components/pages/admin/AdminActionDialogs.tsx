@@ -34,6 +34,7 @@ import {
   UserCheck,
   Users,
   XCircle,
+  Loader2,
 } from "lucide-react";
 
 import type { CancelRequest, Category, Product, Report, User } from "@/lib/mock-data";
@@ -199,16 +200,18 @@ export default function AdminActionDialogs({
       <Dialog open={showUserDetail} onOpenChange={setShowUserDetail}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Detail User
+            <DialogTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Detail User
+              </span>
+              {userDetailLoading && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
-              {userDetailLoading && (
-                <p className="text-sm text-muted-foreground">Memuat detail user...</p>
-              )}
               {userDetailError && (
                 <p className="text-sm text-red-600">{userDetailError}</p>
               )}

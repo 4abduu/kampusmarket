@@ -477,14 +477,14 @@ export function ReportsTabSkeleton() {
         <CardContent>
           <div className="space-y-4 animate-pulse">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={i} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-5 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700/50 transition-all duration-200 bg-white dark:bg-slate-900/10">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 w-full">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Circle Report type icon placeholder */}
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                      <Skeleton className="h-5 w-5 rounded-full" />
+                    <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center shrink-0">
+                      <Skeleton className="h-5 w-5 rounded-full bg-red-200 dark:bg-red-800" />
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 min-w-0 space-y-2.5">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-5 w-40 font-medium" />
                         <Skeleton className="h-4 w-12 rounded" />
@@ -499,20 +499,19 @@ export function ReportsTabSkeleton() {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-4 mt-2">
-                        <Skeleton className="h-3 w-28" />
-                        <Skeleton className="h-3 w-28" />
-                        <Skeleton className="h-3 w-16" />
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
+                        <Skeleton className="h-3.5 w-28" />
+                        <Skeleton className="h-3.5 w-28" />
+                        <Skeleton className="h-3.5 w-16" />
                       </div>
                     </div>
                   </div>
-                  {/* Action buttons on right side */}
-                  <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                  {/* Status & Actions layout alignment */}
+                  <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-slate-800/80 shrink-0">
                     <Skeleton className="h-6 w-16 rounded-full" />
-                    <div className="flex gap-1 mt-2">
+                    <div className="flex gap-1 sm:mt-2">
                       <Skeleton className="h-8 w-20 rounded" />
                       <Skeleton className="h-8 w-14 rounded" />
-                      <Skeleton className="h-8 w-16 rounded" />
                     </div>
                   </div>
                 </div>

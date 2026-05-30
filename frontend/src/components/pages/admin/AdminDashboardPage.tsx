@@ -26,6 +26,7 @@ import {
   ReportsTabSkeleton,
   FinanceTabSkeleton,
 } from "@/components/pages/admin/AdminTabSkeleton";
+import AdminCancelRequestsTabSkeleton from "@/components/skeleton/admin/AdminCancelRequestsTabSkeleton";
 
 interface AdminDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -54,6 +55,7 @@ export default function AdminDashboardPage({
     facultiesLoading,
     reportsLoading,
     withdrawalsLoading,
+    cancelRequestsLoading,
     filteredUsers,
     filteredProducts,
     filteredReports,
@@ -502,12 +504,16 @@ export default function AdminDashboardPage({
             )}
           </TabsContent>
           <TabsContent value="cancel-requests" className="space-y-6 py-2">
-            <AdminCancelRequestsTab
-              cancelRequests={cancelRequests}
-              formatPrice={formatPrice}
-              handleApproveCancelRequest={handleApproveCancelRequest}
-              handleRejectCancelRequest={handleRejectCancelRequest}
-            />
+            {cancelRequestsLoading ? (
+              <AdminCancelRequestsTabSkeleton />
+            ) : (
+              <AdminCancelRequestsTab
+                cancelRequests={cancelRequests}
+                formatPrice={formatPrice}
+                handleApproveCancelRequest={handleApproveCancelRequest}
+                handleRejectCancelRequest={handleRejectCancelRequest}
+              />
+            )}
           </TabsContent>
           <TabsContent value="orders" className="space-y-6 py-2">
             <AdminOrdersTab

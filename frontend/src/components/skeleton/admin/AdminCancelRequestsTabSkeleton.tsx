@@ -1,60 +1,74 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminCancelRequestsTabSkeleton() {
   return (
-    <div className="space-y-4">
-      {/* Filter Bar */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          <div className="flex flex-wrap gap-3 items-center">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cancel Requests Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {/* Header */}
-            <div className="grid grid-cols-7 gap-4 pb-4 border-b">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="h-4 w-20" />
-              ))}
+    <Card className="animate-pulse">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <CardTitle><Skeleton className="h-5 w-48" /></CardTitle>
+              <CardDescription><Skeleton className="h-3.5 w-72" /></CardDescription>
             </div>
-
-            {/* Cancel Request Rows */}
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-7 gap-4 py-3 border-b last:border-0 items-center">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
-            ))}
+            <Skeleton className="h-4 w-20" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-5 bg-white dark:bg-slate-900/10"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              
+              {/* Left side Metadata & Text representation */}
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                {/* Circle Icon Placeholder */}
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                </div>
+                
+                <div className="flex-1 min-w-0 space-y-2.5">
+                  {/* Title & Badge */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-4 w-32 font-semibold" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                  
+                  {/* Description Paragraph */}
+                  <div className="space-y-1">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="h-3.5 w-1/2" />
+                  </div>
+                  
+                  {/* Spacing & Metadata Info (Pemohon, Order UUID, Tanggal) */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-36" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center gap-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-10 rounded" />
+              {/* Right side Pricing & Actions layout */}
+              <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-slate-800/80 shrink-0">
+                <div className="text-right space-y-1">
+                  <Skeleton className="h-2.5 w-20 block sm:ml-auto" />
+                  <Skeleton className="h-4 w-24 font-bold block sm:ml-auto" />
+                </div>
+
+                <div className="flex gap-1 sm:mt-2">
+                  <Skeleton className="h-8 w-16 rounded" /> {/* Tolak Button */}
+                  <Skeleton className="h-8 w-20 rounded" /> {/* Setujui Button */}
+                </div>
+              </div>
+
+            </div>
+          </div>
         ))}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
