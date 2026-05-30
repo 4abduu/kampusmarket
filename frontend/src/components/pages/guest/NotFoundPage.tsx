@@ -14,14 +14,11 @@ export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
     const prev = document.body.classList.contains('no-chrome');
     const prevOverflow = document.body.style.overflow;
     document.body.classList.add('no-chrome');
-    document.body.style.overflow = 'hidden';
-    // Ensure URL reflects the Not Found page so layout rules apply
     try {
       if (!window.location.pathname.startsWith('/not-found')) {
         window.history.replaceState({}, '', '/not-found');
       }
     } catch (e) {
-      // ignore
     }
     return () => {
       if (!prev) document.body.classList.remove('no-chrome');
@@ -46,13 +43,13 @@ export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-emerald-50 px-4 py-10 sm:px-6 lg:px-10">
+    <div className="relative min-h-screen bg-emerald-50 px-4 py-10 sm:px-6 lg:px-10 overflow-y-auto">
       <div className="pointer-events-none absolute -top-24 left-[-4rem] h-72 w-72 rounded-full bg-emerald-200/70 blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-5rem] right-[-4rem] h-80 w-80 rounded-full bg-emerald-300/60 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.08),_transparent_36%),radial-gradient(circle_at_80%_20%,_rgba(52,211,153,0.12),_transparent_20%)]" />
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center">
-        <div className="grid w-full items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
+      <div className="relative mx-auto flex flex-col lg:flex-row min-h-auto lg:min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center lg:items-center gap-12 py-10 lg:py-0">
+        <div className="grid w-full items-center gap-8 lg:gap-12 lg:grid-cols-[1.15fr_.85fr]">
           <div className="order-2 lg:order-1">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 backdrop-blur-sm">
               <AlertCircle className="h-3.5 w-3.5" />
