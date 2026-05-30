@@ -469,18 +469,28 @@ export default function CatalogPage({
                 </Select>
 
                 {/* View Mode */}
-                <div className="hidden sm:flex border rounded-lg">
+                <div className="hidden sm:flex border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                   <Button
-                    variant={viewMode === "grid" ? "secondary" : "ghost"}
+                    variant={viewMode === "grid" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("grid")}
+                    className={`h-9 w-9 rounded-none transition-all duration-200 ${
+                      viewMode === "grid"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white hover:text-white"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
                   >
                     <Grid className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    variant={viewMode === "list" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("list")}
+                    className={`h-9 w-9 rounded-none transition-all duration-200 ${
+                      viewMode === "list"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white hover:text-white"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
                   >
                     <List className="h-4 w-4" />
                   </Button>
