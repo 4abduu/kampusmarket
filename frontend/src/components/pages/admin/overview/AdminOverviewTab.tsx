@@ -188,6 +188,8 @@ export default function AdminOverviewTab({
                     value && typeof value === "number"
                       ? value.toLocaleString()
                       : value
+                      ? value
+                      : ""
                   }
                 />
               </PieChart>
@@ -270,8 +272,6 @@ export default function AdminOverviewTab({
           </CardContent>
         </Card>
       </div>
-
-
 
       <Card>
         <CardHeader>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import AdminFooter from "@/components/layout/AdminFooter";
 import SellerWelcomeModal from "@/app/components/SellerWelcomeModal";
 import { renderPage } from "@/app/navigation/renderPage";
 import { NO_FOOTER_PAGES, NO_NAVBAR_PAGES } from "@/app/navigation/constants";
@@ -300,10 +299,13 @@ export default function Home() {
       </main>
       
       {/* Footer Logic */}
-      {isAdminPage ? (
-        <AdminFooter />
-      ) : !NO_FOOTER_PAGES.includes(currentPage) && (
-        <Footer onNavigate={handleNavigate} />
+      {(!NO_FOOTER_PAGES.filter((p) => !["admin", "admin-notifications"].includes(p)).includes(currentPage) || isAdminPage) && (
+        <Footer
+          onNavigate={handleNavigate}
+          isLoggedIn={isLoggedIn}
+          userRole={userRole}
+          isAdminPage={isAdminPage}
+        />
       )}
     </div>
   );

@@ -120,6 +120,7 @@ export default function AdminAddressesTab({
         }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb {
           background-color: rgb(71 85 105);
+          border-radius: 4px;
         }
       `}</style>
       <CardHeader className="pb-4">

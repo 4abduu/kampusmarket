@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FinancialAmountCard, FinancialStatusBadge } from "./components/shared";
+import { FinancialAmountCard, FinancialStatusBadge } from "./shared";
 import { Calendar, User, BarChart3, ShoppingBag, ShieldCheck } from "lucide-react";
 
 export interface RevenueDetailModalProps {

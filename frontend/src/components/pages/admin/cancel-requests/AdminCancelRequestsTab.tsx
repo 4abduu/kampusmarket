@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { XCircle, Check, X, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { formatAdminDate } from "./admin-dashboard.shared";
+import { formatAdminDate } from "../admin-dashboard.shared";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {

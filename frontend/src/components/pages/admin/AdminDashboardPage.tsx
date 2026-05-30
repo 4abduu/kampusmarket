@@ -4,29 +4,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Clock, LayoutDashboard } from "lucide-react";
-import AdminOverviewTab from "@/components/pages/admin/AdminOverviewTab";
-import AdminUsersTab from "@/components/pages/admin/AdminUsersTab";
-import AdminProductsTab from "@/components/pages/admin/AdminProductsTab";
-import AdminCategoriesTab from "@/components/pages/admin/AdminCategoriesTab";
-import AdminFacultiesTab from "@/components/pages/admin/AdminFacultiesTab";
-import AdminFacultyDialogs from "@/components/pages/admin/AdminFacultyDialogs";
-import AdminReportsTab from "@/components/pages/admin/AdminReportsTab";
-import AdminCancelRequestsTab from "@/components/pages/admin/AdminCancelRequestsTab";
-import AdminOrdersTab from "@/components/pages/admin/AdminOrdersTab";
-import AdminFinanceTab from "@/components/pages/admin/AdminFinanceTab";
-import AdminAddressesTab from "@/components/pages/admin/AdminAddressesTab";
-import AdminActionDialogs from "@/components/pages/admin/AdminActionDialogs";
+import AdminOverviewTab from "@/components/pages/admin/overview/AdminOverviewTab";
+import AdminUsersTab from "@/components/pages/admin/users/AdminUsersTab";
+import AdminProductsTab from "@/components/pages/admin/products/AdminProductsTab";
+import AdminCategoriesTab from "@/components/pages/admin/categories/AdminCategoriesTab";
+import AdminFacultiesTab from "@/components/pages/admin/faculties/AdminFacultiesTab";
+import AdminReportsTab from "@/components/pages/admin/reports/AdminReportsTab";
+import AdminCancelRequestsTab from "@/components/pages/admin/cancel-requests/AdminCancelRequestsTab";
+import AdminOrdersTab from "@/components/pages/admin/orders/AdminOrdersTab";
+import AdminFinanceTab from "@/components/pages/admin/finance/AdminFinanceTab";
+import AdminAddressesTab from "@/components/pages/admin/addresses/AdminAddressesTab";
+import UserDialogs from "@/components/pages/admin/users/components/UserDialogs";
+import ProductDialogs from "@/components/pages/admin/products/components/ProductDialogs";
+import CategoryDialogs from "@/components/pages/admin/categories/components/CategoryDialogs";
+import ReportDialogs from "@/components/pages/admin/reports/components/ReportDialogs";
+import CancelRequestDialogs from "@/components/pages/admin/cancel-requests/components/CancelRequestDialogs";
+import FacultyDialogs from "@/components/pages/admin/faculties/components/FacultyDialogs";
 import { useAdminDashboardController } from "@/components/pages/admin/useAdminDashboardController";
 import {
-  OverviewTabSkeleton,
-  UsersTabSkeleton,
-  ProductsTabSkeleton,
-  CategoriesTabSkeleton,
-  FacultiesTabSkeleton,
-  ReportsTabSkeleton,
-  FinanceTabSkeleton,
-} from "@/components/pages/admin/AdminTabSkeleton";
-import AdminCancelRequestsTabSkeleton from "@/components/skeleton/admin/AdminCancelRequestsTabSkeleton";
+  AdminOverviewTabSkeleton,
+  AdminUsersTabSkeleton,
+  AdminProductsTabSkeleton,
+  AdminCategoriesTabSkeleton,
+  AdminFacultiesTabSkeleton,
+  AdminReportsTabSkeleton,
+  AdminFinanceTabSkeleton,
+  AdminCancelRequestsTabSkeleton,
+} from "@/components/skeleton/admin";
 
 interface AdminDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -374,7 +378,7 @@ export default function AdminDashboardPage({
 
           <TabsContent value="overview" className="space-y-6 py-2">
             {overviewLoading ? (
-              <OverviewTabSkeleton />
+              <AdminOverviewTabSkeleton />
             ) : (
               <AdminOverviewTab
                 stats={stats}
@@ -388,7 +392,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="users" className="space-y-6 py-2">
             {usersLoading ? (
-              <UsersTabSkeleton />
+              <AdminUsersTabSkeleton />
             ) : (
               <AdminUsersTab
                 filteredUsers={filteredUsers}
@@ -417,7 +421,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="products" className="space-y-6 py-2">
             {productsLoading ? (
-              <ProductsTabSkeleton />
+              <AdminProductsTabSkeleton />
             ) : (
               <AdminProductsTab
                 filteredProducts={filteredProducts}
@@ -454,7 +458,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="categories" className="space-y-6 py-2">
             {categoriesLoading ? (
-              <CategoriesTabSkeleton />
+              <AdminCategoriesTabSkeleton />
             ) : (
               <AdminCategoriesTab
                 filteredCategories={filteredCategories}
@@ -471,7 +475,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="faculties" className="space-y-6 py-2">
             {facultiesLoading ? (
-              <FacultiesTabSkeleton />
+              <AdminFacultiesTabSkeleton />
             ) : (
               <AdminFacultiesTab
                 stats={stats}
@@ -496,7 +500,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="reports" className="space-y-6 py-2">
             {reportsLoading ? (
-              <ReportsTabSkeleton />
+              <AdminReportsTabSkeleton />
             ) : (
               <AdminReportsTab
                 filteredReports={filteredReports}
@@ -564,7 +568,7 @@ export default function AdminDashboardPage({
           </TabsContent>
           <TabsContent value="finance" className="space-y-6 py-2">
             {withdrawalsLoading ? (
-              <FinanceTabSkeleton />
+              <AdminFinanceTabSkeleton />
             ) : (
               <AdminFinanceTab
                 financeSubTab={financeSubTab}
@@ -642,7 +646,7 @@ export default function AdminDashboardPage({
         </Tabs>
       </div>
 
-      <AdminActionDialogs
+      <UserDialogs
         showUserDetail={showUserDetail}
         setShowUserDetail={setShowUserDetail}
         selectedUser={selectedUser}
@@ -659,6 +663,11 @@ export default function AdminDashboardPage({
         setUnbanReason={setUnbanReason}
         confirmBanUser={confirmBanUser}
         confirmUnbanUser={confirmUnbanUser}
+        getFacultyName={getFacultyName}
+        getInitials={getInitials}
+      />
+
+      <ProductDialogs
         showProductDetail={showProductDetail}
         setShowProductDetail={setShowProductDetail}
         selectedProduct={selectedProduct}
@@ -670,6 +679,25 @@ export default function AdminDashboardPage({
         productDeleteReason={productDeleteReason}
         setProductDeleteReason={setProductDeleteReason}
         confirmDeleteProduct={confirmDeleteProduct}
+        formatProductPrice={formatProductPrice}
+        getInitials={getInitials}
+      />
+
+      <CategoryDialogs
+        showCategoryDialog={showCategoryDialog}
+        setShowCategoryDialog={setShowCategoryDialog}
+        selectedCategory={selectedCategory}
+        categoryForm={categoryForm}
+        setCategoryForm={setCategoryForm}
+        handleSaveCategory={handleSaveCategory}
+        categories={categories}
+        showDeleteCategoryDialog={showDeleteCategoryDialog}
+        setShowDeleteCategoryDialog={setShowDeleteCategoryDialog}
+        categoryToDelete={categoryToDelete}
+        confirmDeleteCategory={confirmDeleteCategory}
+      />
+
+      <ReportDialogs
         showWarningDialog={showWarningDialog}
         setShowWarningDialog={setShowWarningDialog}
         showBanReportDialog={showBanReportDialog}
@@ -683,17 +711,9 @@ export default function AdminDashboardPage({
         setShowDismissReportDialog={setShowDismissReportDialog}
         confirmResolveReport={confirmResolveReport}
         confirmDismissReport={confirmDismissReport}
-        showCategoryDialog={showCategoryDialog}
-        setShowCategoryDialog={setShowCategoryDialog}
-        selectedCategory={selectedCategory}
-        categoryForm={categoryForm}
-        setCategoryForm={setCategoryForm}
-        handleSaveCategory={handleSaveCategory}
-        categories={categories}
-        showDeleteCategoryDialog={showDeleteCategoryDialog}
-        setShowDeleteCategoryDialog={setShowDeleteCategoryDialog}
-        categoryToDelete={categoryToDelete}
-        confirmDeleteCategory={confirmDeleteCategory}
+      />
+
+      <CancelRequestDialogs
         showCancelApproveDialog={showCancelApproveDialog}
         setShowCancelApproveDialog={setShowCancelApproveDialog}
         showCancelRejectDialog={showCancelRejectDialog}
@@ -706,13 +726,10 @@ export default function AdminDashboardPage({
         confirmApproveCancelRequest={confirmApproveCancelRequest}
         confirmRejectCancelRequest={confirmRejectCancelRequest}
         formatPrice={formatPrice}
-        formatProductPrice={formatProductPrice}
-        getFacultyName={getFacultyName}
-        getInitials={getInitials}
         cancelReasons={cancelReasons}
       />
 
-      <AdminFacultyDialogs
+      <FacultyDialogs
         showFacultyDialog={showFacultyDialog}
         setShowFacultyDialog={setShowFacultyDialog}
         selectedFaculty={selectedFaculty}

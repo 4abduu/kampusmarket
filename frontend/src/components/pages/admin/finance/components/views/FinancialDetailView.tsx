@@ -1,6 +1,6 @@
 import React from "react";
 import { useFinancialModal } from "../FinancialActionModal";
-import { FinancialUserCard, FinancialAmountCard, FinancialStatusBadge } from "../components/shared";
+import { FinancialUserCard, FinancialAmountCard, FinancialStatusBadge } from "../shared";
 import { Button } from "@/components/ui/button";
 import { Calendar, CreditCard, Landmark, Check, X, AlertCircle } from "lucide-react";
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useFinancialModal } from "../FinancialActionModal";
-import { FinancialAmountCard } from "../components/shared";
+import { FinancialAmountCard } from "../shared";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, ChevronLeft, AlertOctagon } from "lucide-react";

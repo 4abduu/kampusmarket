@@ -16,7 +16,6 @@ import { getEcho } from "@/lib/echo";
 // Layout
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import AdminFooter from "@/components/layout/AdminFooter";
 import SellerWelcomeModal from "@/components/layout/SellerWelcomeModal";
 import { getInitialSellerProductCount } from "@/components/pages/user/dashboard/seller-products";
 
@@ -133,25 +132,24 @@ function AppContent() {
       setAuthUser((prev) =>
         prev
           ? {
-              ...prev,
-              name: detail.name ?? prev.name,
-              email: detail.email ?? prev.email,
-              phone: detail.phone ?? prev.phone,
-              bio: detail.bio ?? prev.bio,
-              faculty: detail.faculty ?? prev.faculty,
-              avatar: detail.avatar ?? prev.avatar,
-            }
+            ...prev,
+            name: detail.name ?? prev.name,
+            email: detail.email ?? prev.email,
+            phone: detail.phone ?? prev.phone,
+            bio: detail.bio ?? prev.bio,
+            faculty: detail.faculty ?? prev.faculty,
+            avatar: detail.avatar ?? prev.avatar,
+          }
           : prev,
       );
     };
 
     window.addEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
     window.addEventListener("profile-updated", handleProfileUpdated);
-    return () =>
-      {
-        window.removeEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
-        window.removeEventListener("profile-updated", handleProfileUpdated);
-      };
+    return () => {
+      window.removeEventListener("wallet-balance-updated", handleWalletBalanceUpdated);
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -359,7 +357,7 @@ function AppContent() {
     // REVISI: Set flag isLoggingOut SEBELUM apapun agar ProtectedRoute tidak
     // mendeteksi isLoggedIn=false lalu redirect ke /unauthorized.
     isLoggingOutRef.current = true;
-    
+
     // Clear state IMMEDIATELY agar UI (seperti Navbar) langsung berubah menjadi guest
     setGoogleUserData(null);
     setAuthUser(null);
@@ -553,14 +551,15 @@ function AppContent() {
       </main>
 
       {/* Footer Logic */}
-      {isAdminPage && !isNotFoundPage ? (
-        <AdminFooter />
-      ) : (
-        !isNotFoundPage &&
-        !noFooterPages.some((p) => location.pathname.startsWith(`/${p}`)) && (
-          <Footer onNavigate={handleNavigate} />
-        )
-      )}
+      {!isNotFoundPage &&
+        (!noFooterPages.filter((p) => !["admin", "stats", "admin-notifications"].includes(p)).some((p) => location.pathname.startsWith(`/${p}`)) || isAdminPage) && (
+          <Footer
+            onNavigate={handleNavigate}
+            isLoggedIn={isLoggedIn}
+            userRole={userRole}
+            isAdminPage={isAdminPage}
+          />
+        )}
 
       <Toaster />
     </div>

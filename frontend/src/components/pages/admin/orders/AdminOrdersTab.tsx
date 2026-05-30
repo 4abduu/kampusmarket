@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, Package, ShoppingCart, Search, Filter, ChevronDown, ChevronUp, X } from "lucide-react";
-import { formatAdminDate } from "./admin-dashboard.shared";
+import { formatAdminDate } from "../admin-dashboard.shared";
 
 interface Props {
   orders: any[];

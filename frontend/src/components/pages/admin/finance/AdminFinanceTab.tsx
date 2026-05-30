@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatAdminDate } from "./admin-dashboard.shared";
+import { formatAdminDate } from "../admin-dashboard.shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import FinancialActionModal from "./financial-modal/FinancialActionModal";
-import { RevenueDetailModal } from "./financial-modal/RevenueDetailModal";
+import FinancialActionModal from "./components/FinancialActionModal";
+import { RevenueDetailModal } from "./components/RevenueDetailModal";
 import { 
   Wallet, 
   Clock, 
@@ -458,8 +458,8 @@ export default function AdminFinanceTab(props: Props) {
                       <TableCell className="text-sm font-medium">{withdrawal.bankName}</TableCell>
                       <TableCell className="text-sm">
                         <div>
-                          <p className="font-mono">{withdrawal.accountNumber}</p>
-                          <p className="text-xs text-muted-foreground">a.n {withdrawal.accountName}</p>
+                           <p className="font-mono">{withdrawal.accountNumber}</p>
+                           <p className="text-xs text-muted-foreground">a.n {withdrawal.accountName}</p>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">{formatAdminDate(withdrawal.createdAt)}</TableCell>
@@ -655,7 +655,7 @@ export default function AdminFinanceTab(props: Props) {
         <Card className="border-primary-200 dark:border-primary-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary-600" />Pendapatan Platform
+              <BarChart3 className="h-5 w-5 text-primary-600 animate-pulse" />Pendapatan Platform
             </CardTitle>
             <CardDescription>Potongan 5% dari setiap transaksi penjualan seller</CardDescription>
           </CardHeader>

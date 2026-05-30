@@ -176,18 +176,18 @@ function PublicRoute({
   currentUser?: User | null;
 }): React.ReactElement {
   const location = useLocation();
-  
+
   // REVISI: Allow logged-in users WITHOUT faculty to access /faculty-selection page
-  const isAccessingFacultySelectionWithoutFaculty = 
-    location.pathname === "/faculty-selection" && 
-    isLoggedIn && 
-    currentUser && 
+  const isAccessingFacultySelectionWithoutFaculty =
+    location.pathname === "/faculty-selection" &&
+    isLoggedIn &&
+    currentUser &&
     !currentUser.faculty;
 
   // Allow logged-in users to open email verification page too
   const isAccessingEmailVerification = location.pathname === "/email-verification";
   const isAccessingForgotPassword = location.pathname === "/forgot-password";
-  
+
   if (
     isLoggedIn &&
     !allowLoggedIn &&

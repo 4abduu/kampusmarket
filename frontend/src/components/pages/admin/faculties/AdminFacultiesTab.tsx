@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, X, Pencil, Trash2, GraduationCap } from "lucide-react";
-import type { Faculty as BaseFaculty } from "./admin-dashboard.shared";
-import { formatAdminDate } from "./admin-dashboard.shared";
+import type { Faculty as BaseFaculty } from "../admin-dashboard.shared";
+import { formatAdminDate } from "../admin-dashboard.shared";
 
 type Faculty = BaseFaculty & {
   description?: string;

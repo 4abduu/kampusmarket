@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Trash2, AlertCircle, Users, Building } from "lucide-react";
 
-import type { Faculty as BaseFaculty } from "./admin-dashboard.shared";
+import type { Faculty as BaseFaculty } from "../../admin-dashboard.shared";
 
 type Faculty = BaseFaculty & {
   description?: string;
@@ -170,7 +170,7 @@ export default function AdminFacultyDialogs({
             <Button
               onClick={handleSaveFaculty}
               disabled={!facultyForm.name.trim() || !facultyForm.code.trim()}
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               {selectedFaculty ? "Simpan Perubahan" : "Tambah Fakultas"}
             </Button>

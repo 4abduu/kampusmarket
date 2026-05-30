@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, MessageCircle, Ban, Search, X, Check, Package, Briefcase, User, Image as ImageIcon } from "lucide-react";
-import { formatAdminDate } from "./admin-dashboard.shared";
+import { formatAdminDate } from "../admin-dashboard.shared";
 
 interface Props {
   filteredReports: any[];
@@ -205,7 +205,7 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                               </Button>
                             </>
                           )}
-
+                          
                           {/* Banned State */}
                           {report.status === "banned" && (
                             <Button variant="outline" size="sm" className="h-8 text-xs w-full col-span-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 dark:border-emerald-900/30 dark:text-emerald-400" onClick={() => handleResolveReport(report)}>
