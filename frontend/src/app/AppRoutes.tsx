@@ -391,6 +391,7 @@ export default function AppRoutes({
             <ProfilePage
               onNavigate={onNavigate}
               userId={currentId || undefined}
+              isLoggedIn={isLoggedIn}
             />
           }
         />

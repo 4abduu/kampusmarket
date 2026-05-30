@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star, Settings, Edit } from "lucide-react";
+import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star, Settings, Edit, Flag } from "lucide-react";
 
 interface ProfileUserInfo {
   id: string;
@@ -25,6 +25,7 @@ interface ProfileSidebarProps {
   onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
   isLoadingProducts?: boolean;
   hasProducts?: boolean;
+  onOpenReport?: () => void;
 }
 
 export default function ProfileSidebar({
@@ -38,6 +39,7 @@ export default function ProfileSidebar({
   onNavigate,
   isLoadingProducts = false,
   hasProducts = false,
+  onOpenReport,
 }: ProfileSidebarProps) {
   return (
     <div className="lg:col-span-1 space-y-4">
@@ -110,8 +112,9 @@ export default function ProfileSidebar({
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Hubungi Penjual
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => onNavigate("catalog")}>
-                  Lihat Semua Produk
+                <Button variant="ghost" size="sm" className="w-full text-red-500 hover:text-red-600 hover:bg-red-50" onClick={onOpenReport}>
+                  <Flag className="h-4 w-4 mr-2" />
+                  Laporkan Akun
                 </Button>
               </>
             )}

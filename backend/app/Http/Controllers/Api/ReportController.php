@@ -96,6 +96,7 @@ class ReportController extends Controller
             'reported_user_id' => $reportedUser->id,
             'product_id' => $product?->id,
             'chat_id' => $chat?->id,
+            'type' => $request->type,
             'reason' => $request->reason,
             'description' => $request->description,
             'priority' => $request->priority ?? 'medium',

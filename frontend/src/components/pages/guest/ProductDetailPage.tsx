@@ -91,6 +91,13 @@ export default function ProductDetailPage({
     action();
   };
 
+  const handleReportOpen = () => {
+    setReportReason("");
+    setReportDescription("");
+    setReportOtherReason("");
+    setShowReportModal(true);
+  };
+
   const handleReportSubmit = async () => {
     if (!reportReason || !reportDescription) {
       toast({
@@ -121,20 +128,18 @@ export default function ProductDetailPage({
         productId: product.id,
         reason: finalReason,
         description: reportDescription,
+        type: "product",
       });
 
       toast({
         title: "Laporan berhasil dikirim",
-        description: "Laporan produk sudah masuk ke admin untuk ditinjau",
+        description: `Laporan produk sudah masuk ke admin untuk ditinjau`,
       });
       setShowReportModal(false);
-      setReportReason("");
-      setReportDescription("");
-      setReportOtherReason("");
     } catch (error: any) {
       toast({
         title: "Gagal mengirim laporan",
-        description: error?.message || "Terjadi kesalahan",
+        description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
         variant: "destructive",
       });
     }
@@ -197,7 +202,7 @@ export default function ProductDetailPage({
       formatPrice={formatPrice}
       onAction={handleAction}
       onNavigate={onNavigate}
-      onOpenReport={() => setShowReportModal(true)}
+      onOpenReport={handleReportOpen}
     />
   );
 
@@ -219,6 +224,9 @@ export default function ProductDetailPage({
       setReportOtherReason={setReportOtherReason}
       reportReasons={REPORT_REASONS}
       onSubmit={handleReportSubmit}
+      title="Laporkan Produk"
+      description="Bantu kami menjaga kualitas produk di KampusMarket"
+      placeholder="Jelaskan secara detail mengapa Anda ingin melaporkan produk ini..."
     />
   );
 

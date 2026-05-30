@@ -35,8 +35,8 @@ class ReportResource extends JsonResource
             'chatId' => $this->chat?->uuid,
             'chatMessage' => $this->chat?->message,
             
-            // Inferred Type
-            'reportType' => $this->chat_id ? 'chat' : ($this->product_id ? 'product' : 'user'),
+            // Inferred or Stored Type
+            'reportType' => $this->type ?? ($this->chat_id ? 'chat' : ($this->product_id ? 'product' : 'user')),
             
             // Report details
             'reason' => $this->reason,
