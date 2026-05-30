@@ -31,17 +31,14 @@ export default function RatingOrderCard({ order, isSelected, onSelect, formatPri
     >
       <CardContent className="p-4">
         <div className="flex gap-4">
-          <div className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${order.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
-            {order.productType === "jasa" ? (
-              <Briefcase className="h-8 w-8 text-emerald-600/70" />
-            ) : (
-              <ProductImage
-                src={order.product?.images?.[0]}
-                alt={order.productTitle}
-                className="w-full h-full"
-                imageClassName="w-full h-full object-cover"
-              />
-            )}
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
+            <ProductImage
+              src={order.product?.images?.[0] || order.product?.image}
+              alt={order.productTitle}
+              type={order.productType}
+              className="w-full h-full"
+              imageClassName="w-full h-full object-cover"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">

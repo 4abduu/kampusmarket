@@ -300,18 +300,15 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
             <CardContent className="p-4">
               <div className="flex gap-4">
                 <div
-                  className={`w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${selectedOrder.productType === "jasa" ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}
+                  className="w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800"
                 >
-                  {selectedOrder.productType === "jasa" ? (
-                    <Briefcase className="h-8 w-8 text-emerald-600/70" />
-                  ) : (
-                    <ProductImage
-                      src={selectedOrder.product?.images?.[0]}
-                      alt={selectedOrder.productTitle}
-                      className="w-full h-full"
-                      imageClassName="w-full h-full object-cover"
-                    />
-                  )}
+                  <ProductImage
+                    src={selectedOrder.product?.images?.[0] || selectedOrder.product?.image}
+                    alt={selectedOrder.productTitle}
+                    type={selectedOrder.productType}
+                    className="w-full h-full"
+                    imageClassName="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <p className="font-medium">{selectedOrder.productTitle}</p>

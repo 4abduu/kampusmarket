@@ -48,23 +48,18 @@ export default function OrderDetailProductCard({
             className="w-20 h-20 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 relative group overflow-hidden cursor-pointer"
             onClick={() => imageUrl && setLightboxOpen(true)}
           >
-            {imageUrl ? (
-              <>
-                <ProductImage
-                  src={imageUrl}
-                  alt={order.productTitle || order.product?.title || "Product Image"}
-                  className="w-full h-full"
-                  imageClassName="w-full h-full object-cover transition-transform group-hover:scale-105"
-                  preferredSize="thumbnail"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <Maximize2 className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                </div>
-              </>
-            ) : isService ? (
-              <Briefcase className="h-8 w-8 text-emerald-600/70" />
-            ) : (
-              <Package className="h-8 w-8 text-muted-foreground/30" />
+            <ProductImage
+              src={imageUrl}
+              alt={order.productTitle || order.product?.title || "Product Image"}
+              type={isService ? "jasa" : "barang"}
+              className="w-full h-full"
+              imageClassName="w-full h-full object-cover transition-transform group-hover:scale-105"
+              preferredSize="thumbnail"
+            />
+            {imageUrl && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <Maximize2 className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+              </div>
             )}
           </div>
           <div className="flex-1 min-w-0">

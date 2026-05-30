@@ -13,6 +13,7 @@ import { Package, CalendarDays, MapPin, Trash2 } from "lucide-react";
 import ImageGallery from "@/components/common/ImageGallery";
 import ImageLightbox from "@/components/common/ImageLightbox";
 import type { Product } from "@/lib/mock-data";
+import ProductImage from "@/components/common/ProductImage";
 
 interface ProductDialogsProps {
   showProductDetail: boolean;
@@ -100,12 +101,12 @@ export default function ProductDialogs({
                   />
                 </div>
               ) : (
-                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
-                  {selectedProduct.type === "jasa" ? (
-                    <CalendarDays className="h-12 w-12 text-muted-foreground/30" />
-                  ) : (
-                    <Package className="h-12 w-12 text-muted-foreground/30" />
-                  )}
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden w-full">
+                  <ProductImage
+                    type={selectedProduct.type}
+                    className="w-full h-full bg-slate-100 dark:bg-slate-800"
+                    imageClassName="w-full h-full object-cover"
+                  />
                 </div>
               )}
               <div>
@@ -201,18 +202,14 @@ export default function ProductDialogs({
           {productToDelete && (
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 flex items-center gap-3">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center overflow-hidden shrink-0">
-                  {productToDelete.images && productToDelete.images.length > 0 ? (
-                    <img
-                      src={productToDelete.images[0]}
-                      alt={productToDelete.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : productToDelete.type === "jasa" ? (
-                    <CalendarDays className="h-6 w-6 text-muted-foreground/30" />
-                  ) : (
-                    <Package className="h-6 w-6 text-muted-foreground/30" />
-                  )}
+                <div className="w-12 h-12 rounded flex items-center justify-center overflow-hidden shrink-0">
+                  <ProductImage
+                    src={productToDelete.images?.[0]}
+                    alt={productToDelete.title}
+                    type={productToDelete.type}
+                    className="w-full h-full bg-slate-200 dark:bg-slate-700"
+                    imageClassName="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <p className="font-medium">{productToDelete.title}</p>

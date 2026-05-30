@@ -488,6 +488,7 @@ export default function ServicesPage({
                               service.images?.[0]?.url || service.images?.[0]
                             }
                             alt={service.title}
+                            type="jasa"
                             className="w-full h-full bg-muted flex items-center justify-center"
                             imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             fallbackImageUrl="https://placehold.net/default.svg"
@@ -556,6 +557,7 @@ export default function ServicesPage({
                                 service.images?.[0]?.url || service.images?.[0]
                               }
                               alt={service.title}
+                              type="jasa"
                               className="w-full h-full bg-muted flex items-center justify-center"
                               imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               fallbackImageUrl="https://placehold.net/default.svg"

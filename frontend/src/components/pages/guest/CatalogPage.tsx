@@ -594,6 +594,7 @@ export default function CatalogPage({
                           <ProductImage
                             src={getProductImageUrl(product.images?.[0])}
                             alt={product.title}
+                            type={product.type || "barang"}
                             className="w-full h-full bg-muted flex items-center justify-center"
                             imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             fallbackImageUrl="https://placehold.net/default.svg"
@@ -681,6 +682,7 @@ export default function CatalogPage({
                             <ProductImage
                               src={getProductImageUrl(product.images?.[0])}
                               alt={product.title}
+                              type={product.type || "barang"}
                               className="w-full h-full bg-muted flex items-center justify-center"
                               imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               fallbackImageUrl="https://placehold.net/default.svg"

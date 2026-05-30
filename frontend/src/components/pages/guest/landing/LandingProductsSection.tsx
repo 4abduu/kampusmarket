@@ -49,6 +49,7 @@ export default function LandingProductsSection({ products, onNavigate }: Landing
                 <ProductImage
                   src={(product as any).images?.[0]?.url ?? (product as any).images?.[0]}
                   alt={product.title}
+                  type={product.type || "barang"}
                   className="w-full h-full"
                   imageClassName="w-full h-full object-cover"
                   showError={false}

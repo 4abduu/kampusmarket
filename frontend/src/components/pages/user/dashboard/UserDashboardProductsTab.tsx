@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Briefcase, Clock3, Edit, Eye, Package, Plus, Trash2 } from "lucide-react"
 import type { Product } from "@/lib/mock-data"
+import ProductImage from "@/components/common/ProductImage"
 
 type Props = {
   onNavigate: (page: string, productId?: string) => void
@@ -104,15 +105,14 @@ export default function UserDashboardProductsTab({
                             const firstImg = Array.isArray(imgs)
                               ? (typeof imgs[0] === "string" ? imgs[0] : imgs[0]?.url)
                               : undefined
-                            return firstImg ? (
-                              <img src={firstImg} alt={product.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                {product.type === "jasa"
-                                  ? <Briefcase className="h-6 w-6 text-secondary-600" />
-                                  : <Package className="h-6 w-6 text-muted-foreground/30" />
-                                }
-                              </div>
+                            return (
+                              <ProductImage
+                                src={firstImg}
+                                alt={product.title}
+                                type={product.type}
+                                className="w-full h-full"
+                                imageClassName="w-full h-full object-cover"
+                              />
                             )
                           })()}
                         </div>

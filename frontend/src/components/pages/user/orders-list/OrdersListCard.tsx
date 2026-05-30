@@ -21,6 +21,7 @@ import type {
   OrdersListPageNavigate,
   OrdersViewMode,
 } from "@/components/pages/user/orders-list/ordersList.types";
+import ProductImage from "@/components/common/ProductImage";
 
 interface OrdersListCardProps {
   order: OrderListItem;
@@ -40,8 +41,15 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
     >
       <CardContent className="p-4">
         <div className="flex gap-4">
-          <div className={`w-20 h-20 rounded-lg flex items-center justify-center shrink-0 ${isService ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-100 dark:bg-slate-800"}`}>
-            {isService ? <Briefcase className="h-8 w-8 text-emerald-600/70" /> : <Package className="h-8 w-8 text-muted-foreground/30" />}
+          <div className="w-20 h-20 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
+            <ProductImage
+              src={order.product?.images?.[0] || order.product?.image}
+              alt={order.productTitle}
+              type={order.productType}
+              className="w-full h-full"
+              imageClassName="w-full h-full object-cover"
+              preferredSize="thumbnail"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start gap-2">

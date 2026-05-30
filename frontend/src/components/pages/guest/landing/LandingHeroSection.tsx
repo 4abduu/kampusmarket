@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProductImage from "@/components/common/ProductImage";
 
 type Product = {
   id: string;
@@ -107,9 +108,7 @@ export default function LandingHeroSection({
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <Card key={i} className={`${i === 0 ? "col-span-2" : ""}`}>
-                    <div className={`${i === 0 ? "h-48" : "h-32"} bg-muted flex items-center justify-center`}>
-                      <Package className="h-12 w-12 text-muted-foreground/30" />
-                    </div>
+                    <Skeleton className={`${i === 0 ? "h-48" : "h-32"} w-full rounded-b-none`} />
                     <CardContent className="p-3">
                       <Skeleton className="h-4 w-3/4 mb-2" />
                       <Skeleton className="h-5 w-20" />
@@ -125,17 +124,14 @@ export default function LandingHeroSection({
                     }`}
                     onClick={() => onNavigate(product.type === "jasa" ? "service" : "product", product.id)}
                   >
-                    <div className={`bg-muted ${index === 0 ? "h-48" : "h-32"} flex items-center justify-center overflow-hidden`}>
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <Package className="h-12 w-12 text-muted-foreground/50" />
-                      )}
+                    <div className={`${index === 0 ? "h-48" : "h-32"} flex items-center justify-center overflow-hidden`}>
+                      <ProductImage
+                        src={product.images?.[0]}
+                        alt={product.title}
+                        type={product.type}
+                        className="w-full h-full bg-muted flex items-center justify-center"
+                        imageClassName="w-full h-full object-cover"
+                      />
                     </div>
                     <CardContent className="p-3">
                       <p className="font-medium text-sm truncate">{product.title}</p>

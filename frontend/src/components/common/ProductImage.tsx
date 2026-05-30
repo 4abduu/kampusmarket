@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Package, AlertCircle } from "lucide-react";
+import { Package, AlertCircle, Briefcase } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * Variant sizes mapped to max-width media queries.
@@ -36,6 +37,8 @@ interface ProductImageProps {
   variants?: ImageVariants;
   /** Preferred size to use as primary src when variants available */
   preferredSize?: keyof ImageVariants;
+  /** Type of product: 'barang' (Package/gray) or 'jasa' (Briefcase/green) */
+  type?: "barang" | "jasa" | string;
 }
 
 /**
@@ -56,6 +59,7 @@ export default function ProductImage({
   fallbackImageUrl,
   variants,
   preferredSize = "small",
+  type = "barang",
 }: ProductImageProps) {
   const [imageError, setImageError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -86,8 +90,22 @@ export default function ProductImage({
 
   // No image provided or error occurred
   if (!hasImage || imageError) {
+    const isService = type === "jasa";
+    const FallbackIcon = isService ? Briefcase : Package;
+    
+    // Green theme for service (jasa), Grey theme for goods (barang)
+    // Background: Level 50 (bg-slate-50 dark:bg-slate-900/50 vs bg-emerald-50 dark:bg-emerald-950/20)
+    // Icon: Level 600 with 50% opacity (text-slate-600/50 vs text-emerald-600/50)
+    const bgClass = isService 
+      ? "bg-emerald-50 dark:bg-emerald-950/20" 
+      : "bg-slate-50 dark:bg-slate-900/50";
+    
+    const iconClass = isService 
+      ? "text-emerald-600/50" 
+      : "text-slate-600/50";
+
     return (
-      <div className={className}>
+      <div className={cn(className, bgClass)}>
         <div className="flex flex-col items-center justify-center gap-2">
           {showError && imageError ? (
             <>
@@ -97,7 +115,7 @@ export default function ProductImage({
               </span>
             </>
           ) : (
-            <Package className="h-8 w-8 text-muted-foreground/30" />
+            <FallbackIcon className={cn("h-8 w-8", iconClass)} />
           )}
         </div>
       </div>

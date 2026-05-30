@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, CalendarDays, Search, Filter, ChevronDown, ChevronUp, X, Eye, Trash2, RefreshCcw } from "lucide-react";
+import ProductImage from "@/components/common/ProductImage";
 
 interface Props {
   filteredProducts: any[];
@@ -127,11 +128,13 @@ export default function AdminProductsTab(props: Props) {
                      <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center overflow-hidden shrink-0">
-                          {product.images && product.images.length > 0 ? (
-                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
-                          ) : (
-                            product.type === "jasa" ? <CalendarDays className="h-5 w-5 text-muted-foreground" /> : <Package className="h-5 w-5 text-muted-foreground" />
-                          )}
+                          <ProductImage
+                            src={product.images?.[0]}
+                            alt={product.title}
+                            type={product.type}
+                            className="w-full h-full"
+                            imageClassName="w-full h-full object-cover"
+                          />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">

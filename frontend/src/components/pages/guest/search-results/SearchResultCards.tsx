@@ -49,6 +49,7 @@ export function SearchProductCard({
             <ProductImage
               src={product.images?.[0]}
               alt={product.title}
+              type={product.type}
               className="w-full h-full"
               imageClassName="w-full h-full object-cover"
               fallbackImageUrl="https://placehold.net/default.svg"
@@ -110,6 +111,7 @@ export function SearchProductCard({
           <ProductImage
             src={product.images?.[0]}
             alt={product.title}
+            type={product.type}
             className="w-full h-full"
             imageClassName="w-full h-full object-cover"
             fallbackImageUrl="https://placehold.net/default.svg"

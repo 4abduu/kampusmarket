@@ -15,6 +15,7 @@ import {
   Wifi,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import ProductImage from "@/components/common/ProductImage";
 import {
   availabilityMap,
   formatIDR,
@@ -156,11 +157,12 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
       <Card className="group overflow-hidden border-slate-200/80 dark:border-slate-800">
         <div className="grid md:grid-cols-[240px_1fr]">
           <div className="relative h-48 bg-slate-100 md:h-auto dark:bg-slate-800">
-            <img
+            <ProductImage
               src={getPrimaryImage(product)}
               alt={product.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
+              type={product.type}
+              className="w-full h-full"
+              imageClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
             <div className="absolute left-3 top-3 flex flex-col gap-1.5">
               <Badge className="w-fit bg-slate-900/80 text-xs text-white hover:bg-slate-900/80">{product.type === "jasa" ? "Jasa" : "Barang"}</Badge>
@@ -230,11 +232,12 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
       className="group overflow-hidden border-slate-200/80 transition-all duration-200 hover:shadow-md dark:border-slate-800"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
-        <img
+        <ProductImage
           src={getPrimaryImage(product)}
           alt={product.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
+          type={product.type}
+          className="w-full h-full"
+          imageClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
           {getDiscountPercentage(product) > 0 && (
