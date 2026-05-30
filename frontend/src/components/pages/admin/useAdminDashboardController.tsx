@@ -136,9 +136,16 @@ export function useAdminDashboardController() {
   const [showFacultyDialog, setShowFacultyDialog] = useState(false);
   const [showDeleteFacultyDialog, setShowDeleteFacultyDialog] = useState(false);
   const [facultyToDelete, setFacultyToDelete] = useState<Faculty | null>(null);
-  const [facultyForm, setFacultyForm] = useState({
+  const [facultyForm, setFacultyForm] = useState<{
+    name: string;
+    code: string;
+    description?: string;
+    sortOrder: number;
+    isActive: boolean;
+  }>({
     name: "",
     code: "",
+    description: "",
     sortOrder: 0,
     isActive: true,
   });
@@ -243,6 +250,7 @@ export function useAdminDashboardController() {
     pendingReports: number;
     totalFaculties: number;
     activeFaculties: number;
+    pendingCancellations: number;
   } | null>(null);
   const [activitySummary, setActivitySummary] = useState<{
     newUsersThisWeek: number;
@@ -735,6 +743,7 @@ export function useAdminDashboardController() {
           pendingReports: statsData.reports?.pending || 0,
           totalFaculties: statsData.faculties?.total || 0,
           activeFaculties: statsData.faculties?.active || 0,
+          pendingCancellations: statsData.pending_cancellations || 0,
         });
         setPlatformRevenue((prev) => ({
           ...prev,
@@ -1441,6 +1450,7 @@ export function useAdminDashboardController() {
     pendingReports: 0,
     totalFaculties: faculties.length,
     activeFaculties: faculties.filter((faculty) => faculty.isActive).length,
+    pendingCancellations: 0,
   };
 
   const displayActivitySummary = activitySummary || {
@@ -2026,6 +2036,7 @@ export function useAdminDashboardController() {
           {
             name: categoryForm.name.trim(),
             type: categoryForm.type,
+            description: categoryForm.description.trim(),
             sort_order: categoryForm.sortOrder,
             is_active: categoryForm.isActive,
           },
@@ -2038,8 +2049,8 @@ export function useAdminDashboardController() {
                   ...c,
                   name: updatedCat.name,
                   type: updatedCat.type,
-                  sortOrder: updatedCat.sort_order,
-                  isActive: updatedCat.is_active,
+                  sortOrder: updatedCat.sortOrder ?? updatedCat.sort_order ?? 0,
+                  isActive: updatedCat.isActive !== undefined ? updatedCat.isActive : updatedCat.is_active,
                   slug: updatedCat.slug,
                   description: updatedCat.description,
                 }
@@ -2052,6 +2063,7 @@ export function useAdminDashboardController() {
         const newCat = await adminCategoriesApi.createCategory({
           name: categoryForm.name.trim(),
           type: categoryForm.type,
+          description: categoryForm.description.trim(),
           sort_order: categoryForm.sortOrder,
           is_active: categoryForm.isActive,
         });
@@ -2062,8 +2074,8 @@ export function useAdminDashboardController() {
           slug: newCat.slug,
           type: newCat.type,
           description: newCat.description,
-          sortOrder: newCat.sort_order || 0,
-          isActive: newCat.is_active,
+          sortOrder: newCat.sortOrder ?? newCat.sort_order ?? 0,
+          isActive: newCat.isActive !== undefined ? newCat.isActive : newCat.is_active,
           createdAt:
             newCat.created_at || new Date().toISOString().split("T")[0],
         };
@@ -2124,6 +2136,7 @@ export function useAdminDashboardController() {
     setFacultyForm({
       name: "",
       code: "",
+      description: "",
       sortOrder: faculties.length + 1,
       isActive: true,
     });
@@ -2134,6 +2147,7 @@ export function useAdminDashboardController() {
     setFacultyForm({
       name: faculty.name,
       code: faculty.code,
+      description: faculty.description || "",
       sortOrder: faculty.sortOrder,
       isActive: faculty.isActive,
     });
@@ -2151,6 +2165,7 @@ export function useAdminDashboardController() {
         const updatedFaculty = await facultiesApi.update(selectedFaculty.code, {
           code: normalizedCode || selectedFaculty.code,
           name: facultyForm.name.trim(),
+          description: facultyForm.description?.trim() || "",
           sortOrder: facultyForm.sortOrder,
           isActive: facultyForm.isActive,
         });
@@ -2166,6 +2181,7 @@ export function useAdminDashboardController() {
         const createdFaculty = await facultiesApi.create({
           code: normalizedCode || facultyForm.code.toLowerCase(),
           name: facultyForm.name.trim(),
+          description: facultyForm.description?.trim() || "",
           sortOrder: facultyForm.sortOrder,
           isActive: facultyForm.isActive,
         });
@@ -2184,6 +2200,7 @@ export function useAdminDashboardController() {
                   id: normalizedCode || faculty.id,
                   code: normalizedCode || faculty.code,
                   name: facultyForm.name.trim(),
+                  description: facultyForm.description?.trim() || "",
                   sortOrder: facultyForm.sortOrder,
                   isActive: facultyForm.isActive,
                 }
@@ -2198,6 +2215,7 @@ export function useAdminDashboardController() {
           id: normalizedCode || `fac-${Date.now()}`,
           code: normalizedCode || facultyForm.code.toLowerCase(),
           name: facultyForm.name.trim(),
+          description: facultyForm.description?.trim() || "",
           sortOrder: facultyForm.sortOrder,
           isActive: facultyForm.isActive,
         };

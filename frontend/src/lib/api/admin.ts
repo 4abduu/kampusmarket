@@ -247,6 +247,7 @@ export const adminCategoriesApi = {
   async createCategory(data: {
     name: string;
     type: "barang" | "jasa";
+    description?: string;
     sort_order?: number;
     is_active?: boolean;
   }): Promise<any> {
@@ -267,6 +268,7 @@ export const adminCategoriesApi = {
     data: {
       name: string;
       type: "barang" | "jasa";
+      description?: string;
       sort_order?: number;
       is_active?: boolean;
     }
@@ -324,6 +326,7 @@ export const adminFacultiesApi = {
   async createFaculty(data: {
     code: string;
     name: string;
+    description?: string;
     sort_order?: number;
     is_active?: boolean;
   }) {
@@ -344,6 +347,7 @@ export const adminFacultiesApi = {
     data: {
       code: string;
       name: string;
+      description?: string;
       sort_order?: number;
       is_active?: boolean;
     }

@@ -92,6 +92,7 @@ class AdminCategoryController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'type' => ['required', 'in:barang,jasa'],
+                'description' => ['nullable', 'string', 'max:1000'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
                 'is_active' => ['nullable', 'boolean'],
             ]);
@@ -118,6 +119,7 @@ class AdminCategoryController extends Controller
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'type' => $validated['type'],
+                'description' => $validated['description'] ?? null,
                 'sort_order' => $sortOrder,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
@@ -177,6 +179,7 @@ class AdminCategoryController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'type' => ['required', 'in:barang,jasa'],
+                'description' => ['nullable', 'string', 'max:1000'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
                 'is_active' => ['nullable', 'boolean'],
             ]);
@@ -195,6 +198,7 @@ class AdminCategoryController extends Controller
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'type' => $validated['type'],
+                'description' => $validated['description'] ?? null,
                 'sort_order' => $validated['sort_order'] ?? $category->sort_order,
                 'is_active' => $validated['is_active'] ?? $category->is_active,
             ]);
