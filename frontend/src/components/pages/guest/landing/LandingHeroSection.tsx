@@ -9,6 +9,7 @@ type Product = {
   title: string;
   price?: number | null;
   type?: "barang" | "jasa";
+  images?: string[];
 };
 
 interface LandingHeroSectionProps {
@@ -24,12 +25,19 @@ export default function LandingHeroSection({
   isLoading = false,
   onAction = (action: () => void) => action(),
 }: LandingHeroSectionProps) {
-  const handleMulaiBelanja = () => onNavigate("catalog");
+  const handleMulaiBelanja = () => {
+    const el = document.getElementById("categories-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      onNavigate("catalog");
+    }
+  };
   const handleJualBarang = () => {
     if (onAction) {
-      onAction(() => onNavigate("register"));
+      onAction(() => onNavigate("add-product"));
     } else {
-      onNavigate("register");
+      onNavigate("add-product");
     }
   };
 
@@ -117,8 +125,17 @@ export default function LandingHeroSection({
                     }`}
                     onClick={() => onNavigate(product.type === "jasa" ? "service" : "product", product.id)}
                   >
-                    <div className={`bg-muted ${index === 0 ? "h-48" : "h-32"} flex items-center justify-center`}>
-                      <Package className="h-12 w-12 text-muted-foreground/50" />
+                    <div className={`bg-muted ${index === 0 ? "h-48" : "h-32"} flex items-center justify-center overflow-hidden`}>
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Package className="h-12 w-12 text-muted-foreground/50" />
+                      )}
                     </div>
                     <CardContent className="p-3">
                       <p className="font-medium text-sm truncate">{product.title}</p>

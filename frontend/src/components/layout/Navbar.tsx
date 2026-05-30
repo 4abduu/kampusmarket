@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +59,7 @@ export default function Navbar({
   onLogout,
 }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userUnreadCount = useNotificationStore((state) => state.unreadCount);
   const chatUnreadCount = useChatStore((state) => state.unreadCount);
   const adminUnreadCount = useAdminNotificationStore((state) => state.unreadCount);
@@ -84,13 +85,26 @@ export default function Navbar({
   const userNavLinks = [
     { href: "#catalog", label: "Katalog", page: "catalog" },
     { href: "#services", label: "Jasa", page: "services" },
-    { href: "#how-it-works", label: "Cara Kerja", page: "landing" },
+    { href: "#how-it-works", label: "Cara Kerja", page: "how-it-works" },
   ];
 
-  const handleNavClick = (page: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    onNavigate(page);
+  const handleNavClick = (page: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (page === "how-it-works") {
+      const el = document.getElementById("how-it-works");
+      if (el && window.location.pathname === "/") {
+        el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.location.href = "/#how-it-works";
+      }
+    } else {
+      onNavigate(page);
+    }
   };
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -186,7 +200,7 @@ export default function Navbar({
             </DropdownMenu>
 
             {/* Mobile Menu */}
-            <Sheet>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden text-slate-400 hover:text-white">
                   <Menu className="h-5 w-5" />
@@ -196,7 +210,7 @@ export default function Navbar({
                 <div className="flex flex-col gap-4 mt-6 pb-8">
                   <Button
                     variant="ghost"
-                    onClick={() => onNavigate("admin")}
+                    onClick={() => { onNavigate("admin"); closeMobileMenu(); }}
                     className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-800 transition-colors duration-200"
                   >
                     <LayoutDashboard className="h-4 w-4 mr-3 text-amber-500" />
@@ -204,7 +218,7 @@ export default function Navbar({
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => onNavigate("admin-notifications")}
+                    onClick={() => { onNavigate("admin-notifications"); closeMobileMenu(); }}
                     className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-800 transition-colors duration-200"
                   >
                     <Bell className="h-4 w-4 mr-3 text-amber-500" />
@@ -216,7 +230,7 @@ export default function Navbar({
 
                   <div className="border-t border-slate-700 pt-4 mt-4">
                     <Button
-                      onClick={onLogout}
+                      onClick={() => { onLogout(); closeMobileMenu(); }}
                       className="w-full h-11 px-4 text-sm font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
@@ -439,7 +453,7 @@ export default function Navbar({
           )}
 
           {/* Mobile Menu */}
-          <Sheet>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
@@ -469,7 +483,10 @@ export default function Navbar({
                     <a
                       key={link.page}
                       href={link.href}
-                      onClick={(e) => handleNavClick(link.page, e)}
+                      onClick={(e) => {
+                        handleNavClick(link.page, e);
+                        closeMobileMenu();
+                      }}
                       className="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:text-primary-600 transition-colors duration-200"
                     >
                       {link.label}
@@ -497,7 +514,7 @@ export default function Navbar({
                     <div className="flex flex-col gap-0.5 px-2">
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("dashboard")}
+                        onClick={() => { onNavigate("dashboard"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <LayoutDashboard className="h-4 w-4 mr-3 text-primary-600" />
@@ -505,7 +522,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("cart")}
+                        onClick={() => { onNavigate("cart"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <ShoppingCart className="h-4 w-4 mr-3 text-primary-600" />
@@ -516,7 +533,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("chat")}
+                        onClick={() => { onNavigate("chat"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <MessageCircle className="h-4 w-4 mr-3 text-primary-600" />
@@ -527,7 +544,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("favorites")}
+                        onClick={() => { onNavigate("favorites"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors duration-200"
                       >
                         <Heart className="h-4 w-4 mr-3 text-rose-500" />
@@ -538,7 +555,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("notifications")}
+                        onClick={() => { onNavigate("notifications"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors duration-200"
                       >
                         <Bell className="h-4 w-4 mr-3 text-amber-500" />
@@ -554,7 +571,7 @@ export default function Navbar({
                     <div className="flex flex-col gap-0.5 px-2">
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("my-products")}
+                        onClick={() => { onNavigate("my-products"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <Package className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
@@ -562,7 +579,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("orders")}
+                        onClick={() => { onNavigate("orders"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <ShoppingCart className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
@@ -570,7 +587,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("wallet")}
+                        onClick={() => { onNavigate("wallet"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <Wallet className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
@@ -579,7 +596,7 @@ export default function Navbar({
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => onNavigate("settings")}
+                        onClick={() => { onNavigate("settings"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
                         <Settings className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
@@ -588,7 +605,7 @@ export default function Navbar({
                       {currentUser?.id && (
                         <Button
                           variant="ghost"
-                          onClick={() => onNavigate("profile", currentUser.id)}
+                          onClick={() => { onNavigate("profile", currentUser.id); closeMobileMenu(); }}
                           className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                         >
                           <User className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
@@ -599,7 +616,7 @@ export default function Navbar({
 
                     <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4 px-2">
                       <Button
-                        onClick={onLogout}
+                        onClick={() => { onLogout(); closeMobileMenu(); }}
                         className="w-full h-11 px-4 text-sm font-medium bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
@@ -611,13 +628,13 @@ export default function Navbar({
                   <div className="flex flex-col gap-3 mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 px-2">
                     <Button
                       variant="outline"
-                      onClick={() => onNavigate("login")}
+                      onClick={() => { onNavigate("login"); closeMobileMenu(); }}
                       className="w-full h-11 px-4 text-sm font-medium rounded-lg border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
                     >
                       Masuk
                     </Button>
                     <Button
-                      onClick={() => onNavigate("register")}
+                      onClick={() => { onNavigate("register"); closeMobileMenu(); }}
                       className="w-full h-11 px-4 text-sm font-medium bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                     >
                       Daftar

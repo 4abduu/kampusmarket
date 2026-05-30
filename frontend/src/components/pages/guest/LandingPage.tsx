@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { productsApi } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
 import LandingCategoriesSection from "@/components/pages/guest/landing/LandingCategoriesSection";
@@ -26,6 +27,7 @@ export default function LandingPage({
   isCustomerOnly = false,
   onStartSelling,
 }: LandingPageProps) {
+  const location = useLocation();
   const [categoryType, setCategoryType] =
     useState<LandingCategoryType>("barang");
   const [showSellerBanner, setShowSellerBanner] = useState(true);
@@ -51,6 +53,15 @@ export default function LandingPage({
     }
     action();
   };
+
+  useEffect(() => {
+    if (location.hash === "#how-it-works") {
+      setTimeout(() => {
+        const el = document.getElementById("how-it-works");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, [location.hash]);
 
   useEffect(() => {
     if (hasFetchedRef.current) {
