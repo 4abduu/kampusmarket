@@ -90,8 +90,12 @@ type Props = {
   selectedReport: Report | null;
   confirmSendWarning: () => void;
   confirmBanFromReport: () => void;
-
-
+  showResolveReportDialog: boolean;
+  setShowResolveReportDialog: (open: boolean) => void;
+  showDismissReportDialog: boolean;
+  setShowDismissReportDialog: (open: boolean) => void;
+  confirmResolveReport: () => void;
+  confirmDismissReport: () => void;
 
   showCategoryDialog: boolean;
   setShowCategoryDialog: (open: boolean) => void;
@@ -159,6 +163,12 @@ export default function AdminActionDialogs({
   selectedReport,
   confirmSendWarning,
   confirmBanFromReport,
+  showResolveReportDialog,
+  setShowResolveReportDialog,
+  showDismissReportDialog,
+  setShowDismissReportDialog,
+  confirmResolveReport,
+  confirmDismissReport,
 
   showCategoryDialog,
   setShowCategoryDialog,
@@ -408,6 +418,34 @@ export default function AdminActionDialogs({
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-600"><Ban className="h-5 w-5" />Blokir User</DialogTitle><DialogDescription>User akan diblokir permanen dan tidak bisa login atau bertransaksi lagi.</DialogDescription></DialogHeader>
           {selectedReport && <div className="space-y-3"><div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"><p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Alasan Laporan:</p><p className="text-sm text-red-700 dark:text-red-300">{selectedReport.reason}</p></div><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">User yang akan diblokir:</p><p className="font-medium">{selectedReport.reportedUser.name}</p><p className="text-sm text-muted-foreground">{selectedReport.reportedUser.email}</p></div></div>}
           <DialogFooter><Button variant="outline" onClick={() => setShowBanReportDialog(false)}>Batal</Button><Button variant="destructive" onClick={confirmBanFromReport}><Ban className="h-4 w-4 mr-2" />Blokir User</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showResolveReportDialog} onOpenChange={setShowResolveReportDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600"><CheckCircle2 className="h-5 w-5" />Selesaikan Laporan</DialogTitle>
+            <DialogDescription>Laporan ini akan ditandai sebagai selesai. Pastikan tindakan yang diperlukan sudah dilakukan.</DialogDescription>
+          </DialogHeader>
+          {selectedReport && <div className="space-y-3"><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">User yang dilaporkan:</p><p className="font-medium">{selectedReport.reportedUser.name}</p><p className="text-sm text-muted-foreground">{selectedReport.reportedUser.email}</p></div></div>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResolveReportDialog(false)}>Batal</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={confirmResolveReport}><CheckCircle2 className="h-4 w-4 mr-2" />Selesaikan Laporan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDismissReportDialog} onOpenChange={setShowDismissReportDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-600"><XCircle className="h-5 w-5" />Tolak Laporan</DialogTitle>
+            <DialogDescription>Laporan ini akan ditandai sebagai ditolak dan tidak memerlukan tindakan lebih lanjut. Apakah Anda yakin ingin menolak laporan ini?</DialogDescription>
+          </DialogHeader>
+          {selectedReport && <div className="space-y-3"><div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3"><p className="text-sm text-muted-foreground">User yang dilaporkan:</p><p className="font-medium">{selectedReport.reportedUser.name}</p><p className="text-sm text-muted-foreground">{selectedReport.reportedUser.email}</p></div></div>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDismissReportDialog(false)}>Batal</Button>
+            <Button variant="destructive" onClick={confirmDismissReport}><XCircle className="h-4 w-4 mr-2" />Tolak Laporan</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

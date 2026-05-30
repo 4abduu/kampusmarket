@@ -111,25 +111,43 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-slate-800/80">
                       {getReportStatusBadge(report.status)}
                       
-                      {(report.status === "pending" || report.status === "warning") && (
-                        <div className="flex flex-col gap-1 sm:mt-2 w-full sm:w-auto">
-                          <div className="flex gap-1">
-                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-slate-200 text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/50" onClick={() => handleSendWarning(report)}>
-                              <MessageCircle className="h-3.5 w-3.5 mr-1 text-slate-800 dark:text-slate-200" />Warning
+                      {(report.status === "pending" || report.status === "warning" || report.status === "banned") && (
+                        <div className="grid grid-cols-2 gap-2 sm:mt-2 w-full sm:w-auto sm:min-w-[220px]">
+                          {/* Pending State */}
+                          {report.status === "pending" && (
+                            <>
+                              <Button variant="outline" size="sm" className="h-8 text-xs w-full border-slate-200 text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/50" onClick={() => handleSendWarning(report)}>
+                                <MessageCircle className="h-3.5 w-3.5 mr-1.5 text-slate-800 dark:text-slate-200" />Warning
+                              </Button>
+                              <Button variant="destructive" size="sm" className="h-8 text-xs w-full bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
+                                <Ban className="h-3.5 w-3.5 mr-1.5 text-white" />
+                                <span className="text-white font-medium">Ban</span>
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-8 text-xs w-full col-span-2 border-rose-200 text-rose-600 hover:bg-rose-50/50 dark:border-rose-900/30 dark:text-rose-400" onClick={() => handleDismissReport(report)}>
+                                <X className="h-3.5 w-3.5 mr-1.5 text-rose-600 dark:text-rose-400" />Tolak
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* Warning State */}
+                          {report.status === "warning" && (
+                            <>
+                              <Button variant="destructive" size="sm" className="h-8 text-xs w-full bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
+                                <Ban className="h-3.5 w-3.5 mr-1.5 text-white" />
+                                <span className="text-white font-medium">Ban</span>
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-8 text-xs w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 dark:border-emerald-900/30 dark:text-emerald-400" onClick={() => handleResolveReport(report)}>
+                                <Check className="h-3.5 w-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />Selesaikan
+                              </Button>
+                            </>
+                          )}
+
+                          {/* Banned State */}
+                          {report.status === "banned" && (
+                            <Button variant="outline" size="sm" className="h-8 text-xs w-full col-span-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 dark:border-emerald-900/30 dark:text-emerald-400" onClick={() => handleResolveReport(report)}>
+                              <Check className="h-3.5 w-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />Selesaikan
                             </Button>
-                            <Button variant="destructive" size="sm" className="h-8 text-xs flex-1 sm:flex-initial bg-red-600 hover:bg-red-700 text-white" onClick={() => handleBanFromReport(report)}>
-                              <Ban className="h-3.5 w-3.5 mr-1 text-white" />
-                              <span className="text-white font-medium">Ban</span>
-                            </Button>
-                          </div>
-                          <div className="flex gap-1 mt-1">
-                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 dark:border-emerald-900/30 dark:text-emerald-400" onClick={() => handleResolveReport(report)}>
-                              <Check className="h-3.5 w-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />Selesaikan
-                            </Button>
-                            <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-initial border-rose-200 text-rose-600 hover:bg-rose-50/50 dark:border-rose-900/30 dark:text-rose-400" onClick={() => handleDismissReport(report)}>
-                              <X className="h-3.5 w-3.5 mr-1 text-rose-600 dark:text-rose-400" />Tolak
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>

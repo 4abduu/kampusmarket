@@ -146,12 +146,12 @@ export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRo
                     </div>
 
                     {cancelReq.status === "pending" && (
-                      <div className="flex gap-1 sm:mt-2">
-                        <Button variant="outline" size="sm" className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50/50" onClick={(e) => { e.stopPropagation(); handleRejectCancelRequest(cancelReq); }}>
-                          <X className="h-3.5 w-3.5 mr-1" />Tolak
+                      <div className="grid grid-cols-2 gap-2 sm:mt-2 w-full sm:w-auto sm:min-w-[220px]">
+                        <Button variant="outline" size="sm" className="h-8 text-xs w-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/20" onClick={(e) => { e.stopPropagation(); handleRejectCancelRequest(cancelReq); }}>
+                          <X className="h-3.5 w-3.5 mr-1.5" />Tolak
                         </Button>
-                        <Button variant="default" size="sm" className="h-8 text-xs bg-primary-600 hover:bg-primary-700" onClick={(e) => { e.stopPropagation(); handleApproveCancelRequest(cancelReq); }}>
-                          <Check className="h-3.5 w-3.5 mr-1" />Setujui
+                        <Button variant="default" size="sm" className="h-8 text-xs w-full bg-primary-600 hover:bg-primary-700 text-white" onClick={(e) => { e.stopPropagation(); handleApproveCancelRequest(cancelReq); }}>
+                          <Check className="h-3.5 w-3.5 mr-1.5" />Setujui
                         </Button>
                       </div>
                     )}

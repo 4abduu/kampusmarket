@@ -85,6 +85,8 @@ export function useAdminDashboardController() {
   const [reports, setReports] = useState<Report[]>([]);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [showBanReportDialog, setShowBanReportDialog] = useState(false);
+  const [showResolveReportDialog, setShowResolveReportDialog] = useState(false);
+  const [showDismissReportDialog, setShowDismissReportDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -1733,39 +1735,55 @@ export function useAdminDashboardController() {
       void run();
     }
   };
-  const handleResolveReport = async (report: Report) => {
+  const handleResolveReport = (report: Report) => {
+    setSelectedReport(report);
+    setShowResolveReportDialog(true);
+  };
+  const confirmResolveReport = async () => {
+    if (!selectedReport) return;
     try {
-      await adminReportsApi.resolveReport(report.id, {
-        resolution: `Diselesaikan oleh admin: ${report.reason}`,
+      await adminReportsApi.resolveReport(selectedReport.id, {
+        resolution: `Diselesaikan oleh admin: ${selectedReport.reason}`,
         banUser: false,
       });
       setReports(
         reports.map((r) =>
-          r.id === report.id
+          r.id === selectedReport.id
             ? { ...r, status: "resolved" as const }
             : r,
         ),
       );
-      showSuccess(`Laporan untuk "${report.reportedUser?.name || 'User'}" berhasil diselesaikan`);
+      showSuccess(`Laporan untuk "${selectedReport.reportedUser?.name || 'User'}" berhasil diselesaikan`);
     } catch (err) {
       console.error(err);
       showSuccess("Gagal menyelesaikan laporan, coba lagi");
+    } finally {
+      setShowResolveReportDialog(false);
+      setSelectedReport(null);
     }
   };
-  const handleDismissReport = async (report: Report) => {
+  const handleDismissReport = (report: Report) => {
+    setSelectedReport(report);
+    setShowDismissReportDialog(true);
+  };
+  const confirmDismissReport = async () => {
+    if (!selectedReport) return;
     try {
-      await adminReportsApi.dismissReport(report.id);
+      await adminReportsApi.dismissReport(selectedReport.id);
       setReports(
         reports.map((r) =>
-          r.id === report.id
+          r.id === selectedReport.id
             ? { ...r, status: "dismissed" as const }
             : r,
         ),
       );
-      showSuccess(`Laporan untuk "${report.reportedUser?.name || 'User'}" berhasil ditolak`);
+      showSuccess(`Laporan untuk "${selectedReport.reportedUser?.name || 'User'}" berhasil ditolak`);
     } catch (err) {
       console.error(err);
       showSuccess("Gagal menolak laporan, coba lagi");
+    } finally {
+      setShowDismissReportDialog(false);
+      setSelectedReport(null);
     }
   };
 
@@ -2769,8 +2787,14 @@ export function useAdminDashboardController() {
     handleBanFromReport,
     confirmSendWarning,
     confirmBanFromReport,
+    showResolveReportDialog,
+    setShowResolveReportDialog,
+    showDismissReportDialog,
+    setShowDismissReportDialog,
     handleResolveReport,
+    confirmResolveReport,
     handleDismissReport,
+    confirmDismissReport,
     handleApproveWithdrawal,
     handleRejectWithdrawal,
     handleProcessWithdrawal,

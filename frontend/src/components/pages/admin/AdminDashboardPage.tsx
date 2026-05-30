@@ -189,6 +189,12 @@ export default function AdminDashboardPage({
     setShowWarningDialog,
     showBanReportDialog,
     setShowBanReportDialog,
+    showResolveReportDialog,
+    setShowResolveReportDialog,
+    showDismissReportDialog,
+    setShowDismissReportDialog,
+    confirmResolveReport,
+    confirmDismissReport,
     selectedReport,
     financialModalOpen,
     setFinancialModalOpen,
@@ -671,6 +677,12 @@ export default function AdminDashboardPage({
         selectedReport={selectedReport}
         confirmSendWarning={confirmSendWarning}
         confirmBanFromReport={confirmBanFromReport}
+        showResolveReportDialog={showResolveReportDialog}
+        setShowResolveReportDialog={setShowResolveReportDialog}
+        showDismissReportDialog={showDismissReportDialog}
+        setShowDismissReportDialog={setShowDismissReportDialog}
+        confirmResolveReport={confirmResolveReport}
+        confirmDismissReport={confirmDismissReport}
         showCategoryDialog={showCategoryDialog}
         setShowCategoryDialog={setShowCategoryDialog}
         selectedCategory={selectedCategory}
