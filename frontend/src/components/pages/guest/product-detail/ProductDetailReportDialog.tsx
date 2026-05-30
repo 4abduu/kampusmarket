@@ -22,6 +22,9 @@ interface ProductDetailReportDialogProps {
   setReportOtherReason: (value: string) => void;
   reportReasons: ReportReason[];
   onSubmit: () => void;
+  title?: string;
+  description?: string;
+  placeholder?: string;
 }
 
 export default function ProductDetailReportDialog({
@@ -35,6 +38,9 @@ export default function ProductDetailReportDialog({
   setReportOtherReason,
   reportReasons,
   onSubmit,
+  title = "Laporkan Produk",
+  description = "Membantu kami untuk menjaga komunitas yang aman dan terpercaya",
+  placeholder = "Jelaskan secara detail mengapa Anda ingin melaporkan produk ini...",
 }: ProductDetailReportDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,9 +48,9 @@ export default function ProductDetailReportDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-red-600" />
-            Laporkan Produk
+            {title}
           </DialogTitle>
-          <DialogDescription>Membantu kami untuk menjaga komunitas yang aman dan terpercaya</DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -78,7 +84,7 @@ export default function ProductDetailReportDialog({
             <Label htmlFor="reportDesc" className="font-medium">Deskripsi (*Wajib)</Label>
             <Textarea
               id="reportDesc"
-              placeholder="Jelaskan secara detail mengapa Anda ingin melaporkan produk ini..."
+              placeholder={placeholder}
               value={reportDescription}
               onChange={(e) => setReportDescription(e.target.value)}
               rows={5}

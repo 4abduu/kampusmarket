@@ -20,6 +20,7 @@ class Report extends Model
         'reported_user_id',
         'product_id',
         'chat_id',
+        'type',
         'reason',
         'description',
         'status',

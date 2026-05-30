@@ -15,6 +15,10 @@ import ProfileProductsTab from "@/components/pages/user/profile/ProfileProductsT
 import ProfileReviewsTab from "@/components/pages/user/profile/ProfileReviewsTab";
 import ProfileServicesTab from "@/components/pages/user/profile/ProfileServicesTab";
 import ProfileSidebar from "@/components/pages/user/profile/ProfileSidebar";
+import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
+import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
+import { useToast } from "@/hooks/use-toast";
+import apiClient from "@/lib/api/client";
 
 interface ProfilePageProps {
   onNavigate: (
@@ -22,18 +26,86 @@ interface ProfilePageProps {
     data?: string | { userId?: string; productId?: string },
   ) => void;
   userId?: string;
+  isLoggedIn: boolean;
 }
 
-type ProductSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
-type ServiceSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
-type ActiveTab = "products" | "services" | "reviews";
+const REPORT_ACCOUNT_REASONS = [
+  { id: "fake_account", label: "Akun Palsu / Identitas Palsu" },
+  { id: "scammer", label: "Indikasi Penipuan" },
+  { id: "harassment", label: "Pelecehan / Kata-kata tidak sopan" },
+  { id: "spam", label: "Spam / Mengganggu" },
+  { id: "selling_illegal_items", label: "Menjual barang/jasa terlarang" },
+  { id: "other", label: "Lainnya" },
+];
 
-export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
+export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfilePageProps) {
+  const { toast } = useToast();
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userProducts, setUserProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  // Report states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportOtherReason, setReportOtherReason] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  const handleReportSubmit = async () => {
+    if (!reportReason || !reportDescription) {
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Pilih alasan dan masukkan deskripsi laporan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const finalReason =
+      reportReason === "other"
+        ? reportOtherReason
+        : REPORT_ACCOUNT_REASONS.find((r) => r.id === reportReason)?.label;
+
+    if (!finalReason) {
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Alasan laporan tidak boleh kosong",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingReport(true);
+      await apiClient.post("/reports", {
+        reportedUserId: user.id,
+        reason: finalReason,
+        description: reportDescription,
+        type: "account",
+      });
+
+      toast({
+        title: "Laporan berhasil dikirim",
+        description: "Laporan akun sudah masuk ke admin untuk ditinjau",
+      });
+      setShowReportModal(false);
+      setReportReason("");
+      setReportDescription("");
+      setReportOtherReason("");
+    } catch (error: any) {
+      toast({
+        title: "Gagal mengirim laporan",
+        description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
 
   useEffect(() => {
     setLoading(true);
@@ -275,6 +347,13 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
             userBio={user.bio}
             isLoadingProducts={isLoadingProducts}
             hasProducts={userProducts.length > 0}
+            onOpenReport={() => {
+              if (!isLoggedIn) {
+                setShowLoginModal(true);
+              } else {
+                setShowReportModal(true);
+              }
+            }}
             onNavigate={(page, data) => {
               if (
                 page === "chat" &&
@@ -376,6 +455,28 @@ export default function ProfilePage({ onNavigate, userId }: ProfilePageProps) {
           </div>
         </div>
       </div>
+
+      <ProductDetailLoginDialog
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        onNavigate={onNavigate}
+      />
+
+      <ProductDetailReportDialog
+        open={showReportModal}
+        onOpenChange={setShowReportModal}
+        reportReason={reportReason}
+        setReportReason={setReportReason}
+        reportDescription={reportDescription}
+        setReportDescription={setReportDescription}
+        reportOtherReason={reportOtherReason}
+        setReportOtherReason={setReportOtherReason}
+        reportReasons={REPORT_ACCOUNT_REASONS}
+        onSubmit={handleReportSubmit}
+        title="Laporkan Akun"
+        description="Laporkan perilaku mencurigakan atau pelanggaran oleh pengguna ini"
+        placeholder="Jelaskan alasan Anda ingin melaporkan akun ini..."
+      />
     </div>
   );
 }

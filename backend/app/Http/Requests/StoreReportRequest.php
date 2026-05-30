@@ -24,6 +24,7 @@ class StoreReportRequest extends FormRequest
             'reportedUserId' => ['required', 'exists:users,uuid'],
             'productId' => ['nullable', 'exists:products,uuid'],
             'chatId' => ['nullable', 'exists:chats,uuid'],
+            'type' => ['nullable', 'string', 'max:50'],
             'reason' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:2000'],
             // 'evidence' => ['nullable', 'array', 'max:10'],

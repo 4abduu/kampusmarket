@@ -10,7 +10,10 @@ import ServiceDetailTabsPanel from "@/components/pages/guest/service-detail/Serv
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 import { ServiceDetailPageSkeleton } from "@/components/skeleton";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
+import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ImageGallery from "@/components/common/ImageGallery";
+import apiClient from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ServiceDetailPageProps {
   onNavigate: (
@@ -21,11 +24,22 @@ interface ServiceDetailPageProps {
   isLoggedIn: boolean;
 }
 
+const REPORT_SERVICE_REASONS = [
+  { id: "service_not_as_described", label: "Layanan tidak sesuai deskripsi" },
+  { id: "seller_unresponsive", label: "Penyedia tidak responsif" },
+  { id: "fraud", label: "Penipuan / Layanan palsu" },
+  { id: "poor_quality", label: "Kualitas pengerjaan buruk" },
+  { id: "delayed", label: "Pengerjaan sangat terlambat" },
+  { id: "price_issue", label: "Harga bermasalah" },
+  { id: "other", label: "Lainnya" },
+];
+
 export default function ServiceDetailPage({
   onNavigate,
   serviceId,
   isLoggedIn,
 }: ServiceDetailPageProps) {
+  const { toast } = useToast();
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +47,72 @@ export default function ServiceDetailPage({
   const [selectedImage, setSelectedImage] = useState(0);
   const fetchedIdRef = useRef<string | null>(null);
 
+  // Report states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportOtherReason, setReportOtherReason] = useState("");
+
   const handleAction = (action: () => void) => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return;
     }
     action();
+  };
+
+  const handleReportOpen = () => {
+    setReportReason("");
+    setReportDescription("");
+    setReportOtherReason("");
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = async () => {
+    if (!reportReason || !reportDescription) {
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Pilih alasan dan masukkan deskripsi laporan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const finalReason =
+      reportReason === "other"
+        ? reportOtherReason
+        : REPORT_SERVICE_REASONS.find((r) => r.id === reportReason)?.label;
+
+    if (!finalReason) {
+      toast({
+        title: "Laporan belum lengkap",
+        description: "Alasan laporan tidak boleh kosong",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiClient.post("/reports", {
+        reportedUserId: service.seller?.id,
+        productId: service.id,
+        reason: finalReason,
+        description: reportDescription,
+        type: "service", // Send type as requested
+      });
+
+      toast({
+        title: "Laporan berhasil dikirim",
+        description: `Laporan layanan sudah masuk ke admin untuk ditinjau`,
+      });
+      setShowReportModal(false);
+    } catch (error: any) {
+      toast({
+        title: "Gagal mengirim laporan",
+        description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
+        variant: "destructive",
+      });
+    }
   };
 
   // Fetch service detail from API
@@ -124,6 +198,7 @@ export default function ServiceDetailPage({
       formatPrice={formatPrice}
       onNavigate={onNavigate}
       onAction={handleAction}
+      onOpenReport={handleReportOpen}
     />
   );
 
@@ -132,6 +207,24 @@ export default function ServiceDetailPage({
     { label: "Layanan Jasa", onClick: () => onNavigate("services") },
     { label: service.title },
   ];
+
+  const bottomContent = (
+    <ProductDetailReportDialog
+      open={showReportModal}
+      onOpenChange={setShowReportModal}
+      reportReason={reportReason}
+      setReportReason={setReportReason}
+      reportDescription={reportDescription}
+      setReportDescription={setReportDescription}
+      reportOtherReason={reportOtherReason}
+      setReportOtherReason={setReportOtherReason}
+      reportReasons={REPORT_SERVICE_REASONS}
+      onSubmit={handleReportSubmit}
+      title="Laporkan Layanan"
+      description="Bantu kami menjaga kualitas layanan di KampusMarket"
+      placeholder="Jelaskan secara detail mengapa Anda ingin melaporkan layanan ini..."
+    />
+  );
 
   return (
     <>
@@ -144,6 +237,7 @@ export default function ServiceDetailPage({
         breadcrumbs={breadcrumbs}
         mainContent={mainContent}
         sidebarContent={sidebarContent}
+        bottomContent={bottomContent}
       />
     </>
   );

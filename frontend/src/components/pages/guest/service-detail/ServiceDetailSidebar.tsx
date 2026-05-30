@@ -36,6 +36,7 @@ interface ServiceDetailSidebarProps {
   formatPrice: (price: number) => string;
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
   onAction: (action: () => void) => void;
+  onOpenReport: () => void;
 }
 
 export default function ServiceDetailSidebar({
@@ -44,6 +45,7 @@ export default function ServiceDetailSidebar({
   formatPrice,
   onNavigate,
   onAction,
+  onOpenReport,
 }: ServiceDetailSidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -346,7 +348,7 @@ export default function ServiceDetailSidebar({
             WhatsApp
           </Button>
 
-          <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => onAction(onOpenReport)}>
             <Flag className="h-4 w-4 mr-2" />
             Laporkan Layanan
           </Button>
