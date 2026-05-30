@@ -459,7 +459,11 @@ export default function Navbar({
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 overflow-y-auto bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900">
+            <SheetContent 
+              side="right" 
+              className="w-80 overflow-y-auto bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 [&>button]:top-[6px]"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
               <div className="flex flex-col gap-4 mt-6 pb-8">
                 {/* Mobile Search */}
                 <div className="relative px-2">
