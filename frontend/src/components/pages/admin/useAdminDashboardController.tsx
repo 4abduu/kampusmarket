@@ -1718,7 +1718,7 @@ export function useAdminDashboardController() {
           );
           setReports(
             reports.map((r) =>
-              r.reportedUser?.id === selectedReport.reportedUser.id
+              r.reportedUser?.id === selectedReport.reportedUser.id && (r.status === "pending" || r.status === "warning")
                 ? { ...r, status: "banned" as const }
                 : r,
             ),
