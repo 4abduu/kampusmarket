@@ -185,6 +185,7 @@ export default function ServiceDetailPage({
             {service.category?.name || "Jasa"}
           </Badge>
         }
+        type="jasa"
       />
 
       <ServiceDetailTabsPanel description={service.description} service={service} productId={serviceId} />

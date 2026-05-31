@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Briefcase, SlidersHorizontal, Star, X } from "lucide-react";
+import ProductImage from "@/components/common/ProductImage";
 
 interface CategoryItem {
   id: string;
@@ -231,8 +232,14 @@ export default function ProfileServicesTab({
                 className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isFull ? "opacity-75" : ""}`}
                 onClick={() => onNavigate("service", service.id)}
               >
-                <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 flex items-center justify-center">
-                  <Briefcase className="h-16 w-16 text-primary-600/30" />
+                <div className="relative aspect-video flex items-center justify-center overflow-hidden">
+                  <ProductImage
+                    src={(service as any).images?.[0]?.url ?? (service as any).images?.[0] ?? (service as any).image}
+                    alt={service.title}
+                    type="jasa"
+                    className="w-full h-full bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30"
+                    imageClassName="w-full h-full object-cover"
+                  />
                   {isFull && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <Badge className="bg-orange-600 text-lg px-4 py-2">PENUH</Badge>

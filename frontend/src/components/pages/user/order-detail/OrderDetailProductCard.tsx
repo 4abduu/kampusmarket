@@ -35,7 +35,10 @@ export default function OrderDetailProductCard({
   onNavigate,
 }: Props) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const imageUrl = order.product?.images?.[0] || order.product?.image;
+
+  const isClickable = !!imageUrl && !imageError;
 
   return (
     <Card>
@@ -45,8 +48,10 @@ export default function OrderDetailProductCard({
       <CardContent className="space-y-4">
         <div className="flex gap-4">
           <div 
-            className="w-20 h-20 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 relative group overflow-hidden cursor-pointer"
-            onClick={() => imageUrl && setLightboxOpen(true)}
+            className={`w-20 h-20 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 relative group overflow-hidden ${
+              isClickable ? "cursor-pointer" : "cursor-default"
+            }`}
+            onClick={isClickable ? () => setLightboxOpen(true) : undefined}
           >
             <ProductImage
               src={imageUrl}
@@ -55,8 +60,9 @@ export default function OrderDetailProductCard({
               className="w-full h-full"
               imageClassName="w-full h-full object-cover transition-transform group-hover:scale-105"
               preferredSize="thumbnail"
+              onError={() => setImageError(true)}
             />
-            {imageUrl && (
+            {isClickable && (
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                 <Maximize2 className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
               </div>

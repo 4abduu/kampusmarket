@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import ProductImage, {
   type ImageVariants,
 } from "@/components/common/ProductImage";
 import ImageLightbox from "@/components/common/ImageLightbox";
+import { cn } from "@/lib/utils";
+
 
 interface ImageDetail {
   url: string;
@@ -32,6 +34,10 @@ interface ImageGalleryProps {
   customBadge?: React.ReactNode;
   disableInternalLightbox?: boolean;
   onImageClick?: () => void;
+  /** Type of product: 'barang' or 'jasa' */
+  type?: "barang" | "jasa" | string;
+  /** Custom stroke width for the fallback icon */
+  fallbackStrokeWidth?: number;
 }
 
 /* ──────────────────────────────────────────────
@@ -49,6 +55,8 @@ export default function ImageGallery({
   customBadge,
   disableInternalLightbox = false,
   onImageClick,
+  type,
+  fallbackStrokeWidth,
 }: ImageGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -77,18 +85,30 @@ export default function ImageGallery({
       ? () => setSelectedImage(selectedImage + 1)
       : null;
 
+  const [hasError, setHasError] = useState(false);
+
+  // Sync / reset error state when image selection changes
+  useEffect(() => {
+    setHasError(false);
+  }, [selectedImage, currentUrl]);
+
+  const isClickable = !!currentUrl && !hasError;
+
   return (
     <>
       <div className="space-y-4">
         <Card className="overflow-hidden group relative">
           <div
-            className="relative bg-slate-100 dark:bg-slate-800 h-96 flex items-center justify-center overflow-hidden cursor-pointer"
-            onClick={disableInternalLightbox ? onImageClick : openLightbox}
-            role="button"
-            tabIndex={0}
-            aria-label="Klik untuk memperbesar gambar"
+            className={cn(
+              "relative bg-slate-100 dark:bg-slate-800 h-96 flex items-center justify-center overflow-hidden",
+              isClickable ? "cursor-pointer" : "cursor-default"
+            )}
+            onClick={isClickable ? (disableInternalLightbox ? onImageClick : openLightbox) : undefined}
+            role={isClickable ? "button" : undefined}
+            tabIndex={isClickable ? 0 : -1}
+            aria-label={isClickable ? "Klik untuk memperbesar gambar" : undefined}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+              if (isClickable && (e.key === "Enter" || e.key === " ")) {
                 if (disableInternalLightbox) {
                   onImageClick?.();
                 } else {
@@ -102,20 +122,25 @@ export default function ImageGallery({
               alt={
                 currentDetail?.alt ?? `Gambar produk ${selectedImage + 1}`
               }
+              type={type}
               className="w-full h-full"
               imageClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               showError={true}
               variants={currentDetail?.variants}
               preferredSize="large"
+              onError={() => setHasError(true)}
+              strokeWidth={fallbackStrokeWidth ?? 2.8}
             />
 
             {/* Zoom hint overlay */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-1.5">
-                <Maximize2 className="h-4 w-4" />
-                Perbesar
+            {isClickable && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-1.5">
+                  <Maximize2 className="h-4 w-4" />
+                  Perbesar
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Badges */}
             {customBadge ? (
@@ -214,10 +239,12 @@ export default function ImageGallery({
                   <ProductImage
                     src={thumbUrl}
                     alt={`Thumbnail ${index + 1}`}
+                    type={type}
                     className="w-full h-full bg-slate-100 dark:bg-slate-800"
                     imageClassName="w-full h-full object-cover"
                     variants={detail?.variants}
                     preferredSize="thumbnail"
+                    strokeWidth={2.25}
                   />
                 </button>
               );

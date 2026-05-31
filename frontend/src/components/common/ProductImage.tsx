@@ -1,21 +1,6 @@
-import { useState } from "react";
-import { Package, AlertCircle, Briefcase } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Package, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/**
- * Variant sizes mapped to max-width media queries.
- * Browser selects the most appropriate source for the viewport.
- */
-const VARIANT_MEDIA: Record<string, string> = {
-  thumbnail: "(max-width: 200px)",
-  small: "(max-width: 400px)",
-  medium: "(max-width: 768px)",
-  large: "(max-width: 1280px)",
-  // original has no media — it's the default fallback
-};
-
-/** Order in which variants should appear in <picture> sources (smallest first) */
-const VARIANT_ORDER = ["thumbnail", "small", "medium", "large", "original"] as const;
 
 export interface ImageVariants {
   thumbnail?: string;
@@ -39,129 +24,142 @@ interface ProductImageProps {
   preferredSize?: keyof ImageVariants;
   /** Type of product: 'barang' (Package/gray) or 'jasa' (Briefcase/green) */
   type?: "barang" | "jasa" | string;
+  /** Callback triggered when the image successfully loads */
+  onLoad?: () => void;
+  /** Callback triggered when the image fails to load */
+  onError?: () => void;
+  /** Optional custom class for the fallback icon (e.g., to override default sizes) */
+  fallbackIconClassName?: string;
+  /** Optional custom stroke width for the fallback icon (default: 2) */
+  strokeWidth?: number;
 }
 
 /**
- * Industry-standard product image component.
- *
- * Features:
- * - Responsive <picture> element with srcset when variants are provided
- * - Lazy loading with native loading="lazy"
- * - Graceful error handling with fallback icon
- * - Blur-up loading animation
+ * Standardized KampusMarket product & service image component with unified fallbacks.
  */
 export default function ProductImage({
   src,
   alt = "Produk",
-  className = "bg-slate-100 dark:bg-slate-800 flex items-center justify-center",
+  className = "w-full h-full flex items-center justify-center bg-muted",
   imageClassName = "w-full h-full object-cover",
-  showError = false,
-  fallbackImageUrl,
   variants,
   preferredSize = "small",
   type = "barang",
+  onLoad,
+  onError,
+  fallbackIconClassName,
+  strokeWidth,
 }: ProductImageProps) {
   const [imageError, setImageError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  // Reset loading and error states if src or variants change
+  useEffect(() => {
+    setImageError(false);
+    setLoaded(false);
+  }, [src, JSON.stringify(variants)]);
+
   // Determine the best src to use
   const primarySrc = variants?.[preferredSize] || variants?.small || src;
-  const hasImage = primarySrc && primarySrc.trim().length > 0;
+  const hasImage = primarySrc && typeof primarySrc === "string" && primarySrc.trim().length > 0;
 
   const handleImageError = () => {
     if (!imageError) {
       console.warn(`[ProductImage] Failed to load image: ${primarySrc}`);
       setImageError(true);
+      onError?.();
     }
   };
 
-  // If fallback image is provided and main image failed, show fallback
-  if (fallbackImageUrl && imageError) {
-    return (
-      <img
-        src={fallbackImageUrl}
-        alt={alt}
-        className={imageClassName}
-        loading="lazy"
-        decoding="async"
-      />
-    );
-  }
+  const handleImageLoad = () => {
+    setLoaded(true);
+    onLoad?.();
+  };
 
-  // No image provided or error occurred
+  // Fallback jika gambar bernilai null, kosong, atau gagal dimuat
   if (!hasImage || imageError) {
     const isService = type === "jasa";
     const FallbackIcon = isService ? Briefcase : Package;
     
-    // Green theme for service (jasa), Grey theme for goods (barang)
-    // Background: Level 50 (bg-slate-50 dark:bg-slate-900/50 vs bg-emerald-50 dark:bg-emerald-950/20)
-    // Icon: Level 600 with 50% opacity (text-slate-600/50 vs text-emerald-600/50)
-    const bgClass = isService 
-      ? "bg-emerald-50 dark:bg-emerald-950/20" 
-      : "bg-slate-50 dark:bg-slate-900/50";
-    
-    const iconClass = isService 
-      ? "text-emerald-600/50" 
-      : "text-slate-600/50";
+    // Icon size scales dynamically relative to the container size:
+    // Targets 40% of container size (w-[40%] h-[40%])
+    // Clamp limits: min 20px (for small w-12 h-12 rows) and max 80px (for h-96 galleries)
+    const iconClass = cn(
+      "w-[40%] h-[40%] min-w-[20px] min-h-[20px] max-w-[80px] max-h-[80px]",
+      fallbackIconClassName
+    );
+
+    const activeStrokeWidth = strokeWidth ?? 2.5;
 
     return (
-      <div className={cn(className, bgClass)}>
-        <div className="flex flex-col items-center justify-center gap-2">
-          {showError && imageError ? (
-            <>
-              <AlertCircle className="h-8 w-8 text-red-500/50" />
-              <span className="text-xs text-red-500 text-center">
-                Gagal memuat gambar
-              </span>
-            </>
-          ) : (
-            <FallbackIcon className={cn("h-8 w-8", iconClass)} />
-          )}
-        </div>
+      <div className={cn("w-full h-full flex items-center justify-center", className)}>
+        {type === "jasa" ? (
+          <div className="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-500">
+            <FallbackIcon className={iconClass} strokeWidth={activeStrokeWidth} strokeOpacity={0.5} />
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+            <FallbackIcon className={iconClass} strokeWidth={activeStrokeWidth} strokeOpacity={0.5} />
+          </div>
+        )}
       </div>
     );
   }
 
-  // If we have variant URLs, render <picture> for responsive loading
   const hasVariants = variants && Object.keys(variants).length > 1;
 
-  if (hasVariants) {
-    return (
-      <picture className={className}>
-        {VARIANT_ORDER.map((size) => {
-          const url = variants[size];
-          const media = VARIANT_MEDIA[size];
-          if (!url || !media) return null; // skip original (no media) and missing
-          return (
-            <source key={size} srcSet={url} type="image/webp" media={media} />
-          );
-        })}
+  return (
+    <div className={cn("relative overflow-hidden w-full h-full", className)}>
+      {hasVariants ? (
+        <picture className="w-full h-full">
+          {Object.entries(variants).map(([size, url]) => {
+            if (!url || size === "original") return null;
+            const media =
+              size === "thumbnail"
+                ? "(max-width: 200px)"
+                : size === "small"
+                  ? "(max-width: 400px)"
+                  : size === "medium"
+                    ? "(max-width: 768px)"
+                    : "(max-width: 1280px)";
+            return (
+              <source key={size} srcSet={url} type="image/webp" media={media} />
+            );
+          })}
+          <img
+            src={variants.original || variants.large || primarySrc}
+            alt={alt}
+            className={cn(
+              imageClassName,
+              "transition-opacity duration-300",
+              loaded ? "opacity-100" : "opacity-0"
+            )}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
+      ) : (
         <img
-          src={variants.original || variants.large || primarySrc}
+          src={primarySrc}
           alt={alt}
-          className={`${imageClassName} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
-          onLoad={() => setLoaded(true)}
+          className={cn(
+            imageClassName,
+            "transition-opacity duration-300",
+            loaded ? "opacity-100" : "opacity-0"
+          )}
+          onLoad={handleImageLoad}
           onError={handleImageError}
           loading="lazy"
           decoding="async"
         />
-        {/* Pulse placeholder while loading */}
-        {!loaded && (
-          <div className="absolute inset-0 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
-        )}
-      </picture>
-    );
-  }
+      )}
 
-  // Simple <img> fallback (for external URLs, seeded data, etc.)
-  return (
-    <img
-      src={primarySrc}
-      alt={alt}
-      className={imageClassName}
-      onError={handleImageError}
-      loading="lazy"
-      decoding="async"
-    />
+      {/* Pulse placeholder while loading */}
+      {!loaded && (
+        <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse" />
+      )}
+    </div>
   );
 }

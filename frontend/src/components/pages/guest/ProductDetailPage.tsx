@@ -185,6 +185,7 @@ export default function ProductDetailPage({
         originalPrice={product.originalPrice}
         selectedImage={selectedImage}
         setSelectedImage={setSelectedImage}
+        type="barang"
       />
       <ProductDetailTabsPanel
         productId={productId}

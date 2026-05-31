@@ -98,6 +98,7 @@ export default function ProductDialogs({
                       setShowProductDetail(false);
                       setLightboxOpen(true);
                     }}
+                    type={selectedProduct.type}
                   />
                 </div>
               ) : (

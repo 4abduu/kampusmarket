@@ -1,10 +1,11 @@
-import { Briefcase, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import type { Service } from "@/lib/mock-data";
 import { LandingServicesSectionSkeleton } from "@/components/skeleton";
+import ProductImage from "@/components/common/ProductImage";
 
 interface LandingServicesSectionProps {
   services: Service[];
@@ -46,8 +47,14 @@ export default function LandingServicesSection({
               className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
               onClick={() => onNavigate("service", service.id)}
             >
-              <div className="relative bg-emerald-50 dark:bg-emerald-900/20 h-40 flex items-center justify-center">
-                <Briefcase className="h-12 w-12 text-emerald-600/70" />
+              <div className="relative h-40 flex items-center justify-center overflow-hidden">
+                <ProductImage
+                  src={(service as any).images?.[0]?.url ?? (service as any).images?.[0] ?? (service as any).image}
+                  alt={service.title}
+                  type="jasa"
+                  className="w-full h-full bg-emerald-50 dark:bg-emerald-900/20"
+                  imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
               </div>
 
               <CardContent className="p-4">
