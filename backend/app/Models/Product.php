@@ -264,12 +264,33 @@ class Product extends Model
     }
 
     /**
-     * Update sold count.
+     * Update stock and auto-update status based on new stock value.
+     * active jika stock > 0, sold_out jika stock == 0.
+     */
+    public function updateStock(int $newStock): void
+    {
+        $newStock = max(0, $newStock);
+        $this->stock = $newStock;
+
+        // Hanya ubah status jika produk barang (bukan jasa)
+        if ($this->type === ProductType::BARANG) {
+            if ($newStock === 0 && $this->status === ProductStatus::ACTIVE) {
+                $this->status = ProductStatus::SOLD_OUT;
+            } elseif ($newStock > 0 && $this->status === ProductStatus::SOLD_OUT) {
+                $this->status = ProductStatus::ACTIVE;
+            }
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Update sold count (does NOT touch stock — stock is managed separately).
      */
     public function incrementSoldCount(int $quantity = 1): void
     {
         $this->increment('sold_count', $quantity);
-        $this->decrement('stock', $quantity);
+        // Stok TIDAK dikurangi di sini; dikelola via updateStock() / addToCart()
     }
 
     /**

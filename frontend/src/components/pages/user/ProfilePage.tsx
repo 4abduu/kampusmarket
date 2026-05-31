@@ -19,6 +19,7 @@ import ProductDetailReportDialog from "@/components/pages/guest/product-detail/P
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import { useToast } from "@/hooks/use-toast";
 import apiClient from "@/lib/api/client";
+import { ProfilePageSkeleton } from "@/components/skeleton";
 
 type ActiveTab = "products" | "services" | "reviews";
 type ProductSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
@@ -83,7 +84,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
 
     try {
       await apiClient.post("/reports", {
-        reportedUserId: user.id,
+        reportedUserId: profileUser?.id || authUser?.id || mockUsers[0]?.id,
         reason: finalReason,
         description: reportDescription,
         type: "account",
@@ -154,8 +155,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
   }, [userId]);
 
-  // ✅ Dari dev-abdu: pakai data API, bukan mock
-  const user = profileUser || authUser || mockUsers[0];
+  const user = profileUser || authUser || (mockUsers && mockUsers.length > 0 ? mockUsers[0] : null);
   const isOwnProfile = !userId && !!authUser;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("products");
@@ -171,7 +171,6 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
   ]);
   const [serviceSortBy, setServiceSortBy] = useState<ServiceSortBy>("terbaru");
 
-  // ✅ Dari dev-abdu: pakai fetched products, bukan mock filter
   const barangProducts = useMemo(() => {
     return userProducts.filter((p) => p.type === "barang");
   }, [userProducts]);
@@ -188,9 +187,9 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     (acc, p) => acc + (p.soldCount || 0),
     0,
   );
-  const avgRating = user.rating ?? 0;
-  const totalReviews = user.reviewCount || 0;
-  const memberSince = user.createdAt || "September 2024";
+  const avgRating = user?.rating ?? 0;
+  const totalReviews = user?.reviewCount || 0;
+  const memberSince = user?.createdAt || "September 2024";
 
   const filteredProducts = useMemo(() => {
     const filtered = [...barangProducts]
@@ -322,8 +321,12 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
   };
 
+  if (loading || !user) {
+    return <ProfilePageSkeleton />;
+  }
+
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 pb-20">
       <div className="container mx-auto px-4 py-8">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <button

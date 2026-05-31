@@ -23,6 +23,8 @@ class UserResource extends JsonResource
             'location' => $this->location,
 
             'faculty' => $this->faculty?->code,
+            'facultyCode' => $this->faculty?->code,
+            'facultyName' => $this->faculty?->name,
             'facultyDetails' => $this->faculty ? [
                 'id'   => $this->faculty->code,
                 'name' => $this->faculty->name,
@@ -74,6 +76,8 @@ class UserResource extends JsonResource
             'name'        => $this->name,
             'avatar'      => $this->avatar ?? '',
             'faculty'     => $this->faculty?->code,
+            'facultyCode' => $this->faculty?->code,
+            'facultyName' => $this->faculty?->name,
             'rating'      => (float) $this->rating,
             'reviewCount' => $this->review_count,
             'isVerified'  => $this->is_verified,

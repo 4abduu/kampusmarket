@@ -24,6 +24,8 @@ interface ProductSeller {
   isVerified?: boolean;
   avatar?: string;
   phone?: string;
+  facultyCode?: string;
+  facultyName?: string;
 }
 
 interface ProductShape {
@@ -373,7 +375,7 @@ export default function ProductDetailSidebar({
 
           <div className="grid grid-cols-3 gap-4 text-center text-sm mb-4">
             <div>
-              <p className="font-bold text-lg">{product.soldCount}</p>
+              <p className="font-bold text-lg">{product.soldCount ?? 0}</p>
               <p className="text-muted-foreground">Terjual</p>
             </div>
             <div>
@@ -384,8 +386,10 @@ export default function ProductDetailSidebar({
               <p className="text-muted-foreground">Rating</p>
             </div>
             <div>
-              <p className="font-bold text-lg">4.8</p>
-              <p className="text-muted-foreground">Respon</p>
+              <p className="font-bold text-lg uppercase">
+                {product.seller.facultyCode || product.seller.facultyName || "N/A"}
+              </p>
+              <p className="text-muted-foreground">Fakultas</p>
             </div>
           </div>
 

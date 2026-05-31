@@ -327,9 +327,11 @@ export default function ServiceDetailSidebar({
               </p>
               <p className="text-muted-foreground">Rating</p>
             </div>
-            <div>
-              <p className="font-bold text-lg">98%</p>
-              <p className="text-muted-foreground">Respon</p>
+             <div>
+              <p className="font-bold text-lg uppercase">
+                {service.seller.facultyCode || service.seller.facultyName || "N/A"}
+              </p>
+              <p className="text-muted-foreground">Fakultas</p>
             </div>
           </div>
 

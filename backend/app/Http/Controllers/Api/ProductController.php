@@ -14,7 +14,6 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -294,87 +293,6 @@ class ProductController extends Controller
 
         $updateData = [];
 
-        if ($request->has('title')) {
-            $updateData['title'] = $request->title;
-        }
-        if ($request->has('description')) {
-            $updateData['description'] = $request->description;
-        }
-        if ($request->has('categoryId')) {
-            // Convert category UUID to numeric ID
-            $category = Category::where('uuid', $request->categoryId)->first();
-            if ($category) {
-                $updateData['category_id'] = $category->id;
-            }
-        }
-        if ($request->has('price')) {
-            $updateData['price'] = (int) $request->price;
-        }
-        if ($request->has('originalPrice')) {
-            $updateData['original_price'] = $request->originalPrice ? (int) $request->originalPrice : null;
-        }
-        if ($request->has('priceMin')) {
-            $updateData['price_min'] = $request->priceMin ? (int) $request->priceMin : null;
-        }
-        if ($request->has('priceMax')) {
-            $updateData['price_max'] = $request->priceMax ? (int) $request->priceMax : null;
-        }
-        if ($request->has('priceType')) {
-            $updateData['price_type'] = $request->priceType;
-        }
-        if ($request->has('condition')) {
-            $updateData['condition'] = $request->condition;
-        }
-        if ($request->has('stock')) {
-            $updateData['stock'] = $request->stock;
-        }
-        if ($request->has('weight')) {
-            $updateData['weight'] = $request->weight;
-        }
-        if ($request->has('durationMin')) {
-            $updateData['duration_min'] = $request->durationMin;
-        }
-        if ($request->has('durationMax')) {
-            $updateData['duration_max'] = $request->durationMax;
-        }
-        if ($request->has('durationUnit')) {
-            $updateData['duration_unit'] = $request->durationUnit;
-        }
-        if ($request->has('durationIsPlus')) {
-            $updateData['duration_is_plus'] = $request->durationIsPlus;
-        }
-        if ($request->has('availabilityStatus')) {
-            $updateData['availability_status'] = $request->availabilityStatus;
-        }
-        if ($request->has('canNego')) {
-            $updateData['can_nego'] = $request->canNego;
-        }
-        if ($request->has('location')) {
-            $updateData['location'] = $request->location;
-        }
-        if ($request->has('status')) {
-            $updateData['status'] = $request->status;
-        }
-
-        // Auto-correct status based on stock (for barang only)
-        if ($product->type === 'barang') {
-            $newStock = $updateData['stock'] ?? $product->stock;
-            $newStatus = $updateData['status'] ?? $product->status;
-
-            // If stock becomes 0, auto-set status to sold_out
-            if ($newStock === 0 && $newStatus === 'active') {
-                $updateData['status'] = 'sold_out';
-            }
-
-            // If stock becomes > 0 and status is sold_out, auto-set to active
-            if ($newStock > 0 && $newStatus === 'sold_out') {
-                $request->merge(['status' => 'active']);
-            }
-        }
-
-        // 1. Update basic info (camelCase and snake_case support via Request)
-        $updateData = [];
-
         // Title & Slug
         if ($request->has('title')) {
             $updateData['title'] = $request->title;
@@ -411,15 +329,31 @@ class ProductController extends Controller
         if ($request->has('durationIsPlus')) $updateData['duration_is_plus'] = $request->durationIsPlus;
         if ($request->has('availabilityStatus')) $updateData['availability_status'] = $request->availabilityStatus;
 
-        // Status
+        // Status (basic)
         if ($request->has('status')) $updateData['status'] = $request->status;
+
+        // Auto-correct status based on stock (for barang only)
+        if ($product->type === 'barang') {
+            $newStock = $updateData['stock'] ?? $product->stock;
+            $newStatus = $updateData['status'] ?? $product->status;
+
+            // If stock becomes 0, auto-set status to sold_out
+            if ($newStock === 0 && $newStatus === 'active') {
+                $updateData['status'] = 'sold_out';
+            }
+
+            // If stock becomes > 0 and status is sold_out, auto-set to active
+            if ($newStock > 0 && $newStatus === 'sold_out') {
+                $updateData['status'] = 'active';
+            }
+        }
 
         // Perform basic info update
         if (!empty($updateData)) {
             $product->update($updateData);
         }
 
-        // 2. Update images
+        // Update images
         if ($request->has('images')) {
             $product->images()->delete();
             foreach ($request->images as $index => $imageUrl) {
@@ -432,7 +366,7 @@ class ProductController extends Controller
             }
         }
 
-        // 3. Update shipping/service options
+        // Update shipping/service options
         $options = $request->input('shippingOptions') ?? $request->input('shipping_options');
 
         // Fallback to individual fields if shippingOptions not provided
@@ -446,13 +380,8 @@ class ProductController extends Controller
 
             if ($hasAnyMethod) {
                 $options = [];
-                // Check merged camelCase versions
-                if ($request->isCod) {
-                    $options[] = ['type' => 'cod', 'label' => 'COD (Bayar di Tempat)', 'price' => 0];
-                }
-                if ($request->isPickup) {
-                    $options[] = ['type' => 'pickup', 'label' => 'Ambil di Kampus (Gratis)', 'price' => 0];
-                }
+                if ($request->isCod) $options[] = ['type' => 'cod', 'label' => 'COD (Bayar di Tempat)', 'price' => 0];
+                if ($request->isPickup) $options[] = ['type' => 'pickup', 'label' => 'Ambil di Kampus (Gratis)', 'price' => 0];
                 if ($request->isDelivery) {
                     $options[] = [
                         'type' => 'delivery',
@@ -462,16 +391,9 @@ class ProductController extends Controller
                     ];
                 }
 
-                // Check service modes for jasa
-                if ($request->isOnline) {
-                    $options[] = ['type' => 'online', 'label' => 'Layanan Online', 'price' => 0];
-                }
-                if ($request->isOnsite) {
-                    $options[] = ['type' => 'onsite', 'label' => 'Datang ke Lokasi Provider', 'price' => 0];
-                }
-                if ($request->isHomeService) {
-                    $options[] = ['type' => 'home_service', 'label' => 'Provider Datang ke Lokasi Anda', 'price' => 0];
-                }
+                if ($request->isOnline) $options[] = ['type' => 'online', 'label' => 'Layanan Online', 'price' => 0];
+                if ($request->isOnsite) $options[] = ['type' => 'onsite', 'label' => 'Datang ke Lokasi Provider', 'price' => 0];
+                if ($request->isHomeService) $options[] = ['type' => 'home_service', 'label' => 'Provider Datang ke Lokasi Anda', 'price' => 0];
             }
         }
 
@@ -731,16 +653,20 @@ class ProductController extends Controller
             ->first();
 
         if ($cart) {
-            $newQuantity = $cart->quantity + $requestedQuantity;
-            
-            if ($newQuantity > $product->stock) {
+            $addedQuantity = $requestedQuantity;
+            $newQuantity = $cart->quantity + $addedQuantity;
+
+            if ($newQuantity > ($product->stock + $cart->quantity)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Stok tidak mencukupi. Anda sudah memiliki ' . $cart->quantity . ' item di keranjang.',
                     'current_cart_quantity' => $cart->quantity,
-                    'max_stock' => $product->stock,
+                    'max_stock' => $product->stock + $cart->quantity,
                 ], 400);
             }
+
+            // Kurangi stok sebesar tambahan quantity
+            $product->updateStock($product->stock - $addedQuantity);
 
             $cart->update([
                 'quantity' => $newQuantity,
@@ -753,6 +679,9 @@ class ProductController extends Controller
                     'message' => 'Stok tidak mencukupi',
                 ], 400);
             }
+
+            // Kurangi stok
+            $product->updateStock($product->stock - $requestedQuantity);
 
             Cart::create([
                 'user_id' => $request->user()->id,
@@ -851,16 +780,23 @@ class ProductController extends Controller
             ->firstOrFail();
 
         $product = $cartItem->product;
-        if ($product->stock < $request->quantity) {
+        $oldQuantity = $cartItem->quantity;
+        $newQuantity = $request->quantity;
+        $diff = $newQuantity - $oldQuantity;
+
+        // Stok tersedia = stok saat ini + qty lama di keranjang (stok sudah dikurangi saat addToCart)
+        $availableStock = $product->stock + $oldQuantity;
+        if ($newQuantity > $availableStock) {
             return response()->json([
                 'success' => false,
                 'message' => 'Stok tidak mencukupi',
             ], 400);
         }
 
-        $cartItem->update([
-            'quantity' => $request->quantity,
-        ]);
+        // Sesuaikan stok: kurangi jika quantity naik, tambah jika turun
+        $product->updateStock($product->stock - $diff);
+
+        $cartItem->update(['quantity' => $newQuantity]);
 
         return response()->json([
             'success' => true,
@@ -882,6 +818,13 @@ class ProductController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
+        $product = $cartItem->product;
+
+        // Kembalikan stok
+        if ($product) {
+            $product->updateStock($product->stock + $cartItem->quantity);
+        }
+
         $cartItem->delete();
 
         return response()->json([
@@ -895,6 +838,17 @@ class ProductController extends Controller
      */
     public function clearCart(Request $request): JsonResponse
     {
+        $cartItems = Cart::with('product')
+            ->where('user_id', $request->user()->id)
+            ->get();
+
+        // Kembalikan stok semua item
+        foreach ($cartItems as $item) {
+            if ($item->product) {
+                $item->product->updateStock($item->product->stock + $item->quantity);
+            }
+        }
+
         Cart::where('user_id', $request->user()->id)->delete();
 
         return response()->json([

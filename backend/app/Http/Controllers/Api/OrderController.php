@@ -112,7 +112,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        if ($product->stock < $request->quantity) {
+        if ($product->stock < $request->quantity && !$request->input('from_cart', false)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Stok tidak mencukupi',
@@ -229,8 +229,20 @@ class OrderController extends Controller
             $order->uuid
         );
 
-        // Update product stock
-        $product->decrement('stock', $request->quantity);
+        // Update product sold count
+        $product->incrementSoldCount($request->quantity);
+
+        // Kurangi stok HANYA untuk Beli Langsung (bukan dari keranjang).
+        // Checkout dari keranjang: stok sudah terpotong saat addToCart, jadi tidak dipotong lagi.
+        $isFromCart = (bool) $request->input('from_cart', false);
+        if (!$isFromCart) {
+            $product->updateStock($product->stock - $request->quantity);
+        } else {
+            // Dari keranjang: hapus item keranjang yang relevan (cleanup)
+            \App\Models\Cart::where('user_id', $user->id)
+                ->where('product_id', $product->id)
+                ->delete();
+        }
 
         return response()->json([
             'success' => true,

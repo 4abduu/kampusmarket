@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertCircle, Edit, Lock, MapPin, Plus, Save, Trash2, User, Loader2, Pencil } from "lucide-react"
 import type { Address as AddressType } from "@/lib/mock-data"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { facultiesApi } from "@/lib/api/faculties"
+import type { Faculty } from "@/components/pages/admin/admin-dashboard.shared"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import ProfilePictureEditDialog from "@/components/pages/user/dashboard/ProfilePictureEditDialog"
-import { FACULTIES } from "@/lib/mock-data"
 import { userApi } from "@/lib/api/users"
 
 type ProfileForm = {
@@ -79,6 +80,16 @@ export default function UserDashboardSettingsTab({
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false)
   const [profilePictureUrl, setProfilePictureUrl] = useState(currentUser.avatar || "")
   const [showFacultyConfirmDialog, setShowFacultyConfirmDialog] = useState(false)
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [isLoadingFaculties, setIsLoadingFaculties] = useState(true)
+
+  useEffect(() => {
+    facultiesApi
+      .listDropdown()
+      .then(setFaculties)
+      .catch(() => setFaculties([]))
+      .finally(() => setIsLoadingFaculties(false))
+  }, [])
 
   const onSaveProfileClick = () => {
     if (!profileForm.faculty) {
@@ -191,13 +202,14 @@ export default function UserDashboardSettingsTab({
               ) : (
                 <>
                   <select
-                    className="w-full border rounded-lg px-3 py-2 bg-white"
+                    className="w-full border rounded-lg px-3 py-2 bg-white disabled:opacity-60 disabled:cursor-wait"
                     aria-label="Pilih Fakultas"
                     value={profileForm.faculty}
                     onChange={(e) => setProfileForm({ ...profileForm, faculty: e.target.value })}
+                    disabled={isLoadingFaculties}
                   >
-                    <option value="">Pilih fakultas wajib...</option>
-                    {FACULTIES.map(f => (
+                    <option value="">{isLoadingFaculties ? "Memuat fakultas..." : "Pilih fakultas wajib..."}</option>
+                    {faculties.map(f => (
                       <option key={f.id} value={f.id}>{f.name}</option>
                     ))}
                   </select>

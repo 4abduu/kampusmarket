@@ -24,12 +24,12 @@ interface ProductDetailPageProps {
 }
 
 const REPORT_REASONS = [
-  { id: "not_as_described", label: "Barang tidak sesuai deskripsi" },
-  { id: "seller_unresponsive", label: "Penjual tidak responsif" },
-  { id: "fraud", label: "Penipuan / Produk palsu" },
-  { id: "damaged", label: "Barang rusak saat dikirim" },
-  { id: "misleading_photos", label: "Foto menyesatkan" },
-  { id: "price_issue", label: "Harga bermasalah" },
+  { id: "illegal_product", label: "Produk terlarang / melanggar hukum" },
+  { id: "counterfeit", label: "Produk palsu / bajakan" },
+  { id: "fraud", label: "Indikasi penipuan (Scam)" },
+  { id: "wrong_category_spam", label: "Kategori salah / Spam" },
+  { id: "price_manipulation", label: "Harga tidak masuk akal / manipulasi" },
+  { id: "inappropriate", label: "Mengandung konten vulgar/tidak pantas" },
   { id: "other", label: "Lainnya" },
 ];
 

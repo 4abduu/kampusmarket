@@ -126,7 +126,7 @@ export default function OrderDetailProductCard({
             <p className="font-medium">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
             <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid })}>
+          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" })}>
             <MessageCircle className="h-4 w-4 mr-1" />
             Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
           </Button>

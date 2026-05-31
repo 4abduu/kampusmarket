@@ -25,12 +25,11 @@ interface ServiceDetailPageProps {
 }
 
 const REPORT_SERVICE_REASONS = [
-  { id: "service_not_as_described", label: "Layanan tidak sesuai deskripsi" },
-  { id: "seller_unresponsive", label: "Penyedia tidak responsif" },
-  { id: "fraud", label: "Penipuan / Layanan palsu" },
-  { id: "poor_quality", label: "Kualitas pengerjaan buruk" },
-  { id: "delayed", label: "Pengerjaan sangat terlambat" },
-  { id: "price_issue", label: "Harga bermasalah" },
+  { id: "illegal_service", label: "Layanan terlarang / melanggar aturan" },
+  { id: "fraud", label: "Indikasi penipuan (Scam)" },
+  { id: "spam", label: "Spam / duplikasi layanan" },
+  { id: "price_manipulation", label: "Harga tidak masuk akal / manipulasi" },
+  { id: "inappropriate", label: "Mengandung konten vulgar/tidak pantas" },
   { id: "other", label: "Lainnya" },
 ];
 

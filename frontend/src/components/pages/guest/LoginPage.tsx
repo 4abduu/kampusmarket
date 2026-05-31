@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,20 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+
+  // Handle Google OAuth redirect-back: /login?error=banned&reason=...
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "banned") {
+      const reason = params.get("reason");
+      if (reason) {
+        setBannedReason(decodeURIComponent(reason));
+        setShowBannedModal(true);
+        // Bersihkan URL supaya reason tidak kelihatan di address bar
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,14 +263,6 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            {/* <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-xs space-y-2">
-              <p className="font-medium text-muted-foreground">📍 Tester? Hubungi admin untuk kode test akun</p>
-              <p className="text-muted-foreground text-[11px]">
-                Saat staging/development, admin akan memberikan test email & password untuk testing.
-              </p>
-            </div> */}
           </CardContent>
 
           <CardFooter className="flex justify-center">

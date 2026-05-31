@@ -323,7 +323,7 @@ class Order extends Model
 
         // Restore product stock
         if ($this->product) {
-            $this->product->increment('stock', $this->quantity);
+            $this->product->updateStock($this->product->stock + $this->quantity);
         }
 
         // Add to history

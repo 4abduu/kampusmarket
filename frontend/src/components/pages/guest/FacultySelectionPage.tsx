@@ -31,6 +31,7 @@ type FacultyOption = {
 export default function FacultySelectionPage({ onLogin, userName }: FacultySelectionPageProps) {
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingFaculties, setIsLoadingFaculties] = useState(true);
   const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>(fallbackFaculties);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -93,6 +94,10 @@ export default function FacultySelectionPage({ onLogin, userName }: FacultySelec
         if (isMounted) {
           setLoadError(error instanceof Error ? error.message : "Gagal memuat fakultas");
           setFacultyOptions(fallbackFaculties);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingFaculties(false);
         }
       }
     };
@@ -183,20 +188,27 @@ export default function FacultySelectionPage({ onLogin, userName }: FacultySelec
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Fakultas <span className="text-red-500">*</span>
             </label>
-            <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
+            <Select value={selectedFaculty} onValueChange={setSelectedFaculty} disabled={isLoadingFaculties}>
               <SelectTrigger className="w-full h-12 text-base">
-                <SelectValue placeholder="Pilih fakultas Anda..." />
+                <SelectValue placeholder={isLoadingFaculties ? "Memuat fakultas..." : "Pilih fakultas Anda..."} />
               </SelectTrigger>
               <SelectContent className="max-h-[280px]">
-                {facultyOptions.map((faculty) => (
-                  <SelectItem 
-                    key={faculty.id} 
-                    value={faculty.id}
-                    className="py-3 text-base"
-                  >
-                    {faculty.name}
-                  </SelectItem>
-                ))}
+                {isLoadingFaculties ? (
+                  <div className="flex items-center justify-center py-4 gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Memuat fakultas...
+                  </div>
+                ) : (
+                  facultyOptions.map((faculty) => (
+                    <SelectItem 
+                      key={faculty.id} 
+                      value={faculty.id}
+                      className="py-3 text-base"
+                    >
+                      {faculty.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

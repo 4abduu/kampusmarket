@@ -85,6 +85,7 @@ export function useAdminDashboardController() {
   const [reports, setReports] = useState<Report[]>([]);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [showBanReportDialog, setShowBanReportDialog] = useState(false);
+  const [banReportReason, setBanReportReason] = useState("");
   const [showResolveReportDialog, setShowResolveReportDialog] = useState(false);
   const [showDismissReportDialog, setShowDismissReportDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -1535,9 +1536,10 @@ export function useAdminDashboardController() {
   };
   const confirmBanUser = async () => {
     if (userToAction) {
+      const reason = banReason.trim() || "Melanggar aturan platform KampusMarket.";
       try {
         await adminUsersApi.banUser(userToAction.id, {
-          ban_reason: "Melanggar aturan platform KampusMarket.",
+          ban_reason: reason,
         });
         setUsers(
           users.map((u) =>
@@ -1545,7 +1547,7 @@ export function useAdminDashboardController() {
               ? {
                   ...u,
                   isBanned: true,
-                  banReason: "Melanggar aturan platform KampusMarket.",
+                  banReason: reason,
                 }
               : u,
           ),
@@ -1556,6 +1558,7 @@ export function useAdminDashboardController() {
         showSuccess(`Gagal memblokir user ${userToAction.name}`);
       } finally {
         setShowBanDialog(false);
+        setBanReason("");
         setUserToAction(null);
       }
     }
@@ -1699,21 +1702,23 @@ export function useAdminDashboardController() {
   };
   const handleBanFromReport = (report: Report) => {
     setSelectedReport(report);
+    setBanReportReason(report.reason || report.description || "");
     setShowBanReportDialog(true);
   };
   const confirmBanFromReport = () => {
     if (selectedReport) {
+      const reason = banReportReason.trim() || selectedReport.reason;
       const run = async () => {
         try {
           await adminReportsApi.resolveReport(selectedReport.id, {
-            resolution: `Ban user karena laporan: ${selectedReport.reason}`,
+            resolution: `Ban user karena laporan: ${reason}`,
             banUser: true,
-            banReason: selectedReport.reason,
+            banReason: reason,
           });
           setUsers(
             users.map((u) =>
               u.id === selectedReport.reportedUser.id
-                ? { ...u, isBanned: true, banReason: selectedReport.reason }
+                ? { ...u, isBanned: true, banReason: reason }
                 : u,
             ),
           );
@@ -1730,6 +1735,7 @@ export function useAdminDashboardController() {
           showSuccess("Gagal memblokir user, coba lagi");
         } finally {
           setShowBanReportDialog(false);
+          setBanReportReason("");
           setSelectedReport(null);
         }
       };
@@ -2721,6 +2727,8 @@ export function useAdminDashboardController() {
     setShowWarningDialog,
     showBanReportDialog,
     setShowBanReportDialog,
+    banReportReason,
+    setBanReportReason,
     selectedReport,
     financialModalOpen,
     setFinancialModalOpen,

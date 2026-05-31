@@ -162,7 +162,7 @@ export default function UserDialogs({
       </Dialog>
 
       {/* 2. Ban User Dialog */}
-      <Dialog open={showBanDialog} onOpenChange={setShowBanDialog}>
+      <Dialog open={showBanDialog} onOpenChange={(open) => { setShowBanDialog(open); if (!open) setBanReason(""); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
@@ -181,14 +181,31 @@ export default function UserDialogs({
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Alasan Blokir</label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    "Melakukan penipuan terhadap pembeli/penjual",
+                    "Spam atau penyalahgunaan platform",
+                    "Konten tidak pantas atau melanggar aturan",
+                    "Melanggar aturan platform KampusMarket",
+                  ].map((tpl) => (
+                    <button
+                      key={tpl}
+                      type="button"
+                      onClick={() => setBanReason(tpl)}
+                      className="text-xs px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      {tpl}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
-                  placeholder="Contoh: Melakukan penipuan, tidak responsif, tindakan melawan hukum, dll"
+                  placeholder="Tulis alasan blokir atau pilih template di atas..."
                   className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Alasan ini akan dikirim ke user saat akun diblokir
+                  Alasan ini akan ditampilkan ke user saat akun diblokir
                 </p>
               </div>
             </div>
@@ -196,10 +213,7 @@ export default function UserDialogs({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setShowBanDialog(false);
-                setBanReason("");
-              }}
+              onClick={() => { setShowBanDialog(false); setBanReason(""); }}
             >
               Batal
             </Button>

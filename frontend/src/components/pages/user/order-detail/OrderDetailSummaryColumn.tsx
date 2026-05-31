@@ -100,7 +100,7 @@ export default function OrderDetailSummaryColumn({
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => onNavigate("chat", { productId })}>
+            <Button variant="outline" className="flex-1" onClick={() => onNavigate("chat", { productId, chatAction: "chat" })}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
             </Button>

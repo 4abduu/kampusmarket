@@ -83,9 +83,9 @@ export function SearchProductCard({
               </span>
               <span className="flex items-center gap-1">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                {product.rating} ({product.reviewCount})
+                {product.rating ?? 0} ({product.reviewCount ?? 0})
               </span>
-              <span>Terjual: {product.soldCount}</span>
+              <span>Terjual: {(product as any).soldCount ?? 0}</span>
             </div>
           </div>
         </CardContent>
@@ -146,10 +146,10 @@ export function SearchProductCard({
         <div className="flex items-center justify-between mt-2 text-xs">
           <span className="flex items-center gap-1 text-muted-foreground">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            {product.rating}
+            {product.rating ?? 0}
           </span>
           <span className="text-muted-foreground">
-            Terjual {product.soldCount}
+            Terjual {(product as any).soldCount ?? 0}
           </span>
         </div>
       </CardContent>

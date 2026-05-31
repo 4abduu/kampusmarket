@@ -9,7 +9,6 @@ type ApiEnvelope<T> = {
 
 const mapFacultyFromApi = (faculty: FacultyApiItem): Faculty => {
   const rawCode = (faculty.code || faculty.id || faculty.name || "").toString();
-
   return {
     id: rawCode || "faculty",
     code: rawCode,
@@ -46,6 +45,22 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 };
 
 export const facultiesApi = {
+  /**
+   * Fetch active faculties for public dropdown (Register, Settings, etc.)
+   */
+  async listDropdown(): Promise<Faculty[]> {
+    const response = await fetch(`${API_BASE_URL}/faculties/dropdown`, {
+      credentials: "include",
+    });
+    const payload = await response.json();
+    const data: FacultyApiItem[] = Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload)
+      ? payload
+      : [];
+    return data.map(mapFacultyFromApi);
+  },
+
   async listAdmin(): Promise<Faculty[]> {
     const data = await request<FacultyApiItem[]>(`${API_BASE_URL}/admin/faculties`);
     return Array.isArray(data) ? data.map(mapFacultyFromApi) : [];
@@ -62,7 +77,6 @@ export const facultiesApi = {
         is_active: input.isActive,
       }),
     });
-
     return mapFacultyFromApi(data);
   },
 
@@ -77,7 +91,6 @@ export const facultiesApi = {
         is_active: input.isActive,
       }),
     });
-
     return mapFacultyFromApi(data);
   },
 
@@ -86,7 +99,6 @@ export const facultiesApi = {
       method: "PUT",
       body: JSON.stringify({ is_active: isActive }),
     });
-
     return mapFacultyFromApi(data);
   },
 

@@ -73,10 +73,10 @@ export default function LandingServicesSection({
                 <div className="flex items-center gap-1 mb-3">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="text-sm font-medium">
-                    {service.rating}
+                    {service.rating ?? 0}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    ({service.orderCount} pesanan)
+                    ({(service as any).soldCount ?? service.orderCount ?? 0} pesanan)
                   </span>
                 </div>
 

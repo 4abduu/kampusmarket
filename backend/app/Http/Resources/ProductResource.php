@@ -38,6 +38,9 @@ class ProductResource extends JsonResource
         $deliveryFeeMin = $deliveryOption?->price;
         $deliveryFeeMax = $deliveryOption?->price_max;
 
+        $facultyName = $this->whenLoaded('seller', $this->seller?->faculty?->name);
+        $facultyCode = $this->whenLoaded('seller', $this->seller?->faculty?->code);
+
         return [
             // Primary identifier
             'id' => $this->uuid,
@@ -95,6 +98,9 @@ class ProductResource extends JsonResource
             'isDelivery' => $isDelivery,
             'deliveryFeeMin' => $deliveryFeeMin,
             'deliveryFeeMax' => $deliveryFeeMax,
+
+            'facultyName' => $facultyName,
+            'facultyCode' => $facultyCode,
             
             // Shipping Options (1NF - dari tabel terpisah ke array)
             'shippingOptions' => ShippingOptionResource::collection(

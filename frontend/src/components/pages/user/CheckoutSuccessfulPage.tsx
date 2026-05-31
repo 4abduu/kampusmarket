@@ -329,7 +329,7 @@ export default function CheckoutSuccessfulPage({
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onNavigate("chat", { productId: orderData.product.id });
+                        onNavigate("chat", { productId: orderData.product.id, chatAction: "chat" });
                       }}
                       className="shrink-0 border-primary-300 dark:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-950/20"
                     >
@@ -537,7 +537,7 @@ export default function CheckoutSuccessfulPage({
                     variant="outline"
                     size="sm"
                     className="border-primary-300 dark:border-primary-700"
-                    onClick={() => onNavigate("chat", { productId: orders[0]?.product?.id || orders[0]?.product?.uuid })}
+                    onClick={() => onNavigate("chat", { productId: orders[0]?.product?.id || orders[0]?.product?.uuid, chatAction: "chat" })}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Chat

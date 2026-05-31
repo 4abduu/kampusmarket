@@ -15,6 +15,8 @@ interface ReportDialogsProps {
   setShowWarningDialog: (open: boolean) => void;
   showBanReportDialog: boolean;
   setShowBanReportDialog: (open: boolean) => void;
+  banReportReason: string;
+  setBanReportReason: (r: string) => void;
   selectedReport: Report | null;
   confirmSendWarning: () => void;
   confirmBanFromReport: () => void;
@@ -31,6 +33,8 @@ export default function ReportDialogs({
   setShowWarningDialog,
   showBanReportDialog,
   setShowBanReportDialog,
+  banReportReason,
+  setBanReportReason,
   selectedReport,
   confirmSendWarning,
   confirmBanFromReport,
@@ -167,12 +171,12 @@ export default function ReportDialogs({
       </Dialog>
 
       {/* 2. Ban dari Report Dialog */}
-      <Dialog open={showBanReportDialog} onOpenChange={setShowBanReportDialog}>
+      <Dialog open={showBanReportDialog} onOpenChange={(open) => { setShowBanReportDialog(open); if (!open) setBanReportReason(""); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Ban className="h-5 w-5" />
-              Blokir User
+              Blokir User via Laporan
             </DialogTitle>
             <DialogDescription>
               User akan diblokir permanen dan tidak bisa login atau bertransaksi lagi.
@@ -188,21 +192,35 @@ export default function ReportDialogs({
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                 <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Alasan Laporan:</p>
                 <p className="text-sm text-red-700 dark:text-red-300 font-semibold mb-2">{selectedReport.reason}</p>
-                <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1 border-t border-red-200/50 dark:border-red-800/50 pt-2 mt-2">Deskripsi Laporan:</p>
-                <p className="text-sm text-red-700 dark:text-red-300">{selectedReport.description}</p>
+                {selectedReport.description && (
+                  <>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1 border-t border-red-200/50 dark:border-red-800/50 pt-2 mt-2">Deskripsi Laporan:</p>
+                    <p className="text-sm text-red-700 dark:text-red-300">{selectedReport.description}</p>
+                  </>
+                )}
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                 <p className="text-sm text-muted-foreground">User yang akan diblokir:</p>
                 <p className="font-medium">{selectedReport.reportedUser.name}</p>
                 <p className="text-sm text-muted-foreground">{selectedReport.reportedUser.email}</p>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alasan Blokir (dikirim ke user)</label>
+                <textarea
+                  value={banReportReason}
+                  onChange={(e) => setBanReportReason(e.target.value)}
+                  placeholder="Alasan blokir..."
+                  className="w-full min-h-[70px] px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <p className="text-xs text-muted-foreground">Sudah diisi otomatis dari alasan laporan. Anda bisa mengubahnya.</p>
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBanReportDialog(false)}>
+            <Button variant="outline" onClick={() => { setShowBanReportDialog(false); setBanReportReason(""); }}>
               Batal
             </Button>
-            <Button variant="destructive" onClick={confirmBanFromReport}>
+            <Button variant="destructive" onClick={confirmBanFromReport} disabled={!banReportReason.trim()}>
               <Ban className="h-4 w-4 mr-2" />
               Blokir User
             </Button>

@@ -155,7 +155,7 @@ export default function AdminFacultiesTab({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-mono text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                      <Badge variant="secondary" className="font-mono text-xs bg-indigo-50 text-indigo-700 border-indigo-200 uppercase">
                         {faculty.code}
                       </Badge>
                     </TableCell>

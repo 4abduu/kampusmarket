@@ -257,7 +257,7 @@ export default function ProfileProductsTab({
                       {product.rating ?? 0}
                     </div>
                     <span>•</span>
-                    <span>{product.soldCount || 0} terjual</span>
+                    <span>{(product as any).soldCount ?? 0} terjual</span>
                   </div>
                 </CardContent>
               </Card>

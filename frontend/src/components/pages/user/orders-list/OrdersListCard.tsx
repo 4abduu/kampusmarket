@@ -195,7 +195,7 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNavigate("chat");
+                    onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" } as any);
                   }}
                 >
                   <MessageCircle className="h-3 w-3 mr-1" />

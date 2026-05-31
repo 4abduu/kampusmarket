@@ -193,6 +193,8 @@ export default function AdminDashboardPage({
     setShowWarningDialog,
     showBanReportDialog,
     setShowBanReportDialog,
+    banReportReason,
+    setBanReportReason,
     showResolveReportDialog,
     setShowResolveReportDialog,
     showDismissReportDialog,
@@ -702,6 +704,8 @@ export default function AdminDashboardPage({
         setShowWarningDialog={setShowWarningDialog}
         showBanReportDialog={showBanReportDialog}
         setShowBanReportDialog={setShowBanReportDialog}
+        banReportReason={banReportReason}
+        setBanReportReason={setBanReportReason}
         selectedReport={selectedReport}
         confirmSendWarning={confirmSendWarning}
         confirmBanFromReport={confirmBanFromReport}
