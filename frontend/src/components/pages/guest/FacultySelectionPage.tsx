@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Check, Loader2, Sparkles, Ban } from "lucide-react";
-import { faculties as fallbackFaculties } from "@/lib/mock-data";
 import { getInitialsFromName } from "@/components/pages/guest/faculty-selection/facultySelection.utils";
 import { API_BASE_URL } from "@/lib/config";
 import { userApi } from "@/lib/api/users";
@@ -32,7 +31,7 @@ export default function FacultySelectionPage({ onLogin, userName }: FacultySelec
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingFaculties, setIsLoadingFaculties] = useState(true);
-  const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>(fallbackFaculties);
+  const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Display name from Google account or default
@@ -93,7 +92,6 @@ export default function FacultySelectionPage({ onLogin, userName }: FacultySelec
       } catch (error) {
         if (isMounted) {
           setLoadError(error instanceof Error ? error.message : "Gagal memuat fakultas");
-          setFacultyOptions(fallbackFaculties);
         }
       } finally {
         if (isMounted) {

@@ -16,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
  *
  * Dipanggil setelah pesan berhasil disimpan ke database.
  * Broadcast ke private channel "chat.{uuid}" agar frontend bisa
- * menerima pesan secara realtime via Laravel Echo + Reverb.
+ * menerima pesan secara realtime via Laravel Echo + Pusher.
  */
 class MessageSent implements ShouldBroadcastNow
 {

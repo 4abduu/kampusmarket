@@ -159,16 +159,15 @@ class AdminProductController extends Controller
         // Soft delete the product
         $product->delete();
 
-        // Notify seller
-        \App\Models\Notification::create([
-            'user_id' => $product->seller_id,
-            'type' => \App\Enums\NotificationType::SYSTEM,
-            'title' => 'Produk Dihapus oleh Admin',
-            'message' => "Produk Anda '{$product->title}' telah dihapus oleh Admin dengan alasan: " . $validated['delete_reason'],
-            'link' => null,
-            'data' => null,
-            'is_read' => false,
-        ]);
+        // Notify seller (async via queue)
+        \App\Jobs\SendUserNotification::dispatch(
+            userId:  $product->seller_id,
+            type:    \App\Enums\NotificationType::SYSTEM->value,
+            title:   'Produk Dihapus oleh Admin',
+            message: "Produk Anda '{$product->title}' telah dihapus oleh Admin dengan alasan: " . $validated['delete_reason'],
+            link:    null,
+            data:    [],
+        );
 
         Log::info('[AdminProductController] Product deleted', [
             'product_id' => $product->uuid,

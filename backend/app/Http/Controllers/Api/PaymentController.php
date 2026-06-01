@@ -70,7 +70,16 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'snap_token' => $result['token']]);
         }
 
-        return response()->json(['success' => false, 'error' => $result], 500);
+        \Illuminate\Support\Facades\Log::error('[PaymentController] Failed to create Midtrans snap token', [
+            'order_id' => $order->id,
+            'payment_uuid' => $payment->uuid,
+            'response' => $result,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal membuat token pembayaran. Silakan coba lagi.',
+        ], 500);
     }
 
     /**
@@ -230,11 +239,13 @@ class PaymentController extends Controller
                     'actor_id' => $order->buyer_id,
                 ]);
 
-                \App\Models\Notification::createOrderNotification(
-                    $order->seller_id,
-                    'Pembayaran Berhasil',
-                    "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil. Silakan proses pesanan.",
-                    $order->uuid
+                \App\Jobs\SendUserNotification::dispatch(
+                    userId: $order->seller_id,
+                    type: 'order',
+                    title: 'Pembayaran Berhasil',
+                    message: "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil. Silakan proses pesanan.",
+                    link: "/orders/{$order->uuid}",
+                    data: ['order_id' => $order->uuid],
                 );
             }
 

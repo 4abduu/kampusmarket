@@ -8,11 +8,12 @@ type ApiEnvelope<T> = {
 };
 
 const mapFacultyFromApi = (faculty: FacultyApiItem): Faculty => {
-  const rawCode = (faculty.code || faculty.id || faculty.name || "").toString();
+  const rawCode = (faculty.code || faculty.value || faculty.id || faculty.name || "").toString();
+  const rawName = faculty.name || faculty.label || rawCode || "Fakultas";
   return {
-    id: rawCode || "faculty",
+    id: rawCode || `faculty-${Math.random().toString(36).slice(2, 9)}`,
     code: rawCode,
-    name: faculty.name || rawCode || "Fakultas",
+    name: rawName,
     description: faculty.description || "",
     sortOrder: Number(faculty.sortOrder ?? faculty.sort_order ?? 0),
     isActive: Boolean(faculty.isActive ?? faculty.is_active ?? true),

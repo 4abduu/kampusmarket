@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\ApiResponse;
 use App\Models\Review;
 use App\Models\Order;
 use App\Models\Product;
@@ -12,10 +13,12 @@ use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Helpers\NumberGenerator;
+use App\Jobs\SendUserNotification;
 
 class ReviewController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Display a listing of reviews.
      */
@@ -39,15 +42,11 @@ class ReviewController extends Controller
         $perPage = $request->get('per_page', 10);
         $reviews = $query->latest()->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => ReviewResource::collection($reviews),
-            'meta' => [
-                'current_page' => $reviews->currentPage(),
-                'last_page' => $reviews->lastPage(),
-                'total' => $reviews->total(),
-            ],
-        ]);
+        return $this->paginated(
+            $reviews,
+            ReviewResource::collection($reviews->items()),
+            'Reviews retrieved'
+        );
     }
 
     /**
@@ -57,27 +56,15 @@ class ReviewController extends Controller
     {
         $user = $request->user();
         $order = Order::where('uuid', $request->orderId)->firstOrFail();
-        \Log::info('[ReviewController] Order fetched', [
-            'order_id' => $order->id,
-            'seller_id' => $order->seller_id,
-            'buyer_id' => $order->buyer_id,
-            'uuid' => $order->uuid
-        ]);
 
         // Check if order belongs to user
         if ($order->buyer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke pesanan ini',
-            ], 403);
+            return $this->forbidden('Anda tidak memiliki akses ke pesanan ini');
         }
 
         // Check if order is completed
         if ($order->status->value !== 'completed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pesanan belum selesai',
-            ], 400);
+            return $this->unprocessable('Pesanan belum selesai');
         }
 
         // Check if already reviewed (including soft-deleted)
@@ -87,10 +74,7 @@ class ReviewController extends Controller
                 // Force delete soft-deleted review so user can re-submit
                 $existingReview->forceDelete();
             } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Anda sudah memberikan ulasan untuk pesanan ini',
-                ], 400);
+                return $this->unprocessable('Anda sudah memberikan ulasan untuk pesanan ini');
             }
         }
 
@@ -120,11 +104,19 @@ class ReviewController extends Controller
         $order->seller->recalculateRating();
         $order->product->recalculateRating();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ulasan berhasil dikirim',
-            'data' => new ReviewResource($review->load(['reviewer', 'reviewee', 'product', 'images'])),
-        ], 201);
+        SendUserNotification::dispatch(
+            userId: $review->reviewee_id,
+            type: 'review',
+            title: 'Ulasan Baru',
+            message: "{$user->name} memberikan ulasan bintang {$review->rating} untuk produk Anda.",
+            link: null,
+            data: ['review_id' => $review->uuid],
+        );
+
+        return $this->created(
+            new ReviewResource($review->load(['reviewer', 'reviewee', 'product', 'images'])),
+            'Ulasan berhasil dikirim'
+        );
     }
 
     /**
@@ -136,10 +128,10 @@ class ReviewController extends Controller
             ->where('uuid', $id)
             ->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => new ReviewResource($review),
-        ]);
+        return $this->success(
+            new ReviewResource($review),
+            'Review retrieved'
+        );
     }
 
     /**
@@ -151,10 +143,7 @@ class ReviewController extends Controller
 
         // Check ownership
         if ($review->reviewer_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke ulasan ini',
-            ], 403);
+            return $this->forbidden('Anda tidak memiliki akses ke ulasan ini');
         }
 
         $review->update($request->validated());
@@ -175,11 +164,10 @@ class ReviewController extends Controller
         $review->reviewee->recalculateRating();
         $review->product->recalculateRating();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ulasan berhasil diperbarui',
-            'data' => new ReviewResource($review->fresh(['reviewer', 'reviewee', 'product', 'images'])),
-        ]);
+        return $this->success(
+            new ReviewResource($review->fresh(['reviewer', 'reviewee', 'product', 'images'])),
+            'Ulasan berhasil diperbarui'
+        );
     }
 
     /**
@@ -191,10 +179,7 @@ class ReviewController extends Controller
 
         // Check ownership
         if ($review->reviewer_id !== $request->user()->id && !$request->user()->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke ulasan ini',
-            ], 403);
+            return $this->forbidden('Anda tidak memiliki akses ke ulasan ini');
         }
 
         $reviewee = $review->reviewee;
@@ -206,10 +191,7 @@ class ReviewController extends Controller
         $reviewee->recalculateRating();
         $product->recalculateRating();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ulasan berhasil dihapus',
-        ]);
+        return $this->success(null, 'Ulasan berhasil dihapus');
     }
 
     /**
@@ -225,27 +207,20 @@ class ReviewController extends Controller
 
         // Check if user is the reviewee
         if ($review->reviewee_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses untuk merespon ulasan ini',
-            ], 403);
+            return $this->forbidden('Anda tidak memiliki akses untuk merespon ulasan ini');
         }
 
         // Check if already responded
         if ($review->hasSellerResponse()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda sudah merespon ulasan ini',
-            ], 400);
+            return $this->unprocessable('Anda sudah merespon ulasan ini');
         }
 
         $review->respond($request->response);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Respon berhasil dikirim',
-            'data' => new ReviewResource($review->fresh()),
-        ]);
+        return $this->success(
+            new ReviewResource($review->fresh()),
+            'Respon berhasil dikirim'
+        );
     }
 
     /**
@@ -266,31 +241,28 @@ class ReviewController extends Controller
         $perPage = $request->get('per_page', 10);
         $reviews = $query->latest()->paginate($perPage);
 
-        // Calculate rating distribution
+        // Calculate rating distribution with all 5 rating keys guaranteed
         $distribution = Review::where('product_id', $product->id)
             ->selectRaw('rating, COUNT(*) as count')
             ->groupBy('rating')
             ->pluck('count', 'rating')
             ->toArray();
 
-        return response()->json([
-            'success' => true,
-            'data' => ReviewResource::collection($reviews),
-            'meta' => [
-                'current_page' => $reviews->currentPage(),
-                'last_page' => $reviews->lastPage(),
-                'total' => $reviews->total(),
+        $ratingDistribution = array_replace(
+            [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0],
+            $distribution
+        );
+
+        return $this->paginated(
+            $reviews,
+            ReviewResource::collection($reviews->items()),
+            'Product reviews retrieved',
+            [
                 'averageRating' => (float) $product->rating,
                 'totalReviews' => $product->review_count,
-                'distribution' => [
-                    5 => $distribution[5] ?? 0,
-                    4 => $distribution[4] ?? 0,
-                    3 => $distribution[3] ?? 0,
-                    2 => $distribution[2] ?? 0,
-                    1 => $distribution[1] ?? 0,
-                ],
-            ],
-        ]);
+                'distribution' => $ratingDistribution,
+            ]
+        );
     }
 
     /**
@@ -306,17 +278,15 @@ class ReviewController extends Controller
         $perPage = $request->get('per_page', 10);
         $reviews = $query->latest()->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => ReviewResource::collection($reviews),
-            'meta' => [
-                'current_page' => $reviews->currentPage(),
-                'last_page' => $reviews->lastPage(),
-                'total' => $reviews->total(),
+        return $this->paginated(
+            $reviews,
+            ReviewResource::collection($reviews->items()),
+            'Received reviews retrieved',
+            [
                 'averageRating' => (float) $user->rating,
                 'totalReviews' => $user->review_count,
-            ],
-        ]);
+            ]
+        );
     }
 
     /**
@@ -330,14 +300,10 @@ class ReviewController extends Controller
         $perPage = $request->get('per_page', 10);
         $reviews = $query->latest()->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => ReviewResource::collection($reviews),
-            'meta' => [
-                'current_page' => $reviews->currentPage(),
-                'last_page' => $reviews->lastPage(),
-                'total' => $reviews->total(),
-            ],
-        ]);
+        return $this->paginated(
+            $reviews,
+            ReviewResource::collection($reviews->items()),
+            'Given reviews retrieved'
+        );
     }
 }

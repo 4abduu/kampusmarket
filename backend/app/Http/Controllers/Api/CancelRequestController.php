@@ -6,15 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Models\CancelRequest;
 use App\Models\Order;
 use App\Http\Resources\CancelRequestResource;
+use App\Events\CancelRequestCreated;
+use App\Http\Requests\ApproveCancelRequestRequest;
+use App\Http\Requests\RejectCancelRequestRequest;
 use App\Http\Requests\StoreCancelRequestRequest;
+use App\Services\CancelRequestService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\NumberGenerator;
-use Illuminate\Support\Facades\DB;
-use App\Models\User;
+use Illuminate\Database\QueryException;
 
 class CancelRequestController extends Controller
 {
+    public function __construct(private readonly CancelRequestService $cancelRequestService)
+    {
+    }
+
     /**
      * Display a listing of cancel requests.
      */
@@ -65,52 +72,47 @@ class CancelRequestController extends Controller
             ], 400);
         }
 
-        // Check for existing cancel request
+        // The database enforces one cancel request per order, regardless of status.
         $existingRequest = CancelRequest::where('order_id', $order->id)
-            ->where('status', 'pending')
             ->first();
 
         if ($existingRequest) {
+            $status = $existingRequest->status->value ?? $existingRequest->status;
+            $message = $status === 'pending'
+                ? 'Sudah ada permintaan pembatalan yang pending untuk pesanan ini'
+                : 'Permintaan pembatalan untuk pesanan ini sudah pernah diajukan';
+
             return response()->json([
                 'success' => false,
-                'message' => 'Sudah ada permintaan pembatalan yang pending untuk pesanan ini',
+                'message' => $message,
             ], 400);
         }
 
         // Calculate refund amount
         $refundAmount = $order->payment_status->value === 'paid' ? $order->total_price : 0;
 
-        // Create cancel request
-        $cancelRequest = CancelRequest::create([
-            'request_number' => NumberGenerator::cancelRequestNumber(),
-            'order_id' => $order->id,
-            'requester_id' => $user->id,
-            'reason' => $request->reason,
-            'description' => $request->description,
-            'refund_amount' => $refundAmount,
-            'status' => 'pending',
-        ]);
-
-        // Notify all admins about the new cancel request
         try {
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \App\Models\Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => \App\Enums\NotificationType::ORDER,
-                    'title' => 'Permintaan Pembatalan Baru',
-                    'message' => $user->name . ' mengajukan pembatalan untuk pesanan ' . $order->order_number . '.',
-                    'link' => '/admin',
-                    'data' => [
-                        'action_tab' => 'cancel-requests',
-                        'cancel_request_id' => $cancelRequest->uuid,
-                    ],
-                    'is_read' => false,
-                ]);
+            $cancelRequest = CancelRequest::create([
+                'request_number' => NumberGenerator::cancelRequestNumber(),
+                'order_id' => $order->id,
+                'requester_id' => $user->id,
+                'reason' => $request->reason,
+                'description' => $request->description,
+                'refund_amount' => $refundAmount,
+                'status' => 'pending',
+            ]);
+        } catch (QueryException $e) {
+            if ((string) $e->getCode() === '23000') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permintaan pembatalan untuk pesanan ini sudah pernah diajukan',
+                ], 400);
             }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('[CancelRequestController] Gagal membuat notifikasi admin', ['error' => $e->getMessage()]);
+
+            throw $e;
         }
+
+        CancelRequestCreated::dispatch($cancelRequest);
 
         return response()->json([
             'success' => true,
@@ -161,6 +163,11 @@ class CancelRequestController extends Controller
 
         $perPage = $request->get('per_page', 20);
         $requests = $query->latest()->paginate($perPage);
+        $statusCounts = CancelRequest::query()
+            ->selectRaw('status, COUNT(*) as total')
+            ->whereIn('status', ['pending', 'approved', 'rejected'])
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         return response()->json([
             'success' => true,
@@ -170,9 +177,9 @@ class CancelRequestController extends Controller
                 'last_page' => $requests->lastPage(),
                 'total' => $requests->total(),
                 'counts' => [
-                    'pending' => CancelRequest::where('status', 'pending')->count(),
-                    'approved' => CancelRequest::where('status', 'approved')->count(),
-                    'rejected' => CancelRequest::where('status', 'rejected')->count(),
+                    'pending' => (int) ($statusCounts['pending'] ?? 0),
+                    'approved' => (int) ($statusCounts['approved'] ?? 0),
+                    'rejected' => (int) ($statusCounts['rejected'] ?? 0),
                 ],
             ],
         ]);
@@ -181,61 +188,15 @@ class CancelRequestController extends Controller
     /**
      * Approve cancel request (Admin).
      */
-    public function approve(string $id, Request $request): JsonResponse
+    public function approve(string $id, ApproveCancelRequestRequest $request): JsonResponse
     {
-        $request->validate([
-            'adminNotes' => 'nullable|string|max:500',
-            'refundAmount' => 'nullable|integer|min:0',
-        ]);
-
         try {
-            $cancelRequest = DB::transaction(function () use ($id, $request) {
-                // Lock the cancel request to prevent simultaneous approvals
-                $cancelRequest = CancelRequest::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if (!$cancelRequest->canBeProcessed()) {
-                    throw new \Exception('Permintaan tidak dapat diproses', 400);
-                }
-
-                $refundAmount = $request->refundAmount 
-                    ? $request->refundAmount 
-                    : $cancelRequest->order->total_price;
-
-                $cancelRequest->approve($refundAmount, $request->adminNotes);
-
-                // Lock the order
-                $order = Order::where('id', $cancelRequest->order_id)->lockForUpdate()->firstOrFail();
-                $order->cancel('Cancelled by admin due to cancel request', $request->user()->id);
-
-                // Lock the product to avoid stock race condition
-                $product = $order->product()->lockForUpdate()->firstOrFail();
-                $product->increment('stock', $order->quantity);
-
-                // Process refund if paid
-                if ($order->payment_status->value === 'paid' && $refundAmount > 0) {
-                    // Lock the buyer
-                    $buyer = User::where('id', $order->buyer_id)->lockForUpdate()->firstOrFail();
-                    $balanceBefore = $buyer->wallet_balance;
-                    $buyer->wallet_balance += $refundAmount;
-                    $buyer->save();
-
-                    \App\Models\WalletTransaction::create([
-                        'user_id' => $buyer->id,
-                        'type' => 'refund',
-                        'amount' => $refundAmount,
-                        'balance_before' => $balanceBefore,
-                        'balance_after' => $buyer->wallet_balance,
-                        'description' => 'Refund from approved cancel request ' . $cancelRequest->request_number,
-                        'related_order_id' => $order->id,
-                        'status' => 'completed',
-                    ]);
-
-                    $cancelRequest->markRefundProcessed();
-                    $order->update(['payment_status' => 'refunded']);
-                }
-
-                return $cancelRequest;
-            });
+            $cancelRequest = $this->cancelRequestService->approve(
+                $id,
+                $request->user()->id,
+                $request->refundAmount,
+                $request->adminNotes
+            );
 
             return response()->json([
                 'success' => true,
@@ -254,23 +215,21 @@ class CancelRequestController extends Controller
     /**
      * Reject cancel request (Admin).
      */
-    public function reject(string $id, Request $request): JsonResponse
+    public function reject(string $id, RejectCancelRequestRequest $request): JsonResponse
     {
-        $request->validate([
-            'rejectionReason' => 'required|string|max:500',
-            'adminNotes' => 'nullable|string|max:500',
-        ]);
-
-        $cancelRequest = CancelRequest::where('uuid', $id)->firstOrFail();
-
-        if (!$cancelRequest->canBeProcessed()) {
+        try {
+            $cancelRequest = $this->cancelRequestService->reject(
+                $id,
+                $request->rejectionReason,
+                $request->adminNotes
+            );
+        } catch (\Exception $e) {
+            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
             return response()->json([
                 'success' => false,
-                'message' => 'Permintaan tidak dapat diproses',
-            ], 400);
+                'message' => $e->getMessage() ?: 'Gagal menolak permintaan pembatalan',
+            ], $code);
         }
-
-        $cancelRequest->reject($request->rejectionReason, $request->adminNotes);
 
         return response()->json([
             'success' => true,

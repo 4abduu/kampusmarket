@@ -25,7 +25,7 @@ class StoreAddressRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:200'],
-            'isPrimary' => ['boolean'],
+            'is_primary' => ['boolean'],
         ];
     }
 

@@ -43,38 +43,48 @@ export default function EmailVerificationPage({
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
-  const [userEmail, setUserEmail] = useState(email);
+  const [userEmail] = useState(email); // Mengunci email langsung dari props tanpa effect ganda
 
+  // Interval timer hanya berjalan jika user menekan tombol "Kirim Ulang Kode" secara manual
   useEffect(() => {
-    if (!email || email === "user@email.com") return;
+    if (resendCooldown <= 0) return;
 
-    setUserEmail(email);
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    void sendVerificationOtp(email);
-  }, [email]);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
-  // Handle input change for OTP
+  // 🛠️ FIX: SISA KODE AUTO-SEND DI SEBELUMNYA SUDAH DIHAPUS TOTAL DI SINI.
+  // Halaman sekarang pasif dan langsung siap menerima inputan OTP.
+
+  // Handle input change untuk OTP
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Only single digit
+    if (value.length > 1) return;
 
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
     setError("");
 
-    // Auto-focus next input
     if (value && index < EMAIL_VERIFICATION_CODE_LENGTH - 1) {
       const nextInput = document.getElementById(`code-${index + 1}`);
       nextInput?.focus();
     }
 
-    // Auto-submit when all digits filled
     if (newCode.every(digit => digit !== "") && newCode.join("").length === EMAIL_VERIFICATION_CODE_LENGTH) {
       handleVerify(newCode.join(""));
     }
   };
 
-  // Handle backspace
+  // Handle backspace di input OTP
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       const prevInput = document.getElementById(`code-${index - 1}`);
@@ -82,9 +92,10 @@ export default function EmailVerificationPage({
     }
   };
 
-  // Send verification OTP
+  // Fungsi Kirim Ulang OTP (Hanya dipanggil manual via tombol "Kirim Ulang Kode")
   const sendVerificationOtp = async (emailToVerify: string = userEmail) => {
     setError("");
+    setIsResending(true); 
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/send-email-verification-otp`, {
@@ -100,28 +111,40 @@ export default function EmailVerificationPage({
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 429 && data.data?.resendCooldownSeconds) {
-          setResendCooldown(data.data.resendCooldownSeconds);
-          setError(data.message || "Terlalu banyak percobaan");
+        if (response.status === 429) {
+          const cooldown = data.data?.resendCooldownSeconds ? Math.ceil(data.data.resendCooldownSeconds) : 60;
+          setResendCooldown(cooldown);
+          
+          if (data.message) {
+            const cleanMessage = data.message.replace(/\d+\.\d+/, String(cooldown));
+            setError(cleanMessage);
+          } else {
+            setError(`Harap tunggu ${cooldown} detik sebelum mengirim ulang OTP.`);
+          }
         } else {
           setError(data.message || "Gagal mengirim kode verifikasi");
         }
         return;
       }
 
-      window.sessionStorage.setItem(getEmailVerificationOtpStorageKey(emailToVerify, source), String(Date.now()));
+      window.sessionStorage.setItem(
+        getEmailVerificationOtpStorageKey(emailToVerify, source), 
+        String(Date.now())
+      );
       
       if (data.data?.resendCooldownSeconds) {
-        setResendCooldown(data.data.resendCooldownSeconds);
+        setResendCooldown(Math.ceil(data.data.resendCooldownSeconds));
       } else {
         setResendCooldown(60);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim kode");
+    } finally {
+      setIsResending(false); 
     }
   };
 
-  // Verify code
+  // Verifikasi OTP
   const handleVerify = async (verificationCode?: string) => {
     const codeToVerify = verificationCode || code.join("");
     
@@ -157,6 +180,7 @@ export default function EmailVerificationPage({
         return;
       }
 
+      window.sessionStorage.removeItem(getEmailVerificationOtpStorageKey(userEmail, source));
       setIsVerified(true);
       setIsVerifying(false);
     } catch (err) {
@@ -165,30 +189,13 @@ export default function EmailVerificationPage({
     }
   };
 
-  // Resend code
+  // Manual Trigger Resend OTP via Tombol
   const handleResend = async () => {
-    if (resendCooldown > 0) return;
-
-    setIsResending(true);
-
+    if (resendCooldown > 0 || isResending) return;
     await sendVerificationOtp(userEmail);
-    
-    setIsResending(false);
-
-    // Countdown timer
-    const timer = setInterval(() => {
-      setResendCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
-      window.sessionStorage.removeItem(getEmailVerificationOtpStorageKey(userEmail, source));
 
-  // Handle continue after verified
+  // Aksi setelah verifikasi sukses
   const handleContinue = () => {
     if (onVerified) {
       onVerified();
@@ -206,8 +213,7 @@ export default function EmailVerificationPage({
       : "Akun kamu sudah aktif dan siap digunakan. Silakan login untuk melanjutkan.";
   const backButtonLabel = source === "settings" ? "Kembali ke Dashboard" : "Kembali ke Login";
 
-  // Masked email display
-  const maskedEmail = maskEmail(userEmail);
+  const maskedEmailStr = maskEmail(userEmail);
 
   if (isVerified) {
     return (
@@ -220,13 +226,8 @@ export default function EmailVerificationPage({
               </div>
             </div>
             <h2 className="text-2xl font-bold mb-2">Email Terverifikasi!</h2>
-            <p className="text-muted-foreground mb-6">
-              {verifiedMessage}
-            </p>
-            <Button
-              className="w-full bg-primary-600 hover:bg-primary-700"
-              onClick={handleContinue}
-            >
+            <p className="text-muted-foreground mb-6">{verifiedMessage}</p>
+            <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={handleContinue}>
               {continueButtonLabel}
             </Button>
           </CardContent>
@@ -248,12 +249,11 @@ export default function EmailVerificationPage({
           <CardDescription className="text-center">
             Kami telah mengirim kode verifikasi ke
             <br />
-            <span className="font-medium text-foreground">{maskedEmail}</span>
+            <span className="font-medium text-foreground">{maskedEmailStr}</span>
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Spam Warning */}
           <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <div>
@@ -262,7 +262,6 @@ export default function EmailVerificationPage({
             </div>
           </div>
 
-          {/* OTP Input */}
           <div className="space-y-2">
             <Label className="text-center block">Masukkan Kode Verifikasi</Label>
             <div className="flex justify-center gap-2">
@@ -276,23 +275,20 @@ export default function EmailVerificationPage({
                   value={digit}
                   onChange={(e) => handleCodeChange(index, e.target.value.replace(/\D/g, ""))}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className={`w-10 h-12 text-center text-lg font-bold ${
-                    error ? "border-red-500" : ""
-                  }`}
+                  className={`w-10 h-12 text-center text-lg font-bold ${error ? "border-red-500" : ""}`}
                   disabled={isVerifying}
                   autoFocus={index === 0}
                 />
               ))}
             </div>
             {error && (
-              <p className="text-sm text-red-500 text-center flex items-center justify-center gap-1">
+              <p className="text-sm text-red-500 text-center flex items-center justify-center gap-1 mt-2">
                 <AlertCircle className="h-4 w-4" />
                 {error}
               </p>
             )}
           </div>
 
-          {/* Verify Button */}
           <Button
             className="w-full bg-primary-600 hover:bg-primary-700"
             onClick={() => handleVerify()}
@@ -308,15 +304,12 @@ export default function EmailVerificationPage({
             )}
           </Button>
 
-          {/* Resend Code */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Tidak menerima kode?
-            </p>
+            <p className="text-sm text-muted-foreground">Tidak menerima kode?</p>
             <Button
               variant="outline"
               onClick={handleResend}
-              disabled={resendCooldown > 0 || isResending}
+              disabled={resendCooldown > 0 || isResending || isVerifying}
             >
               {isResending ? (
                 <>
@@ -344,7 +337,6 @@ export default function EmailVerificationPage({
             </ul>
           </div>
 
-          {/* Back to Login */}
           <Button
             variant="ghost"
             className="w-full"

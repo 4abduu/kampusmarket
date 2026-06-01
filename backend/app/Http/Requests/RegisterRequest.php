@@ -27,7 +27,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:20'],
-            'facultyId' => User::facultyIdRules(UserRole::USER->value, false), // facultyId is now optional
+            'facultyId' => User::facultyIdRules(UserRole::USER->value, true), // facultyId is now required
         ];
     }
 
@@ -43,6 +43,7 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'Email sudah terdaftar',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'facultyId.required' => 'Fakultas wajib dipilih',
             'facultyId.exists' => 'Fakultas tidak ditemukan atau tidak aktif',
         ];
     }

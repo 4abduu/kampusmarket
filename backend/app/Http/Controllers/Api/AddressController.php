@@ -9,10 +9,16 @@ use App\Http\Requests\StoreAddressRequest;
 use App\Http\Requests\UpdateAddressRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Helpers\NumberGenerator;
 
 class AddressController extends Controller
 {
+    private function findUserAddress(string $id, int|string $userId): Address
+    {
+        return Address::where('uuid', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+    }
+
     /**
      * Display a listing of addresses.
      */
@@ -36,8 +42,8 @@ class AddressController extends Controller
     {
         $user = $request->user();
 
-        // If this is first address, make it primary
-        $isPrimary = $request->is_primary ?? ($user->addresses()->count() === 0);
+        $data = $request->validated();
+        $isPrimary = $data['is_primary'] ?? ($user->addresses()->count() === 0);
 
         // If setting as primary, remove primary from others
         if ($isPrimary) {
@@ -46,11 +52,11 @@ class AddressController extends Controller
 
         $address = Address::create([
             'user_id' => $user->id,
-            'label' => $request->label,
-            'recipient' => $request->recipient,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'notes' => $request->notes,
+            'label' => $data['label'],
+            'recipient' => $data['recipient'],
+            'phone' => $data['phone'] ?? null,
+            'address' => $data['address'],
+            'notes' => $data['notes'] ?? null,
             'is_primary' => $isPrimary,
         ]);
 
@@ -66,9 +72,7 @@ class AddressController extends Controller
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $address = Address::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $address = $this->findUserAddress($id, $request->user()->id);
 
         return response()->json([
             'success' => true,
@@ -81,9 +85,7 @@ class AddressController extends Controller
      */
     public function update(UpdateAddressRequest $request, string $id): JsonResponse
     {
-        $address = Address::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $address = $this->findUserAddress($id, $request->user()->id);
 
         $data = $request->validated();
 
@@ -108,9 +110,7 @@ class AddressController extends Controller
      */
     public function destroy(string $id, Request $request): JsonResponse
     {
-        $address = Address::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $address = $this->findUserAddress($id, $request->user()->id);
 
         $wasPrimary = $address->is_primary;
         $address->delete();
@@ -134,9 +134,7 @@ class AddressController extends Controller
      */
     public function setPrimary(string $id, Request $request): JsonResponse
     {
-        $address = Address::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $address = $this->findUserAddress($id, $request->user()->id);
 
         $address->setAsPrimary();
 

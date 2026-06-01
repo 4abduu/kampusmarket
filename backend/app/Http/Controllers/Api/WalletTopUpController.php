@@ -80,7 +80,16 @@ class WalletTopUpController extends Controller
             ]);
         }
 
-        return response()->json(['success' => false, 'error' => $result], 500);
+        \Illuminate\Support\Facades\Log::error('[WalletTopUpController] Failed to create Midtrans snap token', [
+            'user_id' => $user->id,
+            'payment_uuid' => $payment->uuid,
+            'response' => $result,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal membuat token pembayaran. Silakan coba lagi.',
+        ], 500);
     }
 
     /**
@@ -240,18 +249,18 @@ class WalletTopUpController extends Controller
                     'status' => 'completed',
                 ]);
 
-                \App\Models\Notification::create([
-                    'user_id' => $user->id,
-                    'type' => 'payment',
-                    'title' => 'Top Up Saldo Berhasil',
-                    'message' => "Top up saldo Rp " . number_format($payment->gross_amount, 0, ',', '.') . " berhasil. Saldo Anda sekarang Rp " . number_format($user->wallet_balance, 0, ',', '.'),
-                    'link' => '/dashboard/wallet',
-                    'data' => [
-                        'type' => 'wallet_topup',
-                        'amount' => $payment->gross_amount,
+                \App\Jobs\SendUserNotification::dispatch(
+                    userId:  $user->id,
+                    type:    'payment',
+                    title:   'Top Up Saldo Berhasil',
+                    message: 'Top up saldo Rp ' . number_format($payment->gross_amount, 0, ',', '.') . ' berhasil. Saldo Anda sekarang Rp ' . number_format($user->wallet_balance, 0, ',', '.'),
+                    link:    '/dashboard/wallet',
+                    data:    [
+                        'type'    => 'wallet_topup',
+                        'amount'  => $payment->gross_amount,
                         'balance' => $user->wallet_balance,
                     ],
-                ]);
+                );
             }
 
             return response()->json([

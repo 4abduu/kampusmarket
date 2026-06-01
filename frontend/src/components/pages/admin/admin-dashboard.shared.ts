@@ -19,6 +19,8 @@ export type FacultyApiItem = {
   is_active?: boolean;
   studentCount?: number;
   student_count?: number;
+  value?: string;
+  label?: string;
 };
 
 export const seedFaculties: Faculty[] = [

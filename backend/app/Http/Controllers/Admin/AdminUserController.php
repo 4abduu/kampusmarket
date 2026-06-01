@@ -240,15 +240,14 @@ class AdminUserController extends Controller
                 'warning_count' => $user->warning_count + 1,
             ]);
 
-            \App\Models\Notification::create([
-                'user_id' => $user->id,
-                'type' => \App\Enums\NotificationType::SYSTEM,
-                'title' => 'Peringatan Akun',
-                'message' => "Akun Anda mendapat peringatan dari Admin: " . $validated['warning_reason'],
-                'link' => null,
-                'data' => null,
-                'is_read' => false,
-            ]);
+            \App\Jobs\SendUserNotification::dispatch(
+                userId:  $user->id,
+                type:    \App\Enums\NotificationType::SYSTEM->value,
+                title:   'Peringatan Akun',
+                message: 'Akun Anda mendapat peringatan dari Admin: ' . $validated['warning_reason'],
+                link:    null,
+                data:    [],
+            );
 
             Log::info('[AdminUserController] User warned', [
                 'user_id' => $user->uuid,

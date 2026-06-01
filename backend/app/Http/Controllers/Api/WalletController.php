@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\ApiResponse;
 use App\Models\WalletTransaction;
 use App\Models\Withdrawal;
 use App\Models\User;
@@ -13,7 +14,6 @@ use App\Http\Requests\StoreWithdrawalRequest;
 use App\Http\Requests\TopUpRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Helpers\CurrencyHelper;
 use App\Http\Helpers\NumberGenerator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Get wallet balance.
      */
@@ -182,26 +184,17 @@ class WalletController extends Controller
                 return $withdrawal;
             });
 
-            // Notify all admins about the new withdrawal request
-            try {
-                $admins = User::where('role', 'admin')->get();
-                foreach ($admins as $admin) {
-                    \App\Models\Notification::create([
-                        'user_id' => $admin->id,
-                        'type' => \App\Enums\NotificationType::WITHDRAWAL,
-                        'title' => 'Permintaan Penarikan Dana Baru',
-                        'message' => $request->user()->name . ' meminta penarikan dana sebesar Rp ' . number_format($withdrawal->amount, 0, ',', '.') . '.',
-                        'link' => '/admin',
-                        'data' => [
-                            'action_tab' => 'finance',
-                            'withdrawal_id' => $withdrawal->uuid,
-                        ],
-                        'is_read' => false,
-                    ]);
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('[WalletController] Gagal membuat notifikasi admin', ['error' => $e->getMessage()]);
-            }
+            // Notify all admins about the new withdrawal request (async via queue)
+            \App\Jobs\SendAdminNotification::dispatch(
+                type:    \App\Enums\NotificationType::WITHDRAWAL->value,
+                title:   'Permintaan Penarikan Dana Baru',
+                message: $request->user()->name . ' meminta penarikan dana sebesar Rp ' . number_format($withdrawal->amount, 0, ',', '.') . '.',
+                link:    '/admin',
+                data:    [
+                    'action_tab'    => 'finance',
+                    'withdrawal_id' => $withdrawal->uuid,
+                ],
+            );
 
             return response()->json([
                 'success' => true,
@@ -255,246 +248,6 @@ class WalletController extends Controller
             'success' => true,
             'data' => new WithdrawalResource($withdrawal),
         ]);
-    }
-
-    // ============================================
-    // ADMIN ACTIONS
-    // ============================================
-
-    /**
-     * Get all withdrawals (Admin).
-     */
-    public function adminWithdrawals(Request $request): JsonResponse
-    {
-        $query = Withdrawal::with(['user']);
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $perPage = $request->get('per_page', 20);
-        $withdrawals = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => WithdrawalResource::collection($withdrawals),
-            'meta' => [
-                'current_page' => $withdrawals->currentPage(),
-                'last_page' => $withdrawals->lastPage(),
-                'total' => $withdrawals->total(),
-            ],
-        ]);
-    }
-
-    /**
-     * Approve withdrawal (Admin).
-     */
-    public function approveWithdrawal(string $id): JsonResponse
-    {
-        try {
-            $withdrawal = DB::transaction(function () use ($id) {
-                $withdrawal = Withdrawal::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if (!$withdrawal->canBeProcessed()) {
-                    throw new \Exception('Withdrawal tidak dapat diproses', 400);
-                }
-
-                $withdrawal->approve();
-
-                return $withdrawal;
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal disetujui',
-                'data' => new WithdrawalResource($withdrawal),
-            ]);
-        } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage() ?: 'Gagal menyetujui withdrawal',
-            ], $code);
-        }
-    }
-
-    /**
-     * Mark withdrawal as processing (Admin).
-     */
-    public function processWithdrawal(string $id): JsonResponse
-    {
-        try {
-            $withdrawal = DB::transaction(function () use ($id) {
-                $withdrawal = Withdrawal::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if ($withdrawal->status->value !== 'approved') {
-                    throw new \Exception('Withdrawal harus disetujui terlebih dahulu', 400);
-                }
-
-                $withdrawal->markAsProcessing();
-
-                return $withdrawal;
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal sedang diproses',
-                'data' => new WithdrawalResource($withdrawal),
-            ]);
-        } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage() ?: 'Gagal memproses withdrawal',
-            ], $code);
-        }
-    }
-
-    /**
-     * Reject withdrawal (Admin).
-     */
-    public function rejectWithdrawal(string $id, Request $request): JsonResponse
-    {
-        $request->validate([
-            'rejectionReason' => 'required|string|max:500',
-        ]);
-
-        try {
-            $withdrawal = DB::transaction(function () use ($id, $request) {
-                $withdrawal = Withdrawal::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if ($withdrawal->status->value !== 'pending') {
-                    throw new \Exception('Withdrawal tidak dapat ditolak', 400);
-                }
-
-                // Refund to user
-                $user = User::where('id', $withdrawal->user_id)->lockForUpdate()->firstOrFail();
-                $balanceBefore = $user->wallet_balance;
-                $user->wallet_balance += $withdrawal->amount;
-                $user->save();
-
-                // Create refund transaction
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'type' => 'refund',
-                    'amount' => $withdrawal->amount,
-                    'balance_before' => $balanceBefore,
-                    'balance_after' => $user->wallet_balance,
-                    'description' => 'Refund from rejected withdrawal ' . $withdrawal->withdrawal_number,
-                    'related_withdrawal_id' => $withdrawal->id,
-                    'status' => 'completed',
-                ]);
-
-                $withdrawal->reject($request->rejectionReason);
-
-                return $withdrawal;
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal ditolak dan dana dikembalikan',
-                'data' => new WithdrawalResource($withdrawal),
-            ]);
-        } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage() ?: 'Gagal menolak withdrawal',
-            ], $code);
-        }
-    }
-
-    /**
-     * Fail withdrawal and refund user (Admin).
-     */
-    public function failWithdrawal(string $id, Request $request): JsonResponse
-    {
-        $request->validate([
-            'failureReason' => 'required|string|max:500',
-        ]);
-
-        try {
-            $withdrawal = DB::transaction(function () use ($id, $request) {
-                $withdrawal = Withdrawal::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if (!in_array($withdrawal->status->value, ['approved', 'processing'])) {
-                    throw new \Exception('Withdrawal tidak dapat ditandai gagal', 400);
-                }
-
-                // Refund to user when payout fails.
-                $user = User::where('id', $withdrawal->user_id)->lockForUpdate()->firstOrFail();
-                $balanceBefore = $user->wallet_balance;
-                $user->wallet_balance += $withdrawal->amount;
-                $user->save();
-
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'type' => 'refund',
-                    'amount' => $withdrawal->amount,
-                    'balance_before' => $balanceBefore,
-                    'balance_after' => $user->wallet_balance,
-                    'description' => 'Refund from failed withdrawal ' . $withdrawal->withdrawal_number,
-                    'related_withdrawal_id' => $withdrawal->id,
-                    'status' => 'completed',
-                ]);
-
-                $withdrawal->markAsFailed($request->failureReason);
-
-                WalletTransaction::where('related_withdrawal_id', $withdrawal->id)
-                    ->where('type', 'withdrawal')
-                    ->update(['status' => 'failed']);
-
-                return $withdrawal;
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal gagal dan dana dikembalikan',
-                'data' => new WithdrawalResource($withdrawal),
-            ]);
-        } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage() ?: 'Gagal menandai withdrawal sebagai gagal',
-            ], $code);
-        }
-    }
-
-    /**
-     * Complete withdrawal (Admin).
-     */
-    public function completeWithdrawal(string $id): JsonResponse
-    {
-        try {
-            $withdrawal = DB::transaction(function () use ($id) {
-                $withdrawal = Withdrawal::where('uuid', $id)->lockForUpdate()->firstOrFail();
-
-                if (!in_array($withdrawal->status->value, ['approved', 'processing'])) {
-                    throw new \Exception('Withdrawal tidak dapat diselesaikan', 400);
-                }
-
-                $withdrawal->markAsCompleted();
-
-                // Update transaction status
-                WalletTransaction::where('related_withdrawal_id', $withdrawal->id)
-                    ->update(['status' => 'completed']);
-
-                return $withdrawal;
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal selesai',
-                'data' => new WithdrawalResource($withdrawal),
-            ]);
-        } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage() ?: 'Gagal menyelesaikan withdrawal',
-            ], $code);
-        }
     }
 
     /**
@@ -661,62 +414,5 @@ class WalletController extends Controller
                 'message' => 'Mohon maaf, terjadi kesalahan. Silakan coba lagi.',
             ], 500);
         }
-    }
-
-    /**
-     * Get all wallet topups (Admin).
-     */
-    public function adminTopUps(Request $request): JsonResponse
-    {
-        $query = \App\Models\Payment::where('type', 'wallet_topup')->with(['user']);
-
-        // Search by user name/email, transaction_id, or payment uuid
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('uuid', $search)
-                  ->orWhere('transaction_id', $search)
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // Filter by status
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        }
-
-        $query->latest();
-
-        // Paginate
-        $perPage = $request->get('per_page', 20);
-        $topups = $query->paginate($perPage);
-
-        // Calculate statistics (Rupiah totals, not counts)
-        $totalAmount = \App\Models\Payment::where('type', 'wallet_topup')->sum('gross_amount');
-        $successfulAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'paid')->sum('gross_amount');
-        $pendingAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'pending')->sum('gross_amount');
-        $failedAmount = \App\Models\Payment::where('type', 'wallet_topup')->where('status', 'failed')->sum('gross_amount');
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'topups' => $topups->items(),
-                'stats' => [
-                    'total_amount' => (int) $totalAmount,
-                    'successful_amount' => (int) $successfulAmount,
-                    'pending_amount' => (int) $pendingAmount,
-                    'failed_amount' => (int) $failedAmount,
-                ],
-                'meta' => [
-                    'current_page' => $topups->currentPage(),
-                    'last_page' => $topups->lastPage(),
-                    'per_page' => $topups->perPage(),
-                    'total' => $topups->total(),
-                ]
-            ]
-        ]);
     }
 }

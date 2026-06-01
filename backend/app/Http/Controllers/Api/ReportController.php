@@ -103,26 +103,17 @@ class ReportController extends Controller
             'status' => 'pending',
         ]);
 
-        // Notify all admins about the new report
-        try {
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \App\Models\Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => \App\Enums\NotificationType::SYSTEM,
-                    'title' => 'Laporan Baru Terbuka',
-                    'message' => $request->user()->name . ' melaporkan ' . $reportedUser->name . ' dengan alasan: ' . $request->reason . '.',
-                    'link' => '/admin',
-                    'data' => [
-                        'action_tab' => 'reports',
-                        'report_id' => $report->uuid,
-                    ],
-                    'is_read' => false,
-                ]);
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('[ReportController] Gagal membuat notifikasi admin', ['error' => $e->getMessage()]);
-        }
+        // Notify all admins about the new report (async via queue)
+        \App\Jobs\SendAdminNotification::dispatch(
+            type:    \App\Enums\NotificationType::SYSTEM->value,
+            title:   'Laporan Baru Terbuka',
+            message: $request->user()->name . ' melaporkan ' . $reportedUser->name . ' dengan alasan: ' . $request->reason . '.',
+            link:    '/admin',
+            data:    [
+                'action_tab' => 'reports',
+                'report_id'  => $report->uuid,
+            ],
+        );
 
         return response()->json([
             'success' => true,

@@ -3,40 +3,32 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\ApiResponse;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
 use App\Models\ShippingOption;
-use App\Models\Favorite;
-use App\Models\Cart;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Helpers\NumberGenerator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Display a listing of products (Public).
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            Log::info('[ProductController] Fetching products', [
-                'type' => $request->type,
-                'category' => $request->category,
-                'user' => $request->user()?->id,
-                'filters' => $request->only(['price_min', 'price_max', 'condition', 'location', 'search'])
-            ]);
-
             $query = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions'])
                 ->where('status', 'active')
-                // FIX #1: Sembunyikan produk tipe 'barang' dengan stok 0 dari listing publik
-                // Jasa tidak punya konsep stok, jadi tidak difilter
+                // Hide 'barang' products with 0 stock from public listing
                 ->where(function ($q) {
                     $q->where('type', 'jasa')
                       ->orWhere('stock', '>', 0);
@@ -100,30 +92,13 @@ class ProductController extends Controller
         $perPage = $request->get('per_page', 12);
         $products = $query->paginate($perPage);
 
-        Log::info('[ProductController] Products fetched successfully', [
-            'count' => $products->total(),
-            'per_page' => $perPage
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => ProductResource::collection($products),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
-            ],
-        ]);
+        return $this->paginated(
+            $products,
+            ProductResource::collection($products),
+            'Products fetched'
+        );
         } catch (\Exception $e) {
-            Log::error('[ProductController] Error fetching products', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch products'
-            ], 500);
+            return $this->serverError('Failed to fetch products');
         }
     }
 
@@ -136,37 +111,24 @@ class ProductController extends Controller
 
         // Check if user can sell
         if (!$user->canSell()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak dapat menjual produk',
-            ], 403);
+            return $this->forbidden('Anda tidak dapat menjual produk');
         }
 
-        // Find category by UUID and get its ID
+        // Find category by UUID
         $category = Category::where('uuid', $request->category_id)->first();
         if (!$category) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kategori tidak ditemukan',
-            ], 404);
+            return $this->notFound('Kategori tidak ditemukan');
         }
 
         // Generate slug
         $slug = NumberGenerator::uniqueSlug($request->title, Product::class);
 
-        // Determine initial status (auto-correct for barang)
-        $initialStatus = $request->status ?? 'active';
-        if ($request->type === 'barang') {
-            $stock = $request->stock ?? 1;
-            // If stock is 0, force status to sold_out
-            if ($stock === 0) {
-                $initialStatus = 'sold_out';
-            }
-            // If status is sold_out but stock > 0, correct to active
-            elseif ($initialStatus === 'sold_out' && $stock > 0) {
-                $initialStatus = 'active';
-            }
-        }
+        // Determine initial status
+        $initialStatus = $this->resolveInitialStatus(
+            $request->type,
+            $request->status ?? 'active',
+            $request->stock ?? 1
+        );
 
         // Create product
         $product = Product::create([
@@ -194,19 +156,323 @@ class ProductController extends Controller
             'status' => $initialStatus,
         ]);
 
-        // Save images
+        // Sync images and shipping options
+        $this->syncImages($product, $request->images ?? []);
+        $this->syncShippingOptions($product, $request);
+
+        return $this->created(
+            new ProductResource($product->load(['category', 'images', 'shippingOptions', 'seller.faculty'])),
+            'Produk berhasil dibuat'
+        );
+    }
+
+    /**
+     * Display the specified product.
+     */
+    public function show(string $slug): JsonResponse
+    {
+        $product = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions', 'reviews.reviewer'])
+            ->where('slug', $slug)
+            ->orWhere('uuid', $slug)
+            ->firstOrFail();
+
+        // Increment views
+        $product->incrementViews();
+
+        return $this->success(new ProductResource($product), 'Product retrieved');
+    }
+
+    /**
+     * Update the specified product.
+     */
+    public function update(UpdateProductRequest $request, string $id): JsonResponse
+    {
+        $product = Product::where('uuid', $id)->firstOrFail();
+
+        // Check ownership
+        if ($product->seller_id !== $request->user()->id) {
+            return $this->forbidden('Anda tidak memiliki akses ke produk ini');
+        }
+
+        // Build update data using helper
+        $updateData = $this->buildUpdateData($product, $request);
+
+        // Perform basic info update
+        if (!empty($updateData)) {
+            $product->update($updateData);
+        }
+
+        // Update images
         if ($request->has('images')) {
-            foreach ($request->images as $index => $imageUrl) {
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'url' => $imageUrl,
-                    'sort_order' => $index,
-                    'is_primary' => $index === 0,
-                ]);
+            $this->syncImages($product, $request->images);
+        }
+
+        // Update shipping/service options
+        $this->updateShippingOptions($product, $request);
+
+        return $this->success(
+            new ProductResource($product->fresh(['category', 'images', 'shippingOptions', 'seller.faculty'])),
+            'Produk berhasil diperbarui'
+        );
+    }
+
+    /**
+     * Remove the specified product.
+     */
+    public function destroy(string $id, Request $request): JsonResponse
+    {
+        $product = Product::where('uuid', $id)->firstOrFail();
+
+        // Check ownership
+        if ($product->seller_id !== $request->user()->id) {
+            return $this->forbidden('Anda tidak memiliki akses ke produk ini');
+        }
+
+        $product->update([
+            'delete_reason' => 'Dihapus oleh pengguna',
+            'deleted_by' => 'user',
+        ]);
+
+        $product->delete();
+
+        return $this->success(null, 'Produk berhasil dihapus');
+    }
+
+    /**
+     * Update product status.
+     */
+    public function updateStatus(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|in:draft,active,sold_out,archived',
+        ]);
+
+        $product = Product::where('uuid', $id)->firstOrFail();
+
+        // Check ownership
+        if ($product->seller_id !== $request->user()->id) {
+            return $this->forbidden('Anda tidak memiliki akses ke produk ini');
+        }
+
+        // Validate status change for barang products
+        if ($product->type === 'barang') {
+            if ($request->status === 'sold_out' && $product->stock > 0) {
+                return $this->unprocessable(
+                    'Status "Terjual" hanya bisa digunakan ketika stok = 0. Silakan kurangi stok menjadi 0 terlebih dahulu.'
+                );
+            }
+
+            if ($request->status === 'active' && $product->stock === 0) {
+                return $this->unprocessable('Status "Aktif" hanya bisa digunakan ketika stok > 0.');
             }
         }
 
-        // Save shipping/service options (source-of-truth in shipping_options).
+        $product->update(['status' => $request->status]);
+
+        return $this->success(
+            new ProductResource($product->fresh()),
+            'Status produk berhasil diperbarui'
+        );
+    }
+
+    /**
+     * Get products by category.
+     */
+    public function byCategory(string $category, Request $request): JsonResponse
+    {
+        $categoryModel = Category::where('slug', $category)->firstOrFail();
+
+        $query = Product::with(['category', 'images', 'seller.faculty'])
+            ->where('category_id', $categoryModel->id)
+            ->where('status', 'active');
+
+        $perPage = $request->get('per_page', 12);
+        $products = $query->latest()->paginate($perPage);
+
+        return $this->success([
+            'products' => ProductResource::collection($products),
+            'category' => new \App\Http\Resources\CategoryResource($categoryModel),
+        ], 'Products by category retrieved');
+    }
+
+    /**
+     * Get products by seller.
+     */
+    public function bySeller(string $sellerId, Request $request): JsonResponse
+    {
+        $seller = \App\Models\User::where('uuid', $sellerId)->firstOrFail();
+
+        $query = Product::with(['category', 'images'])
+            ->where('seller_id', $seller->id)
+            ->whereIn('status', ['active', 'sold_out']);
+
+        $perPage = $request->get('per_page', 12);
+        $products = $query->latest()->paginate($perPage);
+
+        return $this->success([
+            'products' => ProductResource::collection($products),
+            'seller' => new \App\Http\Resources\UserResource($seller),
+        ], 'Products by seller retrieved');
+    }
+
+    /**
+     * Get my products.
+     */
+    public function myProducts(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $query = Product::with(['category', 'images', 'shippingOptions'])
+            ->where('seller_id', $user->id);
+
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $products = $query->latest()->paginate($perPage);
+
+        return $this->paginated(
+            $products,
+            ProductResource::collection($products),
+            'My products retrieved'
+        );
+    }
+
+    /**
+     * Search products.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $request->validate([
+            'q' => 'required|string|min:2',
+        ]);
+
+        $search = $request->q;
+
+        $query = Product::with(['category', 'images', 'seller.faculty'])
+            ->where('status', 'active')
+            ->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
+            });
+
+        $perPage = $request->get('per_page', 12);
+        $products = $query->latest()->paginate($perPage);
+
+        return $this->success([
+            'products' => ProductResource::collection($products),
+            'query' => $search,
+        ], 'Search completed');
+    }
+
+    // ============================================
+    // PRIVATE HELPER METHODS
+    // ============================================
+
+    /**
+     * Resolve initial status for product based on type and stock.
+     */
+    private function resolveInitialStatus(string $type, string $requestedStatus, int $stock): string
+    {
+        if ($type === 'barang') {
+            // If stock is 0, force status to sold_out
+            if ($stock === 0) {
+                return 'sold_out';
+            }
+            // If status is sold_out but stock > 0, correct to active
+            elseif ($requestedStatus === 'sold_out' && $stock > 0) {
+                return 'active';
+            }
+        }
+
+        return $requestedStatus;
+    }
+
+    /**
+     * Sync product images.
+     */
+    private function syncImages(Product $product, array $images): void
+    {
+        $product->images()->delete();
+        foreach ($images as $index => $imageUrl) {
+            ProductImage::create([
+                'product_id' => $product->id,
+                'url' => $imageUrl,
+                'sort_order' => $index,
+                'is_primary' => $index === 0,
+            ]);
+        }
+    }
+
+    /**
+     * Build update data from request.
+     */
+    private function buildUpdateData(Product $product, UpdateProductRequest $request): array
+    {
+        $updateData = [];
+
+        // Title & Slug
+        if ($request->has('title')) {
+            $updateData['title'] = $request->title;
+            $updateData['slug'] = Str::slug($request->title) . '-' . Str::random(5);
+        }
+
+        // Description, Location, Condition
+        if ($request->has('description')) $updateData['description'] = $request->description;
+        if ($request->has('location')) $updateData['location'] = $request->location;
+        if ($request->has('condition')) $updateData['condition'] = $request->condition;
+        
+        // Category
+        if ($request->has('categoryId')) {
+            $category = Category::where('uuid', $request->categoryId)->first();
+            if ($category) $updateData['category_id'] = $category->id;
+        }
+
+        // Pricing
+        if ($request->has('price')) $updateData['price'] = $request->price;
+        if ($request->has('priceMin')) $updateData['price_min'] = $request->priceMin;
+        if ($request->has('priceMax')) $updateData['price_max'] = $request->priceMax;
+        if ($request->has('originalPrice')) $updateData['original_price'] = $request->originalPrice;
+        if ($request->has('priceType')) $updateData['price_type'] = $request->priceType;
+        if ($request->has('canNego')) $updateData['can_nego'] = $request->canNego;
+
+        // Stock & Weight
+        if ($request->has('stock')) $updateData['stock'] = $request->stock;
+        if ($request->has('weight')) $updateData['weight'] = $request->weight;
+
+        // Jasa specific
+        if ($request->has('durationMin')) $updateData['duration_min'] = $request->durationMin;
+        if ($request->has('durationMax')) $updateData['duration_max'] = $request->durationMax;
+        if ($request->has('durationUnit')) $updateData['duration_unit'] = $request->durationUnit;
+        if ($request->has('durationIsPlus')) $updateData['duration_is_plus'] = $request->durationIsPlus;
+        if ($request->has('availabilityStatus')) $updateData['availability_status'] = $request->availabilityStatus;
+
+        // Status (basic)
+        if ($request->has('status')) $updateData['status'] = $request->status;
+
+        // Auto-correct status based on stock (for barang only)
+        if ($product->type === 'barang') {
+            $newStock = $updateData['stock'] ?? $product->stock;
+            $newStatus = $updateData['status'] ?? $product->status;
+
+            if ($newStock === 0 && $newStatus === 'active') {
+                $updateData['status'] = 'sold_out';
+            } elseif ($newStock > 0 && $newStatus === 'sold_out') {
+                $updateData['status'] = 'active';
+            }
+        }
+
+        return $updateData;
+    }
+
+    /**
+     * Sync shipping options for store().
+     */
+    private function syncShippingOptions(Product $product, StoreProductRequest $request): void
+    {
         $options = $request->input('shippingOptions', []);
 
         if (empty($options)) {
@@ -249,124 +515,13 @@ class ProductController extends Controller
                 'price_max' => isset($option['priceMax']) ? (int) ($option['priceMax']) : (isset($option['price_max']) ? (int) ($option['price_max']) : null),
             ]);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil dibuat',
-            'data' => new ProductResource($product->load(['category', 'images', 'shippingOptions', 'seller.faculty'])),
-        ], 201);
     }
 
     /**
-     * Display the specified product.
+     * Update shipping options for update().
      */
-    public function show(string $slug): JsonResponse
+    private function updateShippingOptions(Product $product, UpdateProductRequest $request): void
     {
-        $product = Product::with(['category', 'images', 'seller.faculty', 'shippingOptions', 'reviews.reviewer'])
-            ->where('slug', $slug)
-            ->orWhere('uuid', $slug)
-            ->firstOrFail();
-
-        // Increment views
-        $product->incrementViews();
-
-        return response()->json([
-            'success' => true,
-            'data' => new ProductResource($product),
-        ]);
-    }
-
-    /**
-     * Update the specified product.
-     */
-    public function update(UpdateProductRequest $request, string $id): JsonResponse
-    {
-        $product = Product::where('uuid', $id)->firstOrFail();
-
-        // Check ownership
-        if ($product->seller_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke produk ini',
-            ], 403);
-        }
-
-        $updateData = [];
-
-        // Title & Slug
-        if ($request->has('title')) {
-            $updateData['title'] = $request->title;
-            $updateData['slug'] = Str::slug($request->title) . '-' . Str::random(5);
-        }
-
-        // Description, Location, Condition
-        if ($request->has('description')) $updateData['description'] = $request->description;
-        if ($request->has('location')) $updateData['location'] = $request->location;
-        if ($request->has('condition')) $updateData['condition'] = $request->condition;
-        
-        // Category (via categoryId from frontend)
-        if ($request->has('categoryId')) {
-            $category = Category::where('uuid', $request->categoryId)->first();
-            if ($category) $updateData['category_id'] = $category->id;
-        }
-
-        // Pricing
-        if ($request->has('price')) $updateData['price'] = $request->price;
-        if ($request->has('priceMin')) $updateData['price_min'] = $request->priceMin;
-        if ($request->has('priceMax')) $updateData['price_max'] = $request->priceMax;
-        if ($request->has('originalPrice')) $updateData['original_price'] = $request->originalPrice;
-        if ($request->has('priceType')) $updateData['price_type'] = $request->priceType;
-        if ($request->has('canNego')) $updateData['can_nego'] = $request->canNego;
-
-        // Stock & Weight
-        if ($request->has('stock')) $updateData['stock'] = $request->stock;
-        if ($request->has('weight')) $updateData['weight'] = $request->weight;
-
-        // Jasa specific
-        if ($request->has('durationMin')) $updateData['duration_min'] = $request->durationMin;
-        if ($request->has('durationMax')) $updateData['duration_max'] = $request->durationMax;
-        if ($request->has('durationUnit')) $updateData['duration_unit'] = $request->durationUnit;
-        if ($request->has('durationIsPlus')) $updateData['duration_is_plus'] = $request->durationIsPlus;
-        if ($request->has('availabilityStatus')) $updateData['availability_status'] = $request->availabilityStatus;
-
-        // Status (basic)
-        if ($request->has('status')) $updateData['status'] = $request->status;
-
-        // Auto-correct status based on stock (for barang only)
-        if ($product->type === 'barang') {
-            $newStock = $updateData['stock'] ?? $product->stock;
-            $newStatus = $updateData['status'] ?? $product->status;
-
-            // If stock becomes 0, auto-set status to sold_out
-            if ($newStock === 0 && $newStatus === 'active') {
-                $updateData['status'] = 'sold_out';
-            }
-
-            // If stock becomes > 0 and status is sold_out, auto-set to active
-            if ($newStock > 0 && $newStatus === 'sold_out') {
-                $updateData['status'] = 'active';
-            }
-        }
-
-        // Perform basic info update
-        if (!empty($updateData)) {
-            $product->update($updateData);
-        }
-
-        // Update images
-        if ($request->has('images')) {
-            $product->images()->delete();
-            foreach ($request->images as $index => $imageUrl) {
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'url' => $imageUrl,
-                    'sort_order' => $index,
-                    'is_primary' => $index === 0,
-                ]);
-            }
-        }
-
-        // Update shipping/service options
         $options = $request->input('shippingOptions') ?? $request->input('shipping_options');
 
         // Fallback to individual fields if shippingOptions not provided
@@ -410,450 +565,5 @@ class ProductController extends Controller
                 ]);
             }
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil diperbarui',
-            'data' => new ProductResource($product->fresh(['category', 'images', 'shippingOptions', 'seller.faculty'])),
-        ]);
-    }
-
-    /**
-     * Remove the specified product.
-     */
-    public function destroy(string $id, Request $request): JsonResponse
-    {
-        $product = Product::where('uuid', $id)->firstOrFail();
-
-        // Check ownership
-        if ($product->seller_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke produk ini',
-            ], 403);
-        }
-
-        $product->update([
-            'delete_reason' => 'Dihapus oleh pengguna',
-            'deleted_by' => 'user',
-        ]);
-
-        $product->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil dihapus',
-        ]);
-    }
-
-    /**
-     * Update product status.
-     */
-    public function updateStatus(string $id, Request $request): JsonResponse
-    {
-        $request->validate([
-            'status' => 'required|in:draft,active,sold_out,archived',
-        ]);
-
-        $product = Product::where('uuid', $id)->firstOrFail();
-
-        // Check ownership
-        if ($product->seller_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses ke produk ini',
-            ], 403);
-        }
-
-        // Validate status change for barang products
-        if ($product->type === 'barang') {
-            if ($request->status === 'sold_out' && $product->stock > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Status "Terjual" hanya bisa digunakan ketika stok = 0. Silakan kurangi stok menjadi 0 terlebih dahulu.',
-                ], 422);
-            }
-
-            if ($request->status === 'active' && $product->stock === 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Status "Aktif" hanya bisa digunakan ketika stok > 0.',
-                ], 422);
-            }
-        }
-
-        $product->update(['status' => $request->status]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status produk berhasil diperbarui',
-            'data' => new ProductResource($product->fresh()),
-        ]);
-    }
-
-    /**
-     * Get products by category.
-     */
-    public function byCategory(string $category, Request $request): JsonResponse
-    {
-        $categoryModel = Category::where('slug', $category)->firstOrFail();
-
-        $query = Product::with(['category', 'images', 'seller.faculty'])
-            ->where('category_id', $categoryModel->id)
-            ->where('status', 'active');
-
-        $perPage = $request->get('per_page', 12);
-        $products = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => ProductResource::collection($products),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'total' => $products->total(),
-                'category' => new \App\Http\Resources\CategoryResource($categoryModel),
-            ],
-        ]);
-    }
-
-    /**
-     * Get products by seller.
-     */
-    public function bySeller(string $sellerId, Request $request): JsonResponse
-    {
-        $seller = \App\Models\User::where('uuid', $sellerId)->firstOrFail();
-
-        $query = Product::with(['category', 'images'])
-            ->where('seller_id', $seller->id)
-            ->whereIn('status', ['active', 'sold_out']);
-
-        $perPage = $request->get('per_page', 12);
-        $products = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => ProductResource::collection($products),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'total' => $products->total(),
-                'seller' => new \App\Http\Resources\UserResource($seller),
-            ],
-        ]);
-    }
-
-    /**
-     * Get my products.
-     */
-    public function myProducts(Request $request): JsonResponse
-    {
-        $user = $request->user();
-
-        $query = Product::with(['category', 'images', 'shippingOptions'])
-            ->where('seller_id', $user->id);
-
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $perPage = $request->get('per_page', 10);
-        $products = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => ProductResource::collection($products),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'total' => $products->total(),
-            ],
-        ]);
-    }
-
-    /**
-     * Search products.
-     */
-    public function search(Request $request): JsonResponse
-    {
-        $request->validate([
-            'q' => 'required|string|min:2',
-        ]);
-
-        $search = $request->q;
-
-        $query = Product::with(['category', 'images', 'seller.faculty'])
-            ->where('status', 'active')
-            ->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
-            });
-
-        $perPage = $request->get('per_page', 12);
-        $products = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => ProductResource::collection($products),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'total' => $products->total(),
-                'query' => $search,
-            ],
-        ]);
-    }
-
-    // ============================================
-    // CART & FAVORITES
-    // ============================================
-
-    /**
-     * Get user's cart.
-     */
-    public function getCart(Request $request): JsonResponse
-    {
-        $cartItems = Cart::with(['product.category', 'product.images', 'product.seller', 'product.shippingOptions'])
-            ->where('user_id', $request->user()->id)
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $cartItems->map(function ($item) {
-                return [
-                    'id' => $item->uuid,
-                    'product' => new ProductResource($item->product),
-                    'quantity' => $item->quantity,
-                    'notes' => $item->notes,
-                    'subtotal' => (int) $item->getSubtotal(),
-                ];
-            }),
-            'total' => (int) $cartItems->sum(fn($item) => $item->getSubtotal()),
-        ]);
-    }
-
-    /**
-     * Add to cart.
-     */
-    public function addToCart(Request $request): JsonResponse
-    {
-        $request->validate([
-            'productId' => 'required|exists:products,uuid',
-            'quantity' => 'integer|min:1',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        $product = Product::where('uuid', $request->productId)->firstOrFail();
-        $requestedQuantity = $request->quantity ?? 1;
-
-        $cart = Cart::where('user_id', $request->user()->id)
-            ->where('product_id', $product->id)
-            ->first();
-
-        if ($cart) {
-            $addedQuantity = $requestedQuantity;
-            $newQuantity = $cart->quantity + $addedQuantity;
-
-            if ($newQuantity > ($product->stock + $cart->quantity)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Stok tidak mencukupi. Anda sudah memiliki ' . $cart->quantity . ' item di keranjang.',
-                    'current_cart_quantity' => $cart->quantity,
-                    'max_stock' => $product->stock + $cart->quantity,
-                ], 400);
-            }
-
-            // Kurangi stok sebesar tambahan quantity
-            $product->updateStock($product->stock - $addedQuantity);
-
-            $cart->update([
-                'quantity' => $newQuantity,
-                'notes' => $request->notes ?? $cart->notes,
-            ]);
-        } else {
-            if ($requestedQuantity > $product->stock) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Stok tidak mencukupi',
-                ], 400);
-            }
-
-            // Kurangi stok
-            $product->updateStock($product->stock - $requestedQuantity);
-
-            Cart::create([
-                'user_id' => $request->user()->id,
-                'product_id' => $product->id,
-                'quantity' => $requestedQuantity,
-                'notes' => $request->notes,
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk ditambahkan ke keranjang',
-        ]);
-    }
-
-    /**
-     * Add a product to favorites.
-     */
-    public function addFavorite(string $productId, Request $request): JsonResponse
-    {
-        $product = Product::where('uuid', $productId)->firstOrFail();
-
-        $favorite = Favorite::createForUser($request->user()->id, $product->id);
-
-        return response()->json([
-            'success' => true,
-            'message' => $favorite->wasRecentlyCreated ? 'Ditambahkan ke favorit' : 'Sudah ada di favorit',
-            'data' => [
-                'isFavorited' => true,
-            ],
-        ], $favorite->wasRecentlyCreated ? 201 : 200);
-    }
-
-    /**
-     * Remove a product from favorites.
-     */
-    public function removeFavorite(string $productId, Request $request): JsonResponse
-    {
-        $product = Product::where('uuid', $productId)->firstOrFail();
-
-        Favorite::removeForUser($request->user()->id, $product->id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Dihapus dari favorit',
-            'data' => [
-                'isFavorited' => false,
-            ],
-        ]);
-    }
-
-    /**
-     * Check whether a product is favorited by the current user.
-     */
-    public function checkFavorite(string $productId, Request $request): JsonResponse
-    {
-        $product = Product::where('uuid', $productId)->firstOrFail();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'isFavorited' => Favorite::isFavorited($request->user()->id, $product->id),
-            ],
-        ]);
-    }
-
-    /**
-     * Get user's favorites.
-     */
-    public function getFavorites(Request $request): JsonResponse
-    {
-        $favorites = Favorite::with(['product.category', 'product.images', 'product.seller.faculty'])
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $favorites->map(function ($fav) {
-                return new ProductResource($fav->product);
-            }),
-        ]);
-    }
-
-    /**
-     * Update cart item quantity.
-     */
-    public function updateCart(string $id, Request $request): JsonResponse
-    {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $cartItem = Cart::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
-
-        $product = $cartItem->product;
-        $oldQuantity = $cartItem->quantity;
-        $newQuantity = $request->quantity;
-        $diff = $newQuantity - $oldQuantity;
-
-        // Stok tersedia = stok saat ini + qty lama di keranjang (stok sudah dikurangi saat addToCart)
-        $availableStock = $product->stock + $oldQuantity;
-        if ($newQuantity > $availableStock) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stok tidak mencukupi',
-            ], 400);
-        }
-
-        // Sesuaikan stok: kurangi jika quantity naik, tambah jika turun
-        $product->updateStock($product->stock - $diff);
-
-        $cartItem->update(['quantity' => $newQuantity]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Keranjang diperbarui',
-            'data' => [
-                'id' => $cartItem->uuid,
-                'quantity' => $cartItem->quantity,
-                'subtotal' => (int) $cartItem->getSubtotal(),
-            ]
-        ]);
-    }
-
-    /**
-     * Remove item from cart.
-     */
-    public function removeFromCart(string $id, Request $request): JsonResponse
-    {
-        $cartItem = Cart::where('uuid', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
-
-        $product = $cartItem->product;
-
-        // Kembalikan stok
-        if ($product) {
-            $product->updateStock($product->stock + $cartItem->quantity);
-        }
-
-        $cartItem->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk dihapus dari keranjang',
-        ]);
-    }
-
-    /**
-     * Clear entire cart.
-     */
-    public function clearCart(Request $request): JsonResponse
-    {
-        $cartItems = Cart::with('product')
-            ->where('user_id', $request->user()->id)
-            ->get();
-
-        // Kembalikan stok semua item
-        foreach ($cartItems as $item) {
-            if ($item->product) {
-                $item->product->updateStock($item->product->stock + $item->quantity);
-            }
-        }
-
-        Cart::where('user_id', $request->user()->id)->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Keranjang dikosongkan',
-        ]);
     }
 }

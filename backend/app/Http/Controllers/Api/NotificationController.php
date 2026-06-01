@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\ApiResponse;
 use App\Models\Notification;
 use App\Http\Resources\NotificationResource;
 use Illuminate\Http\Request;
@@ -10,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 class NotificationController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Display a listing of notifications.
      */
@@ -28,15 +31,11 @@ class NotificationController extends Controller
         $perPage = $request->get('per_page', 20);
         $notifications = $query->latest()->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => NotificationResource::collection($notifications),
-            'meta' => [
-                'current_page' => $notifications->currentPage(),
-                'last_page' => $notifications->lastPage(),
-                'total' => $notifications->total(),
-            ],
-        ]);
+        return $this->paginated(
+            $notifications,
+            NotificationResource::collection($notifications->items()),
+            'Notifications retrieved'
+        );
     }
 
     /**
@@ -50,10 +49,10 @@ class NotificationController extends Controller
             ->limit(20)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => NotificationResource::collection($notifications),
-        ]);
+        return $this->success(
+            NotificationResource::collection($notifications),
+            'Unread notifications retrieved'
+        );
     }
 
     /**
@@ -65,10 +64,10 @@ class NotificationController extends Controller
             ->where('is_read', false)
             ->count();
 
-        return response()->json([
-            'success' => true,
-            'data' => ['unreadCount' => $count],
-        ]);
+        return $this->success(
+            ['unreadCount' => $count],
+            'Unread count retrieved'
+        );
     }
 
     /**
@@ -82,11 +81,10 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi ditandai sudah dibaca',
-            'data' => new NotificationResource($notification),
-        ]);
+        return $this->success(
+            new NotificationResource($notification),
+            'Notifikasi ditandai sudah dibaca'
+        );
     }
 
     /**
@@ -101,10 +99,7 @@ class NotificationController extends Controller
                 'read_at' => now(),
             ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Semua notifikasi ditandai sudah dibaca',
-        ]);
+        return $this->success(null, 'Semua notifikasi ditandai sudah dibaca');
     }
 
     /**
@@ -118,9 +113,6 @@ class NotificationController extends Controller
 
         $notification->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi berhasil dihapus',
-        ]);
+        return $this->success(null, 'Notifikasi berhasil dihapus');
     }
 }

@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ImageController;
@@ -17,12 +21,15 @@ use App\Http\Controllers\Api\CancelRequestController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\WalletTopUpController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminFacultyController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminWithdrawalController;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -35,7 +42,7 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-// Laravel Echo + Reverb: daftarkan route untuk otentikasi channel private
+// Laravel Echo + Pusher: daftarkan route untuk otentikasi channel private
 // Middleware 'auth:sanctum' memastikan hanya user yang login bisa subscribe ke channel private.
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
@@ -87,15 +94,15 @@ Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']
 // Authentication
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
-Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect']);
-Route::post('/auth/google', [AuthController::class, 'googleLogin']);
-Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
-Route::post('/auth/google/complete-faculty', [AuthController::class, 'completeGoogleFaculty'])->middleware('auth:sanctum');
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
-Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
-Route::post('/auth/send-email-verification-otp', [AuthController::class, 'sendEmailVerificationOtp']);
-Route::post('/auth/verify-email-with-otp', [AuthController::class, 'verifyEmailWithOtp']);
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'googleRedirect']);
+Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback']);
+Route::post('/auth/google/complete-faculty', [GoogleAuthController::class, 'completeGoogleFaculty'])->middleware('auth:sanctum');
+Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgotPassword']);
+Route::post('/auth/verify-otp', [PasswordResetController::class, 'verifyOtp']);
+Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword']);
+Route::post('/auth/send-email-verification-otp', [EmailVerificationController::class, 'sendEmailVerificationOtp']);
+Route::post('/auth/verify-email-with-otp', [EmailVerificationController::class, 'verifyEmailWithOtp']);
 
 // ============================================
 // PROTECTED ROUTES (Authentication Required)
@@ -110,9 +117,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/auth/check-completion', [AuthController::class, 'checkCompletion']);
-    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
-    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
-    Route::post('/auth/verify-email', [AuthController::class, 'verifyEmail']);
+    Route::put('/auth/profile', [ProfileController::class, 'updateProfile']);
+    Route::put('/auth/password', [ProfileController::class, 'updatePassword']);
+    Route::post('/auth/verify-email', [EmailVerificationController::class, 'verifyEmail']);
 
     Route::get('/profile', [UserController::class, 'profile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
@@ -123,9 +130,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ADDRESSES
     // ----------------------------------------
 
-    Route::apiResource('addresses', AddressController::class);
     Route::get('/addresses/primary', [AddressController::class, 'primary']);
     Route::put('/addresses/{id}/primary', [AddressController::class, 'setPrimary']);
+    Route::apiResource('addresses', AddressController::class);
 
     // ----------------------------------------
     // PRODUCTS (CRUD for Sellers)
@@ -146,16 +153,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // CART & FAVORITES
     // ----------------------------------------
 
-    Route::get('/cart', [ProductController::class, 'getCart']);
-    Route::post('/cart', [ProductController::class, 'addToCart']);
-    Route::put('/cart/{id}', [ProductController::class, 'updateCart']);
-    Route::delete('/cart/{id}', [ProductController::class, 'removeFromCart']);
-    Route::delete('/cart', [ProductController::class, 'clearCart']);
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::delete('/cart', [CartController::class, 'clear']);
 
-    Route::get('/favorites', [ProductController::class, 'getFavorites']);
-    Route::post('/favorites/{productId}', [ProductController::class, 'addFavorite']);
-    Route::delete('/favorites/{productId}', [ProductController::class, 'removeFavorite']);
-    Route::get('/favorites/check/{productId}', [ProductController::class, 'checkFavorite']);
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::post('/favorites/{productId}', [FavoriteController::class, 'store']);
+    Route::delete('/favorites/{productId}', [FavoriteController::class, 'destroy']);
+    Route::get('/favorites/check/{productId}', [FavoriteController::class, 'check']);
 
     // ----------------------------------------
     // ORDERS
@@ -324,15 +331,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/cancel-requests/{id}/reject', [CancelRequestController::class, 'reject']);
 
     // ── WITHDRAWALS ────────────────────────────────────────────────────────
-    Route::get('/withdrawals', [WalletController::class, 'adminWithdrawals']);
-    Route::put('/withdrawals/{id}/approve', [WalletController::class, 'approveWithdrawal']);
-    Route::put('/withdrawals/{id}/process', [WalletController::class, 'processWithdrawal']);
-    Route::put('/withdrawals/{id}/reject', [WalletController::class, 'rejectWithdrawal']);
-    Route::put('/withdrawals/{id}/fail', [WalletController::class, 'failWithdrawal']);
-    Route::put('/withdrawals/{id}/complete', [WalletController::class, 'completeWithdrawal']);
+    Route::get('/withdrawals', [AdminWithdrawalController::class, 'index']);
+    Route::put('/withdrawals/{id}/approve', [AdminWithdrawalController::class, 'approve']);
+    Route::put('/withdrawals/{id}/process', [AdminWithdrawalController::class, 'process']);
+    Route::put('/withdrawals/{id}/reject', [AdminWithdrawalController::class, 'reject']);
+    Route::put('/withdrawals/{id}/fail', [AdminWithdrawalController::class, 'fail']);
+    Route::put('/withdrawals/{id}/complete', [AdminWithdrawalController::class, 'complete']);
 
     // ── TOP UPS ────────────────────────────────────────────────────────────
-    Route::get('/topups', [WalletController::class, 'adminTopUps']);
+    Route::get('/topups', [AdminWithdrawalController::class, 'topUps']);
 });
 
 // Public webhook endpoint for Midtrans notifications

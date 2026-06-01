@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Broadcast;
 /**
  * routes/channels.php [BARU]
  *
- * Definisi otorisasi private channel untuk Laravel Echo + Reverb.
+ * Definisi otorisasi private channel untuk Laravel Echo + Pusher.
  * Setiap channel `chat.{uuid}` hanya bisa diakses oleh buyer atau seller chat tersebut.
  */
 
