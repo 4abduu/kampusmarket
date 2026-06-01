@@ -340,6 +340,22 @@ export function useAdminDashboardController() {
     return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
+  const applyStatsData = (statsData: any) => {
+    setStats({
+      totalUsers: statsData.users?.total || 0,
+      activeProducts: statsData.products?.active || 0,
+      pendingOrders: statsData.orders?.pending || 0,
+      totalRevenue: statsData.orders?.total_revenue || 0,
+      platformRevenue: statsData.platform_revenue || 0,
+      totalEscrow: statsData.total_escrow || 0,
+      pendingWithdrawals: statsData.withdrawals?.pending || 0,
+      pendingReports: statsData.reports?.pending || 0,
+      totalFaculties: statsData.faculties?.total || 0,
+      activeFaculties: statsData.faculties?.active || 0,
+      pendingCancellations: statsData.pending_cancellations || 0,
+    });
+  };
+
   const getTotalPages = (totalItems: number): number =>
     Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
@@ -748,19 +764,7 @@ export function useAdminDashboardController() {
 
       if (apiStats) {
         const statsData = (apiStats as any).data || apiStats;
-        setStats({
-          totalUsers: statsData.users?.total || 0,
-          activeProducts: statsData.products?.active || 0,
-          pendingOrders: statsData.orders?.pending || 0,
-          totalRevenue: statsData.orders?.total_revenue || 0,
-          platformRevenue: statsData.platform_revenue || 0,
-          totalEscrow: statsData.total_escrow || 0,
-          pendingWithdrawals: statsData.withdrawals?.pending || 0,
-          pendingReports: statsData.reports?.pending || 0,
-          totalFaculties: statsData.faculties?.total || 0,
-          activeFaculties: statsData.faculties?.active || 0,
-          pendingCancellations: statsData.pending_cancellations || 0,
-        });
+        applyStatsData(statsData);
         setPlatformRevenue((prev) => ({
           ...prev,
           total: statsData.platform_revenue || 0,
@@ -1011,13 +1015,13 @@ export function useAdminDashboardController() {
     setPlatformRevenueError(null);
     try {
       const res = await adminDashboardApi.getPlatformRevenue();
-      if (res?.data) {
+      if (res) {
         setPlatformRevenue({
-          total: res.data.total || 0,
-          thisMonth: res.data.thisMonth || 0,
-          lastMonth: res.data.lastMonth || 0,
-          pendingClearance: res.data.pendingClearance || 0,
-          transactions: Array.isArray(res.data.transactions) ? res.data.transactions : [],
+          total: res.total || 0,
+          thisMonth: res.thisMonth || 0,
+          lastMonth: res.lastMonth || 0,
+          pendingClearance: res.pendingClearance || 0,
+          transactions: Array.isArray(res.transactions) ? res.transactions : [],
         });
       }
       markResourceLoaded("revenue");
@@ -1027,6 +1031,24 @@ export function useAdminDashboardController() {
       console.error("Failed to load platform revenue data:", err);
     } finally {
       setPlatformRevenueLoading(false);
+    }
+  };
+
+  const loadStatsFallbackForFinance = async () => {
+    if (stats) return;
+
+    try {
+      const apiStats = await adminDashboardApi.getStats();
+      if (!apiStats) return;
+
+      const statsData = (apiStats as any).data || apiStats;
+      applyStatsData(statsData);
+      setPlatformRevenue((prev) => ({
+        ...prev,
+        total: statsData.platform_revenue || 0,
+      }));
+    } catch (err) {
+      console.error("Failed to load stats fallback for finance tab:", err);
     }
   };
 
@@ -1133,14 +1155,17 @@ export function useAdminDashboardController() {
             await loadReportsData();
           }
           break;
-        case "finance":
-          if (!isResourceLoaded("withdrawals")) {
-            await loadWithdrawalsData();
-          }
-          if (financeSubTab === "topups" && !isResourceLoaded("topups")) {
-            await loadTopupsData();
-          }
-          break;
+      case "finance":
+        if (!isResourceLoaded("withdrawals")) {
+          await loadWithdrawalsData();
+        }
+        if (financeSubTab === "topups" && !isResourceLoaded("topups")) {
+          await loadTopupsData();
+        }
+        if (!stats) {
+          await loadStatsFallbackForFinance();
+        }
+        break;
         case "cancel-requests":
           await loadCancelRequestsData();
           break;
