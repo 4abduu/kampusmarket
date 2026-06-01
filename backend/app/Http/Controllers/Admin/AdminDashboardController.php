@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Faculty;
 use App\Models\Report;
 use App\Models\Withdrawal;
+use App\Models\WalletTransaction;
 use App\Enums\PaymentStatus;
 use App\Enums\OrderStatus;
 use App\Models\CancelRequest;
@@ -54,8 +55,9 @@ class AdminDashboardController extends Controller
             $completedOrders = Order::where('status', 'completed')->count();
             $totalRevenue = Order::where('status', 'completed')
                 ->sum(DB::raw('total_price + admin_fee_deducted'));
-            $platformRevenue = Order::where('status', 'completed')
-                ->sum('admin_fee_deducted');
+            $platformRevenue = abs(WalletTransaction::where('type', 'admin_fee')
+                ->where('status', 'completed')
+                ->sum('amount'));
 
             // Calculate Total Escrow: Paid digital orders not completed/cancelled
             $totalEscrow = Order::where('payment_status', PaymentStatus::PAID)
@@ -258,33 +260,39 @@ class AdminDashboardController extends Controller
     public function platformRevenue(): JsonResponse
     {
         try {
-            $total = Order::where('status', 'completed')
-                ->sum('admin_fee_deducted');
+            $total = abs(WalletTransaction::where('type', 'admin_fee')
+                ->where('status', 'completed')
+                ->sum('amount'));
 
-            $thisMonth = Order::where('status', 'completed')
+            $thisMonth = abs(WalletTransaction::where('type', 'admin_fee')
+                ->where('status', 'completed')
                 ->whereYear('created_at', now()->year)
                 ->whereMonth('created_at', now()->month)
-                ->sum('admin_fee_deducted');
+                ->sum('amount'));
 
-            $lastMonth = Order::where('status', 'completed')
+            $lastMonth = abs(WalletTransaction::where('type', 'admin_fee')
+                ->where('status', 'completed')
                 ->whereYear('created_at', now()->subMonth()->year)
                 ->whereMonth('created_at', now()->subMonth()->month)
-                ->sum('admin_fee_deducted');
+                ->sum('amount'));
 
             $pendingClearance = Order::whereIn('status', ['processing', 'ready_pickup', 'in_delivery'])
                 ->sum('admin_fee_deducted');
 
-            $transactions = Order::where('status', 'completed')
+            $transactions = WalletTransaction::with('relatedOrder')
+                ->where('type', 'admin_fee')
+                ->where('status', 'completed')
                 ->latest()
                 ->limit(50)
                 ->get()
-                ->map(function ($order) {
+                ->map(function ($tx) {
+                    $order = $tx->relatedOrder;
                     return [
-                        'orderId' => $order->uuid,
-                        'orderNumber' => $order->order_number,
-                        'productTitle' => $order->product_title,
-                        'adminFee' => (int) $order->admin_fee_deducted,
-                        'createdAt' => $order->created_at->toDateString(),
+                        'orderId' => $order ? $order->uuid : null,
+                        'orderNumber' => $order ? $order->order_number : null,
+                        'productTitle' => $order ? $order->product_title : null,
+                        'adminFee' => abs((int) $tx->amount),
+                        'createdAt' => $tx->created_at->toDateString(),
                     ];
                 });
 
