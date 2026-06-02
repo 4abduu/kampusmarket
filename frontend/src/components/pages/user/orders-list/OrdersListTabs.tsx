@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, Package, Truck, Ban } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdersListCard from "@/components/pages/user/orders-list/OrdersListCard";
 import OrdersListEmptyState from "@/components/pages/user/orders-list/OrdersListEmptyState";
@@ -27,7 +27,7 @@ const tabs: Array<{ value: OrdersTab; label: string; emptyMessage: string; empty
 ];
 
 export default function OrdersListTabs({ orders, viewMode, onNavigate }: OrdersListTabsProps) {
-  const pendingCount = filterOrdersByTab(orders, "pending").length;
+
 
   return (
     <Tabs defaultValue="all">
@@ -35,11 +35,6 @@ export default function OrdersListTabs({ orders, viewMode, onNavigate }: OrdersL
         {tabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value}>
             {tab.label}
-            {tab.value === "pending" && pendingCount > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                {pendingCount}
-              </Badge>
-            )}
           </TabsTrigger>
         ))}
       </TabsList>

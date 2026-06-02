@@ -1,5 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronUp, History, CheckCircle2 } from "lucide-react"
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  History, 
+  CreditCard, 
+  PackageCheck, 
+  Sparkles,
+  Hourglass,   // Menunggu Konfirmasi
+  Receipt,     // Menunggu Ongkir
+  HandCoins,   // COD (Barang)
+  Store,       // Ambil Sendiri (Barang) / Datang ke Tempat (Jasa)
+  Truck,       // Antar Manual (Barang)
+  MapPin,      // Jasa Datang ke Rumah (Home Service)
+  Laptop       // Jasa Online / Remote
+} from "lucide-react"
 
 interface HistoryEntry {
   id?: string
@@ -61,25 +75,110 @@ export default function OrderHistoryTimeline({
             const dateStr = entry.createdAt || entry.created_at || ""
             let config = getStatusConfig(entry.status)
             
-            // Fix double "Sedang Diproses" or "Siap Diambil" for COD/Pickup/Service
             const notesLower = entry.notes?.toLowerCase() || "";
-            if (notesLower.includes("pembayaran") && notesLower.includes("berhasil")) {
-              config = {
-                ...config,
-                label: "Pembayaran Berhasil",
-                icon: CheckCircle2,
-              }
-            } else if (
-              notesLower.includes("mengkonfirmasi barang diserahkan") ||
-              notesLower.includes("mengkonfirmasi layanan selesai") ||
-              notesLower.includes("barang diserahkan/dikirim")
+            const statusLower = entry.status?.toLowerCase() || "";
+
+            // 1. KONDISI: MENUNGGU ONGKIR (Dibuat lebih fleksibel membaca spasi maupun underscore)
+            if (
+              statusLower.includes("ongkir") || 
+              statusLower.includes("ongkos_kirim") || 
+              notesLower.includes("ongkir") || 
+              notesLower.includes("ongkos kirim")
             ) {
               config = {
                 ...config,
-                label: isService ? "Layanan Telah Diberikan" : "Barang Telah Diserahkan",
-                icon: CheckCircle2,
+                label: "Menunggu Nominal Ongkir",
+                icon: Receipt,
+              }
+            } 
+            
+            // 2. KONDISI: MENUNGGU KONFIRMASI
+            else if (
+              statusLower.includes("konfirmasi") || 
+              notesLower.includes("menunggu konfirmasi")
+            ) {
+              config = {
+                ...config,
+                label: "Menunggu Konfirmasi",
+                icon: Hourglass,
               }
             }
+            
+            // 3. KONDISI: PEMBAYARAN BERHASIL
+            else if (notesLower.includes("pembayaran") && notesLower.includes("berhasil")) {
+              config = {
+                ...config,
+                label: "Pembayaran Berhasil",
+                icon: CreditCard,
+              }
+            } 
+            
+            // 4. KONDISI: PROSES PENGERJAAN / SELESAI
+            else if (
+              notesLower.includes("mengkonfirmasi barang diserahkan") ||
+              notesLower.includes("mengkonfirmasi layanan selesai") ||
+              notesLower.includes("barang diserahkan/dikirim") ||
+              statusLower.includes("diproses") || 
+              statusLower.includes("dikirim") ||
+              statusLower.includes("selesai")
+            ) {
+              if (isService) {
+                // ==================== LOGIKA UNTUK JASA ====================
+                if (notesLower.includes("datang ke rumah") || notesLower.includes("home service") || notesLower.includes("lokasi pembeli")) {
+                  config = {
+                    ...config,
+                    label: "Penyedia Menuju Lokasi",
+                    icon: MapPin,
+                  }
+                } else if (notesLower.includes("datang ke tempat") || notesLower.includes("on site") || notesLower.includes("lokasi penjual")) {
+                  config = {
+                    ...config,
+                    label: "Pemesan Datang ke Lokasi Jasa",
+                    icon: Store,
+                  }
+                } else if (notesLower.includes("online") || notesLower.includes("remote") || notesLower.includes("digital")) {
+                  config = {
+                    ...config,
+                    label: "Jasa Dikerjakan Secara Online",
+                    icon: Laptop,
+                  }
+                } else {
+                  config = {
+                    ...config,
+                    label: "Layanan Telah Diberikan",
+                    icon: Sparkles,
+                  }
+                }
+              } else {
+                // ==================== LOGIKA UNTUK BARANG ====================
+                if (notesLower.includes("cod") || notesLower.includes("cash on delivery")) {
+                  config = {
+                    ...config,
+                    label: "Barang Diserahkan via COD",
+                    icon: HandCoins,
+                  }
+                } else if (notesLower.includes("ambil sendiri") || notesLower.includes("pickup")) {
+                  config = {
+                    ...config,
+                    label: "Barang Diambil Sendiri",
+                    icon: Store,
+                  }
+                } else if (notesLower.includes("antar manual") || notesLower.includes("kirim")) {
+                  config = {
+                    ...config,
+                    label: "Barang Diantar",
+                    icon: Truck,
+                  }
+                } else {
+                  config = {
+                    ...config,
+                    label: "Barang Telah Diserahkan",
+                    icon: PackageCheck,
+                  }
+                }
+              }
+            }
+
             const isExpanded = expandedHistory.includes(id)
 
             return (

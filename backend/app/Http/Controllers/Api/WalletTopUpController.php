@@ -245,7 +245,7 @@ class WalletTopUpController extends Controller
                     'amount' => $payment->gross_amount,
                     'balance_before' => $balanceBefore,
                     'balance_after' => $user->wallet_balance,
-                    'description' => 'Top up via Midtrans (verified via API)',
+                    'description' => 'Top up berhasil - VIA Midtrans',
                     'status' => 'completed',
                 ]);
 

@@ -13,6 +13,7 @@ type ServiceData = {
   serviceDate: string
   serviceDeadline: string
   serviceNotes: string
+  notes?: string
 }
 
 interface Props {
@@ -100,12 +101,21 @@ export default function OrderDetailProductCard({
                   <span className="font-medium">{serviceData.serviceDeadline}</span>
                 </div>
               )}
+              {serviceData.notes && (
+                <div className="flex items-start gap-2 text-sm">
+                  <FileText className="h-4 w-4 text-emerald-600 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">Detail Kebutuhan:</span>
+                    <p className="mt-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-md whitespace-pre-wrap">{serviceData.notes}</p>
+                  </div>
+                </div>
+              )}
               {serviceData.serviceNotes && (
                 <div className="flex items-start gap-2 text-sm">
                   <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <span className="text-muted-foreground">Catatan:</span>
-                    <p className="mt-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-md">{serviceData.serviceNotes}</p>
+                    <span className="text-muted-foreground">Catatan Tambahan:</span>
+                    <p className="mt-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-md whitespace-pre-wrap">{serviceData.serviceNotes}</p>
                   </div>
                 </div>
               )}
@@ -126,7 +136,15 @@ export default function OrderDetailProductCard({
             <p className="font-medium">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
             <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" })}>
+          <Button variant="outline" size="sm" onClick={() => {
+            // Buyer buka chat via productId; Seller buka chat list
+            // (seller tidak bisa startChat dengan productId miliknya sendiri)
+            if (!isSellerView) {
+              onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" });
+            } else {
+              onNavigate("chat");
+            }
+          }}>
             <MessageCircle className="h-4 w-4 mr-1" />
             Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
           </Button>

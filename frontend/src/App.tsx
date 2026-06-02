@@ -17,7 +17,6 @@ import { getEcho } from "@/lib/echo";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import SellerWelcomeModal from "@/components/layout/SellerWelcomeModal";
-import { getInitialSellerProductCount } from "@/components/pages/user/dashboard/seller-products";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -35,9 +34,7 @@ function AppContent() {
   const isJustLoggedInRef = useRef(false);
   // REVISI: Flag untuk mencegah infinite redirect loop saat user tidak punya faculty
   const hasRedirectedToFacultyRef = useRef(false);
-  const [sellerProductCount, setSellerProductCount] = useState(
-    getInitialSellerProductCount(),
-  );
+  const [sellerProductCount, setSellerProductCount] = useState(0);
   const [showSellerWelcome, setShowSellerWelcome] = useState(false);
 
   // Data State
@@ -59,6 +56,7 @@ function AppContent() {
         setAuthUser(user);
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
+        setSellerProductCount(user.productsCount || 0);
         void useCartStore.getState().fetchCount();
         void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
@@ -337,6 +335,7 @@ function AppContent() {
       if (user) {
         setAuthUser(user);
         setUserRole(user.role === "admin" ? "admin" : "user");
+        setSellerProductCount(user.productsCount || 0);
         void useCartStore.getState().fetchCount();
         void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();

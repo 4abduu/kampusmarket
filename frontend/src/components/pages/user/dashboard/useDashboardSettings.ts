@@ -8,6 +8,7 @@ interface DashboardUser {
   name: string
   email: string
   phone?: string
+  facultyName?: string
   bio?: string
   faculty?: string | null
 }
@@ -71,7 +72,6 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
       faculty: currentUser.faculty || "",
     })
   }, [currentUser])
-  const [showProfileSuccess, setShowProfileSuccess] = useState(false)
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [passwordForm, setPasswordForm] = useState({
@@ -226,8 +226,7 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
         }),
       )
       
-      setShowProfileSuccess(true)
-      setTimeout(() => setShowProfileSuccess(false), 3000)
+
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : "Gagal menyimpan profil")
     } finally {
@@ -279,7 +278,6 @@ export function useDashboardSettings({ currentUser, initialAddresses }: UseDashb
     setAddressForm,
     profileForm,
     setProfileForm,
-    showProfileSuccess,
     showPasswordDialog,
     setShowPasswordDialog,
     passwordForm,

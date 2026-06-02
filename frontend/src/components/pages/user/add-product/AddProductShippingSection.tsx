@@ -23,7 +23,7 @@ export default function AddProductShippingSection({
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Truck className="h-5 w-5" />
-          Opsi Pengiriman
+          Opsi Pengiriman <span className="text-red-500">*</span>
         </CardTitle>
         <CardDescription>Pilih metode pengiriman yang tersedia untuk pembeli</CardDescription>
       </CardHeader>
@@ -134,7 +134,7 @@ export default function AddProductShippingSection({
         <div className="space-y-2">
           <Label htmlFor="location">
             <MapPin className="h-4 w-4 inline mr-1" />
-            Lokasi
+            Lokasi <span className="text-red-500">*</span>
           </Label>
           <Input
             id="location"

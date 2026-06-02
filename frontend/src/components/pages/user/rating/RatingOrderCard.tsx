@@ -47,7 +47,7 @@ export default function RatingOrderCard({ order, isSelected, onSelect, formatPri
             </div>
             <p className="text-sm text-muted-foreground">{formatPrice(order.finalPrice)}</p>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="default" className="text-xs text-white">
                 {order.productType === "barang" ? "Barang" : "Jasa"}
               </Badge>
               <span className="text-xs text-muted-foreground flex items-center gap-1">

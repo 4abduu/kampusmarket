@@ -598,9 +598,10 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                 sellers={checkoutItems.map(item => ({
                   id: item.product.seller?.uuid || item.product.seller?.id,
                   name: item.product.seller?.name || "Tidak diketahui",
-                  phone: item.product.seller?.phone
+                  phone: item.product.seller?.phone,
+                  productId: item.product.id || item.product.uuid,
                 }))}
-                onChat={(sellerId) => onNavigate("chat", { productId: sellerId, chatAction: "chat" })}
+                onChat={(productId) => onNavigate("chat", { productId, chatAction: "chat" })}
               />
             </div>
 

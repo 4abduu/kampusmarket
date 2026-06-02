@@ -52,8 +52,10 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
       return;
     }
 
-    if (notification.type === "chat" && notification.chatId) {
-      onNavigate("chat", notification.chatId);
+    if (notification.type === "chat") {
+      // Buka chat list saja — chat dari notifikasi tidak perlu auto-open via productId
+      // karena chatId bukan productId. User bisa klik chat dari list.
+      onNavigate("chat");
       return;
     }
 

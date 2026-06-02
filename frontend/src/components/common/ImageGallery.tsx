@@ -147,12 +147,12 @@ export default function ImageGallery({
                <div className="absolute top-4 left-4 z-10">{customBadge}</div>
             ) : condition ? (
               condition === "baru" ? (
-                <Badge className="absolute top-4 left-4 bg-primary-500 z-10">
+                <Badge className="absolute top-4 left-4 bg-primary-500 z-10 text-white">
                   Baru
                 </Badge>
               ) : (
                 <Badge
-                  className="absolute top-4 left-4 z-10"
+                  className="absolute top-4 left-4 z-10 text-white"
                   variant="secondary"
                 >
                   Bekas

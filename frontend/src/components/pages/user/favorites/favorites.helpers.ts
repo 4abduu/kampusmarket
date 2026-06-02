@@ -7,13 +7,16 @@ export const formatIDR = (price: number) =>
     minimumFractionDigits: 0,
   }).format(price);
 
-export const getPriceLabel = (product: Product): string => {
-  if (product.price_type === "range" && product.price_min && product.price_max) {
-    return `${formatIDR(product.price_min)} - ${formatIDR(product.price_max)}`;
+export const getPriceLabel = (product: any): string => {
+  if (!product) return "Rp 0";
+
+  if (product.price_type === "range" && product.priceMin && product.priceMax) {
+    return `${formatIDR(product.priceMin)} - ${formatIDR(product.priceMax)}`;
   }
-  if (product.price_type === "starting" && product.price_min) {
-    return `Mulai ${formatIDR(product.price_min)}`;
+  if (product.price_type === "starting" && product.priceMin) {
+    return `Mulai ${formatIDR(product.priceMin)}`;
   }
+
   return formatIDR(product.price);
 };
 

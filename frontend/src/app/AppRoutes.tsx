@@ -438,6 +438,7 @@ export default function AppRoutes({
               onNavigate={onNavigate}
               isLoggedIn={isLoggedIn}
               onLogin={onLogin}
+              currentUser={currentUser}
             />
           }
         />
@@ -448,6 +449,7 @@ export default function AppRoutes({
               onNavigate={onNavigate}
               serviceId={currentId || "s1"}
               isLoggedIn={isLoggedIn}
+              currentUser={currentUser}
             />
           }
         />

@@ -123,7 +123,7 @@ export default function ServiceBookingSection({
 
         {bookingDate && (durationMin || durationMax) && (
           <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
-            <p className="font-medium text-primary-800 dark:text-primary-200 mb-3">📊 Timeline Pengerjaan</p>
+            <p className="font-medium text-primary-800 dark:text-primary-200 mb-3">Timeline Pengerjaan</p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground w-24">Mulai:</span>
@@ -166,9 +166,9 @@ export default function ServiceBookingSection({
                     estDate.setDate(estDate.getDate() + maxDays)
 
                     if (deadlineDate >= estDate) {
-                      return <span className="text-primary-600 text-xs ml-2">✓ Timeline aman</span>
+                      return <span className="text-primary-600 text-xs ml-2">Timeline aman</span>
                     }
-                    return <span className="text-red-500 text-xs ml-2">⚠️ Deadline lebih cepat dari estimasi</span>
+                    return <span className="text-red-500 text-xs ml-2">Deadline lebih cepat dari estimasi</span>
                   })()}
                 </div>
               )}
@@ -221,7 +221,7 @@ export default function ServiceBookingSection({
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">⚠️ Harga Akan Dikonfirmasi</p>
+                  <p className="font-medium text-amber-800 dark:text-amber-200">Harga Akan Dikonfirmasi</p>
                   <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
                     {priceType === "starting"
                       ? `Harga yang tertera adalah harga minimum (${formatPrice(price)}). Penyedia jasa akan memberikan penawaran harga final berdasarkan kompleksitas kebutuhan kamu.`

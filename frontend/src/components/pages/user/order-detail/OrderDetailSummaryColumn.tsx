@@ -38,6 +38,7 @@ interface Props {
   partnerName?: string
   partnerPhone?: string
   productTitle?: string
+  shippingNotesStr?: string
 }
 
 export default function OrderDetailSummaryColumn({
@@ -69,6 +70,7 @@ export default function OrderDetailSummaryColumn({
   partnerName,
   partnerPhone,
   productTitle,
+  shippingNotesStr,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -88,6 +90,12 @@ export default function OrderDetailSummaryColumn({
               <span className="font-medium">{shippingMethodConfig.label}</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">{shippingMethodConfig.desc}</p>
+            {shippingNotesStr && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Catatan Penjual (Ongkir)</p>
+                <p className="text-sm text-blue-800 dark:text-blue-200">{shippingNotesStr}</p>
+              </div>
+            )}
           </div>
 
           {shippingAddress && (
@@ -100,7 +108,15 @@ export default function OrderDetailSummaryColumn({
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => onNavigate("chat", { productId, chatAction: "chat" })}>
+            <Button variant="outline" className="flex-1" onClick={() => {
+              // Kalau buyer: buka chat produk. Kalau seller: buka chat list
+              // (seller tidak bisa startChat dengan productId miliknya sendiri)
+              if (!isSellerView && productId) {
+                onNavigate("chat", { productId, chatAction: "chat" });
+              } else {
+                onNavigate("chat");
+              }
+            }}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
             </Button>
@@ -126,8 +142,8 @@ export default function OrderDetailSummaryColumn({
             {!isService && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Ongkos Kirim</span>
-                {orderStatus === "waiting_shipping_fee" ? (
-                  <span className="text-blue-600">Menunggu konfirmasi</span>
+                {["pending", "waiting_confirmation", "waiting_shipping_fee"].includes(orderStatus) ? (
+                  <span className="text-blue-600 text-sm italic">Menunggu ongkir</span>
                 ) : (
                   <span>{formatPrice(shippingFee)}</span>
                 )}

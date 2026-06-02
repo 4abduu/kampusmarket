@@ -232,9 +232,9 @@ class Product extends Model
             return 'Rp ' . number_format($this->price_min ?? 0, 0, ',', '.') 
                 . ' - Rp ' . number_format($this->price_max ?? 0, 0, ',', '.');
         } elseif ($this->price_type === PriceType::STARTING) {
-            return 'Mulai Rp ' . number_format($this->price, 0, ',', '.');
+            return 'Mulai Rp ' . number_format($this->price_min ?? $this->price ?? 0, 0, ',', '.');
         }
-        return 'Rp ' . number_format($this->price, 0, ',', '.');
+        return 'Rp ' . number_format($this->price ?? 0, 0, ',', '.');
     }
 
     /**

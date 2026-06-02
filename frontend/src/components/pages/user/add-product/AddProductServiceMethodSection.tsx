@@ -23,7 +23,7 @@ export default function AddProductServiceMethodSection({
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Metode Pelayanan
+          Metode Pelayanan <span className="text-red-500">*</span>
         </CardTitle>
         <CardDescription>Pilih metode pelayanan yang tersedia untuk pelanggan</CardDescription>
       </CardHeader>
@@ -109,7 +109,7 @@ export default function AddProductServiceMethodSection({
         <div className="space-y-2">
           <Label htmlFor="locationJasa">
             <MapPin className="h-4 w-4 inline mr-1" />
-            Lokasi
+            Lokasi <span className="text-red-500">*</span>
           </Label>
           <Input
             id="locationJasa"

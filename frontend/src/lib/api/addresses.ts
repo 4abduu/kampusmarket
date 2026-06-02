@@ -21,6 +21,6 @@ export async function deleteAddress(id: string) {
 }
 
 export async function setPrimaryAddress(id: string) {
-  const response = await api.post(`/addresses/${id}/set-primary`);
+  const response = await api.put(`/addresses/${id}/primary`);
   return response.data;
 }

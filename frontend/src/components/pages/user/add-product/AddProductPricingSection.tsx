@@ -65,7 +65,7 @@ export default function AddProductPricingSection({
         {productType === "jasa" ? (
           <>
             <div className="space-y-3">
-              <Label>Tipe Harga</Label>
+              <Label>Tipe Harga <span className="text-red-500">*</span></Label>
               <RadioGroup
                 value={pricingType}
                 onValueChange={(value) => onPricingTypeChange(value as PricingType)}
@@ -96,7 +96,7 @@ export default function AddProductPricingSection({
 
             {pricingType === "tetap" && (
               <div className="space-y-2">
-                <Label htmlFor="price">Harga Jasa</Label>
+                <Label htmlFor="price">Harga Jasa <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
@@ -113,7 +113,7 @@ export default function AddProductPricingSection({
 
             {pricingType === "mulai_dari" && (
               <div className="space-y-2">
-                <Label htmlFor="priceMin">Harga Mulai Dari</Label>
+                <Label htmlFor="priceMin">Harga Mulai Dari <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
@@ -131,7 +131,7 @@ export default function AddProductPricingSection({
             {pricingType === "rentang" && (
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="priceMinJasa">Harga Minimum</Label>
+                  <Label htmlFor="priceMinJasa">Harga Minimum <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                     <Input
@@ -145,7 +145,7 @@ export default function AddProductPricingSection({
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="priceMaxJasa">Harga Maksimum</Label>
+                  <Label htmlFor="priceMaxJasa">Harga Maksimum <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                     <Input
@@ -231,7 +231,7 @@ export default function AddProductPricingSection({
             <div className="pt-4 border-t dark:border-slate-700">
               <Label className="flex items-center gap-2 mb-3">
                 <Clock className="h-4 w-4" />
-                Status Ketersediaan
+                Status Ketersediaan <span className="text-red-500">*</span>
               </Label>
               <div className="grid grid-cols-3 gap-3">
                 {[
@@ -260,7 +260,7 @@ export default function AddProductPricingSection({
           <>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Harga Jual</Label>
+                <Label htmlFor="price">Harga Jual <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
@@ -291,7 +291,7 @@ export default function AddProductPricingSection({
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stock">Stok</Label>
+                <Label htmlFor="stock">Stok <span className="text-red-500">*</span></Label>
                 <Input
                   id="stock"
                   type="number"

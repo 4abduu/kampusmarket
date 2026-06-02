@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   Bell,
   ShieldCheck,
+  PlusCircle,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
@@ -403,6 +404,10 @@ export default function Navbar({
                     <Package className="mr-2 h-4 w-4" />
                     <span>Produk Saya</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onNavigate("add-product")}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <span>Tambah Produk</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onNavigate("orders")}>
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     <span>Pesanan Saya</span>
@@ -575,6 +580,14 @@ export default function Navbar({
                       >
                         <Package className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
                         <span>Produk Saya</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => { onNavigate("add-product"); closeMobileMenu(); }}
+                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                      >
+                        <PlusCircle className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
+                        <span>Tambah Produk</span>
                       </Button>
                       <Button
                         variant="ghost"

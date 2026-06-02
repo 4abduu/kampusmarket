@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Briefcase, ChevronRight, DollarSign, MessageCircle, Package, Plus, Star, Wallet } from "lucide-react"
+import { Briefcase, ChevronRight, DollarSign, MessageCircle, Package, Plus, Star, Wallet, Loader2 } from "lucide-react"
 import type { Product } from "@/lib/mock-data"
 
 type Stats = {
@@ -23,6 +23,7 @@ type Props = {
   setShowWithdrawDialog: (open: boolean) => void
   setActiveTab: (tab: string) => void
   adminFeePercentage: number
+  isLoadingProducts?: boolean
 }
 
 export default function UserDashboardOverviewTab({
@@ -35,6 +36,7 @@ export default function UserDashboardOverviewTab({
   setShowWithdrawDialog,
   setActiveTab,
   adminFeePercentage,
+  isLoadingProducts = false,
 }: Props) {
   return (
     <>
@@ -116,32 +118,49 @@ export default function UserDashboardOverviewTab({
           <Button variant="ghost" size="sm" onClick={() => setActiveTab("products")}>Lihat Semua<ChevronRight className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {userProducts.slice(0, 3).map((product) => (
-              <div key={product.id} className="border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-colors" onClick={() => onNavigate("product", product.id)}>
-                <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-32 flex items-center justify-center relative overflow-hidden`}>
-                  {product.images && product.images.length > 0 ? (
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    product.type === "jasa" ? <Briefcase className="h-10 w-10 text-secondary-600/50" /> : <Package className="h-10 w-10 text-muted-foreground/30" />
-                  )}
-                </div>
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={product.type === "jasa" ? "default" : "secondary"} className="text-xs">
-                      {product.type === "jasa" ? "Jasa" : "Barang"}
-                    </Badge>
-                  </div>
-                  <p className="font-medium text-sm line-clamp-1">{product.title}</p>
-                  <p className="text-primary-600 font-bold text-sm">{formatPriceRange(product)}</p>
-                </div>
+          {isLoadingProducts ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+            </div>
+          ) : userProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <Package className="h-8 w-8 text-muted-foreground/40" />
               </div>
-            ))}
-          </div>
+              <h3 className="font-semibold text-lg mb-1">Belum ada produk barang atau jasa</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-xs">Mulai jual produk atau tawarkan jasa kamu ke sesama mahasiswa sekarang!</p>
+              <Button className="bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("add-product")}>
+                <Plus className="h-4 w-4 mr-2" />Tambah Produk
+              </Button>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-3 gap-4">
+              {userProducts.slice(0, 3).map((product) => (
+                <div key={product.id} className="border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-colors" onClick={() => onNavigate(product.type === 'jasa' ? 'service' : 'product', product.id)}>
+                  <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-32 flex items-center justify-center relative overflow-hidden`}>
+                    {product.images && product.images.length > 0 ? (
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      product.type === "jasa" ? <Briefcase className="h-10 w-10 text-secondary-600/50" /> : <Package className="h-10 w-10 text-muted-foreground/30" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={product.type === "jasa" ? "secondary" : "default"} className="text-xs text-white">
+                        {product.type === "jasa" ? "Jasa" : "Barang"}
+                      </Badge>
+                    </div>
+                    <p className="font-medium text-sm line-clamp-1">{product.title}</p>
+                    <p className="text-primary-600 font-bold text-sm">{formatPriceRange(product)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </>

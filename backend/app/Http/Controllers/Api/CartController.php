@@ -52,6 +52,10 @@ class CartController extends Controller
         $product = Product::where('uuid', $request->productId)->firstOrFail();
         $requestedQuantity = $request->quantity ?? 1;
 
+        if ($product->seller_id === $request->user()->id) {
+            return $this->error('Anda tidak dapat menambahkan produk Anda sendiri ke keranjang', null, 400);
+        }
+
         $cart = Cart::where('user_id', $request->user()->id)
             ->where('product_id', $product->id)
             ->first();
@@ -60,19 +64,16 @@ class CartController extends Controller
             $addedQuantity = $requestedQuantity;
             $newQuantity = $cart->quantity + $addedQuantity;
 
-            if ($newQuantity > ($product->stock + $cart->quantity)) {
+            if ($newQuantity > $product->stock) {
                 return $this->error(
                     'Stok tidak mencukupi. Anda sudah memiliki ' . $cart->quantity . ' item di keranjang.',
                     [
                         'current_cart_quantity' => $cart->quantity,
-                        'max_stock' => $product->stock + $cart->quantity,
+                        'max_stock' => $product->stock,
                     ],
                     400
                 );
             }
-
-            // Deduct stock
-            $product->updateStock($product->stock - $addedQuantity);
 
             $cart->update([
                 'quantity' => $newQuantity,
@@ -82,9 +83,6 @@ class CartController extends Controller
             if ($requestedQuantity > $product->stock) {
                 return $this->error('Stok tidak mencukupi', null, 400);
             }
-
-            // Deduct stock
-            $product->updateStock($product->stock - $requestedQuantity);
 
             Cart::create([
                 'user_id' => $request->user()->id,
@@ -115,14 +113,9 @@ class CartController extends Controller
         $newQuantity = $request->quantity;
         $diff = $newQuantity - $oldQuantity;
 
-        // Available stock = current stock + old quantity in cart (stock was deducted when added)
-        $availableStock = $product->stock + $oldQuantity;
-        if ($newQuantity > $availableStock) {
+        if ($newQuantity > $product->stock) {
             return $this->error('Stok tidak mencukupi', null, 400);
         }
-
-        // Adjust stock: deduct if quantity increases, refund if decreases
-        $product->updateStock($product->stock - $diff);
 
         $cartItem->update(['quantity' => $newQuantity]);
 
@@ -144,10 +137,7 @@ class CartController extends Controller
 
         $product = $cartItem->product;
 
-        // Refund stock
-        if ($product) {
-            $product->updateStock($product->stock + $cartItem->quantity);
-        }
+        // No need to refund stock here anymore
 
         $cartItem->delete();
 
@@ -163,12 +153,7 @@ class CartController extends Controller
             ->where('user_id', $request->user()->id)
             ->get();
 
-        // Refund stock for all items
-        foreach ($cartItems as $item) {
-            if ($item->product) {
-                $item->product->updateStock($item->product->stock + $item->quantity);
-            }
-        }
+        // No need to refund stock for all items anymore
 
         Cart::where('user_id', $request->user()->id)->delete();
 

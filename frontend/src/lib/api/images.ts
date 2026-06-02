@@ -88,10 +88,19 @@ export async function uploadImage(
   }
 
   // Backend returns relative path (e.g., 'products/small/abc123.webp')
-  // Prepend /storage/ to make it accessible from frontend
+  // Prepend backend URL and /storage/ to make it accessible from frontend
   const prependStorage = (relativePath: string) => {
     if (!relativePath) return '';
-    return relativePath.startsWith('/storage/') ? relativePath : `/storage/${relativePath}`;
+    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) return relativePath;
+    
+    const path = relativePath.startsWith('/storage/') ? relativePath : `/storage/${relativePath}`;
+    const backendBaseUrl = API_BASE_URL.replace(/\/api\/?$/, "");
+    
+    // Check if the current environment is using absolute URL for API
+    if (backendBaseUrl.startsWith('http')) {
+      return `${backendBaseUrl}${path}`;
+    }
+    return path;
   };
 
   return {

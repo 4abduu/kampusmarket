@@ -138,7 +138,6 @@ type Props = {
   handlePayWithWallet: () => void
   handlePayWithMidtrans: () => void
 
-  showProfileSuccess: boolean
   showPasswordSuccess: boolean
   showTopUpSuccess: boolean
   showWithdrawSuccess: boolean
@@ -219,7 +218,6 @@ export default function UserDashboardDialogs({
   paymentRequest,
   handlePayWithWallet,
   handlePayWithMidtrans,
-  showProfileSuccess,
   showPasswordSuccess,
   showTopUpSuccess,
   showWithdrawSuccess,
@@ -252,7 +250,7 @@ export default function UserDashboardDialogs({
               </div>
 
               <div>
-                <Label>Judul</Label>
+                <Label>Judul <span className="text-red-500">*</span></Label>
                 <Input 
                   value={editingProduct.title} 
                   onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })} 
@@ -261,58 +259,101 @@ export default function UserDashboardDialogs({
               </div>
 
               <div>
-                <Label>Lokasi</Label>
+                <Label>Lokasi <span className="text-red-500">*</span></Label>
                 <Input 
                   value={editingProduct.location} 
                   onChange={(e) => setEditingProduct({ ...editingProduct, location: e.target.value })} 
                   placeholder="Contoh: Jakarta Pusat, Bandung"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {editingProduct.type === "jasa" ? (
-                  <>
-                    <div>
-                      <Label>Harga Min (Rp)</Label>
-                      <Input type="number" value={editingProduct.priceMin || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMin: parseInt(e.target.value) || 0 })} placeholder="0" />
+              {editingProduct.type === "jasa" ? (
+                <>
+                  {/* Tipe Harga untuk Jasa */}
+                  <div>
+                    <Label>Tipe Harga <span className="text-red-500">*</span></Label>
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                      {[
+                        { value: "fixed", label: "Tetap", desc: "Satu harga pasti" },
+                        { value: "starting", label: "Mulai Dari", desc: "Harga minimum" },
+                        { value: "range", label: "Rentang", desc: "Min - Max" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setEditingProduct({ ...editingProduct, priceType: opt.value as any })}
+                          className={`p-2 rounded-lg border-2 text-left text-xs transition-all ${
+                            (editingProduct.priceType || "range") === opt.value
+                              ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                              : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                          }`}
+                        >
+                          <span className="font-medium">{opt.label}</span>
+                          <p className="text-muted-foreground mt-0.5">{opt.desc}</p>
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <Label>Harga Max (Rp)</Label>
-                      <Input type="number" value={editingProduct.priceMax || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMax: parseInt(e.target.value) || 0 })} placeholder="0" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <Label>Harga (Rp)</Label>
-                      <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })} placeholder="0" />
-                    </div>
-                    <div>
-                      <Label>Stok</Label>
-                      <Input 
-                        type="number" 
-                        value={editingProduct.stock} 
-                        onChange={(e) => {
-                          const newStock = parseInt(e.target.value) || 0;
-                          let newStatus = editingProduct.status;
-                          
-                          // Auto-correct status based on new stock
-                          if (newStock === 0 && editingProduct.status === 'active') {
-                            newStatus = 'sold_out';
-                          } else if (newStock > 0 && editingProduct.status === 'sold_out') {
-                            newStatus = 'active';
-                          }
-                          
-                          setEditingProduct({ ...editingProduct, stock: newStock, status: newStatus })
-                        }} 
-                        placeholder="0" 
-                      />
-                      {editingProduct.stock === 0 && (
-                        <p className="text-xs text-amber-600 mt-1">Stok 0 → Status akan "Terjual"</p>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+                  </div>
+
+                  {/* Harga fields berdasarkan tipe */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {(editingProduct.priceType || "range") === "fixed" && (
+                      <div className="col-span-2">
+                        <Label>Harga Jasa (Rp) <span className="text-red-500">*</span></Label>
+                        <Input type="number" value={editingProduct.price || ""} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })} placeholder="100000" />
+                      </div>
+                    )}
+                    {(editingProduct.priceType || "range") === "starting" && (
+                      <div className="col-span-2">
+                        <Label>Harga Mulai Dari (Rp) <span className="text-red-500">*</span></Label>
+                        <Input type="number" value={editingProduct.priceMin || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMin: parseInt(e.target.value) || 0 })} placeholder="50000" />
+                      </div>
+                    )}
+                    {(editingProduct.priceType || "range") === "range" && (
+                      <>
+                        <div>
+                          <Label>Harga Min (Rp) <span className="text-red-500">*</span></Label>
+                          <Input type="number" value={editingProduct.priceMin || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMin: parseInt(e.target.value) || 0 })} placeholder="50000" />
+                        </div>
+                        <div>
+                          <Label>Harga Max (Rp) <span className="text-red-500">*</span></Label>
+                          <Input type="number" value={editingProduct.priceMax || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMax: parseInt(e.target.value) || 0 })} placeholder="150000" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Harga (Rp) <span className="text-red-500">*</span></Label>
+                    <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })} placeholder="0" />
+                  </div>
+                  <div>
+                    <Label>Stok <span className="text-red-500">*</span></Label>
+                    <Input 
+                      type="number" 
+                      value={editingProduct.stock} 
+                      onChange={(e) => {
+                        const newStock = parseInt(e.target.value) || 0;
+                        let newStatus = editingProduct.status;
+                        
+                        // Auto-correct status based on new stock
+                        if (newStock === 0 && editingProduct.status === 'active') {
+                          newStatus = 'sold_out';
+                        } else if (newStock > 0 && editingProduct.status === 'sold_out') {
+                          newStatus = 'active';
+                        }
+                        
+                        setEditingProduct({ ...editingProduct, stock: newStock, status: newStatus })
+                      }} 
+                      placeholder="0" 
+                    />
+                    {editingProduct.stock === 0 && (
+                      <p className="text-xs text-amber-600 mt-1">Stok 0 → Status akan "Terjual"</p>
+                    )}
+                  </div>
+                </div>
+              )}
               {editingProduct.type === "jasa" && (
                 <>
                   <div className="grid grid-cols-3 gap-4">
@@ -369,22 +410,25 @@ export default function UserDashboardDialogs({
                 </>
               )}
               <div>
-                <Label>Deskripsi</Label>
+                <Label>Deskripsi <span className="text-red-500">*</span></Label>
                 <Textarea value={editingProduct.description} onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })} rows={3} />
               </div>
               <div>
-                <Label>Kategori</Label>
-                <Select value={editingProduct.category} onValueChange={(v) => setEditingProduct({ ...editingProduct, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Label>Kategori <span className="text-red-500">*</span></Label>
+                <Select value={editingProduct.categoryId || editingProduct.category || ""} onValueChange={(v) => {
+                  const cat = (editingProduct.type === "jasa" ? serviceCategories : categories).find(c => c.id === v);
+                  setEditingProduct({ ...editingProduct, category: cat?.label || v, categoryId: v });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
                   <SelectContent>
-                    {(editingProduct.type === "jasa" ? serviceCategories : categories).map(c => <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>)}
+                    {(editingProduct.type === "jasa" ? serviceCategories : categories).map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               {editingProduct.type === "barang" && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Kondisi</Label>
+                    <Label>Kondisi <span className="text-red-500">*</span></Label>
                     <Select value={editingProduct.condition || "bekas"} onValueChange={(v: "baru" | "bekas") => setEditingProduct({ ...editingProduct, condition: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -400,7 +444,7 @@ export default function UserDashboardDialogs({
                 </div>
               )}
               <div>
-                <Label>Status Produk</Label>
+                <Label>Status Produk <span className="text-red-500">*</span></Label>
                 {editingProduct.type === "barang" && editingProduct.stock === 0 && editingProduct.status !== "sold_out" && (
                   <div className="mb-2 p-2 rounded bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
                     <p className="text-xs text-amber-700 dark:text-amber-400">⚠️ Stok = 0, status harus "Terjual". Auto-disetting...</p>
@@ -600,21 +644,21 @@ export default function UserDashboardDialogs({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Label Alamat</Label>
+              <Label>Label Alamat <span className="text-red-500">*</span></Label>
               <Input placeholder="Rumah, Kos, Kantor..." value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Nama Penerima</Label>
+                <Label>Nama Penerima <span className="text-red-500">*</span></Label>
                 <Input value={addressForm.recipient} onChange={(e) => setAddressForm({ ...addressForm, recipient: e.target.value })} />
               </div>
               <div>
-                <Label>No. HP</Label>
-                <Input value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} />
+                <Label>No. HP <span className="text-red-500">*</span></Label>
+                <Input value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value.replace(/\D/g, "") })} />
               </div>
             </div>
             <div>
-              <Label>Alamat Lengkap</Label>
+              <Label>Alamat Lengkap <span className="text-red-500">*</span></Label>
               <Textarea value={addressForm.address} onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })} rows={2} />
             </div>
             <div>
@@ -820,7 +864,7 @@ export default function UserDashboardDialogs({
                   <p className="text-xs text-muted-foreground mt-1">Masukkan nama e-wallet yang tidak ada di daftar</p>
                 </div>
               )}
-              <div><Label>Nomor HP</Label><Input placeholder="08xxxxxxxxxx" value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })} /></div>
+              <div><Label>Nomor HP</Label><Input placeholder="08xxxxxxxxxx" value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value.replace(/\D/g, "") })} /></div>
               <div><Label>Nama Pemilik E-Wallet</Label><Input placeholder="Nama sesuai akun e-wallet" value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} /></div>
               <div>
                 <Label>Jumlah Penarikan</Label>
@@ -926,11 +970,6 @@ export default function UserDashboardDialogs({
         </div>
       )}
 
-      {showProfileSuccess && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5" />Profil berhasil diperbarui!
-        </div>
-      )}
       {showPasswordSuccess && (
         <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
           <CheckCircle2 className="h-5 w-5" />Password berhasil diubah!

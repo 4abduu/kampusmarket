@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star, Settings, Edit, Flag } from "lucide-react";
+import { Award, Calendar, MapPin, MessageCircle, Package, Shield, Star, Settings, Flag } from "lucide-react";
 
 interface ProfileUserInfo {
   id: string;
@@ -16,6 +16,7 @@ interface ProfileUserInfo {
 
 interface ProfileSidebarProps {
   user: ProfileUserInfo;
+  currentUserId?: string | number;
   isOwnProfile?: boolean;
   totalSold: number;
   avgRating: number;
@@ -31,6 +32,7 @@ interface ProfileSidebarProps {
 export default function ProfileSidebar({
   user,
   isOwnProfile = false,
+  currentUserId,
   totalSold,
   avgRating,
   totalReviews,
@@ -41,6 +43,9 @@ export default function ProfileSidebar({
   hasProducts = false,
   onOpenReport,
 }: ProfileSidebarProps) {
+  // Variabel kalkulasi pintar untuk safety check gabungan
+  const checkIsOwnProfile = isOwnProfile || (currentUserId && String(user.id) === String(currentUserId));
+
   return (
     <div className="lg:col-span-1 space-y-4">
       <Card>
@@ -87,13 +92,9 @@ export default function ProfileSidebar({
           </div>
 
           <div className="space-y-2">
-            {isOwnProfile ? (
+            {checkIsOwnProfile ? (
               <>
-                <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("edit-profile")}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profil
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => onNavigate("dashboard")}>
+                <Button variant="outline" className="w-full bg-primary-600 hover:bg-primary-700 text-white" onClick={() => onNavigate("dashboard")}>
                   <Package className="h-4 w-4 mr-2" />
                   Dashboard
                 </Button>

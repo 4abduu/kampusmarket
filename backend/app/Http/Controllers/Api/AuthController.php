@@ -73,6 +73,13 @@ class AuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
+            if ($user && $user->google_id && !$user->password) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email ini terdaftar melalui Google. Silakan klik "Lanjutkan dengan Google" untuk masuk.',
+                ], 401);
+            }
+
             if (!$user || !Hash::check($request->password, $user->password)) {
                 Log::warning('Auth login failed: invalid credentials', ['email' => $request->email]);
 

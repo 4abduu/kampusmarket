@@ -57,6 +57,7 @@ export interface Order {
   serviceDeadline?: string;
   trackingNumber?: string;
   cancelReason?: string;
+  notes?: string;
   history?: any[];
   createdAt: string;
   updatedAt: string;

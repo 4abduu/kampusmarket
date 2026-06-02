@@ -31,6 +31,9 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
   const statusConfig = getStatusConfig(order.status);
   const StatusIcon = statusConfig.icon;
   const isService = order.productType === "jasa";
+  // Gunakan order.role kalau tersedia (dari API) untuk override viewMode
+  // Ini mencegah badge salah ketika user yang sama pernah jadi pembeli & penjual di order berbeda
+  const effectiveViewMode: typeof viewMode = (order as any).role === 'buyer' ? 'buyer' : (order as any).role === 'seller' ? 'seller' : viewMode;
 
   return (
     <Card
@@ -65,18 +68,18 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
 
             <div className="flex items-center gap-2 mt-2">
               <Avatar className="h-5 w-5">
-                {(viewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar) && (
+                {(effectiveViewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar) && (
                   <AvatarImage 
-                    src={viewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar} 
-                    alt={viewMode === "buyer" ? order.seller?.name : order.buyer?.name}
+                    src={effectiveViewMode === "buyer" ? order.seller?.avatar : order.buyer?.avatar} 
+                    alt={effectiveViewMode === "buyer" ? order.seller?.name : order.buyer?.name}
                   />
                 )}
                 <AvatarFallback className={`text-[10px] ${isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}`}>
-                  {(viewMode === "buyer" ? (order.seller?.name || "S") : (order.buyer?.name || "B")).split(" ").map((namePart: string) => namePart[0]).join("")}
+                  {(effectiveViewMode === "buyer" ? (order.seller?.name || "S") : (order.buyer?.name || "B")).split(" ").map((namePart: string) => namePart[0]).join("")}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-muted-foreground">
-                {viewMode === "buyer"
+                {effectiveViewMode === "buyer"
                   ? `${isService ? "Penyedia" : "Penjual"}: ${order.seller?.name || "Sistem"}`
                   : `${isService ? "Pemesan" : "Pembeli"}: ${order.buyer?.name || "User"}`}
               </span>
@@ -87,7 +90,7 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
                 {order.offeredPrice ? formatPrice(order.offeredPrice) : formatPrice(order.totalPrice)}
               </p>
               <div className="flex items-center gap-2">
-                {viewMode === "buyer" && (
+                {effectiveViewMode === "buyer" && (
                   <>
                     {order.status === "waiting_confirmation" && (
                       <>
@@ -146,7 +149,7 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
                   </>
                 )}
 
-                {viewMode === "seller" && (
+                {effectiveViewMode === "seller" && (
                   <>
                     {order.status === "waiting_price" && (
                       <Button
@@ -195,7 +198,12 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" } as any);
+                    // Buyer: buka chat via productId. Seller: buka chat list (tidak bisa self-chat).
+                    if (effectiveViewMode === 'buyer') {
+                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, chatAction: 'chat' } as any);
+                    } else {
+                      onNavigate('chat');
+                    }
                   }}
                 >
                   <MessageCircle className="h-3 w-3 mr-1" />

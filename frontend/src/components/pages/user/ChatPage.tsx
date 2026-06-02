@@ -69,6 +69,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
   const [offerPrice, setOfferPrice] = useState('');
   const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>([]);
   const [selectedOfferProduct, setSelectedOfferProduct] = useState<SellerProduct | null>(null);
+  const [typingChatIds, setTypingChatIds] = useState<Set<string>>(new Set());
+  const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReportMessage, setSelectedReportMessage] = useState<ApiMessage | null>(null);
@@ -237,6 +239,28 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             return next;
           });
         })
+        .listenForWhisper('typing', (e: { isTyping: boolean; chatId: string; senderId: string }) => {
+          if (e.isTyping && e.senderId !== currentUserId) {
+            setTypingChatIds(prev => {
+              const next = new Set(prev);
+              next.add(e.chatId);
+              return next;
+            });
+            const existingTimeout = typingTimeoutsRef.current.get(e.chatId);
+            if (existingTimeout) clearTimeout(existingTimeout);
+            
+            const newTimeout = setTimeout(() => {
+              setTypingChatIds(prev => {
+                const next = new Set(prev);
+                next.delete(e.chatId);
+                return next;
+              });
+              typingTimeoutsRef.current.delete(e.chatId);
+            }, 3000);
+            
+            typingTimeoutsRef.current.set(e.chatId, newTimeout);
+          }
+        })
         .error((err: unknown) => {
           console.info('[Chat] Presence channel error:', err);
         });
@@ -323,12 +347,15 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         channel.listen('.MessageSent', (event: { message: ApiMessage }) => {
           const incoming = event.message;
           const isVisible = document.visibilityState === 'visible';
+          const isFromMe = incoming.senderId === currentUserId;
+          // Only force isRead to true if the message is from someone else and the window is active
+          const shouldMarkAsRead = !isFromMe && isVisible;
           
           setMessages(prev => {
             const existingIdx = prev.findIndex(m => m.id === incoming.id);
             if (existingIdx !== -1) {
               const next = [...prev];
-              next[existingIdx] = { ...incoming, isRead: isVisible || incoming.isRead };
+              next[existingIdx] = { ...incoming, isRead: shouldMarkAsRead || incoming.isRead };
               return next;
             }
             
@@ -336,11 +363,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
             const pendingIdx = prev.findIndex(m => m._pending && m.senderId === incoming.senderId && m.type === incoming.type);
             if (pendingIdx !== -1) {
               const next = [...prev];
-              next[pendingIdx] = { ...incoming, isRead: isVisible || incoming.isRead };
+              next[pendingIdx] = { ...incoming, isRead: shouldMarkAsRead || incoming.isRead };
               return next;
             }
 
-            return [...prev, { ...incoming, isRead: isVisible || incoming.isRead }];
+            return [...prev, { ...incoming, isRead: shouldMarkAsRead || incoming.isRead }];
           });
 
           setChats(prevChats => prevChats.map(c =>
@@ -351,7 +378,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
           
-          if (isVisible) {
+          if (isVisible && !isFromMe) {
             markChatRead(chatUuid).catch(() => null);
             // Update unread count global
             useChatStore.getState().decrementUnreadCount();
@@ -410,8 +437,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     void (async () => {
       try {
         const chat = await startChat({ productId: initialContextId });
-        setChats(prev => {
-          if (prev.some(c => c.id === chat.id)) return prev;
+        setChats(prev => {          if (prev.some(c => c.id === chat.id)) return prev;
           const item: ApiChat = {
             id: chat.id,
             product: {
@@ -434,9 +460,16 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
         });
         await openChat(chat.id);
         if (initialChatAction === 'nego' && chat.product?.canNego) setShowNegoModal(true);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[Chat] startChat error', err);
-        toast.error('Gagal membuka chat dengan penjual');
+        const errMsg: string = err?.response?.data?.message || err?.message || '';
+        if (errMsg.toLowerCase().includes('diri sendiri') || err?.response?.status === 400) {
+          toast.error(errMsg || 'Tidak dapat membuka chat ini', {
+            description: 'Kamu tidak dapat chat dengan produk milikmu sendiri.',
+          });
+        } else {
+          toast.error('Gagal membuka chat dengan penjual');
+        }
       }
     })();
   }, [initialContextId, initialChatAction, currentUserId, openChat]);
@@ -469,6 +502,13 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
     setMessages([]);
     if (echoChannelRef.current) { echoChannelRef.current.stopListening('.MessageSent'); echoChannelRef.current = null; }
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    if (presenceChannelRef.current && activeChatId) {
+      presenceChannelRef.current.whisper('typing', { isTyping: true, chatId: activeChatId, senderId: currentUserId });
+    }
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -695,8 +735,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       });
       toast.success('Pesan berhasil dilaporkan');
       setShowReportModal(false);
-    } catch {
-      toast.error('Gagal melaporkan pesan');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Gagal melaporkan pesan';
+      toast.error(msg);
     } finally {
       setIsSending(false);
     }
@@ -735,6 +776,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           showChatList={showChatList}
           isSellerView={isSeller}
           isLoading={chatsLoading}
+          typingChatIds={typingChatIds}
           onSelectChat={handleSelectChat}
         />
 
@@ -758,7 +800,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onBack={handleBackToList}
           onSend={handleSendMessage}
           onKeyPress={handleKeyPress}
-          onMessageChange={e => setNewMessage(e.target.value)}
+          onMessageChange={handleMessageChange}
           onImageUpload={handleImageUpload}
           onToggleEmoji={() => setShowEmojiPicker(p => !p)}
           onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
@@ -771,6 +813,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
           onOpenOffer={handleOpenOfferModal}
           formatPrice={formatPrice}
           onReportMessage={handleReportMessage}
+          isOtherUserTyping={activeChatId ? typingChatIds.has(activeChatId) : false}
         />
       </div>
 

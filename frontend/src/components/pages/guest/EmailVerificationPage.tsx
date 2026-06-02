@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,8 +62,28 @@ export default function EmailVerificationPage({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  // 🛠️ FIX: SISA KODE AUTO-SEND DI SEBELUMNYA SUDAH DIHAPUS TOTAL DI SINI.
-  // Halaman sekarang pasif dan langsung siap menerima inputan OTP.
+  const hasFetched = useRef(false);
+
+  // Auto-send OTP on mount for register and settings flows
+  useEffect(() => {
+    if (source === "register" || source === "settings") {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
+
+      const lastSentStr = window.sessionStorage.getItem(getEmailVerificationOtpStorageKey(userEmail, source));
+      const lastSent = lastSentStr ? parseInt(lastSentStr, 10) : 0;
+      const cooldownMs = 60 * 1000;
+
+      // Only auto-send if not sent recently
+      if (Date.now() - lastSent > cooldownMs) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        sendVerificationOtp(userEmail);
+      } else {
+        const remaining = Math.ceil((cooldownMs - (Date.now() - lastSent)) / 1000);
+        setResendCooldown(remaining);
+      }
+    }
+  }, [source, userEmail]);
 
   // Handle input change untuk OTP
   const handleCodeChange = (index: number, value: string) => {

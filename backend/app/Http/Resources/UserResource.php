@@ -47,6 +47,7 @@ class UserResource extends JsonResource
             // [BARU] Status online berdasarkan last_seen
             'isOnline'  => $this->isOnline(),
             'lastSeen'  => $this->last_seen?->toISOString(),
+            'productsCount' => $this->products()->count(),
         ];
     }
 

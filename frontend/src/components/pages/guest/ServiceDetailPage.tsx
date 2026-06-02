@@ -22,6 +22,7 @@ interface ServiceDetailPageProps {
   ) => void;
   serviceId: string;
   isLoggedIn: boolean;
+  currentUser?: any;
 }
 
 const REPORT_SERVICE_REASONS = [
@@ -37,6 +38,7 @@ export default function ServiceDetailPage({
   onNavigate,
   serviceId,
   isLoggedIn,
+  currentUser,
 }: ServiceDetailPageProps) {
   const { toast } = useToast();
   const [service, setService] = useState<any>(null);
@@ -199,6 +201,7 @@ export default function ServiceDetailPage({
       onNavigate={onNavigate}
       onAction={handleAction}
       onOpenReport={handleReportOpen}
+      currentUser={currentUser}
     />
   );
 

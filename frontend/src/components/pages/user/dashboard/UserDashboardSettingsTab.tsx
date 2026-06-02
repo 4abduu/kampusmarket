@@ -35,6 +35,7 @@ type CurrentUser = {
   email: string;
   phone?: string;
   faculty: string | null;
+  facultyName?: string;
   avatar?: string;
   isVerified?: boolean;
 };
@@ -55,8 +56,7 @@ type Props = {
   profileError?: string | null;
   isLoadingAddresses?: boolean;
   addressError?: string | null;
-  showProfileSuccess?: boolean;
-  onNavigate?: (page: string) => void;
+  onNavigate?: (page: string, params?: Record<string, string>) => void;
   onProfilePictureUpdate?: (newAvatarUrl: string) => void;
 };
 
@@ -76,7 +76,6 @@ export default function UserDashboardSettingsTab({
   profileError = null,
   isLoadingAddresses = false,
   addressError = null,
-  showProfileSuccess = false,
   onNavigate, // 🛠️ FIX: Destrukturisasi onNavigate supaya bisa dipakai di dalam komponen
   onProfilePictureUpdate,
 }: Props) {
@@ -146,7 +145,7 @@ export default function UserDashboardSettingsTab({
           <div className="grid sm:grid-cols-2 gap-4">
             {/* Nama Lengkap */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Lengkap</label>
+              <label className="text-sm font-medium">Nama Lengkap <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
                 value={profileForm.name} 
@@ -158,7 +157,7 @@ export default function UserDashboardSettingsTab({
 
             {/* Email dengan Status Verifikasi */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
               <div className="relative">
                 <input 
                   type="email" 
@@ -194,11 +193,14 @@ export default function UserDashboardSettingsTab({
 
             {/* Nomor HP */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nomor HP</label>
+              <label className="text-sm font-medium">Nomor HP <span className="text-red-500">*</span></label>
               <input 
                 type="tel" 
                 value={profileForm.phone} 
-                onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  setProfileForm({ ...profileForm, phone: val });
+                }}
                 aria-label="Nomor HP"
                 className="w-full border rounded-lg px-3 py-2" 
               />
@@ -206,13 +208,13 @@ export default function UserDashboardSettingsTab({
 
             {/* Fakultas */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Fakultas</Label>
+              <Label className="text-sm font-medium">Fakultas <span className="text-red-500">*</span></Label>
               {currentUser.faculty ? (
                 <>
                   <div className="relative">
                     <input 
                       type="text" 
-                      value={getFacultyName(currentUser.faculty)} 
+                      value={currentUser.facultyName || getFacultyName(currentUser.faculty)} 
                       disabled 
                       aria-label="Fakultas"
                       className="w-full border rounded-lg px-3 py-2 pr-10 bg-slate-50 text-slate-600 cursor-not-allowed" 
@@ -267,12 +269,6 @@ export default function UserDashboardSettingsTab({
               {profileError}
             </div>
           )}
-          {showProfileSuccess && (
-            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-              Profil berhasil diperbarui
-            </div>
-          )}
-
           {/* Save Button */}
           <Button 
             className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
@@ -383,7 +379,7 @@ export default function UserDashboardSettingsTab({
           <DialogHeader>
             <DialogTitle>Konfirmasi Fakultas</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menetapkan fakultas <strong>{getFacultyName(profileForm.faculty)}</strong>?
+              Apakah Anda yakin ingin menetapkan fakultas <strong>{faculties.find(f => f.id === profileForm.faculty)?.name || getFacultyName(profileForm.faculty)}</strong>?
               <br/><br/>
               Fakultas ini akan disimpan sebagai data tetap akun kamu.
             </DialogDescription>

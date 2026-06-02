@@ -29,11 +29,11 @@ class StoreProductRequest extends FormRequest
             'categoryId' => ['required', 'exists:categories,uuid'],
 
             // Pricing
-            'price' => ['required', 'integer', 'min:0'],
-            'originalPrice' => ['nullable', 'integer', 'min:0'],
             'priceType' => ['required', 'in:fixed,range,starting'],
-            'priceMin' => ['required_if:priceType,range', 'integer', 'min:0'],
-            'priceMax' => ['required_if:priceType,range', 'integer', 'min:0', 'gte:priceMin'],
+            'price' => ['required_if:priceType,fixed', 'nullable', 'integer', 'min:0'],
+            'originalPrice' => ['nullable', 'integer', 'min:0'],
+            'priceMin' => ['required_unless:priceType,fixed', 'nullable', 'integer', 'min:0'],
+            'priceMax' => ['required_if:priceType,range', 'nullable', 'integer', 'min:0', 'gte:priceMin'],
 
             // Negotiation
             'canNego' => ['boolean'],

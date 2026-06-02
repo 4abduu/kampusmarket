@@ -8,11 +8,12 @@ interface Seller {
   name: string
   phone?: string
   id?: string
+  productId?: string // productId untuk konteks chat
 }
 
 interface Props {
   sellers: Seller[]
-  onChat: (sellerId?: string) => void
+  onChat: (productId?: string) => void
 }
 
 export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
@@ -41,7 +42,7 @@ export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
                 <p className="text-xs text-muted-foreground">{seller.phone || "-"}</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onChat(seller.id)}>
+                <Button variant="outline" size="sm" onClick={() => onChat(seller.productId || seller.id)}>
                   <MessageCircle className="h-4 w-4 mr-1" />
                   Chat
                 </Button>

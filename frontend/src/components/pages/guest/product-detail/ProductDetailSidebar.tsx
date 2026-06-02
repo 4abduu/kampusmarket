@@ -53,6 +53,7 @@ interface ProductDetailSidebarProps {
   // [REVISI] onNavigate menerima NavigationData object yang berisi productId + chatAction
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
   onOpenReport: () => void;
+  currentUser?: any;
 }
 
 export default function ProductDetailSidebar({
@@ -63,6 +64,7 @@ export default function ProductDetailSidebar({
   onAction,
   onNavigate,
   onOpenReport,
+  currentUser,
 }: ProductDetailSidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -202,6 +204,9 @@ export default function ProductDetailSidebar({
     }
   };
 
+  const isOwner = currentUser?.id && (currentUser.id === product.sellerId || currentUser.id === product.seller?.id);
+
+
   return (
     <div className="space-y-4">
       <DetailShareDialog
@@ -252,72 +257,86 @@ export default function ProductDetailSidebar({
 
           <Separator />
 
-          <div className="space-y-2">
-            <Label>Jumlah</Label>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
-              <Input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 text-center"
-                disabled={product.stock === 0}
-              />
-              <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={product.stock === 0}>+</Button>
-              <span className={`text-sm ${product.stock === 0 ? "text-red-600 font-bold" : "text-muted-foreground"}`}>
-                {product.stock === 0 ? "HABIS" : `Stok: ${product.stock}`}
-              </span>
+          {isOwner ? (
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 text-center space-y-3">
+              <p className="text-primary-800 dark:text-primary-200 font-medium">Ini adalah produk Anda</p>
+              <Button 
+                className="w-full bg-primary-600 hover:bg-primary-700" 
+                onClick={() => onNavigate("dashboard", "products")}
+              >
+                Kelola Produk
+              </Button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label>Jumlah</Label>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
+                  <Input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="w-20 text-center"
+                    disabled={product.stock === 0}
+                  />
+                  <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={product.stock === 0}>+</Button>
+                  <span className={`text-sm ${product.stock === 0 ? "text-red-600 font-bold" : "text-muted-foreground"}`}>
+                    {product.stock === 0 ? "HABIS" : `Stok: ${product.stock}`}
+                  </span>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
-              onClick={() => onAction(() => onNavigate("checkout", product.id))}
-              disabled={product.stock === 0}
-            >
-              {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
-            </Button>
-            <Button 
-              variant="outline" 
-              className={`relative overflow-hidden transition-all ${
-                showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" : 
-                showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
-              }`}
-              style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
-              onClick={() => onAction(handleAddToCart)} 
-              disabled={product.stock === 0 || isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <ShoppingCart className={`h-4 w-4 mr-2 ${showSuccessAnim ? "animate-bounce" : ""}`} />
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                  onClick={() => onAction(() => onNavigate("checkout", product.id))}
+                  disabled={product.stock === 0}
+                >
+                  {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className={`relative overflow-hidden transition-all ${
+                    showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" : 
+                    showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
+                  }`}
+                  style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
+                  onClick={() => onAction(handleAddToCart)} 
+                  disabled={product.stock === 0 || isAddingToCart}
+                >
+                  {isAddingToCart ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <ShoppingCart className={`h-4 w-4 mr-2 ${showSuccessAnim ? "animate-bounce" : ""}`} />
+                  )}
+                  {showSuccessAnim ? "Ditambahkan!" : showErrorAnim ? "Sudah Maksimal" : "+ Keranjang"}
+                </Button>
+              </div>
+
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  25% { transform: translateX(-5px); }
+                  75% { transform: translateX(5px); }
+                }
+              `}} />
+
+              {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}
+              {product.canNego && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => onAction(handleNegoWithSeller)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Ajukan Nego
+                </Button>
               )}
-              {showSuccessAnim ? "Ditambahkan!" : showErrorAnim ? "Sudah Maksimal" : "+ Keranjang"}
-            </Button>
-          </div>
-
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes shake {
-              0%, 100% { transform: translateX(0); }
-              25% { transform: translateX(-5px); }
-              75% { transform: translateX(5px); }
-            }
-          `}} />
-
-          {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}
-          {product.canNego && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => onAction(handleNegoWithSeller)}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Ajukan Nego
-            </Button>
+            </>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-4">
             <Button
               variant="ghost"
               size="sm"
@@ -425,10 +444,12 @@ export default function ProductDetailSidebar({
             </>
           )}
 
-          <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => onAction(onOpenReport)}>
-            <Flag className="h-4 w-4 mr-2" />
-            Laporkan Produk
-          </Button>
+          {!isOwner && (
+            <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => onAction(onOpenReport)}>
+              <Flag className="h-4 w-4 mr-2" />
+              Laporkan Produk
+            </Button>
+          )}
         </CardContent>
       </Card>
 

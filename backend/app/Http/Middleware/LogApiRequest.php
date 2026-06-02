@@ -11,17 +11,20 @@ class LogApiRequest
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $startedAt = microtime(true);
+        if (!defined('LARAVEL_START')) {
+            define('LARAVEL_START', microtime(true));
+        }
+        return $next($request);
+    }
 
-        /** @var Response $response */
-        $response = $next($request);
-
+    public function terminate(Request $request, Response $response): void
+    {
         if (!$request->is('api/*')) {
-            return $response;
+            return;
         }
 
+        $durationMs = defined('LARAVEL_START') ? (int) round((microtime(true) - LARAVEL_START) * 1000) : 0;
         $status = $response->getStatusCode();
-        $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
         $method = $request->method();
         $route = $request->route();
 
@@ -43,7 +46,5 @@ class LogApiRequest
         } elseif ($method !== 'GET' || $durationMs >= 1000) {
             Log::info('[API] Request handled', $context);
         }
-
-        return $response;
     }
 }

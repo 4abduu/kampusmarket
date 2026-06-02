@@ -36,7 +36,7 @@ export default function AddProductBasicInfoSection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Judul {productType === "barang" ? "Produk" : "Jasa"}</Label>
+          <Label htmlFor="title">Judul {productType === "barang" ? "Produk" : "Jasa"} <span className="text-red-500">*</span></Label>
           <Input
             id="title"
             placeholder={
@@ -50,7 +50,7 @@ export default function AddProductBasicInfoSection({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Deskripsi</Label>
+          <Label htmlFor="description">Deskripsi <span className="text-red-500">*</span></Label>
           <Textarea
             id="description"
             placeholder={
@@ -66,7 +66,7 @@ export default function AddProductBasicInfoSection({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="category">Kategori</Label>
+            <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
             <Select
               value={formData.category}
               onValueChange={(value) => setFormData({ ...formData, category: value })}
@@ -86,7 +86,7 @@ export default function AddProductBasicInfoSection({
 
           {productType === "barang" && (
             <div className="space-y-2">
-              <Label htmlFor="condition">Kondisi</Label>
+              <Label htmlFor="condition">Kondisi <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.condition}
                 onValueChange={(value: "bekas" | "baru") => setFormData({ ...formData, condition: value })}

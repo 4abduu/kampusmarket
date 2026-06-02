@@ -90,7 +90,7 @@ class OrderController extends Controller
                     throw new \Exception('Produk tidak tersedia', 400);
                 }
 
-                if ($product->stock < $request->quantity && !$request->input('from_cart', false)) {
+                if ($product->stock < $request->quantity) {
                     throw new \Exception('Stok tidak mencukupi', 400);
                 }
 
@@ -193,12 +193,11 @@ class OrderController extends Controller
                 // It will be incremented only when order is COMPLETED (complete() method)
                 // This prevents double-counting if order is cancelled later
 
-                // Deduct stock ONLY for direct purchase, NOT from cart
-                // Cart purchases: stock already deducted in ProductController::addToCart
+                // Deduct stock for all purchases at checkout
+                $product->updateStock($product->stock - $request->quantity);
+
                 $isFromCart = (bool) $request->input('from_cart', false);
-                if (!$isFromCart) {
-                    $product->updateStock($product->stock - $request->quantity);
-                } else {
+                if ($isFromCart) {
                     // From cart: cleanup cart item
                     \App\Models\Cart::where('user_id', $user->id)
                         ->where('product_id', $product->id)
@@ -307,6 +306,7 @@ class OrderController extends Controller
         $request->validate([
             'shippingFee' => 'required|integer|min:0',
             'shippingMethod' => 'nullable|string|max:100',
+            'shippingNotes' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -329,6 +329,7 @@ class OrderController extends Controller
                 $order->update([
                     'shipping_fee' => $shippingFee,
                     'shipping_method' => $request->shippingMethod,
+                    'shipping_notes' => $request->shippingNotes,
                     'total_price' => $order->final_price + $shippingFee,
                     'status' => OrderStatus::WAITING_PAYMENT,
                 ]);

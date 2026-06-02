@@ -107,7 +107,22 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
   };
 
+  // 1. Fetching Data User yang sedang Login (Auth) terlebih dahulu
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const me = await userApi.me();
+        if (me) setAuthUser(me);
+      } catch (err) {
+        console.error("[ProfilePage] Error fetching auth user info:", err);
+      }
+    };
+    if (isLoggedIn) {
+      void fetchMe();
+    }
+  }, [isLoggedIn]);
 
+  // 2. Fetching Profil target berdasarkan parameter URL
   useEffect(() => {
     setLoading(true);
     setIsLoadingProducts(true);
@@ -116,11 +131,10 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
         try {
           const user = await userApi.getPublicProfile(userId);
           setProfileUser(user);
-          setAuthUser(null);
 
           try {
-            const productsResponse = await getProductsBySeller(userId);
-            setUserProducts(productsResponse?.data || []);
+            const productsResponse = await getProductsBySeller(userId) as any;
+            setUserProducts(productsResponse?.products || productsResponse?.data || []);
           } catch (err) {
             console.error("[ProfilePage] Failed to fetch seller products:", err);
             setUserProducts([]);
@@ -155,8 +169,20 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
   }, [userId]);
 
-  const user = profileUser || authUser || (mockUsers && mockUsers.length > 0 ? mockUsers[0] : null);
-  const isOwnProfile = !userId && !!authUser;
+  // BUGFIX: jangan pakai mockUsers[0] sebagai fallback — ini yang menyebabkan profil orang lain
+  // tertimpa mock user saat profileUser masih null (loading). Fallback hanya ke authUser.
+  const user = profileUser || authUser || null;
+
+  // FIX LOGIKA DI SINI: Bandingkan UUID URL (userId) dengan UUID User Login (authUser.id atau authUser.uuid)
+  const isOwnProfile = useMemo(() => {
+    if (!authUser || !user) return false;
+    if (!userId) return true; // kalau ga ada userId di url, otomatis profil sendiri
+    
+    const loggedInId = String(authUser.uuid || authUser.id).toLowerCase();
+    const targetProfileId = String(userId).toLowerCase();
+    
+    return loggedInId === targetProfileId;
+  }, [userId, authUser, user]);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("products");
   const [productCategory, setProductCategory] = useState<string | null>(null);
@@ -343,6 +369,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
           <ProfileSidebar
             user={user}
             isOwnProfile={isOwnProfile}
+            currentUserId={authUser?.uuid || authUser?.id} // <-- Sebagai extra safety check
             totalSold={totalSold}
             avgRating={avgRating}
             totalReviews={totalReviews}
@@ -364,15 +391,12 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
                 data !== null &&
                 "userId" in data
               ) {
-                // Cari produk aktif penjual
                 const firstActive = userProducts.find((p) => p.stock > 0) ?? userProducts[0];
 
                 if (!firstActive) {
-                  // Penjual tidak punya produk — jangan navigasi
                   return;
                 }
 
-                // Disable tombol saat products masih loading
                 onNavigate("chat", {
                   productId: firstActive.uuid || firstActive.id,
                 });
@@ -394,6 +418,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
                   Jasa ({jasaProducts.length})
                 </TabsTrigger>
                 <TabsTrigger value="reviews" className="flex-1">
+                  <Briefcase className="h-4 w-4 mr-1" />
                   Ulasan ({totalReviews})
                 </TabsTrigger>
               </TabsList>

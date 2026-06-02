@@ -317,7 +317,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
                   <p className="text-sm text-muted-foreground">
                     dari {selectedOrder.seller?.name}
                   </p>
-                  <Badge variant="secondary" className="mt-2 text-xs">
+                  <Badge variant="default" className="mt-2 text-xs text-white">
                     {selectedOrder.productType === "barang" ? "Barang" : "Jasa"}
                   </Badge>
                 </div>

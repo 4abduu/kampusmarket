@@ -41,6 +41,13 @@ apiClient.interceptors.response.use(
       window.dispatchEvent(new Event('unauthorized'));
     }
 
+    // Mask 500 error messages so users don't see raw stack traces or SQL errors
+    if (status >= 500) {
+      if (typeof errorData === 'object' && errorData !== null) {
+        errorData.message = 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.';
+      }
+    }
+
     throw errorData;
   }
 );

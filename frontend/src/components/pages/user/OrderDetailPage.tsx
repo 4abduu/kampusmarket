@@ -293,6 +293,7 @@ export default function OrderDetailPage({
     serviceDate: order.serviceDate || "",
     serviceDeadline: order.serviceDeadline || "",
     serviceNotes: order.serviceNotes || "",
+    notes: order.notes || "",
     serviceMethod: order.shippingType || "pickup",
   };
 
@@ -502,7 +503,7 @@ export default function OrderDetailPage({
           onSuccess: async (result: any) => {
             console.log("[Midtrans] Payment success:", result);
             toast({
-              title: "✅ Pembayaran berhasil!",
+              title: "Pembayaran berhasil!",
               description: "Mengonfirmasi pembayaran...",
             });
             try {

@@ -55,10 +55,15 @@ class ReportController extends Controller
             ], 400);
         }
 
-        // Check for duplicate report based on type (user, product, or chat)
+        // Check for duplicate report based on type and specific entity
         $query = Report::where('reporter_id', $request->user()->id)
             ->where('reported_user_id', $reportedUser->id)
             ->where('status', 'pending');
+
+        // Scope duplicate check by report type so different contexts don't block each other
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
 
         if ($request->has('productId')) {
             $product = Product::where('uuid', $request->productId)->first();
@@ -75,7 +80,7 @@ class ReportController extends Controller
         if ($existingReport) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda sudah memiliki laporan pending untuk pengguna ini',
+                'message' => 'Anda sudah memiliki laporan yang belum diproses untuk konteks yang sama. Silakan tunggu laporan sebelumnya ditinjau terlebih dahulu.',
             ], 400);
         }
 
@@ -104,16 +109,23 @@ class ReportController extends Controller
         ]);
 
         // Notify all admins about the new report (async via queue)
-        \App\Jobs\SendAdminNotification::dispatch(
-            type:    \App\Enums\NotificationType::SYSTEM->value,
-            title:   'Laporan Baru Terbuka',
-            message: $request->user()->name . ' melaporkan ' . $reportedUser->name . ' dengan alasan: ' . $request->reason . '.',
-            link:    '/admin',
-            data:    [
-                'action_tab' => 'reports',
-                'report_id'  => $report->uuid,
-            ],
-        );
+        try {
+            \App\Jobs\SendAdminNotification::dispatch(
+                type:    \App\Enums\NotificationType::SYSTEM->value,
+                title:   'Laporan Baru Terbuka',
+                message: $request->user()->name . ' melaporkan ' . $reportedUser->name . ' dengan alasan: ' . $request->reason . '.',
+                link:    '/admin',
+                data:    [
+                    'action_tab' => 'reports',
+                    'report_id'  => $report->uuid,
+                ],
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[ReportController] Failed to dispatch admin notification, but report was saved', [
+                'report_id' => $report->uuid,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,

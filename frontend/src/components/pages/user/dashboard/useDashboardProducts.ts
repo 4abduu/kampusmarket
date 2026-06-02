@@ -77,7 +77,21 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
     if (!editingProduct.description?.trim()) errors.push("Deskripsi harus diisi")
     if (!editingProduct.location?.trim()) errors.push("Lokasi harus diisi")
     if (editingProduct.price <= 0 && editingProduct.type === "barang") errors.push("Harga harus lebih dari 0")
-    if ((editingProduct.priceMin || 0) <= 0 && editingProduct.type === "jasa") errors.push("Harga minimum harus lebih dari 0")
+    if (editingProduct.type === "jasa") {
+      const pType = editingProduct.priceType || "range";
+      if (pType === "fixed" && (editingProduct.price || 0) <= 0) {
+        errors.push("Harga jasa harus lebih dari 0");
+      }
+      if (pType === "starting" && (editingProduct.priceMin || 0) <= 0) {
+        errors.push("Harga mulai dari harus lebih dari 0");
+      }
+      if (pType === "range") {
+        const min = editingProduct.priceMin || 0;
+        const max = editingProduct.priceMax || 0;
+        if (min <= 0) errors.push("Harga minimum harus lebih dari 0");
+        if (max > 0 && max <= min) errors.push("Harga maksimum harus lebih besar dari harga minimum");
+      }
+    }
     if ((editingProduct.images?.length ?? 0) === 0) errors.push("Minimal 1 foto harus diupload")
     if (editingProduct.type === "barang" && editingProduct.stock < 0) errors.push("Stok tidak boleh negatif")
     
@@ -134,8 +148,10 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
           payload.delivery_fee_min = editingProduct.deliveryFeeMin || null
           payload.delivery_fee_max = editingProduct.deliveryFeeMax || null
         } else if (editingProduct.type === "jasa") {
-          payload.price_min = editingProduct.priceMin
-          payload.price_max = editingProduct.priceMax
+          payload.price_type = editingProduct.priceType || "range"
+          payload.price = editingProduct.priceType === "fixed" ? editingProduct.price : null
+          payload.price_min = editingProduct.priceType !== "fixed" ? editingProduct.priceMin : null
+          payload.price_max = editingProduct.priceType === "range" ? editingProduct.priceMax : null
           payload.duration_min = editingProduct.durationMin || null
           payload.duration_max = editingProduct.durationMax || null
           payload.duration_unit = editingProduct.durationUnit || null

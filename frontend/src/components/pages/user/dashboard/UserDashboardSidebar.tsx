@@ -7,6 +7,7 @@ type SidebarUser = {
   name: string
   email: string
   faculty: string | null
+  facultyName?: string
   avatar?: string
 }
 
@@ -43,7 +44,7 @@ export default function UserDashboardSidebar({
             <div className="flex items-center justify-center gap-2 mt-2">
               <Badge variant="outline" className="text-xs">
                 <Building2 className="h-3 w-3 mr-1" />
-                {getFacultyName(currentUser.faculty)}
+                {currentUser.facultyName || getFacultyName(currentUser.faculty)}
               </Badge>
             </div>
             <Badge variant="outline" className="mt-2">

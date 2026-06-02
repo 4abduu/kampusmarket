@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Auto-confirm orders 3 days after seller delivery (like Shopee/Tokopedia)
 Schedule::command('orders:auto-confirm')->hourly();
+
+// Auto-cancel unpaid/unconfirmed orders after 24 hours
+Schedule::command('orders:auto-cancel')->hourly();

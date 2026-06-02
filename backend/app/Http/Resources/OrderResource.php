@@ -67,7 +67,10 @@ class OrderResource extends JsonResource
             'serviceDate' => $this->service_date?->format('Y-m-d'),
             'serviceTime' => $this->service_time?->format('H:i'),
             'serviceDeadline' => $this->service_deadline?->toISOString(),
-            'serviceNotes' => $this->service_notes,
+            'serviceNotes' => $this->service_notes, // Usually used for optional notes in Jasa frontend mapping
+            
+            // General Notes (Used for 'Detail Kebutuhan Jasa' in frontend or generic order notes)
+            'notes' => $this->notes,
             
             // Variable pricing (for jasa)
             'offeredPrice' => $this->offered_price ? (int) $this->offered_price : null,

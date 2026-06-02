@@ -7,17 +7,20 @@
 
 export interface User {
   id: string;
+  uuid: string;
   name: string;
   email: string;
   phone: string;
   avatar: string;
   faculty: string | null;
+  facultyName?: string;
   isVerified: boolean;
   isBanned?: boolean;
   banReason?: string;
   isWarned?: boolean;
   warningReason?: string;
   warningCount?: number;
+  productsCount?: number;
   role?: "user" | "admin";
   googleId?: string;
   joinedAt: string;

@@ -26,7 +26,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'facultyId' => User::facultyIdRules(UserRole::USER->value, true), // facultyId is now required
         ];
     }

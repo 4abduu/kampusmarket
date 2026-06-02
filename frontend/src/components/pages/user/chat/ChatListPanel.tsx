@@ -11,6 +11,7 @@ interface Props {
   showChatList: boolean;
   isSellerView: boolean;
   isLoading: boolean;
+  typingChatIds?: Set<string>;
   onSelectChat: (chat: ApiChat) => void;
 }
 
@@ -23,7 +24,7 @@ function initials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function ChatListPanel({ chats, selectedChatId, showChatList, isSellerView, isLoading, onSelectChat }: Props) {
+export default function ChatListPanel({ chats, selectedChatId, showChatList, isSellerView, isLoading, typingChatIds = new Set(), onSelectChat }: Props) {
   return (
     <Card className={[
       'lg:col-span-1 overflow-hidden transition-all duration-300',
@@ -104,9 +105,11 @@ export default function ChatListPanel({ chats, selectedChatId, showChatList, isS
                       <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{fmt(chat.lastMessageAt)}</span>
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">{chat.product.title}</p>
-                    {chat.lastMessage && (
+                    {typingChatIds.has(chat.id) ? (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 italic truncate mt-0.5">mengetik...</p>
+                    ) : chat.lastMessage ? (
                       <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{chat.lastMessage}</p>
-                    )}
+                    ) : null}
                   </div>
 
                   {chat.unreadCount > 0 && (

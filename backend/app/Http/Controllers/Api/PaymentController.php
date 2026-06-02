@@ -235,7 +235,7 @@ class PaymentController extends Controller
                     'uuid' => Str::uuid(),
                     'order_id' => $order->id,
                     'status' => $newStatus->value,
-                    'notes' => 'Pembayaran Midtrans berhasil (verified via API) — dana ditahan di escrow',
+                    'notes' => 'Pembayaran berhasil — VIA Midtrans',
                     'actor_id' => $order->buyer_id,
                 ]);
 

@@ -209,7 +209,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               console.warn = originalWarn
               setIsLoadingTopUp(false)
               toast({
-                title: "✅ Pembayaran berhasil!",
+                title: "Pembayaran berhasil!",
                 description: "Mengonfirmasi top-up...",
               })
               try {

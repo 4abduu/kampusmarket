@@ -26,7 +26,7 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'facultyId' => User::facultyIdRules(UserRole::USER->value, true),
             'location' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:500'],

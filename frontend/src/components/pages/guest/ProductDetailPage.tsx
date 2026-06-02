@@ -21,6 +21,7 @@ interface ProductDetailPageProps {
   ) => void;
   isLoggedIn: boolean;
   onLogin: (role?: "user" | "admin") => void;
+  currentUser?: any;
 }
 
 const REPORT_REASONS = [
@@ -37,6 +38,7 @@ export default function ProductDetailPage({
   onNavigate,
   isLoggedIn,
   onLogin: _onLogin,
+  currentUser,
 }: ProductDetailPageProps) {
   const { toast } = useToast();
   const params = useParams();
@@ -204,6 +206,7 @@ export default function ProductDetailPage({
       onAction={handleAction}
       onNavigate={onNavigate}
       onOpenReport={handleReportOpen}
+      currentUser={currentUser}
     />
   );
 

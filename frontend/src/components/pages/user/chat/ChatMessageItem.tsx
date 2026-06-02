@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle } from 'lucide-react';
+import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle, Clock3 } from 'lucide-react';
 import type { ApiMessage, ApiChatDetail } from '@/components/pages/user/chat/chat.types';
 
 interface Props {
@@ -92,10 +92,10 @@ export default function ChatMessageItem({
 
               {/* FIX #4: Status label yang tepat */}
               {message.offerStatus === 'accepted' && (
-                <p className="text-xs mt-1 text-emerald-600 dark:text-emerald-400 font-medium">✅ Penawaran diterima</p>
+                <p className="text-xs mt-1 text-emerald-600 dark:text-emerald-400 font-medium">Penawaran diterima</p>
               )}
               {message.offerStatus === 'rejected' && (
-                <p className="text-xs mt-1 text-red-500 font-medium">❌ Penawaran ditolak</p>
+                <p className="text-xs mt-1 text-red-500 font-medium">Penawaran ditolak</p>
               )}
               {message.offerStatus === 'pending' && (
                 // FIX #4: kalau penjual yang kirim → "menunggu konfirmasi pembeli", bukan "menunggu respons penjual"
@@ -164,7 +164,7 @@ export default function ChatMessageItem({
               }
             </span>
           )}
-          {message._pending && <span className="text-[10px] opacity-50">⏳</span>}
+          {message._pending && <Clock3 size={12} className="opacity-50" />}
         </div>
       </div>
     </div>

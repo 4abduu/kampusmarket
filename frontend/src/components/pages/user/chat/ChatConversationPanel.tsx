@@ -64,6 +64,7 @@ interface Props {
   onOpenOffer: () => void;
   formatPrice: (price: number) => string;
   onReportMessage: (message: ApiMessage) => void;
+  isOtherUserTyping?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -102,6 +103,7 @@ export default function ChatConversationPanel({
   onOpenOffer,
   formatPrice,
   onReportMessage,
+  isOtherUserTyping = false,
 }: Props) {
   const handleOpenProfile = () => {
     if (!otherUser?.id) return;
@@ -172,7 +174,14 @@ export default function ChatConversationPanel({
                 >
                   <p className="font-medium text-sm sm:text-base truncate">{otherUser?.name ?? '—'}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    {otherUser?.isOnline ? (
+                    {isOtherUserTyping ? (
+                      <>
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0 animate-pulse" />
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 italic">
+                          mengetik...
+                        </span>
+                      </>
+                    ) : otherUser?.isOnline ? (
                       <>
                         <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0 animate-pulse" />
                         <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">

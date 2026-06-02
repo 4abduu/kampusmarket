@@ -203,7 +203,10 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               <Label htmlFor="phone">Nomor HP (WhatsApp)</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="phone" name="phone" type="tel" placeholder="08xx xxxx xxxx" className="pl-10" value={formData.phone} onChange={handleInputChange} disabled={isLoading} />
+                <Input id="phone" name="phone" type="tel" placeholder="08xx xxxx xxxx" className="pl-10" value={formData.phone} onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  setFormData({ ...formData, phone: val });
+                }} disabled={isLoading} />
               </div>
             </div>
 

@@ -404,7 +404,7 @@ export default function OrderDetailStatusSection({
                 </p>
                 {autoConfirmDate && (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                    ⏰ Auto-konfirmasi: {autoConfirmDate}
+                    Auto-konfirmasi: {autoConfirmDate}
                   </p>
                 )}
               </div>
@@ -432,7 +432,7 @@ export default function OrderDetailStatusSection({
                     </p>
                     {autoConfirmDate && (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                        ⏰ Otomatis dikonfirmasi: {autoConfirmDate}
+                        Otomatis dikonfirmasi: {autoConfirmDate}
                       </p>
                     )}
                   </div>

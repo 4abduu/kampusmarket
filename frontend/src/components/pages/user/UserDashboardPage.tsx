@@ -99,7 +99,7 @@ export default function UserDashboardPage({
   });
 
   const settings = useDashboardSettings({
-    currentUser: currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" },
+    currentUser: currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "", facultyName: "" },
     initialAddresses: [], // @mock-flagged — addresses diload dari API /addresses di useDashboardSettings
   });
 
@@ -237,7 +237,7 @@ export default function UserDashboardPage({
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8">
           <UserDashboardSidebar
-            currentUser={currentUser || { id: "", name: "", email: "", avatar: "", faculty: "" } as any}
+            currentUser={currentUser || { id: "", name: "", email: "", avatar: "", faculty: "", facultyName: "" } as any}
             rating={stats.rating}
             activeTab={activeTab}
             setActiveTab={handleTabChange}
@@ -259,6 +259,7 @@ export default function UserDashboardPage({
                   setShowWithdrawDialog={wallet.setShowWithdrawDialog}
                   setActiveTab={handleTabChange}
                   adminFeePercentage={ADMIN_FEE_PERCENTAGE}
+                  isLoadingProducts={products.isLoadingProducts}
                 />
               )
             )}
@@ -352,7 +353,7 @@ export default function UserDashboardPage({
                 <UserDashboardSettingsSkeleton />
               ) : (
                 <UserDashboardSettingsTab
-                  currentUser={currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "" } as any}
+                  currentUser={currentUser || { id: "", name: "", email: "", phone: "", bio: "", faculty: "", facultyName: "" } as any}
                   profileForm={settings.profileForm}
                   setProfileForm={settings.setProfileForm}
                   handleSaveProfile={settings.handleSaveProfile}
@@ -367,7 +368,6 @@ export default function UserDashboardPage({
                   profileError={settings.profileError}
                   isLoadingAddresses={settings.isLoadingAddresses}
                   addressError={settings.addressError}
-                  showProfileSuccess={settings.showProfileSuccess}
                   onNavigate={onNavigate}
                   onProfilePictureUpdate={handleProfilePictureUpdate}
                 />
@@ -450,7 +450,6 @@ export default function UserDashboardPage({
         handlePayWithWallet={orderActions.handlePayWithWallet}
         handlePayWithMidtrans={orderActions.handlePayWithMidtrans}
         handleSetShippingFee={orderActions.handleSetShippingFee}
-        showProfileSuccess={settings.showProfileSuccess}
         showPasswordSuccess={settings.showPasswordSuccess}
         showTopUpSuccess={wallet.showTopUpSuccess}
         showWithdrawSuccess={wallet.showWithdrawSuccess}
