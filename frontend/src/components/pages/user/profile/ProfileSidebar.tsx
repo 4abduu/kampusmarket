@@ -9,6 +9,7 @@ interface ProfileUserInfo {
   id: string;
   name: string;
   faculty?: string | null;
+  facultyName?: string;
   location?: string;
   isVerified?: boolean;
   avatar?: string;
@@ -26,6 +27,7 @@ interface ProfileSidebarProps {
   onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
   isLoadingProducts?: boolean;
   hasProducts?: boolean;
+  firstProductId?: string;
   onOpenReport?: () => void;
 }
 
@@ -41,6 +43,7 @@ export default function ProfileSidebar({
   onNavigate,
   isLoadingProducts = false,
   hasProducts = false,
+  firstProductId,
   onOpenReport,
 }: ProfileSidebarProps) {
   // Variabel kalkulasi pintar untuk safety check gabungan
@@ -69,7 +72,7 @@ export default function ProfileSidebar({
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground text-sm">{user.faculty}</p>
+            <p className="text-muted-foreground text-sm">{user.facultyName || user.faculty || "Tidak ada fakultas"}</p>
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mt-1">
               <MapPin className="h-3 w-3" />
               {user.location || "Universitas Indonesia"}
@@ -107,8 +110,8 @@ export default function ProfileSidebar({
               <>
                 <Button
                   className="w-full bg-primary-600 hover:bg-primary-700"
-                  onClick={() => onNavigate("chat", { userId: user.id })}
-                  disabled={isLoadingProducts || !hasProducts}
+                  onClick={() => firstProductId && onNavigate("chat", { productId: firstProductId })}
+                  disabled={isLoadingProducts || !hasProducts || !firstProductId}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Hubungi Penjual

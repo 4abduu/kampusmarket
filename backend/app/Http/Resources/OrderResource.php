@@ -99,6 +99,9 @@ class OrderResource extends JsonResource
             'isRated' => $this->relationLoaded('reviews') 
                 ? $this->reviews->where('reviewer_id', $this->buyer_id)->count() > 0 
                 : false,
+
+            // Role: buyer atau seller (relatif terhadap user yang sedang login)
+            'role' => $this->getRoleForCurrentUser(),
         ];
     }
 
@@ -137,5 +140,17 @@ class OrderResource extends JsonResource
             'buyer' => (new UserResource($this->buyer))->toMinimalArray(),
             'netIncome' => (int) $this->net_income,
         ]);
+    }
+
+    /**
+     * Determine role of current authenticated user relative to this order.
+     */
+    private function getRoleForCurrentUser(): ?string
+    {
+        $userId = request()->user()?->id;
+        if (!$userId) return null;
+        if ($this->buyer_id === $userId) return 'buyer';
+        if ($this->seller_id === $userId) return 'seller';
+        return null;
     }
 }

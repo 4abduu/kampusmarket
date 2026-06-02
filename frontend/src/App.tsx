@@ -246,7 +246,6 @@ function AppContent() {
         params.set("rating", String(data.initialRating));
       }
 
-      // ✅ Chat support dari dev-abdu: gunakan query params
       if (page === "chat") {
         url = "/chat";
         if ("productId" in data && data.productId) {
@@ -254,6 +253,9 @@ function AppContent() {
         }
         if ("chatAction" in data && data.chatAction) {
           params.set("action", data.chatAction);
+        }
+        if ("buyerId" in data && data.buyerId) {
+          params.set("buyerId", data.buyerId);
         }
       } else {
         // Untuk halaman lain, handle ID overrides seperti biasa

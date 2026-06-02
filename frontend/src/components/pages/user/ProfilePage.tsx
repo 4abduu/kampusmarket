@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, Package } from "lucide-react";
 import {
   categories,
-  mockUsers,
   serviceCategories,
   type User,
 } from "@/lib/mock-data";
@@ -32,6 +31,7 @@ interface ProfilePageProps {
   ) => void;
   userId?: string;
   isLoggedIn: boolean;
+  currentUser?: User | null;
 }
 
 const REPORT_ACCOUNT_REASONS = [
@@ -43,9 +43,10 @@ const REPORT_ACCOUNT_REASONS = [
   { id: "other", label: "Lainnya" },
 ];
 
-export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfilePageProps) {
+export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUser }: ProfilePageProps) {
   const { toast } = useToast();
-  const [authUser, setAuthUser] = useState<User | null>(null);
+  // BUGFIX: Gunakan currentUser dari App.tsx jika ada, agar tidak loading mock data saat menunggu fetch
+  const [authUser, setAuthUser] = useState<User | null>(currentUser || null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userProducts, setUserProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +85,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
 
     try {
       await apiClient.post("/reports", {
-        reportedUserId: profileUser?.id || authUser?.id || mockUsers[0]?.id,
+        reportedUserId: profileUser?.id || authUser?.id,
         reason: finalReason,
         description: reportDescription,
         type: "account",
@@ -107,20 +108,23 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
     }
   };
 
-  // 1. Fetching Data User yang sedang Login (Auth) terlebih dahulu
+  // 1. Sinkronisasi authUser jika currentUser dari props berubah
   useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const me = await userApi.me();
-        if (me) setAuthUser(me);
-      } catch (err) {
-        console.error("[ProfilePage] Error fetching auth user info:", err);
-      }
-    };
-    if (isLoggedIn) {
+    if (currentUser) {
+      setAuthUser(currentUser);
+    } else if (isLoggedIn) {
+      // Fallback fetch jika currentUser belum tersedia meski isLoggedIn true
+      const fetchMe = async () => {
+        try {
+          const me = await userApi.me();
+          if (me) setAuthUser(me);
+        } catch (err) {
+          console.error("[ProfilePage] Error fetching auth user info:", err);
+        }
+      };
       void fetchMe();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, currentUser]);
 
   // 2. Fetching Profil target berdasarkan parameter URL
   useEffect(() => {
@@ -131,47 +135,84 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
         try {
           const user = await userApi.getPublicProfile(userId);
           setProfileUser(user);
+          setLoading(false);  // Set loading false as soon as profile is loaded
 
+          // Fetch products async (separate from main loading)
           try {
             const productsResponse = await getProductsBySeller(userId) as any;
             setUserProducts(productsResponse?.products || productsResponse?.data || []);
           } catch (err) {
             console.error("[ProfilePage] Failed to fetch seller products:", err);
-            setUserProducts([]);
+            setUserProducts([]);  // Tetap set empty array agar tidak error
+          } finally {
+            setIsLoadingProducts(false);
           }
         } catch (err) {
           console.error("[ProfilePage] Failed to fetch public profile:", err);
           setProfileUser(null);
           setUserProducts([]);
-        } finally {
-          setLoading(false);
+          setLoading(false);  // Set false even on error agar tidak stuck
           setIsLoadingProducts(false);
         }
       };
       void loadPublicProfile();
     } else {
-      const loadAuthUser = async () => {
-        try {
-          const user = await userApi.me();
-          if (user) {
-            setAuthUser(user);
-            setProfileUser(null);
+      // Jika TIDAK ADA userId di parameter, maka ini adalah "Profil Saya"
+      setProfileUser(null);
+      // Kalau kita punya currentUser, tidak perlu fetch ulang, langsung tampilkan
+      if (currentUser) {
+        setLoading(false);
+        // BUGFIX: Fetch own products juga untuk profil sendiri
+        const fetchOwnProducts = async () => {
+          try {
+            const productsResponse = await getProductsBySeller(currentUser.uuid || currentUser.id) as any;
+            setUserProducts(productsResponse?.products || productsResponse?.data || []);
+          } catch (err) {
+            console.error("[ProfilePage] Failed to fetch own products:", err);
+            setUserProducts([]);
+          } finally {
+            setIsLoadingProducts(false);
           }
-        } catch (err) {
-          console.error("[ProfilePage] Failed to fetch auth user:", err);
-          setAuthUser(null);
-        } finally {
-          setLoading(false);
-          setIsLoadingProducts(false);
-        }
-      };
-      void loadAuthUser();
-    }
-  }, [userId]);
+        };
+        void fetchOwnProducts();
+      } else {
+        const loadAuthUser = async () => {
+          try {
+            const user = await userApi.me();
+            if (user) {
+              setAuthUser(user);
+              setLoading(false);  // Set false as soon as we have user
 
-  // BUGFIX: jangan pakai mockUsers[0] sebagai fallback — ini yang menyebabkan profil orang lain
-  // tertimpa mock user saat profileUser masih null (loading). Fallback hanya ke authUser.
-  const user = profileUser || authUser || null;
+              // BUGFIX: Fetch products setelah dapat authUser
+              try {
+                const productsResponse = await getProductsBySeller(user.uuid || user.id) as any;
+                setUserProducts(productsResponse?.products || productsResponse?.data || []);
+              } catch (err) {
+                console.error("[ProfilePage] Failed to fetch own products:", err);
+                setUserProducts([]);
+              } finally {
+                setIsLoadingProducts(false);
+              }
+            } else {
+              setLoading(false);
+              setIsLoadingProducts(false);
+            }
+          } catch (err) {
+            console.error("[ProfilePage] Failed to fetch auth user:", err);
+            setAuthUser(null);
+            setUserProducts([]);
+            setLoading(false);
+            setIsLoadingProducts(false);
+          }
+        };
+        void loadAuthUser();
+      }
+    }
+  }, [userId, currentUser]);
+
+  // BUGFIX: Jika ada userId (melihat profil orang lain), JANGAN fallback ke authUser saat loading,
+  // agar tidak muncul data authUser (user C) saat mencoba melihat user X.
+  const user = userId ? profileUser : (authUser || null);
 
   // FIX LOGIKA DI SINI: Bandingkan UUID URL (userId) dengan UUID User Login (authUser.id atau authUser.uuid)
   const isOwnProfile = useMemo(() => {
@@ -369,7 +410,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
           <ProfileSidebar
             user={user}
             isOwnProfile={isOwnProfile}
-            currentUserId={authUser?.uuid || authUser?.id} // <-- Sebagai extra safety check
+            currentUserId={authUser?.uuid || authUser?.id}
             totalSold={totalSold}
             avgRating={avgRating}
             totalReviews={totalReviews}
@@ -377,6 +418,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
             userBio={user.bio}
             isLoadingProducts={isLoadingProducts}
             hasProducts={userProducts.length > 0}
+            firstProductId={userProducts[0]?.id || userProducts[0]?.uuid}
             onOpenReport={() => {
               if (!isLoggedIn) {
                 setShowLoginModal(true);
@@ -393,7 +435,13 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn }: ProfileP
               ) {
                 const firstActive = userProducts.find((p) => p.stock > 0) ?? userProducts[0];
 
+                // Tetap bisa chat meski gaada produk - show toast saja
                 if (!firstActive) {
+                  toast({
+                    title: "Tidak ada produk",
+                    description: "User ini belum upload produk/jasa apapun",
+                    variant: "destructive",
+                  });
                   return;
                 }
 

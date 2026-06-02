@@ -20,20 +20,28 @@ import type {
   OrdersViewMode,
 } from "@/components/pages/user/orders-list/ordersList.types";
 import ProductImage from "@/components/common/ProductImage";
+import { type User } from "@/lib/mock-data";
 
 interface OrdersListCardProps {
   order: OrderListItem;
   viewMode: OrdersViewMode;
   onNavigate: OrdersListPageNavigate;
+  currentUser?: User | null;
 }
 
-export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersListCardProps) {
+export default function OrdersListCard({ order, viewMode, onNavigate, currentUser }: OrdersListCardProps) {
   const statusConfig = getStatusConfig(order.status);
   const StatusIcon = statusConfig.icon;
   const isService = order.productType === "jasa";
-  // Gunakan order.role kalau tersedia (dari API) untuk override viewMode
-  // Ini mencegah badge salah ketika user yang sama pernah jadi pembeli & penjual di order berbeda
-  const effectiveViewMode: typeof viewMode = (order as any).role === 'buyer' ? 'buyer' : (order as any).role === 'seller' ? 'seller' : viewMode;
+  
+  // Gunakan currentUser jika ada untuk memastikan badge pembeli/penjual selalu benar (bahkan saat dicampur)
+  let effectiveViewMode: typeof viewMode = viewMode;
+  if (currentUser) {
+    const isBuyer = order.buyer?.id === currentUser.id || order.buyer?.uuid === currentUser.uuid;
+    effectiveViewMode = isBuyer ? "buyer" : "seller";
+  } else if ((order as any).role) {
+    effectiveViewMode = (order as any).role === 'buyer' ? 'buyer' : 'seller';
+  }
 
   return (
     <Card
@@ -198,11 +206,11 @@ export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersLi
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Buyer: buka chat via productId. Seller: buka chat list (tidak bisa self-chat).
+                    // Buyer: buka chat via productId. Seller: buka chat via productId & buyerId.
                     if (effectiveViewMode === 'buyer') {
                       onNavigate('chat', { productId: order.product?.id || order.product?.uuid, chatAction: 'chat' } as any);
                     } else {
-                      onNavigate('chat');
+                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, buyerId: order.buyer?.id || order.buyer?.uuid, chatAction: 'chat' } as any);
                     }
                   }}
                 >

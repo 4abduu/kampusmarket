@@ -963,6 +963,7 @@ export default function OrderDetailPage({
             orderStatus={orderStatus}
             totalPayment={totalPayment}
             productId={order.product?.id || order.product?.uuid}
+            buyerId={order.buyer?.id || order.buyer?.uuid}
             partnerName={isSellerView ? order.buyer?.name : order.seller?.name}
             partnerPhone={isSellerView ? order.buyer?.phone : order.seller?.phone}
             productTitle={order.productTitle || order.product?.title || "Produk/Jasa"}

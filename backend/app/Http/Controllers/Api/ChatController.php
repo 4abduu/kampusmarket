@@ -59,6 +59,7 @@ class ChatController extends Controller
     {
         $request->validate([
             'productId' => 'required|exists:products,uuid',
+            'buyerId'   => 'nullable|exists:users,uuid',
         ]);
 
         $user    = $request->user();
@@ -67,17 +68,25 @@ class ChatController extends Controller
             ->firstOrFail();
 
         if ($product->seller_id === $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak dapat mengobrol dengan diri sendiri',
-            ], 400);
+            if (!$request->buyerId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat mengobrol dengan diri sendiri',
+                ], 400);
+            }
+            $buyer = \App\Models\User::where('uuid', $request->buyerId)->firstOrFail();
+            $buyerId = $buyer->id;
+            $sellerId = $user->id;
+        } else {
+            $buyerId = $user->id;
+            $sellerId = $product->seller_id;
         }
 
         $chat = Chat::firstOrCreate(
             [
                 'product_id' => $product->id,
-                'buyer_id'   => $user->id,
-                'seller_id'  => $product->seller_id,
+                'buyer_id'   => $buyerId,
+                'seller_id'  => $sellerId,
             ],
             [
                 'is_active' => true,

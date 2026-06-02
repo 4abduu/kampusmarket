@@ -12,6 +12,7 @@ import type { ApiChat, ApiMessage, ApiChatDetail } from '@/components/pages/user
 
 export interface StartChatPayload {
   productId: string; // UUID produk
+  buyerId?: string;  // UUID buyer (untuk seller memulai chat)
 }
 
 export interface SendMessagePayload {

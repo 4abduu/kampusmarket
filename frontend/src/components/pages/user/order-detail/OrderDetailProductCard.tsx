@@ -137,13 +137,17 @@ export default function OrderDetailProductCard({
             <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => {
-            // Buyer buka chat via productId; Seller buka chat list
-            // (seller tidak bisa startChat dengan productId miliknya sendiri)
-            if (!isSellerView) {
-              onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" });
-            } else {
-              onNavigate("chat");
+            const chatPayload: any = { 
+              productId: order.product?.id || order.product?.uuid,
+              chatAction: "chat"
+            };
+            if (!isSellerView && (order.seller?.id || order.seller?.uuid)) {
+              chatPayload.sellerId = order.seller?.id || order.seller?.uuid;
+            } else if (isSellerView && (order.buyer?.id || order.buyer?.uuid)) {
+              chatPayload.buyerId = order.buyer?.id || order.buyer?.uuid;
+              chatPayload.sellerId = order.seller?.id || order.seller?.uuid;
             }
+            onNavigate("chat", chatPayload);
           }}>
             <MessageCircle className="h-4 w-4 mr-1" />
             Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}

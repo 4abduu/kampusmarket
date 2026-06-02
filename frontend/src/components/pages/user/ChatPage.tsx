@@ -17,6 +17,7 @@ import {
   markChatRead,
   acceptOffer,
   rejectOffer,
+  type StartChatPayload,
 } from '@/lib/api/chat';
 import { uploadImage } from '@/lib/api/images';
 import { getEcho } from '@/lib/echo';
@@ -29,6 +30,7 @@ interface ChatPageProps {
   onNavigate: (page: string, data?: string | Record<string, unknown>) => void;
   initialContextId?: string;
   initialChatAction?: 'chat' | 'nego';
+  initialBuyerId?: string;
   currentUser?: User | null; // dari App.tsx via AppRoutes — BUKAN localStorage
 }
 
@@ -45,7 +47,7 @@ const formatPriceInput = (value: string) => {
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function ChatPage({ onNavigate, initialContextId, initialChatAction, currentUser }: ChatPageProps) {
+export default function ChatPage({ onNavigate, initialContextId, initialChatAction, initialBuyerId, currentUser }: ChatPageProps) {
   // currentUser dari props (App.tsx → AppRoutes → ChatPageWrapper → sini)
   // BUKAN dari localStorage — auth pakai HttpOnly cookie, user tidak disimpan di localStorage
   const currentUserId = currentUser?.id ?? '';
@@ -436,7 +438,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
 
     void (async () => {
       try {
-        const chat = await startChat({ productId: initialContextId });
+        const payload: StartChatPayload = { productId: initialContextId };
+        if (initialBuyerId) {
+          payload.buyerId = initialBuyerId;
+        }
+        const chat = await startChat(payload);
         setChats(prev => {          if (prev.some(c => c.id === chat.id)) return prev;
           const item: ApiChat = {
             id: chat.id,

@@ -8,7 +8,7 @@ import { AlertCircle, Briefcase, Check, CheckCircle2, DollarSign, MessageCircle,
 import { UserDashboardOrdersTabSkeleton } from "@/components/skeleton"
 
 type Props = {
-  onNavigate: (page: string, options?: { productId?: string; chatAction?: "chat" | "nego" }) => void
+  onNavigate: (page: string, options?: any) => void
   formatPrice: (price: number) => string
   getStatusBadge: (status: string) => React.ReactNode
   setShowShippingDialog: (open: boolean | string) => void
@@ -139,7 +139,7 @@ export default function UserDashboardOrdersTab({
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid, chatAction: "chat" })}><MessageCircle className="h-4 w-4 mr-1" />Chat</Button>
+                          <Button variant="outline" size="sm" onClick={() => onNavigate("chat", { productId: order.product?.id || order.product?.uuid, buyerId: order.buyer?.id || order.buyer?.uuid, chatAction: "chat" })}><MessageCircle className="h-4 w-4 mr-1" />Chat</Button>
                           <Button variant="outline" size="sm" onClick={() => onNavigate("order-detail", order.id)}>Detail</Button>
                         </div>
                         {order.status === "waiting_shipping_fee" && (

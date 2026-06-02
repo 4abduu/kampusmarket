@@ -35,6 +35,8 @@ interface Props {
   onRating?: () => void
   isRated?: boolean
   productId?: string
+  buyerId?: string
+  sellerId?: string
   partnerName?: string
   partnerPhone?: string
   productTitle?: string
@@ -67,6 +69,8 @@ export default function OrderDetailSummaryColumn({
   onRating,
   isRated,
   productId,
+  buyerId,
+  sellerId,
   partnerName,
   partnerPhone,
   productTitle,
@@ -109,12 +113,10 @@ export default function OrderDetailSummaryColumn({
 
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={() => {
-              // Kalau buyer: buka chat produk. Kalau seller: buka chat list
-              // (seller tidak bisa startChat dengan productId miliknya sendiri)
               if (!isSellerView && productId) {
-                onNavigate("chat", { productId, chatAction: "chat" });
-              } else {
-                onNavigate("chat");
+                onNavigate("chat", { productId, sellerId, chatAction: "chat" });
+              } else if (isSellerView && productId) {
+                onNavigate("chat", { productId, buyerId, sellerId, chatAction: "chat" });
               }
             }}>
               <MessageCircle className="h-4 w-4 mr-2" />

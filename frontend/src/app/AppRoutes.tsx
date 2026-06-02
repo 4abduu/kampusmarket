@@ -86,11 +86,14 @@ function ChatPageWrapper({
         ? "chat"
         : undefined;
 
+  const initialBuyerId = searchParams.get("buyerId") ?? undefined;
+
   return (
     <ChatPage
       onNavigate={onNavigate}
       initialContextId={initialContextId}
       initialChatAction={initialChatAction}
+      initialBuyerId={initialBuyerId}
       currentUser={currentUser}
     />
   );
@@ -392,6 +395,7 @@ export default function AppRoutes({
               onNavigate={onNavigate}
               userId={currentId || undefined}
               isLoggedIn={isLoggedIn}
+              currentUser={currentUser}
             />
           }
         />
@@ -593,7 +597,7 @@ export default function AppRoutes({
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
               isLoggingOut={isLoggingOut}
-              element={<OrdersListPage onNavigate={onNavigate} />}
+              element={<OrdersListPage onNavigate={onNavigate} currentUser={currentUser} />}
             />
           }
         />
