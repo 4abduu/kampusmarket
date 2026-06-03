@@ -8,6 +8,7 @@ export interface ServicesFilterSidebarProps {
   setSelectedCategory: (category: string | null) => void;
   priceRange: number[];
   setPriceRange: (range: number[]) => void;
+  maxPrice?: number;
   onResetFilters: () => void;
   categories: ServiceCategoryOption[];
 }

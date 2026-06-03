@@ -46,7 +46,6 @@ interface Props {
   attachedImage: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
-  showContextCard: boolean;
   onNavigate: (page: string, data?: string | Record<string, unknown>) => void;
   onBack: () => void;
   onSend: () => void;
@@ -55,7 +54,6 @@ interface Props {
   onToggleEmoji: () => void;
   onEmojiSelect: (emoji: string) => void;
   onRemoveImage: () => void;
-  onToggleContextCard: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onAcceptOffer: (message: ApiMessage) => void;
   onRejectOffer: (message: ApiMessage) => void;
@@ -86,7 +84,6 @@ export default function ChatConversationPanel({
   attachedImage,
   fileInputRef,
   messagesEndRef,
-  showContextCard,
   onNavigate,
   onBack,
   onSend,
@@ -240,30 +237,7 @@ export default function ChatConversationPanel({
               </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {/* Context card "Sedang Ditanyakan" — tetap tampil selama sesi chat */}
-                {showContextCard && chatProduct && (
-                  <div className="flex justify-center mb-4">
-                    <div
-                      className="flex items-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow max-w-xs w-full"
-                      onClick={() => onNavigate('product', chatProduct.id)}
-                    >
-                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
-                        {chatProduct.image ? (
-                          <img src={chatProduct.image} alt={chatProduct.title} className="w-full h-full object-cover rounded-lg" />
-                        ) : (
-                          <Package className="h-4 w-4 text-muted-foreground/50" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-muted-foreground">Sedang ditanyakan</p>
-                        <p className="text-xs font-medium truncate">{chatProduct.title}</p>
-                        <p className="text-xs text-primary-600 font-semibold">{formatPrice(chatProduct.price)}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {messages.length === 0 && !showContextCard && (
+                {messages.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-sm text-muted-foreground">Belum ada pesan. Mulai chat sekarang!</p>
                   </div>

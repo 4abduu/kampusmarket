@@ -1,23 +1,24 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Building2, Package, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, Building2, Package, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react";
 
 type SidebarUser = {
-  name: string
-  email: string
-  faculty: string | null
-  facultyName?: string
-  avatar?: string
-}
+  name: string;
+  email: string;
+  faculty: string | null;
+  facultyName?: string;
+  avatar?: string;
+};
 
 type Props = {
-  currentUser: SidebarUser
-  rating: number
-  activeTab: string
-  setActiveTab: (tab: string) => void
-  getFacultyName: (id: string | null) => string
-}
+  currentUser: SidebarUser;
+  rating: number;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  getFacultyName: (id: string | null) => string;
+  hasDebt?: boolean;
+};
 
 export default function UserDashboardSidebar({
   currentUser,
@@ -25,7 +26,17 @@ export default function UserDashboardSidebar({
   activeTab,
   setActiveTab,
   getFacultyName,
+  hasDebt = false,
 }: Props) {
+  const navItems = [
+    { id: "overview", label: "Dashboard", icon: TrendingUp },
+    { id: "products", label: "Produk & Jasa", icon: Package },
+    { id: "orders", label: "Pesanan", icon: ShoppingCart },
+    { id: "wallet", label: "Dompet", icon: Wallet },
+    ...(hasDebt ? [{ id: "debts", label: "Tunggakan Komisi", icon: AlertCircle, isAlert: true }] : []),
+    { id: "settings", label: "Pengaturan", icon: Settings },
+  ];
+
   return (
     <aside className="lg:col-span-1">
       <Card className="sticky top-20">
@@ -36,7 +47,7 @@ export default function UserDashboardSidebar({
                 <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
               )}
               <AvatarFallback className="bg-primary-100 text-primary-700 text-xl">
-                {currentUser.name.split(" ").map(n => n[0]).join("")}
+                {currentUser.name.split(" ").map((n) => n[0]).join("")}
               </AvatarFallback>
             </Avatar>
             <h2 className="font-bold text-lg">{currentUser.name}</h2>
@@ -56,29 +67,30 @@ export default function UserDashboardSidebar({
           <div className="h-px bg-border mb-4" />
 
           <nav className="space-y-1">
-            {[
-              { id: "overview", label: "Dashboard", icon: TrendingUp },
-              { id: "products", label: "Produk & Jasa", icon: Package },
-              { id: "orders", label: "Pesanan", icon: ShoppingCart },
-              { id: "wallet", label: "Dompet", icon: Wallet },
-              { id: "settings", label: "Pengaturan", icon: Settings },
-            ].map((item) => (
+            {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   activeTab === item.id
-                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "alert" in item && item.isAlert
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "alert" in item && item.isAlert
+                      ? "hover:bg-red-50 text-red-600 dark:hover:bg-red-900/20 dark:text-red-400"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
+                <item.icon className="h-4 w-4 flex-shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {"isAlert" in item && item.isAlert && (
+                  <span className="h-2 w-2 rounded-full bg-red-500 flex-shrink-0 animate-pulse" />
+                )}
               </button>
             ))}
           </nav>
         </CardContent>
       </Card>
     </aside>
-  )
+  );
 }

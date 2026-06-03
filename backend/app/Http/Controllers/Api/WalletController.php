@@ -147,6 +147,11 @@ class WalletController extends Controller
                 $user = User::where('id', $request->user()->id)->lockForUpdate()->firstOrFail();
                 $amount = $request->amount;
 
+                // Check overdue debt
+                if ($user->has_overdue_debt) {
+                    throw new \Exception('Penarikan dana tidak diperbolehkan karena Anda memiliki tunggakan komisi yang belum dilunasi', 403);
+                }
+
                 // Check balance
                 if ($user->wallet_balance < $amount) {
                     throw new \Exception('Saldo tidak mencukupi', 400);

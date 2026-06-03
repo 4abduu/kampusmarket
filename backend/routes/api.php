@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\WalletTopUpController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminFacultyController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
+use App\Http\Controllers\Admin\AdminDebtController;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -235,6 +237,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // ----------------------------------------
+    // DEBTS (Tunggakan Komisi)
+    // ----------------------------------------
+
+    Route::prefix('debts')->group(function () {
+        Route::get('/summary', [DebtController::class, 'summary']);
+        Route::post('/pay/wallet', [DebtController::class, 'payWallet']);
+        Route::post('/pay/midtrans', [DebtController::class, 'payMidtrans']);
+        Route::post('/simulate-expired', [DebtController::class, 'simulateExpired']);
+    });
+
+    // ----------------------------------------
     // REPORTS
     // ----------------------------------------
 
@@ -325,6 +338,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/reports/{id}/review', [ReportController::class, 'review']);
     Route::put('/reports/{id}/resolve', [ReportController::class, 'resolve']);
     Route::put('/reports/{id}/dismiss', [ReportController::class, 'dismiss']);
+
+    // ── DEBTS (TUNGGAKAN KOMISI) ──────────────────────────────────────────
+    Route::prefix('debts')->group(function () {
+        Route::get('/', [AdminDebtController::class, 'index']);
+        Route::get('/stats', [AdminDebtController::class, 'stats']);
+    });
 
     // ── CANCEL REQUESTS ────────────────────────────────────────────────────
     Route::get('/cancel-requests', [CancelRequestController::class, 'adminIndex']);

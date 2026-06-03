@@ -41,6 +41,7 @@ import {
   adminWithdrawalsApi,
   adminAddressesApi,
   adminTopUpsApi,
+  adminDebtsApi,
 } from "@/lib/api/admin";
 import type { AdminAddressUser, AdminTopUp, AdminTopUpStats } from "@/lib/api/admin";
 
@@ -101,7 +102,7 @@ export function useAdminDashboardController() {
   const [selectedRevenueTransaction, setSelectedRevenueTransaction] = useState<any | null>(null);
 
   const [financeSubTab, setFinanceSubTab] = useState<
-    "withdrawals" | "revenue" | "topups"
+    "withdrawals" | "revenue" | "topups" | "debts"
   >("withdrawals");
 
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
@@ -211,21 +212,55 @@ export function useAdminDashboardController() {
     failed_amount: 0,
   });
 
+  // Debts States
+  const [debts, setDebts] = useState<any[]>([]);
+  const [debtsLoading, setDebtsLoading] = useState(false);
+  const [debtsError, setDebtsError] = useState<string | null>(null);
+  const [debtSearchTerm, setDebtSearchTerm] = useState("");
+  const [debouncedDebtSearch, setDebouncedDebtSearch] = useState("");
+  const [debtStatusFilter, setDebtStatusFilter] = useState<"all" | "unpaid" | "paid" | "overdue">("all");
+  const [debtPage, setDebtPage] = useState(1);
+  const [debtTotalItems, setDebtTotalItems] = useState(0);
+  const [debtTotalPages, setDebtTotalPages] = useState(1);
+  const [debtStats, setDebtStats] = useState<{
+    total_unpaid_amount: number;
+    total_overdue_amount: number;
+    count_unpaid: number;
+    count_overdue: number;
+  }>({
+    total_unpaid_amount: 0,
+    total_overdue_amount: 0,
+    count_unpaid: 0,
+    count_overdue: 0,
+  });
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedTopupSearch(topupSearchTerm);
       setTopupPage(1);
     }, 400);
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [topupSearchTerm]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedDebtSearch(debtSearchTerm);
+      setDebtPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [debtSearchTerm]);
 
   useEffect(() => {
     if (activeTab === "finance" && financeSubTab === "topups") {
       loadTopupsData(topupPage, debouncedTopupSearch, topupStatusFilter);
     }
   }, [activeTab, financeSubTab, topupPage, debouncedTopupSearch, topupStatusFilter]);
+
+  useEffect(() => {
+    if (activeTab === "finance" && financeSubTab === "debts") {
+      loadDebtsData(debtPage, debouncedDebtSearch, debtStatusFilter);
+    }
+  }, [activeTab, financeSubTab, debtPage, debouncedDebtSearch, debtStatusFilter]);
 
   useEffect(() => {
     if (activeTab === "finance") {
@@ -1007,6 +1042,44 @@ export function useAdminDashboardController() {
       console.error("Failed to load topups data:", err);
     } finally {
       setTopupLoading(false);
+    }
+  };
+
+  const loadDebtsData = async (
+    page = debtPage,
+    search = debouncedDebtSearch,
+    status = debtStatusFilter
+  ): Promise<boolean> => {
+    setDebtsLoading(true);
+    setDebtsError(null);
+    try {
+      const [res, statsRes] = await Promise.all([
+        adminDebtsApi.getDebts({
+          page,
+          per_page: ITEMS_PER_PAGE,
+          search,
+          status,
+        }),
+        adminDebtsApi.getDebtStats(),
+      ]);
+
+      if (res?.data) {
+        setDebts(res.data);
+        setDebtTotalItems(res.meta?.total || 0);
+        setDebtTotalPages(res.meta?.last_page || 1);
+      }
+
+      if (statsRes) {
+        setDebtStats(statsRes);
+      }
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat data tunggakan";
+      setDebtsError(msg);
+      console.error("Failed to load debts:", err);
+      return false;
+    } finally {
+      setDebtsLoading(false);
     }
   };
 
@@ -2532,6 +2605,7 @@ export function useAdminDashboardController() {
         </Badge>
       ),
       failed: <Badge variant="destructive">Gagal</Badge>,
+      cancelled: <Badge variant="destructive">Batal</Badge>,
       refunded: (
         <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">
           Dikembalikan
@@ -2723,6 +2797,22 @@ export function useAdminDashboardController() {
     topupTotalPages,
     topupStats,
     loadTopupsData,
+
+    // Debts
+    debts,
+    debtsLoading,
+    debtsError,
+    debtSearchTerm,
+    setDebtSearchTerm,
+    debtStatusFilter,
+    setDebtStatusFilter,
+    debtPage,
+    setDebtPage,
+    debtTotalItems,
+    debtTotalPages,
+    debtStats,
+    loadDebtsData,
+
     ordersLoading,
     ordersError,
     orderTotalItems,

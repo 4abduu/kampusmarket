@@ -14,6 +14,7 @@ export interface CatalogFilterSidebarProps {
   setTempPrice: (range: number[]) => void;
   priceRange: number[];
   setPriceRange: (range: number[]) => void;
+  maxPrice?: number;
   onResetFilters: () => void;
   categories: CatalogCategoryOption[];
 }

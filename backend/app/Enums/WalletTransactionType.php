@@ -10,6 +10,8 @@ enum WalletTransactionType: string
     case REFUND = 'refund';
     case INCOME = 'income';
     case ADMIN_FEE = 'admin_fee';
+    case COD_FEE_DEDUCTION = 'cod_fee_deduction';
+    case DEBT_PAYMENT = 'debt_payment';
 
     public function label(): string
     {
@@ -20,6 +22,8 @@ enum WalletTransactionType: string
             self::REFUND => 'Refund',
             self::INCOME => 'Pendapatan',
             self::ADMIN_FEE => 'Biaya Admin',
+            self::COD_FEE_DEDUCTION => 'Potongan Komisi',
+            self::DEBT_PAYMENT => 'Pelunasan Komisi',
         };
     }
 
@@ -32,6 +36,8 @@ enum WalletTransactionType: string
             self::REFUND => '↩',
             self::INCOME => '↓',
             self::ADMIN_FEE => '−',
+            self::COD_FEE_DEDUCTION => '−',
+            self::DEBT_PAYMENT => '↑',
         };
     }
 
@@ -44,6 +50,8 @@ enum WalletTransactionType: string
             self::REFUND => 'emerald',
             self::INCOME => 'emerald',
             self::ADMIN_FEE => 'amber',
+            self::COD_FEE_DEDUCTION => 'amber',
+            self::DEBT_PAYMENT => 'red',
         };
     }
 

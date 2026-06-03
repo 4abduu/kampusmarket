@@ -131,6 +131,7 @@ export default function ServicesPage({
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [maxPrice, setMaxPrice] = useState(5000000);
 
   // Sync initialCategory from props
   useEffect(() => {
@@ -151,11 +152,12 @@ export default function ServicesPage({
               id: cat.slug,
               name: cat.name,
               label: cat.name,
+              slug: cat.slug,
             })),
           );
         }
       } catch (err) {
-        console.error("[ServicesPage] Error fetching categories:", err);
+        console.error("Failed to fetch categories:", err);
       }
     };
 
@@ -165,14 +167,6 @@ export default function ServicesPage({
   // Fetch services from API
   useEffect(() => {
     const abortController = new AbortController();
-    console.log("[ServicesPage] useEffect triggered - dependencies:", {
-      selectedCategory,
-      searchQuery,
-      selectedConditions: selectedConditions.length,
-      priceRange,
-      sortBy,
-      currentPage,
-    });
 
     const fetchServices = async () => {
       try {
@@ -189,35 +183,27 @@ export default function ServicesPage({
           priceRange,
           sortBy,
         });
-        console.log(
-          "[ServicesPage] REQUEST PARAMS:",
-          JSON.stringify(params, null, 2),
-        );
-        console.log("[ServicesPage] ITEMS_PER_PAGE constant:", ITEMS_PER_PAGE);
 
         const response = await getProducts(params);
-        console.log(
-          "[ServicesPage] API RESPONSE - data count:",
-          (response as any)?.data?.length,
-          "total:",
-          (response as any)?.meta?.total,
-          "per_page:",
-          (response as any)?.meta?.per_page,
-        );
-        console.log(
-          "[ServicesPage] Abort signal aborted?",
-          abortController.signal.aborted,
-        );
 
         // Only update state if request wasn't aborted
         if (!abortController.signal.aborted) {
           const items = (response as any)?.data ?? (response as any) ?? [];
-          console.log(
-            "[ServicesPage] Setting services:",
-            items.length,
-            "items",
-          );
           setServices(items);
+
+          if ((response as any)?.meta?.max_price) {
+            const newMax = (response as any).meta.max_price;
+            setMaxPrice((prevMax) => {
+              if (prevMax !== newMax) {
+                setPriceRange((prevRange) =>
+                  prevRange[1] === prevMax || prevRange[1] > newMax
+                    ? [prevRange[0], newMax]
+                    : prevRange,
+                );
+              }
+              return newMax;
+            });
+          }
 
           // Calculate total pages with fallback
           let pages = 1;
@@ -261,9 +247,6 @@ export default function ServicesPage({
 
   const paginatedServices = services;
 
-  console.log("CATEGORY:", selectedCategory);
-  console.log("ITEM COUNT:", services.length);
-
   // Ensure currentPage stays within valid bounds when filters or results change
   useEffect(() => {
     if (totalPages === 0) {
@@ -287,9 +270,10 @@ export default function ServicesPage({
       setPriceRange(range);
       setCurrentPage(1);
     },
+    maxPrice,
     onResetFilters: () => {
       setSelectedCategory(null);
-      setPriceRange([0, 5000000]);
+      setPriceRange([0, maxPrice || 5000000]);
       setSearchQuery("");
       setCurrentPage(1);
     },

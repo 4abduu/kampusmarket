@@ -14,6 +14,7 @@ import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, Ey
 import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 import AddProductImagesSection from "@/components/pages/user/add-product/AddProductImagesSection"
 import type { NavigateFn } from "@/app/navigation/types"
+import { useAuthStore } from "@/lib/auth-store"
 
 type PasswordValidations = {
   minLength: boolean
@@ -224,6 +225,8 @@ export default function UserDashboardDialogs({
   onNavigate,
   currentUserEmail,
 }: Props) {
+  const hasOverdueDebt = useAuthStore((s) => s.hasOverdueDebt);
+
   return (
     <>
       <Dialog open={showEditProductDialog} onOpenChange={setShowEditProductDialog}>
@@ -820,6 +823,15 @@ export default function UserDashboardDialogs({
             <DialogTitle>Tarik Dana</DialogTitle>
             <DialogDescription>Saldo: {formatPrice(currentWalletBalance)}</DialogDescription>
           </DialogHeader>
+          {hasOverdueDebt && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+              <div className="text-xs text-red-700 dark:text-red-300">
+                <p className="font-medium">Penarikan Dana Dinonaktifkan</p>
+                <p className="mt-1">Anda memiliki tunggakan komisi yang belum dilunasi. Silakan lunasi tunggakan terlebih dahulu melalui tab Tunggakan.</p>
+              </div>
+            </div>
+          )}
           <Tabs value={withdrawForm.type} onValueChange={(v) => setWithdrawForm({ ...withdrawForm, type: v as "bank" | "ewallet", bankType: "", ewalletType: "" })} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="bank"><Building className="h-4 w-4 mr-2" />Bank</TabsTrigger>
@@ -876,7 +888,7 @@ export default function UserDashboardDialogs({
           </Tabs>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowWithdrawDialog(false)}>Batal</Button>
-            <Button className="bg-primary-600 hover:bg-primary-700" onClick={handleWithdraw} disabled={(withdrawForm.type === "bank" && (!withdrawForm.bankType || !withdrawForm.accountNumber || !withdrawForm.amount || (isBankLainnya && !withdrawForm.customBankName))) || (withdrawForm.type === "ewallet" && (!withdrawForm.ewalletType || !withdrawForm.accountNumber || !withdrawForm.amount || (isEwalletLainnya && !withdrawForm.customEwalletName)))}>Ajukan Penarikan</Button>
+            <Button className="bg-primary-600 hover:bg-primary-700" onClick={handleWithdraw} disabled={hasOverdueDebt || (withdrawForm.type === "bank" && (!withdrawForm.bankType || !withdrawForm.accountNumber || !withdrawForm.amount || (isBankLainnya && !withdrawForm.customBankName))) || (withdrawForm.type === "ewallet" && (!withdrawForm.ewalletType || !withdrawForm.accountNumber || !withdrawForm.amount || (isEwalletLainnya && !withdrawForm.customEwalletName)))}>{hasOverdueDebt ? "Penarikan Dibatasi" : "Ajukan Penarikan"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

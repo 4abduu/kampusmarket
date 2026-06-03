@@ -669,3 +669,28 @@ export const adminTopUpsApi = {
     return request<AdminTopUpResponse>(url);
   },
 };
+
+// ============================================================
+// ADMIN DEBTS
+// ============================================================
+export const adminDebtsApi = {
+  async getDebts(params?: {
+    status?: string;
+    search?: string;
+    per_page?: number;
+    page?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params?.status && params.status !== "all") queryParams.append("status", params.status);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.per_page) queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `${API_BASE_URL}/admin/debts${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    return request<any>(url);
+  },
+
+  async getDebtStats(): Promise<any> {
+    return request<any>(`${API_BASE_URL}/admin/debts/stats`);
+  },
+};

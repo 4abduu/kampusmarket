@@ -29,6 +29,10 @@ import UserDashboardOverviewTab from "@/components/pages/user/dashboard/UserDash
 import UserDashboardProductsTab from "@/components/pages/user/dashboard/UserDashboardProductsTab";
 import UserDashboardWalletTab from "@/components/pages/user/dashboard/UserDashboardWalletTab";
 import UserDashboardSidebar from "@/components/pages/user/dashboard/UserDashboardSidebar";
+import UserDashboardDebtsTab from "@/components/pages/user/dashboard/UserDashboardDebtsTab";
+import DebtWarningBanner from "@/components/pages/user/dashboard/DebtWarningBanner";
+import { useAuthStore } from "@/lib/auth-store";
+import { debtsApi } from "@/lib/api/debts";
 import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
 import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
 import {
@@ -65,6 +69,8 @@ export default function UserDashboardPage({
   const [statsLoading, setStatsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(authUser || null);
   const [ordersRefreshKey, setOrdersRefreshKey] = useState(0);
+  const [hasDebt, setHasDebt] = useState(false);
+  const hasOverdueDebt = useAuthStore((s) => s.hasOverdueDebt);
   const [dashboardStats, setDashboardStats] = useState<{
     totalSales: number;
     totalSold: number;
@@ -166,6 +172,14 @@ export default function UserDashboardPage({
     }
   }, [currentUser?.id, ordersRefreshKey]);
 
+  // Fetch debt summary to know if sidebar tab should appear
+  useEffect(() => {
+    if (!currentUser?.id) return;
+      debtsApi.getSummary()
+        .then((data) => setHasDebt(((data as any).data || data).total_debt > 0))
+      .catch(() => setHasDebt(false));
+  }, [currentUser?.id]);
+
   useEffect(() => {
     if (wallet.showTopUpSuccess || wallet.showWithdrawSuccess) {
       void fetchDashboardStats();
@@ -242,9 +256,15 @@ export default function UserDashboardPage({
             activeTab={activeTab}
             setActiveTab={handleTabChange}
             getFacultyName={getFacultyName}
+            hasDebt={hasDebt || hasOverdueDebt}
           />
 
           <main className="lg:col-span-3 space-y-6 min-w-0">
+            {/* Debt warning banner — muncul di semua tab jika ada tunggakan */}
+            {(hasDebt || hasOverdueDebt) && activeTab !== "debts" && (
+              <DebtWarningBanner onPayClick={() => handleTabChange("debts")} />
+            )}
+
             {activeTab === "overview" && (
               isLoading ? (
                 <UserDashboardOverviewTabSkeleton />
@@ -345,6 +365,13 @@ export default function UserDashboardPage({
                   admin_fee: { label: "Biaya Admin" },
                 }}
                 isLoadingStats={statsLoading}
+              />
+            )}
+
+            {activeTab === "debts" && (
+              <UserDashboardDebtsTab 
+                onNavigate={onNavigate} 
+                currentUser={currentUser ? { ...currentUser, walletBalance: wallet.currentBalance } : null} 
               />
             )}
 

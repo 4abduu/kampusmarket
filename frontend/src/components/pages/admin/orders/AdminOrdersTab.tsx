@@ -327,7 +327,15 @@ export default function AdminOrdersTab({
 
                       {/* Badges */}
                       <TableCell>{getOrderStatusBadge(order.status)}</TableCell>
-                      <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>
+                      <TableCell>
+                        {getPaymentStatusBadge(
+                          order.status === 'cancelled' && (!order.paymentStatus || order.paymentStatus === 'pending') 
+                            ? 'cancelled' 
+                            : order.status === 'completed' && (!order.paymentStatus || order.paymentStatus === 'pending')
+                            ? 'paid'
+                            : order.paymentStatus || 'pending'
+                        )}
+                      </TableCell>
                       
                       {/* Date */}
                       <TableCell className="text-xs text-slate-500">

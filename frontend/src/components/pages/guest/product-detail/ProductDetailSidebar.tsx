@@ -50,7 +50,7 @@ interface ProductDetailSidebarProps {
   setQuantity: (value: number) => void;
   formatPrice: (price: number) => string;
   onAction: (action: () => void) => void;
-  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
+  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego"; sellerId?: string }) => void;
   onOpenReport: () => void;
   currentUser?: any;
 }
@@ -152,7 +152,7 @@ export default function ProductDetailSidebar({
   };
 
   const handleChatWithSeller = () => {
-    onNavigate("chat", { productId: product.id, chatAction: "chat" });
+    onNavigate("chat", { sellerId: product.sellerId || product.seller?.id });
   };
 
   const handleNegoWithSeller = () => {

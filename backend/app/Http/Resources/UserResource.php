@@ -44,6 +44,8 @@ class UserResource extends JsonResource
             'walletBalance' => $this->wallet_balance,
             'joinedAt'      => $this->joined_at?->format('Y-m-d') ?? $this->created_at->format('Y-m-d'),
 
+            'has_overdue_debt' => (bool) $this->has_overdue_debt,
+
             // [BARU] Status online berdasarkan last_seen
             'isOnline'  => $this->isOnline(),
             'lastSeen'  => $this->last_seen?->toISOString(),

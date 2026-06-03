@@ -62,6 +62,14 @@ class MessageResource extends JsonResource
             // Content
             'content' => $this->content,
             'type' => $this->type->value ?? $this->type,
+            'product' => $this->relationLoaded('product') && $this->product ? [
+                'id' => $this->product->uuid,
+                'title' => $this->product->title,
+                'slug' => $this->product->slug,
+                'price' => (int) $this->product->price,
+                'image' => $this->product->images->first()?->image_url ?? null,
+                'canNego' => $this->product->can_nego,
+            ] : null,
             
             // Offer (if type = 'offer')
             'offerPrice' => $this->offer_price ? (int) $this->offer_price : null,

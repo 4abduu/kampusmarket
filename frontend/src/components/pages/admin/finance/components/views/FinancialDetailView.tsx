@@ -2,10 +2,10 @@ import React from "react";
 import { useFinancialModal } from "../FinancialContext";
 import { FinancialUserCard, FinancialAmountCard, FinancialStatusBadge } from "../shared";
 import { Button } from "@/components/ui/button";
-import { Calendar, CreditCard, Landmark, Check, X, AlertCircle } from "lucide-react";
+import { Calendar, Landmark, Check, X, AlertCircle } from "lucide-react";
 
 export const FinancialDetailView: React.FC = () => {
-  const { withdrawal, setVariant, onProcess, loading, onClose } = useFinancialModal();
+  const { withdrawal, setVariant, loading, onClose } = useFinancialModal();
 
   if (!withdrawal) return null;
 
@@ -113,12 +113,12 @@ export const FinancialDetailView: React.FC = () => {
         {withdrawal.status === "pending" && (
           <>
             <Button
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-1.5"
-              onClick={onProcess}
+              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white gap-1.5"
+              onClick={() => setVariant("approve")}
               disabled={loading}
             >
-              <CreditCard className="h-4 w-4" />
-              Proses Transaksi
+              <Check className="h-4 w-4" />
+              Setujui Pengajuan
             </Button>
             <Button
               variant="destructive"

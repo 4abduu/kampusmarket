@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 
 interface Props {
-  financeSubTab: "withdrawals" | "revenue" | "topups";
-  setFinanceSubTab: (value: "withdrawals" | "revenue" | "topups") => void;
+  financeSubTab: "withdrawals" | "revenue" | "topups" | "debts";
+  setFinanceSubTab: (value: "withdrawals" | "revenue" | "topups" | "debts") => void;
   withdrawals: any[];
   filteredWithdrawals: any[];
   paginatedWithdrawals: any[];
@@ -99,6 +99,25 @@ interface Props {
     failed_amount: number;
   };
   topupTotalItems: number;
+
+  // New Debts Props
+  debts?: any[];
+  debtsLoading?: boolean;
+  debtsError?: string | null;
+  debtSearchTerm?: string;
+  setDebtSearchTerm?: (value: string) => void;
+  debtStatusFilter?: string;
+  setDebtStatusFilter?: (value: any) => void;
+  debtPage?: number;
+  setDebtPage?: (value: number) => void;
+  debtTotalPages?: number;
+  debtTotalItems?: number;
+  debtStats?: {
+    total_unpaid_amount: number;
+    total_overdue_amount: number;
+    count_unpaid: number;
+    count_overdue: number;
+  };
 }
 
 export default function AdminFinanceTab(props: Props) {
@@ -166,6 +185,25 @@ export default function AdminFinanceTab(props: Props) {
     topupTotalPages,
     topupStats,
     topupTotalItems,
+
+    // Debts Props
+    debts = [],
+    debtsLoading = false,
+    debtsError = null,
+    debtSearchTerm = "",
+    setDebtSearchTerm,
+    debtStatusFilter = "all",
+    setDebtStatusFilter,
+    debtPage = 1,
+    setDebtPage,
+    debtTotalPages = 1,
+    debtTotalItems = 0,
+    debtStats = {
+      total_unpaid_amount: 0,
+      total_overdue_amount: 0,
+      count_unpaid: 0,
+      count_overdue: 0,
+    },
   } = props;
 
   const [selectedTopup, setSelectedTopup] = useState<any | null>(null);
@@ -269,6 +307,49 @@ export default function AdminFinanceTab(props: Props) {
             </CardContent>
           </Card>
         </div>
+      ) : financeSubTab === "debts" ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Total Tunggakan</span>
+                <Wallet className="h-4 w-4 text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold">{formatPrice(debtStats.total_unpaid_amount)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total komisi yang belum dibayar</p>
+            </CardContent>
+          </Card>
+          <Card className="border-red-200 dark:border-red-800 bg-red-50/20 dark:bg-red-900/10">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Overdue / Lewat Tempo</span>
+                <Clock className="h-4 w-4 text-red-600" />
+              </div>
+              <p className="text-2xl font-bold text-red-600">{formatPrice(debtStats.total_overdue_amount)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total utang yang sudah jatuh tempo</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">User Menunggak</span>
+                <UserIcon className="h-4 w-4 text-amber-600" />
+              </div>
+              <p className="text-2xl font-bold">{debtStats.count_unpaid}</p>
+              <p className="text-xs text-muted-foreground mt-1">Jumlah transaksi yang belum dilunasi</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">User Overdue</span>
+                <XCircle className="h-4 w-4 text-red-600" />
+              </div>
+              <p className="text-2xl font-bold text-red-600">{debtStats.count_overdue}</p>
+              <p className="text-xs text-muted-foreground mt-1">Jumlah transaksi overdue</p>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -339,6 +420,14 @@ export default function AdminFinanceTab(props: Props) {
           className="gap-2"
         >
           <BarChart3 className="h-4 w-4" />Pendapatan Platform
+        </Button>
+        <Button 
+          variant={financeSubTab === "debts" ? "default" : "ghost"} 
+          size="sm" 
+          onClick={() => setFinanceSubTab("debts")} 
+          className="gap-2"
+        >
+          <XCircle className="h-4 w-4" />Tunggakan Komisi
         </Button>
       </div>
 
@@ -726,6 +815,121 @@ export default function AdminFinanceTab(props: Props) {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debts Content */}
+      {financeSubTab === "debts" && (
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Daftar Tunggakan Komisi (COD/Cash)</CardTitle>
+                  <CardDescription>Monitor pembayaran komisi dari pesanan yang tidak menggunakan escrow otomatis</CardDescription>
+                </div>
+                <div className="text-sm text-muted-foreground">{debtTotalItems} tunggakan</div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[200px] max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="search" 
+                    placeholder="Cari user, nomor pesanan..." 
+                    value={debtSearchTerm} 
+                    onChange={(e) => setDebtSearchTerm && setDebtSearchTerm(e.target.value)} 
+                    className="pl-9" 
+                  />
+                </div>
+                <Select value={debtStatusFilter} onValueChange={(value: any) => { setDebtStatusFilter && setDebtStatusFilter(value); setDebtPage && setDebtPage(1); }}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="unpaid">Belum Lunas</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="paid">Lunas</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(debtStatusFilter !== "all" || debtSearchTerm) && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => { setDebtSearchTerm && setDebtSearchTerm(""); setDebtStatusFilter && setDebtStatusFilter("all"); setDebtPage && setDebtPage(1); }} 
+                    className="text-xs text-muted-foreground"
+                  >
+                    <X className="h-3 w-3 mr-1" />Reset
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {debtsLoading ? (
+              <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+                <p className="text-sm">Memuat data tunggakan...</p>
+              </div>
+            ) : debtsError ? (
+              <div className="py-12 text-center text-red-500">
+                <XCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p className="font-semibold">Terjadi Kesalahan</p>
+                <p className="text-sm text-muted-foreground mt-1">{debtsError}</p>
+              </div>
+            ) : debts.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <XCircle className="h-12 w-12 mx-auto mb-4 opacity-30 text-slate-400" />
+                <p className="font-medium text-slate-500">Tidak ada data tunggakan</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[20%]">User</TableHead>
+                    <TableHead className="w-[15%]">No Pesanan</TableHead>
+                    <TableHead className="w-[15%]">Nominal Utang</TableHead>
+                    <TableHead className="w-[15%]">Jatuh Tempo</TableHead>
+                    <TableHead className="w-[10%]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {debts.map((debt) => (
+                    <TableRow key={debt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
+                              {getInitials(debt.user?.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm line-clamp-1">{debt.user?.name || "-"}</span>
+                            <span className="text-xs text-muted-foreground line-clamp-1">{debt.user?.email || "-"}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{debt.order?.order_number}</TableCell>
+                      <TableCell className="font-bold text-red-600">{formatPrice(debt.amount)}</TableCell>
+                      <TableCell className="text-sm">
+                        {debt.due_date ? formatAdminDate(debt.due_date) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {debt.status === 'paid' ? (
+                          <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Lunas</Badge>
+                        ) : new Date(debt.due_date) < new Date() ? (
+                          <Badge variant="destructive">Overdue</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-amber-600 border-amber-600">Belum Lunas</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {!debtsLoading && !debtsError && debts.length > 0 && setDebtPage && renderPagination(debtPage, debtTotalPages, setDebtPage)}
           </CardContent>
         </Card>
       )}

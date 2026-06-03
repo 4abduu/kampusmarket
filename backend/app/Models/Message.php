@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\HasUuid;
 
 use App\Enums\MessageType;
@@ -17,6 +18,7 @@ class Message extends Model
         'uuid',
         'chat_id',
         'sender_id',
+        'product_id',
         'content',
         'type',
         'offer_price',
@@ -36,7 +38,7 @@ class Message extends Model
     /**
      * Get the chat that owns the message.
      */
-    public function chat()
+    public function chat(): BelongsTo
     {
         return $this->belongsTo(Chat::class);
     }
@@ -44,9 +46,17 @@ class Message extends Model
     /**
      * Get the sender of the message.
      */
-    public function sender()
+    public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    /**
+     * Get the product for the message context.
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /**

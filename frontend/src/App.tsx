@@ -12,11 +12,12 @@ import type { User } from "@/lib/mock-data";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useChatStore } from "@/lib/chat-store";
 import { getEcho } from "@/lib/echo";
+import { useAuthStore } from "@/lib/auth-store";
 
-// Layout
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import SellerWelcomeModal from "@/components/layout/SellerWelcomeModal";
+import RestrictedAccessOverlay from "@/components/shared/RestrictedAccessOverlay";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ function AppContent() {
         setIsLoggedIn(true);
         setUserRole(user.role === "admin" ? "admin" : "user");
         setSellerProductCount(user.productsCount || 0);
+        useAuthStore.getState().setHasOverdueDebt(user.has_overdue_debt || false);
         void useCartStore.getState().fetchCount();
         void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
@@ -341,6 +343,7 @@ function AppContent() {
         setAuthUser(user);
         setUserRole(user.role === "admin" ? "admin" : "user");
         setSellerProductCount(user.productsCount || 0);
+        useAuthStore.getState().setHasOverdueDebt(user.has_overdue_debt || false);
         void useCartStore.getState().fetchCount();
         void useFavoritesStore.getState().fetchCount();
         void useNotificationStore.getState().fetchNotifications();
@@ -565,6 +568,7 @@ function AppContent() {
           />
         )}
 
+      <RestrictedAccessOverlay />
       <Toaster />
     </div>
   );

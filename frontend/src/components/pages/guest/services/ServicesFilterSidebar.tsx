@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -12,8 +12,13 @@ export default function ServicesFilterSidebar({
   setPriceRange,
   onResetFilters,
   categories,
+  maxPrice,
 }: ServicesFilterSidebarProps) {
   const [tempPrice, setTempPrice] = useState(priceRange);
+
+  useEffect(() => {
+    setTempPrice(priceRange);
+  }, [priceRange]);
 
   return (
     <div className="space-y-6">
@@ -30,7 +35,7 @@ export default function ServicesFilterSidebar({
             value={tempPrice}
             onValueChange={setTempPrice}
             onValueCommit={(val) => setPriceRange(val)}
-            max={5000000}
+            max={maxPrice || 5000000}
             step={10000}
             className="w-full"
           />

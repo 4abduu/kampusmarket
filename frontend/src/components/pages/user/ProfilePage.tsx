@@ -49,8 +49,8 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
   const [authUser, setAuthUser] = useState<User | null>(currentUser || null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userProducts, setUserProducts] = useState<any[]>([]);
+  const [_isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
   // Report states
   const [showReportModal, setShowReportModal] = useState(false);

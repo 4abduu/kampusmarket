@@ -16,6 +16,7 @@ export default function CatalogFilterSidebar({
   setPriceRange,
   onResetFilters,
   categories,
+  maxPrice,
 }: CatalogFilterSidebarProps) {
   return (
     <div className="space-y-6">
@@ -38,7 +39,7 @@ export default function CatalogFilterSidebar({
             />
             <Label
               htmlFor="baru"
-              className="text-sm font-normal cursor-pointer"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Baru
             </Label>
@@ -53,7 +54,7 @@ export default function CatalogFilterSidebar({
             />
             <Label
               htmlFor="bekas"
-              className="text-sm font-normal cursor-pointer"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Bekas
             </Label>
@@ -71,7 +72,7 @@ export default function CatalogFilterSidebar({
             onValueCommit={(val: number[]) => {
               setPriceRange(val);
             }}
-            max={5000000}
+            max={maxPrice || 5000000}
             step={10000}
             className="w-full"
           />

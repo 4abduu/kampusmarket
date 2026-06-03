@@ -16,6 +16,7 @@ interface ProductsListResponse {
     last_page: number;
     per_page: number;
     total: number;
+    max_price?: number;
   };
 }
 

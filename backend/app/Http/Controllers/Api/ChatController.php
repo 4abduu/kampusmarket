@@ -86,17 +86,32 @@ class ChatController extends Controller
         // Unique per buyer+seller — satu chat saja untuk semua produk
         $chat = Chat::firstOrCreate(
             ['buyer_id' => $buyerId, 'seller_id' => $sellerId],
-            ['product_id' => $product->id, 'is_active' => true]
+            ['is_active' => true]
         );
 
-        // Update product_id ke produk yang sedang dikontekskan (jika berbeda)
-        if ($chat->product_id !== $product->id) {
-            $chat->update(['product_id' => $product->id]);
+        // Check if the latest product inquiry message in this chat is for this product
+        $lastProductMsg = $chat->messages()->where('type', 'system')->whereNotNull('product_id')->latest()->first();
+        if (!$lastProductMsg || $lastProductMsg->product_id !== $product->id) {
+            $msg = Message::create([
+                'chat_id'    => $chat->id,
+                'sender_id'  => $user->id,
+                'product_id' => $product->id,
+                'content'    => 'Menanyakan produk',
+                'type'       => 'system',
+            ]);
+            
+            $chat->update([
+                'last_message'    => 'Menanyakan produk',
+                'last_message_at' => now(),
+            ]);
+            $chat->incrementUnreadFor($sellerId);
+            
+            broadcast(new MessageSent($msg->loadMissing(['sender', 'chat', 'attachments', 'product'])));
         }
 
         return response()->json([
             'success' => true,
-            'data'    => new ChatResource($chat->load(['product.images', 'product.seller', 'buyer', 'seller'])),
+            'data'    => new ChatResource($chat->load(['buyer', 'seller'])),
         ]);
     }
 
@@ -104,7 +119,6 @@ class ChatController extends Controller
      * POST /chats/with-seller
      * Start atau ambil chat dengan seller berdasarkan sellerId (UUID) saja.
      * Dipakai dari halaman profil seller saat klik "Hubungi Penjual".
-     * Otomatis menggunakan produk pertama seller sebagai konteks chat.
      */
     public function startWithSeller(Request $request): JsonResponse
     {
@@ -122,20 +136,15 @@ class ChatController extends Controller
             ], 400);
         }
 
-        // Cari produk seller untuk jadi konteks awal (opsional, boleh null)
-        $product = Product::where('seller_id', $seller->id)
-            ->orderByRaw("FIELD(status, 'active', 'sold_out', 'archived', 'draft')")
-            ->first();
-
         // Unique per buyer+seller — kalau sudah ada chat, return yang lama
         $chat = Chat::firstOrCreate(
             ['buyer_id' => $user->id, 'seller_id' => $seller->id],
-            ['product_id' => $product?->id, 'is_active' => true]
+            ['is_active' => true]
         );
 
         return response()->json([
             'success' => true,
-            'data'    => new ChatResource($chat->load(['product.images', 'product.seller', 'buyer', 'seller'])),
+            'data'    => new ChatResource($chat->load(['buyer', 'seller'])),
         ]);
     }
 

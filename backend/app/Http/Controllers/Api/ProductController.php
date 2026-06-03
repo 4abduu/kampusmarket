@@ -70,7 +70,11 @@ class ProductController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhereHas('seller', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -92,10 +96,13 @@ class ProductController extends Controller
         $perPage = $request->get('per_page', 12);
         $products = $query->paginate($perPage);
 
+        $maxPrice = Product::where('status', 'active')->max('price') ?? 20000000;
+
         return $this->paginated(
             $products,
             ProductResource::collection($products),
-            'Products fetched'
+            'Products fetched',
+            ['max_price' => (int) $maxPrice]
         );
         } catch (\Exception $e) {
             return $this->serverError('Failed to fetch products');
@@ -356,16 +363,26 @@ class ProductController extends Controller
             ->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhereHas('seller', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
             });
 
-        $perPage = $request->get('per_page', 12);
+        $perPage = $request->get('per_page', 48);
         $products = $query->latest()->paginate($perPage);
 
-        return $this->success([
-            'products' => ProductResource::collection($products),
+        return response()->json([
+            'success' => true,
+            'data' => ProductResource::collection($products),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+            ],
             'query' => $search,
-        ], 'Search completed');
+        ]);
     }
 
     // ============================================

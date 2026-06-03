@@ -157,6 +157,7 @@ export default function CatalogPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [maxPrice, setMaxPrice] = useState<number>(20000000);
   const initialMountRef = useRef(true);
 
   // Sync initialCategory from props (skip on initial mount to avoid double-trigger)
@@ -220,6 +221,26 @@ export default function CatalogPage({
           const items = (res as any)?.data ?? (res as any) ?? [];
           console.log("[CatalogPage] Setting products:", items.length, "items");
           setProducts(items as Product[]);
+
+          if ((res as any)?.meta?.max_price) {
+            const newMax = (res as any).meta.max_price;
+            setMaxPrice((prevMax) => {
+              if (prevMax !== newMax) {
+                // Adjust price range so it doesn't stay stuck at an obsolete max value
+                setPriceRange((prevRange) =>
+                  prevRange[1] === prevMax || prevRange[1] > newMax
+                    ? [prevRange[0], newMax]
+                    : prevRange,
+                );
+                setTempPrice((prevTemp) =>
+                  prevTemp[1] === prevMax || prevTemp[1] > newMax
+                    ? [prevTemp[0], newMax]
+                    : prevTemp,
+                );
+              }
+              return newMax;
+            });
+          }
 
           // Calculate total pages with fallback
           let pages = 1;
@@ -354,6 +375,7 @@ export default function CatalogPage({
       setPriceRange(range);
       setCurrentPage(1);
     },
+    maxPrice,
     onResetFilters: () => {
       setSelectedCategory(null);
       setSelectedConditions([]);

@@ -34,6 +34,8 @@ export interface User {
   walletBalance?: number; // in Rupiah
   // Customer-only flag
   isCustomerOnly?: boolean;
+  // Debt flag
+  has_overdue_debt?: boolean;
 }
 
 export interface Address {

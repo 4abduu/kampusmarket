@@ -24,7 +24,7 @@ function initials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function ChatListPanel({ chats, selectedChatId, showChatList, isSellerView, isLoading, typingChatIds = new Set(), onSelectChat }: Props) {
+export default function ChatListPanel({ chats, selectedChatId, showChatList, isLoading, typingChatIds = new Set(), onSelectChat }: Props) {
   return (
     <Card className={[
       'lg:col-span-1 overflow-hidden transition-all duration-300',

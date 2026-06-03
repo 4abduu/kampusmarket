@@ -165,6 +165,18 @@ export default function AdminDashboardPage({
     topupTotalItems,
     topupTotalPages,
     topupStats,
+    debts,
+    debtsLoading,
+    debtsError,
+    debtSearchTerm,
+    setDebtSearchTerm,
+    debtStatusFilter,
+    setDebtStatusFilter,
+    debtPage,
+    setDebtPage,
+    debtTotalItems,
+    debtTotalPages,
+    debtStats,
     showUserDetail,
     setShowUserDetail,
     selectedUser,
@@ -631,6 +643,19 @@ export default function AdminDashboardPage({
                 topupTotalPages={topupTotalPages}
                 topupStats={topupStats}
                 topupTotalItems={topupTotalItems}
+                // Debts Props
+                debts={debts}
+                debtsLoading={debtsLoading}
+                debtsError={debtsError}
+                debtSearchTerm={debtSearchTerm}
+                setDebtSearchTerm={setDebtSearchTerm}
+                debtStatusFilter={debtStatusFilter}
+                setDebtStatusFilter={setDebtStatusFilter}
+                debtPage={debtPage}
+                setDebtPage={setDebtPage}
+                debtTotalItems={debtTotalItems}
+                debtTotalPages={debtTotalPages}
+                debtStats={debtStats}
               />
             )}
           </TabsContent>

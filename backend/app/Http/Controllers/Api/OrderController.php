@@ -26,6 +26,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\NotificationHelper;
 use App\Jobs\ReleaseOrderEscrow;
+use App\Models\CodInvoice;
+use App\Jobs\AutoConfirmOrderJob;
+use App\Jobs\DebtReminderJob;
+use App\Jobs\CheckDebtExpirationJob;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -97,6 +102,11 @@ class OrderController extends Controller
                 // Check if buyer is not the seller
                 if ($product->seller_id === $user->id) {
                     throw new \Exception('Anda tidak dapat membeli produk sendiri', 400);
+                }
+
+                // Check if seller has overdue debt (restricted access)
+                if ($product->seller && $product->seller->has_overdue_debt) {
+                    throw new \Exception('Maaf, penjual ini sedang tidak dapat menerima pesanan (Akses Dibatasi).', 403);
                 }
 
                 // Calculate prices
@@ -554,7 +564,7 @@ class OrderController extends Controller
     /**
      * Deliver / Service done (Seller action).
      * Marks that seller has shipped/completed their side.
-     * Sets auto_confirm_deadline to 3 days from now.
+     * Sets auto_confirm_deadline to 2 days from now.
      * Wrapped in DB::transaction for data consistency.
      *
      * Barang delivery: processing → in_delivery
@@ -589,7 +599,7 @@ class OrderController extends Controller
                     $newStatus = $order->status;
                 }
 
-                $autoConfirmDeadline = now()->addDays(3);
+                $autoConfirmDeadline = now()->addDays(2);
 
                 $order->update([
                     'status' => $newStatus,
@@ -607,6 +617,11 @@ class OrderController extends Controller
                 ]);
 
                 NotificationHelper::orderShipped($order->buyer_id, $order, $isService);
+
+                // Jika pesanan butuh konfirmasi dari pembeli, dispatch AutoConfirmOrderJob (2 hari)
+                if (in_array($newStatus, [OrderStatus::IN_DELIVERY, OrderStatus::READY_PICKUP, OrderStatus::PROCESSING])) {
+                    AutoConfirmOrderJob::dispatch($order->uuid)->delay($autoConfirmDeadline);
+                }
 
                 return $order->fresh();
             });
@@ -643,6 +658,9 @@ class OrderController extends Controller
                     $order->save();
                 } elseif ($requestedMethod === 'midtrans') {
                     $order->payment_method = 'midtrans';
+                    $order->save();
+                } elseif ($requestedMethod === 'cash') {
+                    $order->payment_method = 'cash';
                     $order->save();
                 }
 
@@ -754,24 +772,36 @@ class OrderController extends Controller
                     ShippingType::DELIVERY => OrderStatus::PROCESSING,
                     default => OrderStatus::PROCESSING,
                 };
+                $isCash = $order->payment_method === 'cash';
 
                 $order->update([
                     'status' => $newStatus,
-                    'payment_status' => PaymentStatus::PAID,
-                    'paid_at' => now(),
+                    'payment_status' => $isCash ? PaymentStatus::PENDING : PaymentStatus::PAID,
+                    'paid_at' => $isCash ? null : now(),
                 ]);
 
                 OrderHistory::create([
                     'order_id' => $order->id,
                     'status' => $newStatus->value,
-                    'notes' => 'Pembayaran berhasil — dana ditahan di escrow',
+                    'notes' => $isCash ? 'Pembeli memilih metode pembayaran Tunai (Cash). Pesanan diproses.' : 'Pembayaran berhasil — dana ditahan di escrow',
                     'actor_id' => $request->user()->id,
                 ]);
 
-NotificationHelper::paymentReceived($order->seller_id, $order);
+                if (!$isCash) {
+                    NotificationHelper::paymentReceived($order->seller_id, $order);
+                } else {
+                    \App\Jobs\SendUserNotification::dispatch(
+                        userId: $order->seller_id,
+                        type: \App\Enums\NotificationType::ORDER->value,
+                        title: 'Metode Tunai (Cash) Dipilih',
+                        message: "Pembeli memilih pembayaran Tunai (Cash) untuk pesanan '{$order->product_title}'. Silakan proses pesanan.",
+                        link: "/order-detail/{$order->uuid}",
+                        data: ['order_id' => $order->uuid, 'action' => 'process_order']
+                    );
+                }
 
                 return [
-                    'type' => 'balance',
+                    'type' => $isCash ? 'cash' : 'balance',
                     'order' => $order->fresh()->load(['product.images', 'buyer', 'seller', 'history.actor', 'selectedShippingOption']),
                 ];
             });
@@ -817,11 +847,18 @@ NotificationHelper::paymentReceived($order->seller_id, $order);
                     throw new \Exception('Status pesanan tidak valid untuk konfirmasi', 400);
                 }
 
-                // Mark as completed
-                $order->update([
+                $updateData = [
                     'status' => OrderStatus::COMPLETED,
                     'completed_at' => now(),
-                ]);
+                ];
+
+                if (in_array($order->payment_method, ['cash', 'cod'])) {
+                    $updateData['payment_status'] = PaymentStatus::PAID;
+                    $updateData['paid_at'] = now();
+                }
+
+                // Mark as completed
+                $order->update($updateData);
 
                 OrderHistory::create([
                     'order_id' => $order->id,
@@ -834,7 +871,7 @@ NotificationHelper::paymentReceived($order->seller_id, $order);
                 $order->product->incrementSoldCount($order->quantity);
 
                 // ESCROW RELEASE: Transfer dana ke penjual (hanya untuk pembayaran digital, bukan COD)
-                if ($order->payment_status === PaymentStatus::PAID) {
+                if ($order->payment_status === PaymentStatus::PAID && in_array($order->payment_method, ['balance', 'midtrans'])) {
                     $seller = $order->seller;
                     $sellerBalanceBefore = $seller->wallet_balance;
                     $seller->wallet_balance += $order->net_income;
@@ -862,6 +899,43 @@ NotificationHelper::paymentReceived($order->seller_id, $order);
                             'related_order_id' => $order->id,
                             'status' => 'completed',
                         ]);
+                    }
+                } elseif (in_array($order->payment_method, ['cod', 'cash']) && $order->admin_fee_deducted > 0) {
+                    // COD / Cash payment: Seller received cash directly, we need to deduct the commission from their wallet.
+                    $seller = $order->seller;
+                    $commission = $order->admin_fee_deducted;
+                    
+                    if ($seller->wallet_balance >= $commission) {
+                        // Saldo cukup, potong langsung
+                        $sellerBalanceBefore = $seller->wallet_balance;
+                        $seller->wallet_balance -= $commission;
+                        $seller->save();
+
+                        WalletTransaction::create([
+                            'user_id' => $seller->id,
+                            'type' => 'cod_fee_deduction',
+                            'amount' => -$commission,
+                            'balance_before' => $sellerBalanceBefore,
+                            'balance_after' => $seller->wallet_balance,
+                            'description' => 'Potongan komisi pesanan ' . strtoupper($order->payment_method) . ' ' . $order->order_number,
+                            'related_order_id' => $order->id,
+                            'status' => 'completed',
+                        ]);
+                    } else {
+                        // Saldo tidak cukup, masukkan ke buku utang
+                        $dueDate = Carbon::now()->addDays(7);
+                        $invoice = CodInvoice::create([
+                            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+                            'user_id' => $seller->id,
+                            'order_id' => $order->id,
+                            'amount' => $commission,
+                            'status' => 'unpaid',
+                            'due_date' => $dueDate,
+                        ]);
+
+                        // Queue job untuk reminder (H-2) dan expiration (H)
+                        DebtReminderJob::dispatch($invoice->uuid)->delay($dueDate->copy()->subDays(2));
+                        CheckDebtExpirationJob::dispatch($invoice->uuid)->delay($dueDate);
                     }
                 }
 

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, Eye, EyeOff, Filter, Plus, Search, Wallet, X, AlertCircle } from "lucide-react"
 import TransactionPagination from "@/components/pages/user/dashboard/TransactionPagination"
+import { useAuthStore } from "@/lib/auth-store"
 
 type Stats = {
   totalSales: number
@@ -93,6 +94,9 @@ export default function UserDashboardWalletTab({
   transactionTypeLabels,
   isLoadingStats = false,
 }: Props) {
+  const hasOverdueDebt = useAuthStore((s) => s.hasOverdueDebt);
+  const isWithdrawDisabled = currentWalletBalance < 10000 || !hasPin || hasOverdueDebt;
+
   return (
     <>
       {!hasPin && !isLoadingStats && (
@@ -156,18 +160,22 @@ export default function UserDashboardWalletTab({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col gap-2" 
-                onClick={() => setShowWithdrawDialog(true)} 
-                disabled={currentWalletBalance < 10000 || !hasPin}
-              >
-                <ArrowUpRight className="h-6 w-6" />Tarik Dana
-              </Button>
+              <span className={isWithdrawDisabled ? "cursor-not-allowed" : ""}>
+                <Button 
+                  variant="outline" 
+                  className="h-20 w-full flex-col gap-2" 
+                  onClick={() => setShowWithdrawDialog(true)} 
+                  disabled={isWithdrawDisabled}
+                >
+                  <ArrowUpRight className="h-6 w-6" />Tarik Dana
+                </Button>
+              </span>
             </TooltipTrigger>
-            {(currentWalletBalance < 10000 || !hasPin) && (
+            {isWithdrawDisabled && (
               <TooltipContent className="max-w-xs">
-                {!hasPin ? (
+                {hasOverdueDebt ? (
+                  <p>Penarikan dana dinonaktifkan karena Anda memiliki tunggakan komisi yang belum dilunasi</p>
+                ) : !hasPin ? (
                   <p>Atur PIN Wallet terlebih dahulu untuk melakukan penarikan dana</p>
                 ) : (
                   <p>Saldo minimal untuk penarikan adalah Rp 10.000</p>

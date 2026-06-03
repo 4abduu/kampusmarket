@@ -57,6 +57,7 @@ export default function OrderDetailPage({
   const [showCancelRequestDialog, setShowCancelRequestDialog] = useState(false);
   const [showCompleteConfirmDialog, setShowCompleteConfirmDialog] =
     useState(false);
+  const [showDeliverConfirmDialog, setShowDeliverConfirmDialog] = useState(false);
 
   // Input states
   const [inputShippingFee, setInputShippingFee] = useState("");
@@ -430,7 +431,17 @@ export default function OrderDetailPage({
     }
   };
 
+  const handleDeliverClick = () => {
+    const isCashOrCod = (order as any)?.paymentMethod === "cash" || (order as any)?.shippingType === "cod";
+    if (isCashOrCod) {
+      setShowDeliverConfirmDialog(true);
+    } else {
+      handleDeliver();
+    }
+  };
+
   const handleDeliver = async () => {
+    setShowDeliverConfirmDialog(false);
     setActionLoading(true);
     try {
       await deliverOrder(order.id);
@@ -917,7 +928,7 @@ export default function OrderDetailPage({
           shippingNotes={shippingNotes}
           setShippingNotes={setShippingNotes}
           handleInputShippingFee={handleInputShippingFee}
-          handleDeliver={handleDeliver}
+          handleDeliver={handleDeliverClick}
           handleConfirmOrder={handleConfirmOrder}
           handleRejectOrder={handleRejectOrder}
           sellerHasConfirmed={sellerHasConfirmed}
@@ -1025,6 +1036,9 @@ export default function OrderDetailPage({
         showCompleteConfirmDialog={showCompleteConfirmDialog}
         setShowCompleteConfirmDialog={setShowCompleteConfirmDialog}
         handleBuyerConfirmComplete={handleBuyerConfirmComplete}
+        showDeliverConfirmDialog={showDeliverConfirmDialog}
+        setShowDeliverConfirmDialog={setShowDeliverConfirmDialog}
+        handleDeliver={handleDeliver}
         actionLoading={actionLoading}
         otherReasonText={otherReasonText}
         setOtherReasonText={setOtherReasonText}

@@ -118,34 +118,54 @@ class PaymentController extends Controller
             $payment->status = 'paid';
             $payment->paid_at = now();
 
-            $order = $payment->order;
-            if ($order && $order->payment_status !== 'paid') {
-                $order->payment_status = 'paid';
-                $order->paid_at = now();
-
-                $shippingType = $order->shipping_type;
-                if (is_string($shippingType)) {
-                    $shippingType = \App\Enums\ShippingType::tryFrom($shippingType);
+            if ($payment->type === 'debt_payment') {
+                $user = $payment->user;
+                if ($user) {
+                    \App\Models\CodInvoice::where('user_id', $user->id)
+                        ->where('status', 'unpaid')
+                        ->update(['status' => 'paid', 'paid_at' => now()]);
+                        
+                    $user->update(['has_overdue_debt' => false]);
+                    
+                    \App\Models\Notification::create([
+                        'user_id' => $user->id,
+                        'type' => \App\Enums\NotificationType::SYSTEM->value,
+                        'title' => 'Tunggakan Dilunasi',
+                        'message' => 'Tunggakan komisi Anda berhasil dilunasi via Midtrans. Akun Anda telah aktif kembali.',
+                        'link' => '/dashboard/wallet',
+                        'data' => ['action' => 'debt_paid'],
+                    ]);
                 }
+            } else {
+                $order = $payment->order;
+                if ($order && $order->payment_status !== 'paid') {
+                    $order->payment_status = 'paid';
+                    $order->paid_at = now();
 
-                $newStatus = match ($shippingType) {
-                    \App\Enums\ShippingType::PICKUP => \App\Enums\OrderStatus::READY_PICKUP,
-                    default => \App\Enums\OrderStatus::PROCESSING,
-                };
+                    $shippingType = $order->shipping_type;
+                    if (is_string($shippingType)) {
+                        $shippingType = \App\Enums\ShippingType::tryFrom($shippingType);
+                    }
 
-                $order->status = $newStatus;
-                $order->save();
+                    $newStatus = match ($shippingType) {
+                        \App\Enums\ShippingType::PICKUP => \App\Enums\OrderStatus::READY_PICKUP,
+                        default => \App\Enums\OrderStatus::PROCESSING,
+                    };
 
-                \App\Models\OrderHistory::create([
-                    'uuid' => \Illuminate\Support\Str::uuid(),
-                    'order_id' => $order->id,
-                    'status' => $newStatus->value,
-                    'notes' => 'Pembayaran Midtrans berhasil — dana ditahan di escrow',
-                    'actor_id' => $order->buyer_id,
-                ]);
+                    $order->status = $newStatus;
+                    $order->save();
 
-                // Notify seller via webhook (no buyer notif needed here, buyer initiated it)
-                NotificationHelper::paymentReceived($order->seller_id, $order);
+                    \App\Models\OrderHistory::create([
+                        'uuid' => \Illuminate\Support\Str::uuid(),
+                        'order_id' => $order->id,
+                        'status' => $newStatus->value,
+                        'notes' => 'Pembayaran Midtrans berhasil — dana ditahan di escrow',
+                        'actor_id' => $order->buyer_id,
+                    ]);
+
+                    // Notify seller via webhook (no buyer notif needed here, buyer initiated it)
+                    NotificationHelper::paymentReceived($order->seller_id, $order);
+                }
             }
         } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
             $payment->status = 'failed';

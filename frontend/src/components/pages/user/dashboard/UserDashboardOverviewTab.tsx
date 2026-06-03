@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Briefcase, ChevronRight, DollarSign, MessageCircle, Package, Plus, Star, Wallet, Loader2 } from "lucide-react"
 import type { Product } from "@/lib/mock-data"
+import { useAuthStore } from "@/lib/auth-store"
 
 type Stats = {
   totalSales: number
@@ -38,6 +39,8 @@ export default function UserDashboardOverviewTab({
   adminFeePercentage,
   isLoadingProducts = false,
 }: Props) {
+  const hasOverdueDebt = useAuthStore((s) => s.hasOverdueDebt);
+
   return (
     <>
       <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onNavigate("wallet")}>
@@ -102,8 +105,8 @@ export default function UserDashboardOverviewTab({
             <Button className="bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("add-product")}>
               <Plus className="h-4 w-4 mr-2" />Tambah Produk
             </Button>
-            <Button variant="outline" onClick={() => setShowWithdrawDialog(true)}>
-              <Wallet className="h-4 w-4 mr-2" />Tarik Dana
+            <Button variant="outline" onClick={() => setShowWithdrawDialog(true)} disabled={hasOverdueDebt} title={hasOverdueDebt ? "Penarikan dana dinonaktifkan karena ada tunggakan komisi" : undefined}>
+              <Wallet className="h-4 w-4 mr-2" />{hasOverdueDebt ? "Tarik Dana (Dibatasi)" : "Tarik Dana"}
             </Button>
             <Button variant="outline" onClick={() => onNavigate("chat")}>
               <MessageCircle className="h-4 w-4 mr-2" />Pesan (2)

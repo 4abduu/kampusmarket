@@ -73,6 +73,7 @@ export interface ApiMessage {
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+  product?: ApiChatProduct;
   // Tambahan yang diisi oleh getEcho listener atau lokal optimistic
   _pending?: boolean;
 }

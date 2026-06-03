@@ -34,7 +34,7 @@ interface ServiceDetailSidebarProps {
   service: any;
   serviceId: string;
   formatPrice: (price: number) => string;
-  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
+  onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego"; sellerId?: string }) => void;
   onAction: (action: () => void) => void;
   onOpenReport: () => void;
   currentUser?: any;
@@ -258,7 +258,7 @@ export default function ServiceDetailSidebar({
                 {service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={() => onAction(() => onNavigate("chat", { productId: serviceId, chatAction: "chat" }))}>
+              <Button variant="outline" className="w-full" onClick={() => onAction(() => onNavigate("chat", { sellerId: service.providerId || service.provider?.id }))}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Chat Penjual
               </Button>

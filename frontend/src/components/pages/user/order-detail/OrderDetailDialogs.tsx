@@ -56,6 +56,9 @@ interface OrderDetailDialogsProps {
   showCompleteConfirmDialog: boolean
   setShowCompleteConfirmDialog: (open: boolean) => void
   handleBuyerConfirmComplete: () => void
+  showDeliverConfirmDialog?: boolean
+  setShowDeliverConfirmDialog?: (open: boolean) => void
+  handleDeliver?: () => void
   actionLoading: boolean
   otherReasonText: string
   setOtherReasonText: (text: string) => void
@@ -88,6 +91,9 @@ export default function OrderDetailDialogs({
   showCompleteConfirmDialog,
   setShowCompleteConfirmDialog,
   handleBuyerConfirmComplete,
+  showDeliverConfirmDialog = false,
+  setShowDeliverConfirmDialog,
+  handleDeliver,
   actionLoading,
   otherReasonText,
   setOtherReasonText,
@@ -329,6 +335,48 @@ export default function OrderDetailDialogs({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── NEW: Seller Deliver Confirm Dialog (for COD/Cash) ── */}
+      {setShowDeliverConfirmDialog && handleDeliver && (
+        <AlertDialog open={showDeliverConfirmDialog} onOpenChange={setShowDeliverConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-amber-600" />
+                Konfirmasi Penyerahan (COD/Cash)
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2">
+                  <div>
+                    Pesanan ini menggunakan metode pembayaran <strong>COD / Cash</strong>. 
+                  </div>
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded border border-amber-200 dark:border-amber-800 text-sm">
+                    <strong>Penting:</strong> Komisi platform (5%) akan ditagihkan ke <strong>Dompet Anda</strong> setelah pesanan selesai. Jika saldo tidak cukup, selisihnya akan dicatat sebagai <strong>Tunggakan Komisi</strong>.
+                  </div>
+                  <div>
+                    Apakah Anda yakin barang/jasa sudah diserahkan kepada pembeli?
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={actionLoading}>Batal</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={handleDeliver}
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                )}
+                Ya, Sudah Diserahkan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   )
 }

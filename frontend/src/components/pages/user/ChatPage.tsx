@@ -66,7 +66,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [showContextCard, setShowContextCard] = useState(false);
   const [showNegoModal, setShowNegoModal] = useState(false);
   const [negoPrice, setNegoPrice] = useState('');
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -326,7 +325,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     setShowChatList(false);
     setChatLoading(true);
     setMessages([]);
-    setShowContextCard(true);
     setChatDetail(null);
 
     try {
@@ -793,16 +791,19 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
   const isSeller = chatDetail ? chatDetail.seller?.id === currentUserId : false;
 
-  const chatProduct: ApiChatProduct | null = chatDetail?.product
+  const lastProductMessage = [...messages].reverse().find(m => m.type === 'system' && m.product);
+  const activeProduct = lastProductMessage?.product;
+
+  const chatProduct: ApiChatProduct | null = activeProduct
     ? {
-        id: chatDetail.product.id,
-        title: chatDetail.product.title,
-        slug: chatDetail.product.slug,
-        price: chatDetail.product.price,
-        image: chatDetail.product.images?.[0] ?? '',
-        type: (chatDetail.product.type ?? 'barang') as 'barang' | 'jasa',
-        canNego: chatDetail.product.canNego ?? false,
-        sellerId: chatDetail.product.seller?.id ?? chatDetail.seller?.id ?? '',
+        id: activeProduct.id,
+        title: activeProduct.title,
+        slug: activeProduct.slug,
+        price: activeProduct.price,
+        image: activeProduct.image ?? '',
+        type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
+        canNego: activeProduct.canNego ?? false,
+        sellerId: chatDetail?.seller?.id ?? '',
       }
     : null;
 
@@ -838,7 +839,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           isLoading={chatLoading}
           isSending={isSending}
           showChatList={showChatList}
-          showContextCard={showContextCard}
           showEmojiPicker={showEmojiPicker}
           newMessage={newMessage}
           attachedImage={attachedImage}
@@ -853,7 +853,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           onToggleEmoji={() => setShowEmojiPicker(p => !p)}
           onEmojiSelect={emoji => { setNewMessage(p => p + emoji); setShowEmojiPicker(false); }}
           onRemoveImage={() => { setAttachedImage(null); setImageFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-          onToggleContextCard={() => setShowContextCard(p => !p)}
           onAcceptOffer={handleAcceptOffer}
           onRejectOffer={handleRejectOffer}
           onBayarSekarang={handleBayarSekarang}
