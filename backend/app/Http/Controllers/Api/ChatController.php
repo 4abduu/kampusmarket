@@ -75,23 +75,62 @@ class ChatController extends Controller
                     'message' => 'Tidak dapat mengobrol dengan diri sendiri',
                 ], 400);
             }
-            $buyer = \App\Models\User::where('uuid', $request->buyerId)->firstOrFail();
-            $buyerId = $buyer->id;
+            $buyer    = \App\Models\User::where('uuid', $request->buyerId)->firstOrFail();
+            $buyerId  = $buyer->id;
             $sellerId = $user->id;
         } else {
-            $buyerId = $user->id;
+            $buyerId  = $user->id;
             $sellerId = $product->seller_id;
         }
 
+        // Unique per buyer+seller — satu chat saja untuk semua produk
         $chat = Chat::firstOrCreate(
-            [
-                'product_id' => $product->id,
-                'buyer_id'   => $buyerId,
-                'seller_id'  => $sellerId,
-            ],
-            [
-                'is_active' => true,
-            ]
+            ['buyer_id' => $buyerId, 'seller_id' => $sellerId],
+            ['product_id' => $product->id, 'is_active' => true]
+        );
+
+        // Update product_id ke produk yang sedang dikontekskan (jika berbeda)
+        if ($chat->product_id !== $product->id) {
+            $chat->update(['product_id' => $product->id]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => new ChatResource($chat->load(['product.images', 'product.seller', 'buyer', 'seller'])),
+        ]);
+    }
+
+    /**
+     * POST /chats/with-seller
+     * Start atau ambil chat dengan seller berdasarkan sellerId (UUID) saja.
+     * Dipakai dari halaman profil seller saat klik "Hubungi Penjual".
+     * Otomatis menggunakan produk pertama seller sebagai konteks chat.
+     */
+    public function startWithSeller(Request $request): JsonResponse
+    {
+        $request->validate([
+            'sellerId' => 'required|exists:users,uuid',
+        ]);
+
+        $user   = $request->user();
+        $seller = \App\Models\User::where('uuid', $request->sellerId)->firstOrFail();
+
+        if ($seller->id === $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak dapat mengobrol dengan diri sendiri',
+            ], 400);
+        }
+
+        // Cari produk seller untuk jadi konteks awal (opsional, boleh null)
+        $product = Product::where('seller_id', $seller->id)
+            ->orderByRaw("FIELD(status, 'active', 'sold_out', 'archived', 'draft')")
+            ->first();
+
+        // Unique per buyer+seller — kalau sudah ada chat, return yang lama
+        $chat = Chat::firstOrCreate(
+            ['buyer_id' => $user->id, 'seller_id' => $seller->id],
+            ['product_id' => $product?->id, 'is_active' => true]
         );
 
         return response()->json([

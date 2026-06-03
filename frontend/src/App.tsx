@@ -251,6 +251,9 @@ function AppContent() {
         if ("productId" in data && data.productId) {
           params.set("productId", data.productId);
         }
+        if ("sellerId" in data && data.sellerId) {
+          params.set("sellerId", data.sellerId);
+        }
         if ("chatAction" in data && data.chatAction) {
           params.set("action", data.chatAction);
         }
@@ -387,7 +390,7 @@ function AppContent() {
     setShowSellerWelcome(true);
   };
 
-  // ✅ Google auth flow dari main (bukan () => {})
+  //  Google auth flow dari main (bukan () => {})
   const handleGooglePendingSelection = (session: GoogleAuthSession) => {
     setGoogleUserData({
       userName: session.userName,
@@ -411,7 +414,7 @@ function AppContent() {
         : null;
   const categoryParam = new URLSearchParams(location.search).get("category");
 
-  // ✅ Page visibility logic dari main
+  //  Page visibility logic dari main
   const noNavbarPages = [
     "login",
     "register",

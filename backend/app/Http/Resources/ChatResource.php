@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * - toArray() sekarang expose messages
  * - toListArray() expose otherUser.isOnline
  * - tambah canNego di product card
+ * - product nullable (chat tanpa konteks produk)
  */
 class ChatResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class ChatResource extends JsonResource
     {
         return [
             'id'        => $this->uuid,
-            'productId' => $this->product->uuid,
+            'productId' => $this->product?->uuid,
             'product'   => new ProductResource($this->whenLoaded('product')),
             'seller'    => new UserResource($this->whenLoaded('seller')),
             'buyer'     => new UserResource($this->whenLoaded('buyer')),
@@ -58,21 +59,24 @@ class ChatResource extends JsonResource
 
     /**
      * Card produk dengan field canNego agar frontend bisa tampilkan tombol nego.
+     * Return null kalau chat tidak punya konteks produk.
      */
-    private function getProductCardWithNego(): array
+    private function getProductCardWithNego(): ?array
     {
-        $product      = $this->product;
+        $product = $this->product;
+        if (!$product) return null;
+
         $primaryImage = $product->images?->first()?->url ?? '';
 
         return [
-            'id'        => $product->uuid,
-            'title'     => $product->title,
-            'slug'      => $product->slug,
-            'price'     => (int) $product->price,
-            'image'     => $primaryImage,
-            'type'      => $product->type->value ?? 'barang',
-            'canNego'   => (bool) $product->can_nego,  // [BARU]
-            'sellerId'  => $product->seller->uuid,
+            'id'       => $product->uuid,
+            'title'    => $product->title,
+            'slug'     => $product->slug,
+            'price'    => (int) $product->price,
+            'image'    => $primaryImage,
+            'type'     => $product->type->value ?? 'barang',
+            'canNego'  => (bool) $product->can_nego,
+            'sellerId' => $product->seller->uuid,
         ];
     }
 }

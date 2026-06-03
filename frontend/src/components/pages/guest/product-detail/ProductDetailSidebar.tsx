@@ -50,7 +50,6 @@ interface ProductDetailSidebarProps {
   setQuantity: (value: number) => void;
   formatPrice: (price: number) => string;
   onAction: (action: () => void) => void;
-  // [REVISI] onNavigate menerima NavigationData object yang berisi productId + chatAction
   onNavigate: (page: string, data?: string | { productId?: string; chatAction?: "chat" | "nego" }) => void;
   onOpenReport: () => void;
   currentUser?: any;
@@ -75,11 +74,9 @@ export default function ProductDetailSidebar({
   const [showErrorAnim, setShowErrorAnim] = useState(false);
   const [liveRating, setLiveRating] = useState(product.rating || 0);
 
-  // Listen to realtime review updates to update rating
   useEffect(() => {
     if (!product?.id) return;
-    
-    // Also initialize with current prop value in case it changes
+
     setLiveRating(product.rating || 0);
 
     const channel = getEcho().channel(`product.${product.id}`);
@@ -96,7 +93,6 @@ export default function ProductDetailSidebar({
 
   const productShareUrl = `https://kampusmarket.id/p/${product.id}`;
 
-  // Check if product is already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
@@ -112,7 +108,7 @@ export default function ProductDetailSidebar({
 
   const toggleFavorite = async () => {
     if (isLoadingFavorite) return;
-    
+
     try {
       setIsLoadingFavorite(true);
       if (isFavorited) {
@@ -128,7 +124,7 @@ export default function ProductDetailSidebar({
           description: `${product.title} telah masuk ke favorit.`,
           action: {
             label: "Lihat Favorit",
-            onClick: () => onNavigate("favorites")
+            onClick: () => onNavigate("favorites"),
           },
         });
       }
@@ -155,8 +151,6 @@ export default function ProductDetailSidebar({
     }
   };
 
-  // [REVISI] Helper: navigate ke chat dengan context produk
-  // Menggunakan key "chatAction" (bukan "action") — NavigationData di types.ts pakai chatAction
   const handleChatWithSeller = () => {
     onNavigate("chat", { productId: product.id, chatAction: "chat" });
   };
@@ -167,31 +161,27 @@ export default function ProductDetailSidebar({
 
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
-    
+
     try {
       setIsAddingToCart(true);
       await addToCart(product.id, quantity);
-      
-      // Update global cart store
+
       useCartStore.getState().fetchCount();
 
-      // Show flasher/toast
       toast.success("Berhasil ditambahkan", {
         description: `${quantity}x ${product.title} telah masuk ke keranjang.`,
         action: {
           label: "Lihat Keranjang",
-          onClick: () => onNavigate("cart")
+          onClick: () => onNavigate("cart"),
         },
       });
 
-      // Trigger small animation
       setShowSuccessAnim(true);
       setTimeout(() => setShowSuccessAnim(false), 2000);
     } catch (err: any) {
       console.error("Failed to add to cart:", err);
       const errorMessage = err?.response?.data?.message || err?.message || "Silakan coba lagi nanti.";
-      
-      // Trigger error animation (shake)
+
       setShowErrorAnim(true);
       setTimeout(() => setShowErrorAnim(false), 500);
 
@@ -205,7 +195,6 @@ export default function ProductDetailSidebar({
   };
 
   const isOwner = currentUser?.id && (currentUser.id === product.sellerId || currentUser.id === product.seller?.id);
-
 
   return (
     <div className="space-y-4">
@@ -260,8 +249,8 @@ export default function ProductDetailSidebar({
           {isOwner ? (
             <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 text-center space-y-3">
               <p className="text-primary-800 dark:text-primary-200 font-medium">Ini adalah produk Anda</p>
-              <Button 
-                className="w-full bg-primary-600 hover:bg-primary-700" 
+              <Button
+                className="w-full bg-primary-600 hover:bg-primary-700"
                 onClick={() => onNavigate("dashboard", "products")}
               >
                 Kelola Produk
@@ -288,21 +277,21 @@ export default function ProductDetailSidebar({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                <Button
+                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => onAction(() => onNavigate("checkout", product.id))}
                   disabled={product.stock === 0}
                 >
                   {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className={`relative overflow-hidden transition-all ${
-                    showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" : 
+                    showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" :
                     showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
                   }`}
                   style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
-                  onClick={() => onAction(handleAddToCart)} 
+                  onClick={() => onAction(handleAddToCart)}
                   disabled={product.stock === 0 || isAddingToCart}
                 >
                   {isAddingToCart ? (
@@ -322,7 +311,6 @@ export default function ProductDetailSidebar({
                 }
               `}} />
 
-              {/* [REVISI] Tombol Ajukan Nego — gunakan handleNegoWithSeller */}
               {product.canNego && (
                 <Button
                   variant="outline"
@@ -412,35 +400,42 @@ export default function ProductDetailSidebar({
             </div>
           </div>
 
-          {product.canNego ? (
-            <>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
-                  <Phone className="h-4 w-4 mr-2" />
-                  WhatsApp
-                </Button>
-                <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
-                  <User className="h-4 w-4 mr-2" />
-                  Lihat Profil
-                </Button>
-              </div>
-            </>
+          {isOwner ? (
+            <Button variant="outline" className="w-full" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+              <User className="h-4 w-4 mr-2" />
+              Lihat Profil
+            </Button>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Chat
-                </Button>
-                <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
-                  <User className="h-4 w-4 mr-2" />
-                  Lihat Profil
-                </Button>
-              </div>
-              <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
-                <Phone className="h-4 w-4 mr-2" />
-                WhatsApp
-              </Button>
+              {product.canNego ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                  <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                    <User className="h-4 w-4 mr-2" />
+                    Lihat Profil
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Chat
+                    </Button>
+                    <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                      <User className="h-4 w-4 mr-2" />
+                      Lihat Profil
+                    </Button>
+                  </div>
+                  <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                </>
+              )}
             </>
           )}
 

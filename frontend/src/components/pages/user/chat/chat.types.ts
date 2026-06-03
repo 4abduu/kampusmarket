@@ -42,7 +42,7 @@ export interface ApiChatProduct {
 /** Item dalam list chat — dari ChatResource.toListArray() */
 export interface ApiChat {
   id: string;           // uuid chat
-  product: ApiChatProduct;
+  product: ApiChatProduct | null;
   otherUser: ApiUser;
   lastMessage: string | null;
   lastMessageAt: string | null;

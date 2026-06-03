@@ -247,7 +247,7 @@ export default function ProfileServicesTab({
                   )}
                 </div>
                 <CardContent className="p-4">
-                  {/* ✅ Dari dev-abdu: badge sibuk */}
+                  {/*  Dari dev-abdu: badge sibuk */}
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">
                       {service.category}

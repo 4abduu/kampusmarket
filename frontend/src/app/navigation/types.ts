@@ -12,6 +12,7 @@ export interface NavigationData {
   orderId?: string;
   chatAction?: "chat" | "nego";
   buyerId?: string;
+  sellerId?: string;
   successType?: "product" | "service";
   negoPrice?: number;
 }

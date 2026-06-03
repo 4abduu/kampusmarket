@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Faculty;
 use App\Http\Resources\UserResource;
-use App\Http\Resources\FacultyResource;
-use App\Http\Requests\StoreUserRequest;
+// use App\Http\Resources\FacultyResource;
+// use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -112,6 +112,12 @@ class UserController extends Controller
             ->where('uuid', $id)
             ->orWhere('id', $id)
             ->firstOrFail();
+
+        // Auto-fix: kalau rating 0 tapi punya reviews, recalculate
+        if ($user->rating == 0 && $user->reviews()->count() > 0) {
+            $user->recalculateRating();
+            $user->refresh();
+        }
 
         return response()->json([
             'success' => true,

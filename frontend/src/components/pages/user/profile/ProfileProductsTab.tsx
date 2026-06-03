@@ -219,7 +219,7 @@ export default function ProfileProductsTab({
                 className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isOutOfStock ? "opacity-75" : ""}`}
                 onClick={() => onNavigate("product", product.id)}
               >
-                {/* ✅ Dari dev-abdu: relative untuk overlay positioning */}
+                {/*  Dari dev-abdu: relative untuk overlay positioning */}
                 <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                   <ProductImage
                     src={product.images?.[0]}
@@ -227,7 +227,7 @@ export default function ProfileProductsTab({
                     className="w-full h-full"
                     imageClassName="w-full h-full object-cover"
                   />
-                  {/* ✅ Dari dev-abdu: overlay habis */}
+                  {/* Dari dev-abdu: overlay habis */}
                   {isOutOfStock && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <Badge className="bg-red-600 text-lg px-4 py-2">HABIS</Badge>
@@ -239,14 +239,14 @@ export default function ProfileProductsTab({
                     {product.title}
                   </h3>
                   <div className="flex items-center justify-between mb-2">
-                    {/* ✅ Dari dev-abdu: styling harga kalau habis */}
+                    {/* Dari dev-abdu: styling harga kalau habis */}
                     <p className={`font-bold ${isOutOfStock ? "text-muted-foreground line-through" : "text-primary-600"}`}>
                       {formatPrice(product.price)}
                     </p>
                     {product.condition === "baru" ? (
-                      <Badge className="bg-primary-500 text-xs">Baru</Badge>
+                      <Badge className="bg-primary-500 text-xs text-white">Baru</Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs text-white">
                         Bekas
                       </Badge>
                     )}

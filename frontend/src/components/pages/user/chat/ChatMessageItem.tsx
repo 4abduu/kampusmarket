@@ -24,7 +24,7 @@ export default function ChatMessageItem({
 }: Props) {
   const isMe = message.senderId === currentUserId;
   const isSeller = chat.seller?.id === currentUserId;
-  // FIX #4 & #5: tentukan siapa yang kirim pesan ini
+  
   const senderIsSeller = message.senderId === chat.seller?.id;
   const senderIsBuyer = message.senderId === chat.buyer?.id;
   const canRespondToOffer = !isMe
@@ -63,7 +63,6 @@ export default function ChatMessageItem({
             <div className={`rounded-xl p-3 ${isMe ? 'bg-white/10' : 'bg-amber-50 dark:bg-amber-900/30'}`}>
               <div className="flex items-center gap-2 mb-2 text-xs">
                 <Handshake className="h-4 w-4" />
-                {/* FIX #4: Label yang akurat berdasarkan siapa pengirimnya */}
                 <span className="font-medium">
                   {senderIsBuyer ? 'Pembeli mengajukan nego' : senderIsSeller ? 'Penjual mengajukan penawaran' : 'Penawaran'}
                 </span>
@@ -90,22 +89,25 @@ export default function ChatMessageItem({
 
               <p className="font-bold text-base sm:text-lg">{formatPrice(message.offerPrice ?? 0)}</p>
 
-              {/* FIX #4: Status label yang tepat */}
+              {/* Teks Status Penawaran yang Dinamis sesuai POV */}
               {message.offerStatus === 'accepted' && (
-                <p className="text-xs mt-1 text-emerald-600 dark:text-emerald-400 font-medium">Penawaran diterima</p>
+                <p className={`text-xs mt-1 font-medium ${isMe ? 'text-white/90' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  Penawaran diterima
+                </p>
               )}
               {message.offerStatus === 'rejected' && (
-                <p className="text-xs mt-1 text-red-500 font-medium">Penawaran ditolak</p>
+                <p className={`text-xs mt-1 font-medium ${isMe ? 'text-red-200' : 'text-red-500'}`}>
+                  Penawaran ditolak
+                </p>
               )}
               {message.offerStatus === 'pending' && (
-                // FIX #4: kalau penjual yang kirim → "menunggu konfirmasi pembeli", bukan "menunggu respons penjual"
                 <p className="text-xs opacity-70 mt-1">
                   {senderIsSeller ? 'Menunggu konfirmasi pembeli' : 'Menunggu respons penjual'}
                 </p>
               )}
             </div>
 
-            {/* Tombol seller: terima/tolak — hanya jika buyer yang kirim nego, dan seller belum reply */}
+            {/* Tombol seller: terima/tolak */}
             {canRespondToOffer && (
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAcceptOffer(message)}>
@@ -117,11 +119,11 @@ export default function ChatMessageItem({
               </div>
             )}
 
-            {/* FIX #6: Tombol Bayar — buyer, offer accepted, langsung ke checkout */}
+            {/* Tombol Bayar */}
             {!isSeller && message.offerStatus === 'accepted' && (
               <Button
                 size="sm"
-                className="w-full bg-primary-600 text-white hover:bg-primary-700"
+                className="w-full bg-white/10 text-white hover:bg-primary-700"
                 onClick={() => onOpenPaymentDialog(message)}
               >
                 <Receipt className="h-3 w-3 mr-1" />

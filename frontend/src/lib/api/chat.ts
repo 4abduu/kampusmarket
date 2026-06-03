@@ -15,6 +15,10 @@ export interface StartChatPayload {
   buyerId?: string;  // UUID buyer (untuk seller memulai chat)
 }
 
+export interface StartChatWithSellerPayload {
+  sellerId: string; // UUID seller
+}
+
 export interface SendMessagePayload {
   content?: string;
   type: 'text' | 'offer' | 'image' | 'file';
@@ -38,6 +42,14 @@ export async function fetchChats(): Promise<ApiChat[]> {
  */
 export async function startChat(payload: StartChatPayload): Promise<ApiChatDetail> {
   const res = await apiClient.post<unknown, { success: boolean; data: ApiChatDetail }>('/chats', payload);
+  return res.data;
+}
+
+/**
+ * POST /chats/with-seller — start chat langsung ke seller (dari halaman profil)
+ */
+export async function startChatWithSeller(sellerId: string): Promise<ApiChatDetail> {
+  const res = await apiClient.post<unknown, { success: boolean; data: ApiChatDetail }>('/chats/with-seller', { sellerId });
   return res.data;
 }
 

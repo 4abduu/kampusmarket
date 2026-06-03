@@ -27,7 +27,7 @@ type ServiceSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
 interface ProfilePageProps {
   onNavigate: (
     page: string,
-    data?: string | { userId?: string; productId?: string },
+    data?: string | { userId?: string; productId?: string; sellerId?: string },
   ) => void;
   userId?: string;
   isLoggedIn: boolean;
@@ -250,7 +250,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
     return [...jasaProducts] as any[];
   }, [jasaProducts]);
 
-  const totalSold = barangProducts.reduce(
+  const totalSold = userProducts.reduce(
     (acc, p) => acc + (p.soldCount || 0),
     0,
   );
@@ -416,9 +416,6 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
             totalReviews={totalReviews}
             memberSince={memberSince}
             userBio={user.bio}
-            isLoadingProducts={isLoadingProducts}
-            hasProducts={userProducts.length > 0}
-            firstProductId={userProducts[0]?.id || userProducts[0]?.uuid}
             onOpenReport={() => {
               if (!isLoggedIn) {
                 setShowLoginModal(true);
@@ -431,23 +428,10 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
                 page === "chat" &&
                 typeof data === "object" &&
                 data !== null &&
-                "userId" in data
+                "sellerId" in data &&
+                data.sellerId
               ) {
-                const firstActive = userProducts.find((p) => p.stock > 0) ?? userProducts[0];
-
-                // Tetap bisa chat meski gaada produk - show toast saja
-                if (!firstActive) {
-                  toast({
-                    title: "Tidak ada produk",
-                    description: "User ini belum upload produk/jasa apapun",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                onNavigate("chat", {
-                  productId: firstActive.uuid || firstActive.id,
-                });
+                onNavigate("chat", { sellerId: data.sellerId as string });
                 return;
               }
               onNavigate(page, data);

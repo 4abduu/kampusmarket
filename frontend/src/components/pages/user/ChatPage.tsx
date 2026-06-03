@@ -17,6 +17,7 @@ import {
   markChatRead,
   acceptOffer,
   rejectOffer,
+  startChatWithSeller,
   type StartChatPayload,
 } from '@/lib/api/chat';
 import { uploadImage } from '@/lib/api/images';
@@ -29,6 +30,7 @@ import { useChatStore } from '@/lib/chat-store';
 interface ChatPageProps {
   onNavigate: (page: string, data?: string | Record<string, unknown>) => void;
   initialContextId?: string;
+  initialSellerId?: string;
   initialChatAction?: 'chat' | 'nego';
   initialBuyerId?: string;
   currentUser?: User | null; // dari App.tsx via AppRoutes — BUKAN localStorage
@@ -47,7 +49,7 @@ const formatPriceInput = (value: string) => {
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function ChatPage({ onNavigate, initialContextId, initialChatAction, initialBuyerId, currentUser }: ChatPageProps) {
+export default function ChatPage({ onNavigate, initialContextId, initialSellerId, initialChatAction, initialBuyerId, currentUser }: ChatPageProps) {
   // currentUser dari props (App.tsx → AppRoutes → ChatPageWrapper → sini)
   // BUKAN dari localStorage — auth pakai HttpOnly cookie, user tidak disimpan di localStorage
   const currentUserId = currentUser?.id ?? '';
@@ -479,6 +481,46 @@ export default function ChatPage({ onNavigate, initialContextId, initialChatActi
       }
     })();
   }, [initialContextId, initialChatAction, currentUserId, openChat]);
+
+  // ── Trigger dari halaman profil seller (sellerId tanpa productId) ──────────
+  useEffect(() => {
+    if (!initialSellerId || !currentUserId || initialContextId) return;
+    const key = `seller:${initialSellerId}`;
+    if (lastContextRef.current === key) return;
+    lastContextRef.current = key;
+
+    void (async () => {
+      try {
+        const chat = await startChatWithSeller(initialSellerId);
+        setChats(prev => {
+          if (prev.some(c => c.id === chat.id)) return prev;
+          const item: ApiChat = {
+            id: chat.id,
+            product: chat.product ? {
+              id: chat.product.id ?? '',
+              title: chat.product.title ?? '',
+              slug: chat.product.slug ?? '',
+              price: chat.product.price ?? 0,
+              image: chat.product.images?.[0] ?? '',
+              type: (chat.product.type ?? 'barang') as 'barang' | 'jasa',
+              canNego: chat.product.canNego ?? false,
+              sellerId: chat.seller?.id ?? '',
+            } : null,
+            otherUser: chat.seller ?? { id: '', name: '', avatar: '', faculty: null, rating: 0, reviewCount: 0, isVerified: false, isOnline: false, lastSeen: null },
+            lastMessage: chat.lastMessage,
+            lastMessageAt: chat.lastMessageAt,
+            unreadCount: 0,
+            isActive: true,
+          };
+          return [item, ...prev];
+        });
+        await openChat(chat.id);
+      } catch (err: any) {
+        console.error('[Chat] startChatWithSeller error', err);
+        toast.error('Gagal membuka chat dengan penjual');
+      }
+    })();
+  }, [initialSellerId, currentUserId, initialContextId, openChat]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

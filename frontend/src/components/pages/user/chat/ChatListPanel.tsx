@@ -65,8 +65,6 @@ export default function ChatListPanel({ chats, selectedChatId, showChatList, isS
               // Chat yang saya adalah buyer: otherUser adalah seller
               // isSellerView di sini tidak akurat per-chat, tapi kita tidak punya currentUserId
               // Solusi: tampilkan keduanya — "Pembeli" jika isSellerView, "Penjual" jika tidak
-              const roleLabel = isSellerView ? 'Pembeli' : 'Penjual';
-
               return (
                 <div
                   key={chat.id}
@@ -92,19 +90,10 @@ export default function ChatListPanel({ chats, selectedChatId, showChatList, isS
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <p className="font-medium truncate text-sm">{chat.otherUser.name}</p>
-                        {/* FIX #5: Badge Penjual/Pembeli agar tidak bingung */}
-                        <span className={[
-                          'shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                          roleLabel === 'Penjual'
-                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
-                        ].join(' ')}>
-                          {roleLabel}
-                        </span>
                       </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{fmt(chat.lastMessageAt)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{chat.product.title}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{chat.product?.title ?? 'Chat'}</p>
                     {typingChatIds.has(chat.id) ? (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400 italic truncate mt-0.5">mengetik...</p>
                     ) : chat.lastMessage ? (

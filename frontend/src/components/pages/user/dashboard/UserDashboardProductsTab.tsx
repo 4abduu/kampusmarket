@@ -152,12 +152,12 @@ export default function UserDashboardProductsTab({
                     <TableCell>{product.soldCount}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        <Badge variant={product.status === "active" && (product.type === "jasa" || product.stock > 0) ? "default" : "secondary"}>
+                        <Badge variant={product.status === "active" && (product.type === "jasa" || product.stock > 0) ? "default" : "secondary"} className="text=xs text-white">
                           {product.status === "active" && (product.type === "jasa" || product.stock > 0) ? "Aktif" : "Nonaktif"}
                         </Badge>
                         {product.type === "jasa" && product.availabilityStatus && product.availabilityStatus !== "available" && (
-                          <Badge variant={product.availabilityStatus === "full" ? "destructive" : "secondary"} className="text-xs">
-                            {product.availabilityStatus === "full" ? "🔴 Penuh" : "⚠️ Sibuk"}
+                          <Badge variant={product.availabilityStatus === "full" ? "destructive" : "secondary"} className="text-xs text-white">
+                            {product.availabilityStatus === "full" ? "Penuh" : "Sibuk"}
                           </Badge>
                         )}
                       </div>

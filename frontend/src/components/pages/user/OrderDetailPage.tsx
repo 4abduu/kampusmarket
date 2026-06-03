@@ -597,7 +597,7 @@ export default function OrderDetailPage({
       };
 
       script.onload = () => {
-        console.log("[Midtrans] ✅ Snap.js loaded successfully");
+        console.log("[Midtrans]  Snap.js loaded successfully");
         console.log(
           "[Midtrans] Window.snap available:",
           !!(window as any).snap,

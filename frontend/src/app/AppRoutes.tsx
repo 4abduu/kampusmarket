@@ -78,6 +78,7 @@ function ChatPageWrapper({
 }) {
   const [searchParams] = useSearchParams();
   const initialContextId = searchParams.get("productId") ?? undefined;
+  const initialSellerId = searchParams.get("sellerId") ?? undefined;
   const actionParam = searchParams.get("action");
   const initialChatAction: "chat" | "nego" | undefined =
     actionParam === "nego"
@@ -92,6 +93,7 @@ function ChatPageWrapper({
     <ChatPage
       onNavigate={onNavigate}
       initialContextId={initialContextId}
+      initialSellerId={initialSellerId}
       initialChatAction={initialChatAction}
       initialBuyerId={initialBuyerId}
       currentUser={currentUser}
@@ -199,7 +201,7 @@ function PublicRoute({
     !isAccessingForgotPassword
   ) {
     const stateFrom = (location.state as { from?: string } | null)?.from;
-    // ✅ Dari dev-abdu: cegah redirect ke protected route setelah login
+    //  Dari dev-abdu: cegah redirect ke protected route setelah login
     let previousPath =
       stateFrom || sessionStorage.getItem("lastNonAuthPath") || "/";
 
@@ -276,7 +278,7 @@ export default function AppRoutes({
     }
   }, [location.pathname, location.search]);
 
-  // ✅ Dari dev-abdu: scroll restoration
+  //  Dari dev-abdu: scroll restoration
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";

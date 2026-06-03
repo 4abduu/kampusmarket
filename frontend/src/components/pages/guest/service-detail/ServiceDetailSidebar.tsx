@@ -55,11 +55,9 @@ export default function ServiceDetailSidebar({
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const [liveRating, setLiveRating] = useState(service.rating || 0);
 
-  // Listen to realtime review updates to update rating
   useEffect(() => {
     if (!service?.id) return;
-    
-    // Also initialize with current prop value in case it changes
+
     setLiveRating(service.rating || 0);
 
     const channel = getEcho().channel(`product.${service.id}`);
@@ -76,7 +74,6 @@ export default function ServiceDetailSidebar({
 
   const serviceShareUrl = `https://kampusmarket.id/s/${service.id}`;
 
-  // Check if service is already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
@@ -92,7 +89,7 @@ export default function ServiceDetailSidebar({
 
   const toggleFavorite = async () => {
     if (isLoadingFavorite) return;
-    
+
     try {
       setIsLoadingFavorite(true);
       if (isFavorited) {
@@ -108,7 +105,7 @@ export default function ServiceDetailSidebar({
           description: `${service.title} telah masuk ke favorit.`,
           action: {
             label: "Lihat Favorit",
-            onClick: () => onNavigate("favorites")
+            onClick: () => onNavigate("favorites"),
           },
         });
       }
@@ -247,8 +244,8 @@ export default function ServiceDetailSidebar({
           {isOwner ? (
             <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 text-center space-y-3">
               <p className="text-primary-800 dark:text-primary-200 font-medium">Ini adalah layanan Anda</p>
-              <Button 
-                className="w-full bg-primary-600 hover:bg-primary-700" 
+              <Button
+                className="w-full bg-primary-600 hover:bg-primary-700"
                 onClick={() => onNavigate("dashboard", "products")}
               >
                 Kelola Layanan
@@ -297,7 +294,7 @@ export default function ServiceDetailSidebar({
 
       <Card>
         <CardContent className="p-6">
-          <div 
+          <div
             className="flex items-center gap-3 mb-4 cursor-pointer hover:opacity-70 transition-opacity"
             onClick={() => service.seller?.id && onNavigate("profile", service.seller.id)}
             role="button"
@@ -343,7 +340,7 @@ export default function ServiceDetailSidebar({
               </p>
               <p className="text-muted-foreground">Rating</p>
             </div>
-             <div>
+            <div>
               <p className="font-bold text-lg uppercase">
                 {service.seller.facultyCode || service.seller.facultyName || "N/A"}
               </p>
@@ -351,16 +348,23 @@ export default function ServiceDetailSidebar({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={() => onNavigate("profile", service.seller?.id)}>
+          {isOwner ? (
+            <Button variant="outline" className="w-full" onClick={() => onNavigate("profile", service.seller?.id)}>
               <User className="h-4 w-4 mr-2" />
               Lihat Profil
             </Button>
-            <Button variant="outline" onClick={() => openWhatsApp(service.seller?.phone, service.seller?.name || 'Penyedia', service.title, true)}>
-              <Phone className="h-4 w-4 mr-2" />
-              WhatsApp
-            </Button>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => onNavigate("profile", service.seller?.id)}>
+                <User className="h-4 w-4 mr-2" />
+                Lihat Profil
+              </Button>
+              <Button variant="outline" onClick={() => openWhatsApp(service.seller?.phone, service.seller?.name || 'Penyedia', service.title, true)}>
+                <Phone className="h-4 w-4 mr-2" />
+                WhatsApp
+              </Button>
+            </div>
+          )}
 
           {!isOwner && (
             <Button variant="ghost" size="sm" className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => onAction(onOpenReport)}>

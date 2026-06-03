@@ -24,10 +24,7 @@ interface ProfileSidebarProps {
   totalReviews: number;
   memberSince: string;
   userBio?: string | null;
-  onNavigate: (page: string, data?: string | { userId?: string; productId?: string }) => void;
-  isLoadingProducts?: boolean;
-  hasProducts?: boolean;
-  firstProductId?: string;
+  onNavigate: (page: string, data?: string | { userId?: string; productId?: string; sellerId?: string }) => void;
   onOpenReport?: () => void;
 }
 
@@ -41,9 +38,6 @@ export default function ProfileSidebar({
   memberSince,
   userBio,
   onNavigate,
-  isLoadingProducts = false,
-  hasProducts = false,
-  firstProductId,
   onOpenReport,
 }: ProfileSidebarProps) {
   // Variabel kalkulasi pintar untuk safety check gabungan
@@ -110,8 +104,7 @@ export default function ProfileSidebar({
               <>
                 <Button
                   className="w-full bg-primary-600 hover:bg-primary-700"
-                  onClick={() => firstProductId && onNavigate("chat", { productId: firstProductId })}
-                  disabled={isLoadingProducts || !hasProducts || !firstProductId}
+                  onClick={() => onNavigate("chat", { sellerId: user.id })}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Hubungi Penjual
