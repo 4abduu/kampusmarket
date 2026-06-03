@@ -31,15 +31,13 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // Auto mark-all-read sekali saat halaman notif admin dibuka
   useEffect(() => {
-    if (notifications.length === 0) return;
-    const timer = setTimeout(() => {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-      unreadIds.forEach(id => markAsRead(id));
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [notifications, markAsRead]);
+    if (unreadCount > 0) {
+      markAllAsRead();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredNotifications = notifications.filter((n) => {
     if (filter === "all") return true;
@@ -56,7 +54,10 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
       markAsRead(notification.id);
     }
 
-    if (notification.actionPage) {
+    // Navigate ke tab admin yang sesuai berdasarkan actionTab dari notifikasi
+    if (notification.actionTab) {
+      onNavigate(`admin/${notification.actionTab}`);
+    } else if (notification.actionPage) {
       onNavigate(notification.actionPage);
     }
   };
@@ -211,7 +212,7 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                                 {notification.time}
                               </p>
                               {notification.action && (
-                                <span className="text-xs text-amber-600 flex items-center gap-1">
+                                <span className="text-xs text-blue-500 flex items-center gap-1">
                                   {notification.action}
                                   <ChevronRight className="h-3 w-3" />
                                 </span>

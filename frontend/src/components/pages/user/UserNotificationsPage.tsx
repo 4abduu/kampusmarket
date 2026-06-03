@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { MouseEvent } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import UserNotificationsHeader from "@/components/pages/user/notifications/UserNotificationsHeader";
@@ -23,16 +23,14 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
     deleteNotification,
   } = useNotificationStore();
 
+  // Auto mark-all-read sekali saat halaman notif dibuka
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const hasUnread = notifications.some((notification) => !notification.read);
-      if (hasUnread) {
-        markAllAsRead();
-      }
-    }, 2000);
+    if (unreadCount > 0) {
+      markAllAsRead();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [notifications, markAllAsRead]);
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notification) => {
@@ -47,20 +45,53 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
       markAsRead(notification.id);
     }
 
-    if (notification.type === "order" && notification.orderId) {
+    // Gunakan notification.link dari backend sebagai sumber kebenaran routing
+    if (notification.link) {
+      // Untuk order-detail, chat, rating, wallet — langsung navigate via link
+      const link = notification.link;
+
+      if (link.startsWith("/order-detail/")) {
+        const id = link.replace("/order-detail/", "");
+        onNavigate("order-detail", id);
+        return;
+      }
+
+      if (link.startsWith("/rating/")) {
+        const id = link.replace("/rating/", "");
+        onNavigate("rating", id);
+        return;
+      }
+
+      if (link === "/chat") {
+        onNavigate("chat");
+        return;
+      }
+
+      if (link === "/dashboard/wallet" || link.startsWith("/wallet")) {
+        onNavigate("dashboard", "wallet");
+        return;
+      }
+    }
+
+    // Fallback ke orderId jika ada (untuk order & payment)
+    if ((notification.type === "order" || notification.type === "payment" || notification.type === "system") && notification.orderId) {
       onNavigate("order-detail", notification.orderId);
       return;
     }
 
     if (notification.type === "chat") {
-      // Buka chat list saja — chat dari notifikasi tidak perlu auto-open via productId
-      // karena chatId bukan productId. User bisa klik chat dari list.
       onNavigate("chat");
       return;
     }
 
     if (notification.type === "review" && notification.orderId) {
       onNavigate("rating", notification.orderId);
+      return;
+    }
+
+    if (notification.type === "withdrawal") {
+      onNavigate("dashboard", "wallet");
+      return;
     }
   };
 

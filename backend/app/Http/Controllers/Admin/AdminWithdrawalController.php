@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Traits\ApiResponse;
+use App\Helpers\NotificationHelper;
 use App\Models\Withdrawal;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -55,6 +56,9 @@ class AdminWithdrawalController extends Controller
 
                 return $withdrawal;
             });
+
+            // Notify user that withdrawal is approved and processing
+            NotificationHelper::withdrawalPending($withdrawal->user_id, $withdrawal);
 
             return $this->success(
                 new WithdrawalResource($withdrawal),
@@ -134,6 +138,9 @@ class AdminWithdrawalController extends Controller
                 return $withdrawal;
             });
 
+            // Notify user that withdrawal was rejected
+            NotificationHelper::withdrawalFailed($withdrawal->user_id, $withdrawal, $request->rejectionReason);
+
             return $this->success(
                 new WithdrawalResource($withdrawal),
                 'Withdrawal ditolak dan dana dikembalikan'
@@ -187,6 +194,9 @@ class AdminWithdrawalController extends Controller
                 return $withdrawal;
             });
 
+            // Notify user that withdrawal failed and funds were refunded
+            NotificationHelper::withdrawalFailed($withdrawal->user_id, $withdrawal, $request->failureReason);
+
             return $this->success(
                 new WithdrawalResource($withdrawal),
                 'Withdrawal gagal dan dana dikembalikan'
@@ -218,6 +228,9 @@ class AdminWithdrawalController extends Controller
 
                 return $withdrawal;
             });
+
+            // Notify user that withdrawal completed successfully
+            NotificationHelper::withdrawalSuccess($withdrawal->user_id, $withdrawal);
 
             return $this->success(
                 new WithdrawalResource($withdrawal),

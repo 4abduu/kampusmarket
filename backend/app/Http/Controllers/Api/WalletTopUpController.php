@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\NotificationHelper;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -249,18 +250,7 @@ class WalletTopUpController extends Controller
                     'status' => 'completed',
                 ]);
 
-                \App\Jobs\SendUserNotification::dispatch(
-                    userId:  $user->id,
-                    type:    'payment',
-                    title:   'Top Up Saldo Berhasil',
-                    message: 'Top up saldo Rp ' . number_format($payment->gross_amount, 0, ',', '.') . ' berhasil. Saldo Anda sekarang Rp ' . number_format($user->wallet_balance, 0, ',', '.'),
-                    link:    '/dashboard/wallet',
-                    data:    [
-                        'type'    => 'wallet_topup',
-                        'amount'  => $payment->gross_amount,
-                        'balance' => $user->wallet_balance,
-                    ],
-                );
+                NotificationHelper::topupSuccess($user->id, $payment->gross_amount);
             }
 
             return response()->json([

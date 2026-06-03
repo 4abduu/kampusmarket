@@ -1,18 +1,27 @@
 import { create } from "zustand";
 import { Package, MessageCircle, CheckCircle } from "lucide-react";
 
+export interface NotificationAction {
+  label: string;
+  icon: string;
+  color: 'primary' | 'secondary' | 'info' | 'warning' | 'danger';
+}
+
 export interface Notification {
   id: string;
-  type: "order" | "chat" | "review" | "system";
+  type: "order" | "chat" | "review" | "system" | "payment" | "withdrawal";
   title: string;
   message: string;
   time: string;
+  timeRelative: string; // "2 jam yang lalu", "Kemarin"
   read: boolean;
   icon: any;
   iconColor: string;
   iconBg: string;
   orderId?: string;
   chatId?: string;
+  link?: string;
+  action?: NotificationAction; // Button action info
 }
 
 interface NotificationState {
@@ -49,7 +58,6 @@ export const useNotificationStore = create<NotificationState & {
 
       const data = notificationsArray.map((n: any) => {
         let type = n.type;
-        if (type === 'payment') type = 'order';
         
         let icon = Package;
         let iconColor = "text-blue-500";
@@ -68,6 +76,38 @@ export const useNotificationStore = create<NotificationState & {
           icon = MessageCircle;
           iconColor = "text-purple-500";
           iconBg = "bg-purple-100";
+        } else if (type === 'payment' || type === 'withdrawal') {
+          icon = Package;
+          iconColor = "text-green-500";
+          iconBg = "bg-green-100";
+        } else if (type === 'review') {
+          icon = Package;
+          iconColor = "text-yellow-500";
+          iconBg = "bg-yellow-100";
+        }
+        
+        // Use relative time from API (e.g., "2 jam yang lalu")
+        const timeRelative = n.createdAtRelative || n.created_at_relative || "Baru saja";
+        
+        // Fallback to calculating time if API doesn't provide it
+        let timeStr = timeRelative;
+        if (timeStr === "Baru saja" && n.createdAt) {
+          try {
+            const date = new Date(n.createdAt);
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) timeStr = "Baru saja";
+            else if (diffMins < 60) timeStr = `${diffMins} menit yang lalu`;
+            else if (diffHours < 24) timeStr = `${diffHours} jam yang lalu`;
+            else if (diffDays === 1) timeStr = "Kemarin";
+            else timeStr = `${diffDays} hari yang lalu`;
+          } catch (err) {
+            // Fallback to API time
+          }
         }
         
         return {
@@ -75,13 +115,16 @@ export const useNotificationStore = create<NotificationState & {
           type: type,
           title: n.title,
           message: n.message,
-          time: n.createdAt || n.created_at, // Handle both camelCase and snake_case
-          read: n.isRead !== undefined ? n.isRead : n.is_read, // Handle both camelCase and snake_case
+          time: n.createdAt || "",
+          timeRelative: timeStr,
+          read: n.isRead !== undefined ? n.isRead : n.is_read,
           icon,
           iconColor,
           iconBg,
+          link: n.link,
           orderId: n.data?.order_id,
           chatId: n.data?.chat_id,
+          action: n.action, // Action button info from API
         };
       });
       set({ notifications: data, unreadCount: data.filter((n: any) => !n.read).length });
@@ -178,11 +221,8 @@ export const useNotificationStore = create<NotificationState & {
       }
     });
 
-    // Polling fallback: fetch unread count every 30 seconds as a defensive safety net
+    // Polling removed - using Pusher/Echo for real-time updates
     if (pollingIntervalId) clearInterval(pollingIntervalId);
-    pollingIntervalId = setInterval(() => {
-      get().fetchUnreadCount();
-    }, 30000);
   },
 
   cleanupEcho: () => {

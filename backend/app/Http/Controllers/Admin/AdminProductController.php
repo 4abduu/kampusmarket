@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Http\Resources\ProductResource;
+use App\Helpers\NotificationHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -160,14 +161,7 @@ class AdminProductController extends Controller
         $product->delete();
 
         // Notify seller (async via queue)
-        \App\Jobs\SendUserNotification::dispatch(
-            userId:  $product->seller_id,
-            type:    \App\Enums\NotificationType::SYSTEM->value,
-            title:   'Produk Dihapus oleh Admin',
-            message: "Produk Anda '{$product->title}' telah dihapus oleh Admin dengan alasan: " . $validated['delete_reason'],
-            link:    null,
-            data:    [],
-        );
+        NotificationHelper::adminProductDeleted($product->seller_id, $product, $validated['delete_reason']);
 
         Log::info('[AdminProductController] Product deleted', [
             'product_id' => $product->uuid,

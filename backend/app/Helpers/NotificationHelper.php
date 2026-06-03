@@ -1,0 +1,462 @@
+<?php
+
+namespace App\Helpers;
+
+use App\Models\Notification;
+use App\Enums\NotificationType;
+use App\Enums\CancelReason;
+use App\Jobs\SendAdminNotification;
+use App\Jobs\SendUserNotification;
+
+/**
+ * Centralized Notification Helper
+ *
+ * Mengurus semua notification creation dengan format konsisten dan tipe button yang tepat.
+ */
+class NotificationHelper
+{
+    // ─────────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Format alasan pembatalan dari enum value (misal "changed_mind")
+     * menjadi label yang rapi (misal "Berubah pikiran").
+     * Jika nilai tidak dikenali sebagai enum, kembalikan string aslinya.
+     */
+    public static function formatCancelReason(string $reason): string
+    {
+        try {
+            return CancelReason::from($reason)->label();
+        } catch (\ValueError) {
+            // Bukan nilai enum yang dikenal — kembalikan apa adanya
+            return $reason;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // ORDER NOTIFICATIONS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Pesanan Baru - untuk Seller
+     */
+    public static function orderNew(int $userId, $order): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Pesanan Baru',
+            message: "Anda menerima pesanan baru untuk '{$order->product_title}'. Total: Rp " . number_format($order->total_price, 0, ',', '.'),
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'view_order'],
+        );
+    }
+
+    /**
+     * Pesanan Dikonfirmasi - untuk Buyer
+     */
+    public static function orderConfirmed(int $userId, $order): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Pesanan Dikonfirmasi',
+            message: "Penjual telah mengkonfirmasi pesanan Anda untuk '{$order->product_title}'.",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'view_order'],
+        );
+    }
+
+    /**
+     * Ongkos Kirim Ditetapkan - untuk Buyer
+     */
+    public static function shippingFeeSet(int $userId, $order, $fee): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Ongkos Kirim Ditetapkan',
+            message: "Penjual telah menetapkan ongkos kirim: Rp " . number_format($fee, 0, ',', '.') . ". Silakan lanjut ke pembayaran.",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'proceed_payment'],
+        );
+    }
+
+    /**
+     * Penawaran Harga - untuk Buyer
+     */
+    public static function priceOffer(int $userId, $order, $price): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Penawaran Harga Baru',
+            message: "Penjual memberikan penawaran harga: Rp " . number_format($price, 0, ',', '.') . ". Terima atau tolak?",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'decide_price_offer'],
+        );
+    }
+
+    /**
+     * Penawaran Diterima - untuk Seller
+     */
+    public static function priceOfferAccepted(int $userId, $order, $price): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Penawaran Diterima',
+            message: "Pembeli menyetujui penawaran harga Anda: Rp " . number_format($price, 0, ',', '.'),
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'continue_order'],
+        );
+    }
+
+    /**
+     * Penawaran Ditolak - untuk Seller
+     */
+    public static function priceOfferRejected(int $userId, $order): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Penawaran Ditolak',
+            message: "Pembeli menolak penawaran harga Anda. Silakan berikan penawaran baru.",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'make_new_offer'],
+        );
+    }
+
+    /**
+     * Pembayaran Berhasil - untuk Seller
+     */
+    public static function paymentReceived(int $userId, $order): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::PAYMENT->value,
+            title: 'Pembayaran Berhasil',
+            message: "Pembayaran untuk pesanan '{$order->product_title}' diterima. Total: Rp " . number_format($order->total_price, 0, ',', '.'),
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'view_order'],
+        );
+    }
+
+    /**
+     * Pesanan Dikirim/Layanan Selesai - untuk Buyer
+     */
+    public static function orderShipped(int $userId, $order, bool $isService = false): void
+    {
+        $title = $isService ? 'Layanan Selesai' : 'Pesanan Dikirim';
+        $message = $isService
+            ? "Penyedia jasa telah menyelesaikan layanan. Silakan konfirmasi penerimaan jika sudah sesuai."
+            : "Pesanan Anda telah dikirim. Silakan lacak pengiriman dan konfirmasi penerimaan.";
+
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: $title,
+            message: $message,
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'track_and_confirm'],
+        );
+    }
+
+    /**
+     * Pesanan Selesai - untuk Seller
+     */
+    public static function orderCompleted(int $userId, $order): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::ORDER->value,
+            title: 'Pesanan Selesai',
+            message: "Pembeli telah mengkonfirmasi penerimaan pesanan '{$order->product_title}'. Dana telah diteruskan ke saldo Anda.",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'view_order'],
+        );
+    }
+
+    /**
+     * Pesanan Dibatalkan - untuk kedua pihak
+     */
+    public static function orderCancelled(int $userId, $order, string $cancelReason, string $cancelledBy): void
+    {
+        $formattedReason = self::formatCancelReason($cancelReason);
+
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::SYSTEM->value,
+            title: 'Pesanan Dibatalkan',
+            message: "$cancelledBy membatalkan pesanan '{$order->product_title}'. Alasan: $formattedReason",
+            link: "/order-detail/{$order->uuid}",
+            data: ['order_id' => $order->uuid, 'action' => 'view_cancellation_details'],
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PAYMENT NOTIFICATIONS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Top-up Berhasil - untuk User
+     */
+    public static function topupSuccess(int $userId, $amount): void
+    {
+        Notification::create([
+            'user_id' => $userId,
+            'type' => NotificationType::PAYMENT->value,
+            'title' => 'Top-up Berhasil',
+            'message' => "Saldo Anda bertambah: Rp " . number_format($amount, 0, ',', '.'),
+            'link' => '/dashboard/wallet',
+            'data' => ['action' => 'view_wallet', 'amount' => $amount],
+        ]);
+    }
+
+    /**
+     * Penarikan Saldo Pending - untuk User
+     */
+    public static function withdrawalPending(int $userId, $withdrawal): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::WITHDRAWAL->value,
+            title: 'Penarikan Diproses',
+            message: "Permintaan penarikan Anda sebesar Rp " . number_format($withdrawal->amount, 0, ',', '.') . " sedang diproses.",
+            link: "/dashboard/wallet",
+            data: ['withdrawal_id' => $withdrawal->uuid, 'action' => 'view_withdrawal_status'],
+        );
+    }
+
+    /**
+     * Penarikan Saldo Berhasil - untuk User
+     */
+    public static function withdrawalSuccess(int $userId, $withdrawal): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::WITHDRAWAL->value,
+            title: 'Penarikan Berhasil',
+            message: "Penarikan sebesar Rp " . number_format($withdrawal->amount, 0, ',', '.') . " telah masuk ke rekening Anda.",
+            link: "/dashboard/wallet",
+            data: ['withdrawal_id' => $withdrawal->uuid, 'action' => 'view_history'],
+        );
+    }
+
+    /**
+     * Penarikan Saldo Ditolak - untuk User
+     */
+    public static function withdrawalFailed(int $userId, $withdrawal, $reason = null): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::SYSTEM->value,
+            title: 'Penarikan Gagal',
+            message: "Penarikan Anda ditolak. " . ($reason ? "Alasan: $reason" : "Silakan periksa kembali data rekening Anda."),
+            link: "/dashboard/wallet",
+            data: ['withdrawal_id' => $withdrawal->uuid, 'action' => 'retry_withdrawal'],
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // REVIEW/RATING NOTIFICATIONS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Review Diterima - untuk Seller/User yang di-review
+     */
+    public static function reviewReceived(int $userId, $review): void
+    {
+        $rating = $review->rating ?? 0;
+
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::REVIEW->value,
+            title: "Review Baru ({$rating}/5)",
+            message: "Anda menerima review baru: \"{$review->comment}\" - dari {$review->reviewer_name}",
+            link: "/rating/{$review->order_uuid}",
+            data: ['review_id' => $review->uuid, 'order_id' => $review->order_uuid, 'action' => 'view_review'],
+        );
+    }
+
+    /**
+     * Balasan Review - untuk Reviewer
+     */
+    public static function reviewReplyReceived(int $userId, $review): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::REVIEW->value,
+            title: 'Ada Balasan untuk Review Anda',
+            message: "Penjual merespons review Anda: \"{$review->reply}\"",
+            link: "/rating/{$review->order_uuid}",
+            data: ['review_id' => $review->uuid, 'order_id' => $review->order_uuid, 'action' => 'view_reply'],
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // CHAT NOTIFICATIONS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Pesan Baru - untuk recipient
+     */
+    public static function newMessage(int $userId, $chat, $sender): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::CHAT->value,
+            title: "Pesan dari {$sender->name}",
+            message: "Ada pesan baru untuk '{$chat->product->title}'",
+            link: "/chat",
+            data: ['chat_id' => $chat->uuid, 'sender_id' => $sender->uuid, 'action' => 'open_chat'],
+        );
+    }
+
+    /**
+     * Penawaran Harga di Chat - untuk recipient
+     */
+    public static function chatPriceOffer(int $userId, $chat, $offerPrice, $sender): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::CHAT->value,
+            title: "Penawaran Harga dari {$sender->name}",
+            message: "Rp " . number_format($offerPrice, 0, ',', '.') . " untuk '{$chat->product->title}'",
+            link: "/chat",
+            data: ['chat_id' => $chat->uuid, 'offer_price' => $offerPrice, 'action' => 'view_offer'],
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // ADMIN NOTIFICATIONS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Permintaan Pembatalan Baru - untuk Admin
+     */
+    public static function adminCancelRequest($cancelRequest): void
+    {
+        $formattedReason = self::formatCancelReason($cancelRequest->reason);
+
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Permintaan Pembatalan',
+            message: "Pembeli meminta pembatalan untuk pesanan '{$cancelRequest->order->product_title}'. Alasan: {$formattedReason}",
+            link: "/admin/cancel-requests",
+            data: [
+                'cancel_request_id' => $cancelRequest->uuid,
+                'order_id' => $cancelRequest->order->uuid,
+                'action' => 'review_cancellation',
+                'action_tab' => 'cancel-requests',
+            ],
+        );
+    }
+
+    /**
+     * Laporan Produk Baru - untuk Admin
+     */
+    public static function adminProductReport($report): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Laporan Produk Baru',
+            message: "Ada laporan produk \"{$report->product->title}\" - Alasan: {$report->reason}",
+            link: "/admin/reports",
+            data: [
+                'report_id' => $report->uuid,
+                'product_id' => $report->product->uuid,
+                'action' => 'view_report_and_product',
+                'action_tab' => 'reports',
+            ],
+        );
+    }
+
+    /**
+     * Laporan User Baru - untuk Admin
+     */
+    public static function adminUserReport($report): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Laporan User Baru',
+            message: "Ada laporan user \"{$report->reported_user->name}\" - Alasan: {$report->reason}",
+            link: "/admin/reports",
+            data: [
+                'report_id' => $report->uuid,
+                'reported_user_id' => $report->reported_user->uuid,
+                'action' => 'view_report_and_user',
+                'action_tab' => 'reports',
+            ],
+        );
+    }
+
+    /**
+     * Penarikan Saldo User - untuk Admin
+     */
+    public static function adminWithdrawalRequest($withdrawal): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Permintaan Penarikan Baru',
+            message: "{$withdrawal->user->name} meminta penarikan Rp " . number_format($withdrawal->amount, 0, ',', '.'),
+            link: "/admin/finance",
+            data: [
+                'withdrawal_id' => $withdrawal->uuid,
+                'user_id' => $withdrawal->user->uuid,
+                'action' => 'process_withdrawal',
+                'action_tab' => 'finance',
+            ],
+        );
+    }
+
+    /**
+     * Produk Verifikasi - untuk Admin
+     */
+    public static function adminProductVerification($product): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Produk Menunggu Verifikasi',
+            message: "Produk baru \"{$product->title}\" dari {$product->seller->name} menunggu verifikasi.",
+            link: "/admin/products",
+            data: [
+                'product_id' => $product->uuid,
+                'seller_id' => $product->seller->uuid,
+                'action' => 'verify_product',
+                'action_tab' => 'products',
+            ],
+        );
+    }
+
+    /**
+     * Produk Dihapus Admin - untuk Seller
+     */
+    public static function adminProductDeleted(int $userId, $product, string $reason): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::SYSTEM->value,
+            title: 'Produk Dihapus oleh Admin',
+            message: "Produk Anda \"{$product->title}\" telah dihapus oleh Admin. Alasan: {$reason}",
+            link: "/dashboard/products",
+            data: ['product_id' => $product->uuid, 'action' => 'view_my_products'],
+        );
+    }
+
+    /**
+     * Peringatan Akun - untuk User
+     */
+    public static function adminUserWarning(int $userId, string $reason): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::SYSTEM->value,
+            title: 'Peringatan Akun',
+            message: "Akun Anda mendapat peringatan dari Admin. Alasan: {$reason}",
+            link: "/dashboard/settings",
+            data: ['action' => 'view_account_settings'],
+        );
+    }
+}

@@ -13,7 +13,7 @@ use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Jobs\SendUserNotification;
+use App\Helpers\NotificationHelper;
 
 class ReviewController extends Controller
 {
@@ -104,14 +104,7 @@ class ReviewController extends Controller
         $order->seller->recalculateRating();
         $order->product->recalculateRating();
 
-        SendUserNotification::dispatch(
-            userId: $review->reviewee_id,
-            type: 'review',
-            title: 'Ulasan Baru',
-            message: "{$user->name} memberikan ulasan bintang {$review->rating} untuk produk Anda.",
-            link: null,
-            data: ['review_id' => $review->uuid],
-        );
+        NotificationHelper::reviewReceived($review->reviewee_id, $review);
 
         return $this->created(
             new ReviewResource($review->load(['reviewer', 'reviewee', 'product', 'images'])),
@@ -216,6 +209,9 @@ class ReviewController extends Controller
         }
 
         $review->respond($request->response);
+
+        // Notify the original reviewer that their review got a reply
+        NotificationHelper::reviewReplyReceived($review->reviewer_id, $review->fresh());
 
         return $this->success(
             new ReviewResource($review->fresh()),

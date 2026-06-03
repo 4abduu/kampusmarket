@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\NotificationHelper;
 use Illuminate\Http\Request;
 use App\Services\MidtransService;
 use App\Models\Payment;
@@ -59,10 +60,8 @@ class PaymentController extends Controller
             ],
         ];
 
-        // Use createSnapToken to obtain token for frontend Snap JS
         $result = $this->midtrans->createSnapToken($payload);
 
-        // store raw response
         $payment->raw_response = $result;
         if (isset($result['token'])) {
             $payment->transaction_id = $result['transaction_id'] ?? null;
@@ -84,7 +83,6 @@ class PaymentController extends Controller
 
     /**
      * Webhook endpoint for Midtrans notifications.
-     * Updates payment record AND order status after successful payment.
      */
     public function webhook(Request $request)
     {
@@ -125,7 +123,6 @@ class PaymentController extends Controller
                 $order->payment_status = 'paid';
                 $order->paid_at = now();
 
-                // Update order status based on shipping type (escrow - no seller transfer)
                 $shippingType = $order->shipping_type;
                 if (is_string($shippingType)) {
                     $shippingType = \App\Enums\ShippingType::tryFrom($shippingType);
@@ -146,6 +143,9 @@ class PaymentController extends Controller
                     'notes' => 'Pembayaran Midtrans berhasil — dana ditahan di escrow',
                     'actor_id' => $order->buyer_id,
                 ]);
+
+                // Notify seller via webhook (no buyer notif needed here, buyer initiated it)
+                NotificationHelper::paymentReceived($order->seller_id, $order);
             }
         } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
             $payment->status = 'failed';
@@ -159,8 +159,6 @@ class PaymentController extends Controller
     /**
      * Client-side payment confirmation.
      * Called by frontend after Midtrans Snap returns onSuccess/onPending.
-     * Verifies payment status with Midtrans API and updates order.
-     * This solves the problem where webhooks can't reach localhost.
      */
     public function confirmPayment(Request $request)
     {
@@ -175,12 +173,10 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Payment not found'], 404);
         }
 
-        // Already processed
         if ($payment->status === 'paid') {
             return response()->json(['success' => true, 'message' => 'Payment already confirmed', 'status' => 'paid']);
         }
 
-        // Query Midtrans API for actual transaction status
         $txStatus = $this->midtrans->getTransactionStatus($paymentUuid);
 
         if (isset($txStatus['error'])) {
@@ -195,13 +191,11 @@ class PaymentController extends Controller
         $statusCode = $txStatus['status_code'] ?? '';
         $fraudStatus = $txStatus['fraud_status'] ?? 'accept';
 
-        // Update payment record
         $payment->raw_response = $txStatus;
         $payment->transaction_id = $txStatus['transaction_id'] ?? $payment->transaction_id;
         $payment->payment_method = $txStatus['payment_type'] ?? $payment->payment_method;
 
         if (in_array($transactionStatus, ['capture', 'settlement'])) {
-            // For capture, only accept if fraud_status is accept
             if ($transactionStatus === 'capture' && $fraudStatus !== 'accept') {
                 $payment->status = 'failed';
                 $payment->save();
@@ -212,7 +206,6 @@ class PaymentController extends Controller
             $payment->paid_at = now();
             $payment->save();
 
-            // Update order status
             $order = $payment->order;
             if ($order && $order->payment_status !== 'paid') {
                 $order->payment_status = 'paid';
@@ -239,14 +232,7 @@ class PaymentController extends Controller
                     'actor_id' => $order->buyer_id,
                 ]);
 
-                \App\Jobs\SendUserNotification::dispatch(
-                    userId: $order->seller_id,
-                    type: 'order',
-                    title: 'Pembayaran Berhasil',
-                    message: "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil. Silakan proses pesanan.",
-                    link: "/orders/{$order->uuid}",
-                    data: ['order_id' => $order->uuid],
-                );
+                NotificationHelper::paymentReceived($order->seller_id, $order);
             }
 
             return response()->json(['success' => true, 'message' => 'Payment confirmed', 'status' => 'paid']);

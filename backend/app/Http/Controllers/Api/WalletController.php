@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpMail;
+use App\Helpers\NotificationHelper;
 use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
@@ -184,17 +185,11 @@ class WalletController extends Controller
                 return $withdrawal;
             });
 
-            // Notify all admins about the new withdrawal request (async via queue)
-            \App\Jobs\SendAdminNotification::dispatch(
-                type:    \App\Enums\NotificationType::WITHDRAWAL->value,
-                title:   'Permintaan Penarikan Dana Baru',
-                message: $request->user()->name . ' meminta penarikan dana sebesar Rp ' . number_format($withdrawal->amount, 0, ',', '.') . '.',
-                link:    '/admin',
-                data:    [
-                    'action_tab'    => 'finance',
-                    'withdrawal_id' => $withdrawal->uuid,
-                ],
-            );
+            // Notify user that their withdrawal is pending
+            NotificationHelper::withdrawalPending($request->user()->id, $withdrawal);
+
+            // Notify all admins about the new withdrawal request
+            NotificationHelper::adminWithdrawalRequest($withdrawal->load('user'));
 
             return response()->json([
                 'success' => true,

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Faculty;
 use App\Http\Resources\UserResource;
+use App\Helpers\NotificationHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -240,14 +241,7 @@ class AdminUserController extends Controller
                 'warning_count' => $user->warning_count + 1,
             ]);
 
-            \App\Jobs\SendUserNotification::dispatch(
-                userId:  $user->id,
-                type:    \App\Enums\NotificationType::SYSTEM->value,
-                title:   'Peringatan Akun',
-                message: 'Akun Anda mendapat peringatan dari Admin: ' . $validated['warning_reason'],
-                link:    null,
-                data:    [],
-            );
+            NotificationHelper::adminUserWarning($user->id, $validated['warning_reason']);
 
             Log::info('[AdminUserController] User warned', [
                 'user_id' => $user->uuid,

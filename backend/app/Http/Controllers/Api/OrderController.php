@@ -24,7 +24,7 @@ use Illuminate\Support\Str;
 use App\Enums\ShippingType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendUserNotification;
+use App\Helpers\NotificationHelper;
 use App\Jobs\ReleaseOrderEscrow;
 
 class OrderController extends Controller
@@ -187,7 +187,7 @@ class OrderController extends Controller
                     'actor_id' => $user->id,
                 ]);
 
-                $this->sendOrderNotification($order->seller_id, 'Pesanan Baru', "Anda menerima pesanan baru untuk produk '{$product->title}'.", $order);
+                NotificationHelper::orderNew($order->seller_id, $order);
 
                 // NOTE: DO NOT increment sold_count here
                 // It will be incremented only when order is COMPLETED (complete() method)
@@ -342,7 +342,7 @@ class OrderController extends Controller
                     'actor_id' => $request->user()->id,
                 ]);
 
-                $this->sendOrderNotification($order->buyer_id, 'Ongkos Kirim Ditetapkan', "Penjual telah menetapkan ongkos kirim sebesar Rp " . number_format($request->shippingFee, 0, ',', '.') . " untuk pesanan Anda. Silakan lanjutkan ke pembayaran.", $order);
+                NotificationHelper::shippingFeeSet($order->buyer_id, $order, $request->shippingFee);
 
                 return $order->fresh();
             });
@@ -397,7 +397,7 @@ class OrderController extends Controller
                     'actor_id' => $request->user()->id,
                 ]);
 
-                $this->sendOrderNotification($order->buyer_id, 'Penawaran Harga', "Penjual memberikan penawaran harga sebesar Rp " . number_format($request->offeredPrice, 0, ',', '.') . ". Silakan konfirmasi.", $order);
+                NotificationHelper::priceOffer($order->buyer_id, $order, $request->offeredPrice);
 
                 return $order->fresh();
             });
@@ -458,7 +458,7 @@ class OrderController extends Controller
                         'actor_id' => $request->user()->id,
                     ]);
 
-                    $this->sendOrderNotification($order->seller_id, 'Penawaran Diterima', "Pembeli telah menyetujui penawaran harga Anda sebesar Rp " . number_format($newFinalPrice, 0, ',', '.') . ".", $order);
+                    NotificationHelper::priceOfferAccepted($order->seller_id, $order, $newFinalPrice);
                 } else {
                     // Reject - back to negotiation or cancel
                     $order->update([
@@ -472,7 +472,7 @@ class OrderController extends Controller
                         'actor_id' => $request->user()->id,
                     ]);
 
-                    $this->sendOrderNotification($order->seller_id, 'Penawaran Ditolak', "Pembeli menolak penawaran harga Anda. Silakan berikan penawaran baru.", $order);
+                    NotificationHelper::priceOfferRejected($order->seller_id, $order);
                 }
 
                 return $order->fresh();
@@ -536,7 +536,7 @@ class OrderController extends Controller
                     'actor_id' => $request->user()->id,
                 ]);
 
-                $this->sendOrderNotification($order->buyer_id, 'Pesanan Dikonfirmasi', "Pesanan Anda untuk '{$product->title}' telah dikonfirmasi oleh penjual.", $order);
+                NotificationHelper::orderConfirmed($order->buyer_id, $order);
 
                 return $order->fresh();
             });
@@ -606,7 +606,7 @@ class OrderController extends Controller
                     'actor_id' => $request->user()->id,
                 ]);
 
-                $this->sendOrderNotification($order->buyer_id, $isService ? 'Layanan Selesai' : 'Pesanan Dikirim', $notes . ". Silakan konfirmasi penerimaan pesanan jika sudah sesuai.", $order);
+                NotificationHelper::orderShipped($order->buyer_id, $order, $isService);
 
                 return $order->fresh();
             });
@@ -768,7 +768,7 @@ class OrderController extends Controller
                     'actor_id' => $request->user()->id,
                 ]);
 
-                $this->sendOrderNotification($order->seller_id, 'Pembayaran Berhasil', "Pembayaran dari pembeli untuk pesanan '{$order->product_title}' telah berhasil (ditahan di escrow sistem). Silakan proses pesanan.", $order);
+NotificationHelper::paymentReceived($order->seller_id, $order);
 
                 return [
                     'type' => 'balance',
@@ -865,7 +865,7 @@ class OrderController extends Controller
                     }
                 }
 
-                $this->sendOrderNotification($order->seller_id, 'Pesanan Selesai', "Pembeli telah mengkonfirmasi penerimaan pesanan '{$order->product_title}'. Dana telah diteruskan ke saldo Anda.", $order);
+                NotificationHelper::orderCompleted($order->seller_id, $order);
 
                 return $order->fresh();
             });
@@ -955,7 +955,7 @@ class OrderController extends Controller
             $otherPartyId = $user->id === $order->buyer_id ? $order->seller_id : $order->buyer_id;
             $partyRole = $user->id === $order->buyer_id ? 'Pembeli' : 'Penjual';
 
-            $this->sendOrderNotification($otherPartyId, 'Pesanan Dibatalkan', "$partyRole telah membatalkan pesanan '{$order->product_title}' dengan alasan: {$request->cancelReason}", $order);
+            NotificationHelper::orderCancelled($otherPartyId, $order, $request->cancelReason, $partyRole);
 
             return $this->success(
                 new OrderResource($order),
@@ -990,17 +990,4 @@ class OrderController extends Controller
         }
     }
 
-    private function sendOrderNotification(int $userId, string $title, string $message, Order $order): void
-    {
-        $orderReference = $order->uuid ?? (string) $order->id;
-
-        SendUserNotification::dispatch(
-            userId: $userId,
-            type: 'order',
-            title: $title,
-            message: $message,
-            link: "/orders/{$orderReference}",
-            data: ['order_id' => $orderReference],
-        );
-    }
 }

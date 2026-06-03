@@ -1162,6 +1162,9 @@ export function useAdminDashboardController() {
         if (financeSubTab === "topups" && !isResourceLoaded("topups")) {
           await loadTopupsData();
         }
+        if (!isResourceLoaded("revenue")) {
+          await loadPlatformRevenueData();
+        }
         if (!stats) {
           await loadStatsFallbackForFinance();
         }

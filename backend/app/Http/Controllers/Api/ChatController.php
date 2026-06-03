@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\MessageSent;
 use App\Events\MessagesRead;
 use App\Events\NewMessageNotification;
+use App\Helpers\NotificationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Message;
@@ -251,9 +252,9 @@ class ChatController extends Controller
 
             // Update summary chat
             $preview = match ($request->type) {
-                'offer' => '💰 Penawaran harga',
-                'image' => '📷 Gambar',
-                'file'  => '📎 File',
+                'offer' => 'Penawaran harga',
+                'image' => 'Gambar',
+                'file'  => 'File',
                 default => mb_strimwidth($request->content ?? '', 0, 80, '…'),
             };
 
@@ -281,6 +282,16 @@ class ChatController extends Controller
 
         if ($receiverUuid) {
             broadcast(new NewMessageNotification($message, $receiverUuid));
+
+            // Persist a notification so it shows in the notification center
+            // (covers the case where the recipient is offline / not in the chat)
+            $receiver = $chat->buyer_id === $userId ? $chat->seller : $chat->buyer;
+            $sender   = $chat->buyer_id === $userId ? $chat->buyer  : $chat->seller;
+            if ($receiver && $message->type->value === 'offer') {
+                NotificationHelper::chatPriceOffer($receiver->id, $chat, $message->offer_price, $sender);
+            } elseif ($receiver && $message->type->value === 'text') {
+                NotificationHelper::newMessage($receiver->id, $chat, $sender);
+            }
         }
 
         return response()->json([
@@ -399,7 +410,7 @@ class ChatController extends Controller
             $sysMsg = Message::create([
                 'chat_id'   => $chat->id,
                 'sender_id' => $userId,
-                'content'   => '✅ Penawaran diterima! Silakan lanjutkan ke pembayaran.',
+                'content'   => 'Penawaran diterima! Silakan lanjutkan ke pembayaran.',
                 'type'      => 'system',
             ]);
 
@@ -451,7 +462,7 @@ class ChatController extends Controller
             $sysMsg = Message::create([
                 'chat_id'   => $chat->id,
                 'sender_id' => $userId,
-                'content'   => '❌ Penawaran ditolak.',
+                'content'   => 'Penawaran ditolak.',
                 'type'      => 'system',
             ]);
 
