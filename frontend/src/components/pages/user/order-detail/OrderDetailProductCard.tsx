@@ -60,7 +60,6 @@ export default function OrderDetailProductCard({
               type={isService ? "jasa" : "barang"}
               className="w-full h-full"
               imageClassName="w-full h-full object-cover transition-transform group-hover:scale-105"
-              preferredSize="thumbnail"
               onError={() => setImageError(true)}
             />
             {isClickable && (

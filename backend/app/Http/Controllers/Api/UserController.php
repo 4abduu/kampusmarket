@@ -109,8 +109,13 @@ class UserController extends Controller
     public function show(string $id): JsonResponse
     {
         $user = User::with(['faculty'])
-            ->where('uuid', $id)
-            ->orWhere('id', $id)
+            ->where(function ($query) use ($id) {
+                if (\Illuminate\Support\Str::isUuid($id)) {
+                    $query->where('uuid', $id);
+                } else {
+                    $query->where('id', $id);
+                }
+            })
             ->firstOrFail();
 
         // Auto-fix: kalau rating 0 tapi punya reviews, recalculate
@@ -169,8 +174,13 @@ class UserController extends Controller
      */
     public function products(string $id, Request $request): JsonResponse
     {
-        $user = User::where('uuid', $id)
-            ->orWhere('id', $id)
+        $user = User::where(function ($query) use ($id) {
+                if (\Illuminate\Support\Str::isUuid($id)) {
+                    $query->where('uuid', $id);
+                } else {
+                    $query->where('id', $id);
+                }
+            })
             ->firstOrFail();
 
         $query = $user->products()
@@ -202,8 +212,13 @@ class UserController extends Controller
      */
     public function reviews(string $id, Request $request): JsonResponse
     {
-        $user = User::where('uuid', $id)
-            ->orWhere('id', $id)
+        $user = User::where(function ($query) use ($id) {
+                if (\Illuminate\Support\Str::isUuid($id)) {
+                    $query->where('uuid', $id);
+                } else {
+                    $query->where('id', $id);
+                }
+            })
             ->firstOrFail();
 
         $query = $user->reviews()

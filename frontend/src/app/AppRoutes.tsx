@@ -599,7 +599,7 @@ export default function AppRoutes({
             <ProtectedRoute
               isLoggedIn={isLoggedIn}
               isLoggingOut={isLoggingOut}
-              element={<OrdersListPage onNavigate={onNavigate} currentUser={currentUser} />}
+              element={<OrdersListPage onNavigate={onNavigate} />}
             />
           }
         />

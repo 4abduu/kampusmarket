@@ -66,7 +66,6 @@ class ProductImage extends Model
 
     /**
      * Derive the base filename (without variant folder or extension) from the stored URL.
-     * e.g. "products/small/abc123_1234567890.webp" → "abc123_1234567890"
      */
     public function getFilenameAttribute(): ?string
     {
@@ -88,41 +87,6 @@ class ProductImage extends Model
         $clean = preg_replace('#^/?storage/#', '', $raw);
         $parts = explode('/', $clean);
         return $parts[0] ?? 'products';
-    }
-
-    /**
-     * Build URLs for all size variants based on the stored filename.
-     *
-     * @return array<string, string>  e.g. { thumbnail: "http://...", small: "...", ... }
-     */
-    public function getVariantUrlsAttribute(): array
-    {
-        $filename = $this->filename;
-        $category = $this->category;
-
-        if (!$filename) {
-            $url = $this->url;
-            return $url ? ['original' => $url] : [];
-        }
-
-        $variants = ['thumbnail', 'small', 'medium', 'large', 'original'];
-        $urls = [];
-
-        foreach ($variants as $variant) {
-            $path = "{$category}/{$variant}/{$filename}.webp";
-            // Check if the variant file actually exists on disk
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-                $urls[$variant] = asset("storage/{$path}");
-            }
-        }
-
-        // If no variants found (e.g. external/seeded image), return primary URL
-        if (empty($urls)) {
-            $url = $this->url;
-            return $url ? ['original' => $url] : [];
-        }
-
-        return $urls;
     }
 
     /**

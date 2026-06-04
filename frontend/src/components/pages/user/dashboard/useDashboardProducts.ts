@@ -169,12 +169,17 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
           ).filter(Boolean)
         }
 
-        await updateProduct(editingProduct.id, payload)
+        const updatedProduct = await updateProduct(editingProduct.id, payload)
+        
+        setUserProducts((previous) => previous.map((product) => (
+          product.id === editingProduct.id ? updatedProduct : product
+        )))
+      } else {
+        // Fallback for mock data testing if no backend
+        setUserProducts((previous) => previous.map((product) => (
+          product.id === editingProduct.id ? editingProduct : product
+        )))
       }
-
-      setUserProducts((previous) => previous.map((product) => (
-        product.id === editingProduct.id ? editingProduct : product
-      )))
 
       setShowEditProductDialog(false)
       setEditingProduct(null)

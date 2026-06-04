@@ -67,10 +67,8 @@ class ImageController extends Controller
 
             return response()->json([
                 'success'  => true,
-                // Primary URL (small variant, relative path for DB storage)
+                // Primary URL
                 'url'      => $imageData['url'],
-                // All variant URLs (relative paths)
-                'urls'     => $imageData['urls'],
                 'filename' => $imageData['filename'],
                 'category' => $category,
                 'alt'      => $alt,

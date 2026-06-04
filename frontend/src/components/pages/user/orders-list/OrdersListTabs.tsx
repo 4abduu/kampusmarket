@@ -10,13 +10,11 @@ import type {
   OrdersTab,
   OrdersViewMode,
 } from "@/components/pages/user/orders-list/ordersList.types";
-import { type User } from "@/lib/mock-data";
 
 interface OrdersListTabsProps {
   orders: OrderListItem[];
   viewMode: OrdersViewMode;
   onNavigate: OrdersListPageNavigate;
-  currentUser?: User | null;
 }
 
 const tabs: Array<{ value: OrdersTab; label: string; emptyMessage: string; emptyIcon: typeof Package }> = [
@@ -28,7 +26,7 @@ const tabs: Array<{ value: OrdersTab; label: string; emptyMessage: string; empty
   { value: "cancelled", label: "Dibatalkan", emptyMessage: "Tidak ada pesanan dibatalkan", emptyIcon: Ban },
 ];
 
-export default function OrdersListTabs({ orders, viewMode, onNavigate, currentUser }: OrdersListTabsProps) {
+export default function OrdersListTabs({ orders, viewMode, onNavigate }: OrdersListTabsProps) {
 
 
   return (
@@ -48,7 +46,7 @@ export default function OrdersListTabs({ orders, viewMode, onNavigate, currentUs
           <TabsContent key={tab.value} value={tab.value}>
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <OrdersListCard key={order.id} order={order} viewMode={viewMode} onNavigate={onNavigate} currentUser={currentUser} />
+                <OrdersListCard key={order.id} order={order} viewMode={viewMode} onNavigate={onNavigate} />
               ))}
 
               {filteredOrders.length === 0 && (

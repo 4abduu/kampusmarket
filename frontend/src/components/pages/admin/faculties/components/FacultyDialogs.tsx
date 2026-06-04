@@ -207,7 +207,7 @@ export default function AdminFacultyDialogs({
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-semibold text-red-700 dark:text-red-300 mb-2">⚠️ Bahaya - Tindakan Ini Berisiko Tinggi!</p>
+                    <p className="font-semibold text-red-700 dark:text-red-300 mb-2">Bahaya - Tindakan Ini Berisiko Tinggi!</p>
                     <ul className="text-sm text-red-600 dark:text-red-400 space-y-1.5">
                       <li className="flex items-start gap-1.5">
                         <span className="text-red-500 mt-1">•</span>

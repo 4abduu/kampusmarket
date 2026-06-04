@@ -257,4 +257,9 @@ class User extends Authenticatable
     {
         return $this->warning_count >= 3;
     }
+
+    public function canSell(): bool
+    {
+        return !$this->isBanned() && !$this->isSuspended() && !$this->has_overdue_debt;
+    }
 }

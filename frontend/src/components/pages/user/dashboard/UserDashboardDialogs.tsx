@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { mockAddresses, mockOrders, type Address as AddressType, type Product } from "@/lib/mock-data"
 import { BANK_OPTIONS, EWALLET_OPTIONS } from "@/components/pages/user/dashboard/constants"
-import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2 } from "lucide-react"
+import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2, TriangleAlert } from "lucide-react"
 import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 import AddProductImagesSection from "@/components/pages/user/add-product/AddProductImagesSection"
 import type { NavigateFn } from "@/app/navigation/types"
@@ -125,7 +125,7 @@ type Props = {
 
   showServicePriceDialog: boolean
   setShowServicePriceDialog: (open: boolean) => void
-  selectedServiceOrder: string | null
+  selectedServiceOrder: any | null
   servicePriceForm: ServicePriceForm
   setServicePriceForm: (form: ServicePriceForm) => void
   handleSubmitServicePrice: () => void
@@ -302,24 +302,60 @@ export default function UserDashboardDialogs({
                     {(editingProduct.priceType || "range") === "fixed" && (
                       <div className="col-span-2">
                         <Label>Harga Jasa (Rp) <span className="text-red-500">*</span></Label>
-                        <Input type="number" value={editingProduct.price || ""} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })} placeholder="100000" />
+                        <Input 
+                          type="text" 
+                          inputMode="numeric"
+                          value={editingProduct.price ? new Intl.NumberFormat("id-ID").format(editingProduct.price) : ""} 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            setEditingProduct({ ...editingProduct, price: parseInt(val, 10) || 0 });
+                          }} 
+                          placeholder="100.000" 
+                        />
                       </div>
                     )}
                     {(editingProduct.priceType || "range") === "starting" && (
                       <div className="col-span-2">
                         <Label>Harga Mulai Dari (Rp) <span className="text-red-500">*</span></Label>
-                        <Input type="number" value={editingProduct.priceMin || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMin: parseInt(e.target.value) || 0 })} placeholder="50000" />
+                        <Input 
+                          type="text" 
+                          inputMode="numeric"
+                          value={editingProduct.priceMin ? new Intl.NumberFormat("id-ID").format(editingProduct.priceMin) : ""} 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            setEditingProduct({ ...editingProduct, priceMin: parseInt(val, 10) || 0 });
+                          }} 
+                          placeholder="50.000" 
+                        />
                       </div>
                     )}
                     {(editingProduct.priceType || "range") === "range" && (
                       <>
                         <div>
                           <Label>Harga Min (Rp) <span className="text-red-500">*</span></Label>
-                          <Input type="number" value={editingProduct.priceMin || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMin: parseInt(e.target.value) || 0 })} placeholder="50000" />
+                          <Input 
+                            type="text" 
+                            inputMode="numeric"
+                            value={editingProduct.priceMin ? new Intl.NumberFormat("id-ID").format(editingProduct.priceMin) : ""} 
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "");
+                              setEditingProduct({ ...editingProduct, priceMin: parseInt(val, 10) || 0 });
+                            }} 
+                            placeholder="50.000" 
+                          />
                         </div>
                         <div>
                           <Label>Harga Max (Rp) <span className="text-red-500">*</span></Label>
-                          <Input type="number" value={editingProduct.priceMax || ""} onChange={(e) => setEditingProduct({ ...editingProduct, priceMax: parseInt(e.target.value) || 0 })} placeholder="150000" />
+                          <Input 
+                            type="text" 
+                            inputMode="numeric"
+                            value={editingProduct.priceMax ? new Intl.NumberFormat("id-ID").format(editingProduct.priceMax) : ""} 
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "");
+                              setEditingProduct({ ...editingProduct, priceMax: parseInt(val, 10) || 0 });
+                            }} 
+                            placeholder="150.000" 
+                          />
                         </div>
                       </>
                     )}
@@ -329,7 +365,16 @@ export default function UserDashboardDialogs({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Harga (Rp) <span className="text-red-500">*</span></Label>
-                    <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })} placeholder="0" />
+                    <Input 
+                      type="text" 
+                      inputMode="numeric"
+                      value={editingProduct.price ? new Intl.NumberFormat("id-ID").format(editingProduct.price) : ""} 
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setEditingProduct({ ...editingProduct, price: parseInt(val, 10) || 0 });
+                      }} 
+                      placeholder="0" 
+                    />
                   </div>
                   <div>
                     <Label>Stok <span className="text-red-500">*</span></Label>
@@ -418,7 +463,7 @@ export default function UserDashboardDialogs({
               </div>
               <div>
                 <Label>Kategori <span className="text-red-500">*</span></Label>
-                <Select value={editingProduct.categoryId || editingProduct.category || ""} onValueChange={(v) => {
+                <Select value={editingProduct.categoryId || (editingProduct.type === "jasa" ? serviceCategories : categories).find(c => c.label === editingProduct.category)?.id || ""} onValueChange={(v) => {
                   const cat = (editingProduct.type === "jasa" ? serviceCategories : categories).find(c => c.id === v);
                   setEditingProduct({ ...editingProduct, category: cat?.label || v, categoryId: v });
                 }}>
@@ -450,7 +495,7 @@ export default function UserDashboardDialogs({
                 <Label>Status Produk <span className="text-red-500">*</span></Label>
                 {editingProduct.type === "barang" && editingProduct.stock === 0 && editingProduct.status !== "sold_out" && (
                   <div className="mb-2 p-2 rounded bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
-                    <p className="text-xs text-amber-700 dark:text-amber-400">⚠️ Stok = 0, status harus "Terjual". Auto-disetting...</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400"><TriangleAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" /> Stok = 0, status harus "Terjual". Auto-disetting...</p>
                   </div>
                 )}
                 <Select 
@@ -501,13 +546,15 @@ export default function UserDashboardDialogs({
                 )}
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 dark:bg-slate-800/50">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Bisa Nego</span>
+              {editingProduct.type === "barang" && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Bisa Nego</span>
+                  </div>
+                  <Switch checked={editingProduct.canNego} onCheckedChange={(checked) => setEditingProduct({ ...editingProduct, canNego: checked })} />
                 </div>
-                <Switch checked={editingProduct.canNego} onCheckedChange={(checked) => setEditingProduct({ ...editingProduct, canNego: checked })} />
-              </div>
+              )}
 
               {editingProduct.type === "barang" && (
                 <div className="space-y-3">
@@ -589,16 +636,17 @@ export default function UserDashboardDialogs({
             if (!editingProduct.title?.trim()) errors.push("Judul harus diisi")
             if (!editingProduct.description?.trim()) errors.push("Deskripsi harus diisi")
             if (!editingProduct.location?.trim()) errors.push("Lokasi harus diisi")
-            if (editingProduct.price <= 0 && editingProduct.type === "barang") errors.push("Harga harus lebih dari 0")
-            if ((editingProduct.priceMin || 0) <= 0 && editingProduct.type === "jasa") errors.push("Harga minimum harus lebih dari 0")
-            if ((editingProduct.images?.length ?? 0) === 0) errors.push("Minimal 1 foto harus diupload")
-            if (editingProduct.type === "barang" && editingProduct.stock < 0) errors.push("Stok tidak boleh negatif")
-            
-            // Shipping/Service validation
             if (editingProduct.type === "barang") {
+              if ((editingProduct.price || 0) <= 0) errors.push("Harga harus lebih dari 0")
+              if ((editingProduct.stock || 0) < 0) errors.push("Stok tidak boleh negatif")
               const hasShipping = editingProduct.isCod || editingProduct.isPickup || editingProduct.isDelivery || (editingProduct.shippingOptions?.length ?? 0) > 0
               if (!hasShipping) errors.push("Minimal pilih satu metode pengiriman")
             } else if (editingProduct.type === "jasa") {
+              if (editingProduct.priceType === "fixed" && (editingProduct.price || 0) <= 0) {
+                errors.push("Harga harus lebih dari 0")
+              } else if ((editingProduct.priceType === "starting" || editingProduct.priceType === "range") && (editingProduct.priceMin || 0) <= 0) {
+                errors.push("Harga minimum harus lebih dari 0")
+              }
               const hasService = editingProduct.isOnline || editingProduct.isOnsite || editingProduct.isHomeService || (editingProduct.shippingOptions?.length ?? 0) > 0
               if (!hasService) errors.push("Minimal pilih satu metode pelayanan")
             }
@@ -927,13 +975,37 @@ export default function UserDashboardDialogs({
             <DialogDescription>Masukkan harga untuk layanan ini berdasarkan kebutuhan pembeli</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {mockOrders.find(o => o.id === selectedServiceOrder)?.serviceNotes && (
+            {selectedServiceOrder?.serviceNotes && (
               <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
                 <p className="text-xs text-purple-600 font-medium mb-1">Kebutuhan Pembeli:</p>
-                <p className="text-sm text-purple-800 dark:text-purple-200 line-clamp-3">{mockOrders.find(o => o.id === selectedServiceOrder)?.serviceNotes}</p>
+                <p className="text-sm text-purple-800 dark:text-purple-200 line-clamp-3">{selectedServiceOrder.serviceNotes}</p>
               </div>
             )}
-            <div className="space-y-2"><Label htmlFor="service-price">Harga Jasa (Rp) *</Label><Input id="service-price" type="number" placeholder="Contoh: 350000" value={servicePriceForm.price} onChange={(e) => setServicePriceForm({ ...servicePriceForm, price: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label htmlFor="service-price">Harga Jasa (Rp) *</Label>
+              <Input id="service-price" type="number" placeholder="Contoh: 350000" value={servicePriceForm.price} onChange={(e) => setServicePriceForm({ ...servicePriceForm, price: e.target.value })} />
+              {(() => {
+                const inputPrice = parseInt(servicePriceForm.price, 10) || 0;
+                const product = selectedServiceOrder?.product;
+                if (!product || !inputPrice) return null;
+
+                const max = product.priceMax || product.price;
+                const min = product.priceMin || product.price;
+                const isRange = product.priceType === 'range';
+                const isStarting = product.priceType === 'starting';
+                
+                if (isRange && max && inputPrice > max) {
+                   return <p className="text-xs text-amber-600 mt-1"><TriangleAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" /> Harga yang Anda masukkan lebih tinggi dari batas maksimal rentang harga ({formatPrice(max)}). Pastikan pembeli setuju.</p>
+                }
+                if ((isRange || isStarting) && min && inputPrice < min) {
+                   return <p className="text-xs text-amber-600 mt-1"><TriangleAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" /> Harga yang Anda masukkan lebih rendah dari batas minimal harga ({formatPrice(min)}).</p>
+                }
+                if (product.priceType === 'fixed' && inputPrice !== product.price) {
+                   return <p className="text-xs text-amber-600 mt-1"><TriangleAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" /> Harga yang Anda masukkan berbeda dari harga tetap yang tertera pada produk ({formatPrice(product.price)}).</p>
+                }
+                return null;
+              })()}
+            </div>
             <div className="space-y-2"><Label htmlFor="service-notes">Catatan (Opsional)</Label><Textarea id="service-notes" placeholder="Contoh: Harga sudah termasuk revisi 2x" value={servicePriceForm.notes} onChange={(e) => setServicePriceForm({ ...servicePriceForm, notes: e.target.value })} rows={2} /></div>
           </div>
           <DialogFooter>

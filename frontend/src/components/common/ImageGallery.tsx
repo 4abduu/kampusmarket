@@ -7,9 +7,7 @@ import {
   ChevronRight,
   Maximize2,
 } from "lucide-react";
-import ProductImage, {
-  type ImageVariants,
-} from "@/components/common/ProductImage";
+import ProductImage from "@/components/common/ProductImage";
 import ImageLightbox from "@/components/common/ImageLightbox";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +15,6 @@ import { cn } from "@/lib/utils";
 interface ImageDetail {
   url: string;
   alt?: string;
-  variants?: ImageVariants;
   isPrimary?: boolean;
 }
 
@@ -67,11 +64,8 @@ export default function ImageGallery({
   const currentDetail = hasDetail ? imagesDetail[selectedImage] : null;
   const currentUrl = currentDetail?.url ?? images?.[selectedImage];
 
-  // For lightbox: use the original (HD) variant or fall back to URL
-  const lightboxSrc =
-    currentDetail?.variants?.original ??
-    currentDetail?.variants?.large ??
-    currentUrl;
+  // For lightbox: use the url directly
+  const lightboxSrc = currentUrl;
 
   const openLightbox = () => setLightboxOpen(true);
 
@@ -126,8 +120,6 @@ export default function ImageGallery({
               className="w-full h-full"
               imageClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               showError={true}
-              variants={currentDetail?.variants}
-              preferredSize="large"
               onError={() => setHasError(true)}
               strokeWidth={fallbackStrokeWidth ?? 2.8}
             />
@@ -220,7 +212,6 @@ export default function ImageGallery({
             {Array.from({ length: imageCount }).map((_, index) => {
               const detail = hasDetail ? imagesDetail[index] : null;
               const thumbUrl =
-                detail?.variants?.thumbnail ??
                 detail?.url ??
                 images[index];
 
@@ -242,8 +233,6 @@ export default function ImageGallery({
                     type={type}
                     className="w-full h-full bg-slate-100 dark:bg-slate-800"
                     imageClassName="w-full h-full object-cover"
-                    variants={detail?.variants}
-                    preferredSize="thumbnail"
                     strokeWidth={2.25}
                   />
                 </button>

@@ -233,7 +233,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
                 console.error("Failed to confirm payment", e)
                 setIsLoadingTopUp(false)
                 toast({
-                  title: "⚠️ Pembayaran Terkirim",
+                  title: "Pembayaran Terkirim",
                   description: "Pembayaran diproses tetapi konfirmasi gagal. Silakan refresh halaman.",
                   variant: "default",
                 })

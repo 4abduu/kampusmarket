@@ -137,6 +137,15 @@ class ProductController extends Controller
             $request->stock ?? 1
         );
 
+        $priceType = $request->priceType ?? 'fixed';
+        $priceMin = $request->price_min ?? $request->priceMin;
+        $priceMax = $request->price_max ?? $request->priceMax;
+        $price = $request->price;
+
+        if ($priceType === 'starting' && $priceMin && !$price) {
+            $price = $priceMin;
+        }
+
         // Create product
         $product = Product::create([
             'seller_id' => $user->id,
@@ -144,11 +153,11 @@ class ProductController extends Controller
             'title' => $request->title,
             'slug' => $slug,
             'description' => $request->description,
-            'price' => (int) $request->price,
+            'price' => (int) $price,
             'original_price' => $request->original_price ? (int) $request->original_price : null,
-            'price_min' => $request->price_min ? (int) $request->price_min : null,
-            'price_max' => $request->price_max ? (int) $request->price_max : null,
-            'price_type' => $request->priceType,
+            'price_min' => $priceMin ? (int) $priceMin : null,
+            'price_max' => $priceMax ? (int) $priceMax : null,
+            'price_type' => $priceType,
             'type' => $request->type,
             'condition' => $request->condition,
             'stock' => $request->stock ?? 1,
@@ -449,11 +458,21 @@ class ProductController extends Controller
         }
 
         // Pricing
-        if ($request->has('price')) $updateData['price'] = $request->price;
-        if ($request->has('priceMin')) $updateData['price_min'] = $request->priceMin;
-        if ($request->has('priceMax')) $updateData['price_max'] = $request->priceMax;
+        $price = $request->price;
+        $priceMin = $request->has('priceMin') ? $request->priceMin : ($request->has('price_min') ? $request->price_min : null);
+        $priceMax = $request->has('priceMax') ? $request->priceMax : ($request->has('price_max') ? $request->price_max : null);
+        $priceType = $request->has('priceType') ? $request->priceType : ($request->has('price_type') ? $request->price_type : null);
+
+        $finalPriceType = $priceType ?? $product->price_type?->value;
+        if ($finalPriceType === 'starting' && $priceMin !== null && empty($price)) {
+            $price = $priceMin;
+        }
+
+        if ($price !== null && $price !== '') $updateData['price'] = (int) $price;
+        if ($priceMin !== null && $priceMin !== '') $updateData['price_min'] = (int) $priceMin;
+        if ($priceMax !== null && $priceMax !== '') $updateData['price_max'] = (int) $priceMax;
         if ($request->has('originalPrice')) $updateData['original_price'] = $request->originalPrice;
-        if ($request->has('priceType')) $updateData['price_type'] = $request->priceType;
+        if ($priceType !== null) $updateData['price_type'] = $priceType;
         if ($request->has('canNego')) $updateData['can_nego'] = $request->canNego;
 
         // Stock & Weight

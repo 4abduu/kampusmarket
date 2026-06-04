@@ -20,28 +20,19 @@ import type {
   OrdersViewMode,
 } from "@/components/pages/user/orders-list/ordersList.types";
 import ProductImage from "@/components/common/ProductImage";
-import { type User } from "@/lib/mock-data";
 
 interface OrdersListCardProps {
   order: OrderListItem;
   viewMode: OrdersViewMode;
   onNavigate: OrdersListPageNavigate;
-  currentUser?: User | null;
 }
 
-export default function OrdersListCard({ order, viewMode, onNavigate, currentUser }: OrdersListCardProps) {
+export default function OrdersListCard({ order, viewMode, onNavigate }: OrdersListCardProps) {
   const statusConfig = getStatusConfig(order.status);
   const StatusIcon = statusConfig.icon;
   const isService = order.productType === "jasa";
   
-  // Gunakan currentUser jika ada untuk memastikan badge pembeli/penjual selalu benar (bahkan saat dicampur)
-  let effectiveViewMode: typeof viewMode = viewMode;
-  if (currentUser) {
-    const isBuyer = order.buyer?.id === currentUser.id || order.buyer?.uuid === currentUser.uuid;
-    effectiveViewMode = isBuyer ? "buyer" : "seller";
-  } else if ((order as any).role) {
-    effectiveViewMode = (order as any).role === 'buyer' ? 'buyer' : 'seller';
-  }
+  const effectiveViewMode = viewMode;
 
   return (
     <Card
@@ -57,7 +48,6 @@ export default function OrdersListCard({ order, viewMode, onNavigate, currentUse
               type={order.productType}
               className="w-full h-full"
               imageClassName="w-full h-full object-cover"
-              preferredSize="thumbnail"
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -140,20 +130,6 @@ export default function OrdersListCard({ order, viewMode, onNavigate, currentUse
                         Bayar
                       </Button>
                     )}
-                    {order.status === "completed" && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="bg-primary-600 hover:bg-primary-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate("rating", order.id);
-                        }}
-                      >
-                        <Star className="h-3 w-3 mr-1" />
-                        Beri Rating
-                      </Button>
-                    )}
                   </>
                 )}
 
@@ -201,6 +177,39 @@ export default function OrdersListCard({ order, viewMode, onNavigate, currentUse
                   </>
                 )}
 
+                {order.status === "completed" && (
+                  <>
+                    {(order as any).isRated || (order as any).hasReview ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate("rating", order.id);
+                        }}
+                      >
+                        <Star className="h-3 w-3 mr-1 fill-current" />
+                        Lihat Rating
+                      </Button>
+                    ) : (
+                      effectiveViewMode === "buyer" && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="bg-primary-600 hover:bg-primary-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate("rating", order.id);
+                          }}
+                        >
+                          <Star className="h-3 w-3 mr-1" />
+                          Beri Rating
+                        </Button>
+                      )
+                    )}
+                  </>
+                )}
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -208,9 +217,9 @@ export default function OrdersListCard({ order, viewMode, onNavigate, currentUse
                     e.stopPropagation();
                     // Buyer: buka chat via productId. Seller: buka chat via productId & buyerId.
                     if (effectiveViewMode === 'buyer') {
-                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, chatAction: 'chat' } as any);
+                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, sellerId: order.seller?.id || order.seller?.uuid, chatAction: 'chat' } as any);
                     } else {
-                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, buyerId: order.buyer?.id || order.buyer?.uuid, chatAction: 'chat' } as any);
+                      onNavigate('chat', { productId: order.product?.id || order.product?.uuid, buyerId: order.buyer?.id || order.buyer?.uuid, sellerId: order.seller?.id || order.seller?.uuid, chatAction: 'chat' } as any);
                     }
                   }}
                 >

@@ -32,11 +32,7 @@ class UpdateProductRequest extends FormRequest
             'categoryId' => ['sometimes', 'exists:categories,uuid'],
 
             // Pricing
-            'priceType' => ['sometimes', 'in:fixed,range,starting'],
-            'price' => ['required_if:priceType,fixed', 'nullable', 'integer', 'min:0'],
             'originalPrice' => ['nullable', 'integer', 'min:0'],
-            'priceMin' => ['required_unless:priceType,fixed', 'nullable', 'integer', 'min:0'],
-            'priceMax' => ['required_if:priceType,range', 'nullable', 'integer', 'min:0', 'gte:priceMin'],
 
             // Negotiation
             'canNego' => ['sometimes', 'boolean'],
@@ -54,6 +50,7 @@ class UpdateProductRequest extends FormRequest
 
         // Barang specific rules
         if ($productType === 'barang') {
+            $rules['price'] = ['sometimes', 'integer', 'min:0'];
             $rules['condition'] = ['sometimes', 'in:baru,bekas'];
             $rules['stock'] = ['sometimes', 'integer', 'min:0'];
             $rules['weight'] = ['nullable', 'integer', 'min:0'];
@@ -71,6 +68,10 @@ class UpdateProductRequest extends FormRequest
 
         // Jasa specific rules
         if ($productType === 'jasa') {
+            $rules['priceType'] = ['sometimes', 'in:fixed,range,starting'];
+            $rules['price'] = ['required_if:priceType,fixed', 'nullable', 'integer', 'min:0'];
+            $rules['priceMin'] = ['required_unless:priceType,fixed', 'nullable', 'integer', 'min:0'];
+            $rules['priceMax'] = ['required_if:priceType,range', 'nullable', 'integer', 'min:0', 'gte:priceMin'];
             $rules['durationMin'] = ['nullable', 'integer', 'min:1'];
             $rules['durationMax'] = ['nullable', 'integer', 'min:1'];
             $rules['durationUnit'] = ['nullable', 'in:jam,hari,minggu,bulan'];

@@ -12,8 +12,8 @@ type Props = {
   formatPrice: (price: number) => string
   getStatusBadge: (status: string) => React.ReactNode
   setShowShippingDialog: (open: boolean | string) => void
-  handleOpenServicePriceDialog: (orderId: string, currentPrice?: number) => void
-  setShowOrderConfirmDialog: (open: boolean) => void
+  handleOpenServicePriceDialog: (order: OrderListItem) => void
+  setShowOrderConfirmDialog: (show: boolean) => void
   handleRejectPrice: (orderId: string) => void
   handleAcceptPrice: (order: OrderListItem) => void
 }
@@ -148,7 +148,7 @@ export default function UserDashboardOrdersTab({
                           </Button>
                         )}
                         {order.status === "waiting_price" && (
-                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleOpenServicePriceDialog(order.id, order.basePrice)}>
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleOpenServicePriceDialog(order)}>
                             <DollarSign className="h-4 w-4 mr-1" />Kirim Penawaran
                           </Button>
                         )}

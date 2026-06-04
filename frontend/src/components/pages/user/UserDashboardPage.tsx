@@ -12,9 +12,8 @@ import {
   ADMIN_FEE_PERCENTAGE,
   calculateAdminFee,
   calculateNetIncome,
-  categories,
-  serviceCategories,
 } from "@/lib/mock-data";
+import { categoriesApi } from "@/lib/api/categories";
 import apiClient from "@/lib/api/client";
 import { getInitialSellerProducts } from "@/components/pages/user/dashboard/seller-products";
 import {
@@ -78,6 +77,37 @@ export default function UserDashboardPage({
     pendingOrders: number;
     walletBalance: number;
   } | null>(null);
+  
+  const [barangCategories, setBarangCategories] = useState<Array<{ id: string; label: string }>>([]);
+  const [jasaCategories, setJasaCategories] = useState<Array<{ id: string; label: string }>>([]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const [barangCats, jasaCats] = await Promise.all([
+          categoriesApi.getCategoriesByType("barang"),
+          categoriesApi.getCategoriesByType("jasa"),
+        ]);
+        
+        setBarangCategories(
+          (barangCats || []).map((cat: any) => ({
+            id: cat.uuid || cat.id,
+            label: cat.name,
+          }))
+        );
+        setJasaCategories(
+          (jasaCats || []).map((cat: any) => ({
+            id: cat.uuid || cat.id,
+            label: cat.name,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
 
   const handleOrderUpdated = () => {
@@ -410,8 +440,8 @@ export default function UserDashboardPage({
         editingProduct={products.editingProduct}
         setEditingProduct={products.setEditingProduct}
         handleSaveProduct={products.handleSaveProduct}
-        categories={categories}
-        serviceCategories={serviceCategories}
+        categories={barangCategories}
+        serviceCategories={jasaCategories}
         showDeleteProductDialog={products.showDeleteProductDialog}
         setShowDeleteProductDialog={products.setShowDeleteProductDialog}
         userProducts={products.userProducts}

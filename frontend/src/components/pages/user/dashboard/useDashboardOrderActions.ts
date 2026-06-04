@@ -28,7 +28,7 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null)
 
   const [showServicePriceDialog, setShowServicePriceDialog] = useState(false)
-  const [selectedServiceOrder, setSelectedServiceOrder] = useState<string | null>(null)
+  const [selectedServiceOrder, setSelectedServiceOrder] = useState<OrderListItem | null>(null)
   const [servicePriceForm, setServicePriceForm] = useState({
     price: "",
     notes: "",
@@ -47,10 +47,10 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
     }
   }
 
-  const handleOpenServicePriceDialog = (orderId: string, currentPrice?: number) => {
-    setSelectedServiceOrder(orderId)
+  const handleOpenServicePriceDialog = (order: OrderListItem) => {
+    setSelectedServiceOrder(order)
     setServicePriceForm({
-      price: currentPrice?.toString() || "",
+      price: order.basePrice?.toString() || "",
       notes: "",
     })
     setShowServicePriceDialog(true)
@@ -61,7 +61,7 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
     const price = parseInt(servicePriceForm.price, 10)
     if (isNaN(price) || price <= 0) return
     try {
-      await offerPrice(selectedServiceOrder, price, servicePriceForm.notes || undefined)
+      await offerPrice(selectedServiceOrder.id, price, servicePriceForm.notes || undefined)
       setShowServicePriceDialog(false)
       setSelectedServiceOrder(null)
       setServicePriceForm({ price: "", notes: "" })

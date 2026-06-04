@@ -138,9 +138,14 @@ export default function OrderDetailPage({
     };
   }, [orderId, fetchOrder]);
 
-  // Auto-detect buyer/seller view based on currentUser
-  const isSellerView = currentUser?.id === order?.seller?.id;
-  const isBuyerView = currentUser?.id === order?.buyer?.id;
+  // Auto-detect buyer/seller view based on order.role or currentUser fallback
+  const isSellerView = (order as any)?.role ? (order as any).role === 'seller' : 
+    (Boolean(order?.seller?.id && currentUser?.id && String(currentUser?.id) === String(order?.seller?.id)) || 
+     Boolean(order?.seller?.uuid && currentUser?.uuid && currentUser?.uuid === order?.seller?.uuid));
+     
+  const isBuyerView = (order as any)?.role ? (order as any).role === 'buyer' : 
+    (Boolean(order?.buyer?.id && currentUser?.id && String(currentUser?.id) === String(order?.buyer?.id)) || 
+     Boolean(order?.buyer?.uuid && currentUser?.uuid && currentUser?.uuid === order?.buyer?.uuid));
   const isService = order?.productType === "jasa";
 
   // Define filtered reasons based on role and type

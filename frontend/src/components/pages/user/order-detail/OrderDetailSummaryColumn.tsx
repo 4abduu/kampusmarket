@@ -205,20 +205,21 @@ export default function OrderDetailSummaryColumn({
       </Card>
 
       <div className="space-y-3">
-          {!isSellerView && (
-          <>
-            {orderCompleted && onRating && (
-              <Button 
-                variant={isRated ? "outline" : "default"}
-                className={isRated ? "w-full" : "w-full bg-primary-600 hover:bg-primary-700"} 
-                size="lg" 
-                onClick={onRating}
-              >
-                <Star className="h-4 w-4 mr-2" />
-                {isRated ? "Lihat Rating" : "Beri Rating & Ulasan"}
-              </Button>
-            )}
+        {/* Rating Section - Both can see if rated, but only buyer can rate */}
+        {orderCompleted && onRating && (isRated || !isSellerView) && (
+          <Button 
+            variant={isRated ? "outline" : "default"}
+            className={isRated ? "w-full" : "w-full bg-primary-600 hover:bg-primary-700"} 
+            size="lg" 
+            onClick={onRating}
+          >
+            <Star className="h-4 w-4 mr-2" />
+            {isRated ? "Lihat Rating" : "Beri Rating & Ulasan"}
+          </Button>
+        )}
 
+        {!isSellerView && (
+          <>
             {(canCancelDirectly || needsCancelRequest) && orderStatus !== "cancelled" && orderStatus !== "completed" && (
               <Button variant="outline" className="w-full text-red-600 border-red-300 hover:bg-red-50" onClick={handleCancelClick}>
                 <XCircle className="h-4 w-4 mr-2" />

@@ -20,19 +20,9 @@ const MAX_SIZE_MB = 2;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
-export interface ImageVariantUrls {
-  thumbnail?: string;
-  small?: string;
-  medium?: string;
-  large?: string;
-  original?: string;
-}
-
 export interface UploadImageResult {
-  /** Primary URL (small variant relative path, for storing in DB) */
+  /** Primary URL */
   url: string;
-  /** All variant relative paths */
-  urls?: ImageVariantUrls;
   /** Base filename without extension */
   filename?: string;
 }
@@ -78,7 +68,6 @@ export async function uploadImage(
   const data = await response.json() as {
     success: boolean;
     url: string;
-    urls?: ImageVariantUrls;
     filename?: string;
     message?: string;
   };
@@ -87,7 +76,7 @@ export async function uploadImage(
     throw new Error(data.message || 'Gagal upload gambar');
   }
 
-  // Backend returns relative path (e.g., 'products/small/abc123.webp')
+  // Backend returns relative path (e.g., 'products/abc123.webp')
   // Prepend backend URL and /storage/ to make it accessible from frontend
   const prependStorage = (relativePath: string) => {
     if (!relativePath) return '';
@@ -105,9 +94,6 @@ export async function uploadImage(
 
   return {
     url: prependStorage(data.url),
-    urls: data.urls ? Object.fromEntries(
-      Object.entries(data.urls).map(([key, val]) => [key, prependStorage(val)])
-    ) as ImageVariantUrls : undefined,
     filename: data.filename,
   };
 }

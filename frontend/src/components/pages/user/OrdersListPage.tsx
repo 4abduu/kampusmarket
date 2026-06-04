@@ -6,17 +6,15 @@ import { Button } from "@/components/ui/button";
 import OrdersListStatusLegend from "@/components/pages/user/orders-list/OrdersListStatusLegend";
 import OrdersListTabs from "@/components/pages/user/orders-list/OrdersListTabs";
 import { getUserOrders, type Order } from "@/lib/api/orders";
-import { type User } from "@/lib/mock-data";
 import { getMyProducts } from "@/lib/api/products";
 import type { OrdersListPageNavigate, OrdersViewMode } from "@/components/pages/user/orders-list/ordersList.types";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrdersListPageProps {
   onNavigate: OrdersListPageNavigate;
-  currentUser?: User | null;
 }
 
-export default function OrdersListPage({ onNavigate, currentUser }: OrdersListPageProps) {
+export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<OrdersViewMode>("buyer");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -108,7 +106,7 @@ export default function OrdersListPage({ onNavigate, currentUser }: OrdersListPa
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <OrdersListTabs orders={orders} viewMode={viewMode} onNavigate={onNavigate} currentUser={currentUser} />
+          <OrdersListTabs orders={orders} viewMode={viewMode} onNavigate={onNavigate} />
         )}
       </div>
     </div>

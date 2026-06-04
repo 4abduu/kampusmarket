@@ -259,8 +259,6 @@ export default function ProductDialogs({
       {lightboxOpen && selectedProduct && selectedProduct.images && (
         <ImageLightbox
           src={
-            selectedProduct.imagesDetail?.[selectedImageIndex]?.variants?.original ??
-            selectedProduct.imagesDetail?.[selectedImageIndex]?.variants?.large ??
             selectedProduct.imagesDetail?.[selectedImageIndex]?.url ??
             selectedProduct.images?.[selectedImageIndex]
           }

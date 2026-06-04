@@ -53,6 +53,16 @@ export default function AddProductPricingSection({
     setFormData({ ...formData, price: "", priceMin: "", priceMax: "" });
   };
 
+  const handleCurrencyChange = (value: string, field: keyof AddProductFormData) => {
+    const numericValue = value.replace(/\D/g, "");
+    if (!numericValue) {
+      setFormData({ ...formData, [field]: "" });
+      return;
+    }
+    const formattedValue = new Intl.NumberFormat("id-ID").format(parseInt(numericValue, 10));
+    setFormData({ ...formData, [field]: formattedValue });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -101,11 +111,12 @@ export default function AddProductPricingSection({
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
                     id="price"
-                    type="number"
-                    placeholder="100000"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="100.000"
                     className="pl-10"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) => handleCurrencyChange(e.target.value, 'price')}
                   />
                 </div>
               </div>
@@ -118,11 +129,12 @@ export default function AddProductPricingSection({
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
                     id="priceMin"
-                    type="number"
-                    placeholder="50000"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="50.000"
                     className="pl-10"
                     value={formData.priceMin}
-                    onChange={(e) => setFormData({ ...formData, priceMin: e.target.value })}
+                    onChange={(e) => handleCurrencyChange(e.target.value, 'priceMin')}
                   />
                 </div>
               </div>
@@ -136,11 +148,12 @@ export default function AddProductPricingSection({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                     <Input
                       id="priceMinJasa"
-                      type="number"
-                      placeholder="50000"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="50.000"
                       className="pl-10"
                       value={formData.priceMin}
-                      onChange={(e) => setFormData({ ...formData, priceMin: e.target.value })}
+                      onChange={(e) => handleCurrencyChange(e.target.value, 'priceMin')}
                     />
                   </div>
                 </div>
@@ -150,11 +163,12 @@ export default function AddProductPricingSection({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                     <Input
                       id="priceMaxJasa"
-                      type="number"
-                      placeholder="150000"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="150.000"
                       className="pl-10"
                       value={formData.priceMax}
-                      onChange={(e) => setFormData({ ...formData, priceMax: e.target.value })}
+                      onChange={(e) => handleCurrencyChange(e.target.value, 'priceMax')}
                     />
                   </div>
                 </div>
@@ -265,11 +279,12 @@ export default function AddProductPricingSection({
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
                     id="price"
-                    type="number"
-                    placeholder="180000"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="180.000"
                     className="pl-10"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) => handleCurrencyChange(e.target.value, 'price')}
                   />
                 </div>
               </div>
@@ -279,11 +294,12 @@ export default function AddProductPricingSection({
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
                   <Input
                     id="originalPrice"
-                    type="number"
-                    placeholder="350000"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="350.000"
                     className="pl-10"
                     value={formData.originalPrice}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                    onChange={(e) => handleCurrencyChange(e.target.value, 'originalPrice')}
                   />
                 </div>
               </div>

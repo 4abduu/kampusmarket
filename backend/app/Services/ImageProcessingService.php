@@ -10,54 +10,33 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\WebpEncoder;
 
 /**
- * ImageProcessingService — Industry-Standard Multi-Variant WebP Pipeline
+ * ImageProcessingService — WebP Image Pipeline
  *
- * Generates multiple size variants from a single uploaded image:
- *   - thumbnail : 150px  (card thumbnails, lists)
- *   - small     : 320px  (mobile cards, chat previews)
- *   - medium    : 640px  (tablet / half-width grids)
- *   - large     : 1024px (desktop detail pages, main gallery)
- *   - original  : full   (zoom / full-screen / download)
+ * Generates a single WebP image from an uploaded image without downscaling (native resolution).
  *
- * All variants are WebP with quality 90 (sweet spot: quality ≈ JPEG q95, size ≈ JPEG q70).
+ * All images are converted to WebP with quality 82.
  * Uses Intervention Image v3.11.8 (ImageManager with GD Driver).
  *
  * Storage layout (public disk):
- *   {category}/thumbnail/{filename}.webp
- *   {category}/small/{filename}.webp
- *   {category}/medium/{filename}.webp
- *   {category}/large/{filename}.webp
- *   {category}/original/{filename}.webp
+ *   {category}/{filename}.webp
  *
- * URL returned to frontend is RELATIVE path (e.g. "products/small/abc123.webp").
+ * URL returned to frontend is RELATIVE path (e.g. "products/abc123.webp").
  * The ProductImage model's accessor prepends asset('storage/...') to make it absolute.
  */
 class ImageProcessingService
 {
     protected string $disk = 'public';
 
-    /**
-     * Size variants: folder => max dimension (longest side).
-     * null = keep original dimensions.
-     */
-    protected const VARIANTS = [
-        'thumbnail' => 150,
-        'small'     => 320,
-        'medium'    => 640,
-        'large'     => 1024,
-        'original'  => null,
-    ];
-
     protected const WEBP_QUALITY = 82;
 
     protected const VALID_CATEGORIES = ['products', 'ratings', 'profiles', 'messages'];
 
     /**
-     * Process an uploaded image: generate all WebP variants.
+     * Process an uploaded image: generate WebP image in original size.
      *
      * @param  string  $tmpPath   Absolute path to the temp file on disk
      * @param  string  $category  Storage sub-folder (products|ratings|profiles|messages)
-     * @return array{filename: string, category: string, url: string, urls: array<string, string>}
+     * @return array{filename: string, category: string, url: string}
      */
     public function processImage(string $tmpPath, string $category = 'products'): array
     {
@@ -78,75 +57,46 @@ class ImageProcessingService
         }
 
         $filename = uniqid() . '_' . time();
-        $urls     = [];
-
-        $variants = self::VARIANTS;
-        if ($category === 'messages') {
-            $variants = [
-                'chat'     => null,
-                'small'    => 320,
-                'medium'   => 640,
-                'original' => null,
-            ];
-        }
-
-        foreach ($variants as $variant => $maxSide) {
-            $dir = "{$category}/{$variant}";
-            Storage::disk($this->disk)->makeDirectory($dir);
-
-            try {
-                // Clone the source for each variant using PHP's clone
-                $image = clone $source;
-
-                // Scale down (preserve aspect ratio) if a max-side is specified
-                // scaleDown() never upscales, only downscales with aspect ratio preserved
-                if ($maxSide !== null) {
-                    $image = $image->scaleDown($maxSide, $maxSide);
-                }
-
-                // Encode as WebP with quality parameter
-                $webp = $image->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
-                $path = "{$dir}/{$filename}.webp";
-                Storage::disk($this->disk)->put($path, (string) $webp);
-
-                // Store the RELATIVE path (no /storage/ prefix).
-                // The model accessor will build the full URL.
-                $urls[$variant] = $path;
-            } catch (Exception $e) {
-                Log::error("Failed to generate image variant", [
-                    'variant' => $variant,
-                    'category' => $category,
-                    'error' => $e->getMessage(),
-                ]);
-                throw new Exception("Gagal membuat varian gambar '{$variant}': " . $e->getMessage());
-            }
+        $path = "{$category}/{$filename}.webp";
+        
+        try {
+            Storage::disk($this->disk)->makeDirectory($category);
+            
+            // Encode as WebP with quality parameter
+            $webp = $source->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
+            Storage::disk($this->disk)->put($path, (string) $webp);
+        } catch (Exception $e) {
+            Log::error("Failed to generate image", [
+                'category' => $category,
+                'error' => $e->getMessage(),
+            ]);
+            throw new Exception("Gagal membuat gambar: " . $e->getMessage());
         }
 
         return [
             'filename' => $filename,
             'category' => $category,
-            // Primary URL points to the 'chat' variant if category is messages, otherwise 'small'
-            'url'      => $category === 'messages' ? $urls['chat'] : $urls['small'],
-            // All variants for frontend <picture>/<srcset> usage
-            'urls'     => $urls,
+            'url'      => $path,
         ];
     }
 
     /**
-     * Delete all variants of an image.
+     * Delete image and any old variants.
      */
     public function deleteImage(string $filename, string $category = 'products'): bool
     {
         try {
-            $variants = array_keys(self::VARIANTS);
-            if ($category === 'messages') {
-                $variants = ['chat', 'small', 'medium', 'original'];
+            $path = "{$category}/{$filename}.webp";
+            if (Storage::disk($this->disk)->exists($path)) {
+                Storage::disk($this->disk)->delete($path);
             }
 
+            // Cleanup old variants if they exist
+            $variants = ['thumbnail', 'small', 'medium', 'large', 'original', 'chat'];
             foreach ($variants as $variant) {
-                $path = "{$category}/{$variant}/{$filename}.webp";
-                if (Storage::disk($this->disk)->exists($path)) {
-                    Storage::disk($this->disk)->delete($path);
+                $varPath = "{$category}/{$variant}/{$filename}.webp";
+                if (Storage::disk($this->disk)->exists($varPath)) {
+                    Storage::disk($this->disk)->delete($varPath);
                 }
             }
 
@@ -161,21 +111,5 @@ class ImageProcessingService
             Log::error("Image deletion failed: " . $e->getMessage());
             return false;
         }
-    }
-
-    /**
-     * Build absolute URLs for all variants from a base filename.
-     * Useful when you need to regenerate the URL map from just the filename.
-     */
-    public function getVariantUrls(string $filename, string $category = 'products'): array
-    {
-        $urls = [];
-        foreach (array_keys(self::VARIANTS) as $variant) {
-            $path = "{$category}/{$variant}/{$filename}.webp";
-            if (Storage::disk($this->disk)->exists($path)) {
-                $urls[$variant] = asset("storage/{$path}");
-            }
-        }
-        return $urls;
     }
 }

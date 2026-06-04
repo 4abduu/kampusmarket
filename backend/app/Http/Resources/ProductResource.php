@@ -126,7 +126,6 @@ class ProductResource extends JsonResource
 
     /**
      * Get image URLs as array (1NF → Array).
-     * Returns 'small' variant URL when available; falls back to the accessor (which handles external URLs).
      */
     protected function getImageUrls(): array
     {
@@ -137,14 +136,13 @@ class ProductResource extends JsonResource
     }
 
     /**
-     * Get detailed image data including all variant URLs for responsive <picture>/<srcset>.
+     * Get detailed image data.
      *
      * Returns array of objects:
      * [
      *   {
-     *     url: "http://…/small/abc.webp",
+     *     url: "http://…/abc.webp",
      *     alt: "Produk X",
-     *     variants: { thumbnail: "…", small: "…", medium: "…", large: "…", original: "…" },
      *     isPrimary: true
      *   },
      *   …
@@ -160,7 +158,6 @@ class ProductResource extends JsonResource
             return [
                 'url'       => $img->url,
                 'alt'       => $img->alt,
-                'variants'  => $img->variant_urls,
                 'isPrimary' => (bool) $img->is_primary,
             ];
         })->toArray();
