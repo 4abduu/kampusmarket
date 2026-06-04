@@ -8,14 +8,14 @@ import OrdersListTabs from "@/components/pages/user/orders-list/OrdersListTabs";
 import { getUserOrders, type Order } from "@/lib/api/orders";
 import { getMyProducts } from "@/lib/api/products";
 import type { OrdersListPageNavigate, OrdersViewMode } from "@/components/pages/user/orders-list/ordersList.types";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface OrdersListPageProps {
   onNavigate: OrdersListPageNavigate;
 }
 
 export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
-  const { toast } = useToast();
+  const { error: toastError } = useAppToast();
   const [viewMode, setViewMode] = useState<OrdersViewMode>("buyer");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,15 +41,11 @@ export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
       setOrders(ordersData);
 
     } catch (err: any) {
-      toast({
-        title: "Gagal memuat pesanan",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
+      toastError("Gagal memuat pesanan", err?.message || "Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
-  }, [viewMode, toast]);
+  }, [viewMode, toastError]);
 
   useEffect(() => {
     checkSellerStatus();

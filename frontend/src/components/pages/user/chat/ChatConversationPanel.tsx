@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,6 @@ import {
   Package,
 } from 'lucide-react';
 import {
-  EMOJIS,
   type ApiChatDetail,
   type ApiChatProduct,
   type ApiMessage,
@@ -249,6 +249,7 @@ export default function ChatConversationPanel({
                     message={msg}
                     currentUserId={currentUserId}
                     chat={chatDetail}
+                    chatProduct={chatProduct}
                     formatPrice={formatPrice}
                     onNavigate={onNavigate}
                     onAcceptOffer={onAcceptOffer}
@@ -274,25 +275,19 @@ export default function ChatConversationPanel({
             </div>
           )}
 
-          {/* ── Emoji picker ── */}
-          {showEmojiPicker && (
-            <div className="px-4 py-2 border-t bg-white dark:bg-slate-800">
-              <div className="flex flex-wrap gap-1">
-                {EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => onEmojiSelect(emoji)}
-                    className="h-8 w-8 flex items-center justify-center text-lg hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ── Input area ── */}
-          <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur">
+          <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur relative">
+            {/* ── Emoji picker ── */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-[calc(100%+0.5rem)] left-2 sm:left-4 z-50 shadow-2xl rounded-lg">
+                <EmojiPicker
+                  onEmojiClick={(emojiObject) => onEmojiSelect(emojiObject.emoji)}
+                  theme={Theme.AUTO}
+                  lazyLoadEmojis={true}
+                  searchPlaceHolder="Cari emoji..."
+                />
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}

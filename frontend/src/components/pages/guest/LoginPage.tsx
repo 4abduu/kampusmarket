@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Package, Mail, Lock, Eye, EyeOff, AlertCircle, Ban, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/config";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface LoginPageProps {
   onNavigate: (page: string, data?: { userName?: string; userEmail?: string }) => void;
@@ -21,15 +22,14 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelection: _onGooglePendingSelection }: LoginPageProps) {
+  const { success, error: toastError } = useAppToast();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showBannedModal, setShowBannedModal] = useState(false);
   const [bannedReason, setBannedReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [googleError, setGoogleError] = useState<string | null>(null);
 
   // Handle Google OAuth redirect-back: /login?error=banned&reason=...
   useEffect(() => {
@@ -39,7 +39,6 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
       if (reason) {
         setBannedReason(decodeURIComponent(reason));
         setShowBannedModal(true);
-        // Bersihkan URL supaya reason tidak kelihatan di address bar
         window.history.replaceState({}, "", window.location.pathname);
       }
     }
@@ -47,7 +46,6 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
 
     try {
@@ -77,26 +75,24 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
       }
 
       const authData = result.data;
-      // Auth token is now stored as HttpOnly cookie automatically by the backend
-      // No need to store in localStorage
-
+      success("Login berhasil", `Selamat datang kembali!`);
       onLogin(authData?.user?.role === "admin" ? "admin" : "user");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat login");
+      toastError(
+        "Login gagal",
+        err instanceof Error ? err.message : "Terjadi kesalahan saat login"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle Google Login - Real Google OAuth flow
   const handleGoogleLogin = async () => {
-    setGoogleError(null);
     setIsGoogleLoading(true);
-
     try {
       window.location.href = `${API_BASE_URL}/auth/google/redirect`;
-    } catch (error) {
-      setGoogleError(error instanceof Error ? error.message : "Login Google gagal");
+    } catch (err) {
+      toastError("Login Google gagal", err instanceof Error ? err.message : undefined);
     } finally {
       setIsGoogleLoading(false);
     }
@@ -157,12 +153,6 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
               )}
             </Button>
 
-            {googleError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
-                {googleError}
-              </div>
-            )}
-
             {/* Info about Google login */}
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
               <div className="flex items-start gap-2">
@@ -183,13 +173,6 @@ export default function LoginPage({ onNavigate, onLogin, onGooglePendingSelectio
                 </span>
               </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
-                {error}
-              </div>
-            )}
 
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">

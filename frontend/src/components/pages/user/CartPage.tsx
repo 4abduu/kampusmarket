@@ -11,11 +11,11 @@ import { computeSubtotal } from "@/components/pages/user/cart/cart.utils";
 import type { CartItem, CartPageProps } from "@/components/pages/user/cart/cart.types";
 import { Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { validateMultipleCheckout } from "@/lib/checkout-validation";
 
 export default function CartPage({ onNavigate }: CartPageProps) {
-  const { toast } = useToast();
+  const { success, error: toastError, warning } = useAppToast();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -25,24 +25,20 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       try {
         setLoading(true);
         const data = await getCart();
-        // data from API is array of { id, product, quantity }
-        // our local CartItem is { product, quantity }
         const formattedItems = data.map(item => ({
-          id: item.id, // we might need the cart item id for updates
+          id: item.id,
           product: item.product,
           quantity: item.quantity
         }));
         
         setCartItems(formattedItems);
-        
-        // Auto-select all items by default
         setSelectedItems(formattedItems.map(item => item.product.id));
 
-        // Update global cart store count
         const totalQty = formattedItems.reduce((sum, item) => sum + item.quantity, 0);
         useCartStore.getState().setCount(totalQty);
       } catch (err) {
         console.error("Failed to fetch cart:", err);
+        toastError("Gagal memuat keranjang", "Silakan muat ulang halaman.");
       } finally {
         setLoading(false);
       }
@@ -62,7 +58,6 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       setSelectedItems((prev) => [...prev, productId]);
       return;
     }
-
     setSelectedItems((prev) => prev.filter((id) => id !== productId));
   };
 
@@ -73,17 +68,16 @@ export default function CartPage({ onNavigate }: CartPageProps) {
     const newQty = Math.max(1, item.quantity + delta);
     
     try {
-      // If we have the cart item ID, use it for update
       const cartItemId = (item as any).id;
       if (cartItemId) {
         await updateCart(cartItemId, newQty);
       }
-      
       setCartItems(prev => prev.map(i => 
         i.product.id === productId ? { ...i, quantity: newQty } : i
       ));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update cart quantity:", err);
+      toastError("Gagal mengubah jumlah", err?.message || "Silakan coba lagi.");
     }
   };
 
@@ -100,10 +94,10 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       setCartItems(prev => prev.map(i => 
         i.product.id === productId ? { ...i, quantity: newQty } : i
       ));
-      // Update global cart store
       useCartStore.getState().fetchCount();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update cart quantity:", err);
+      toastError("Gagal mengubah jumlah", err?.message || "Silakan coba lagi.");
     }
   };
 
@@ -118,10 +112,11 @@ export default function CartPage({ onNavigate }: CartPageProps) {
       }
       setCartItems((prev) => prev.filter((i) => i.product.id !== productId));
       setSelectedItems((prev) => prev.filter((id) => id !== productId));
-      // Update global cart store
       useCartStore.getState().fetchCount();
-    } catch (err) {
+      success("Produk dihapus dari keranjang", item.product.title || (item.product as any).name);
+    } catch (err: any) {
       console.error("Failed to remove item from cart:", err);
+      toastError("Gagal menghapus produk", err?.message || "Silakan coba lagi.");
     }
   };
 
@@ -176,22 +171,16 @@ export default function CartPage({ onNavigate }: CartPageProps) {
                   .map((item) => ({
                     productId: item.product.id,
                     quantity: item.quantity,
-                    product: item.product, // Required for validation
+                    product: item.product,
                     cartItemId: item.id,
                   }));
                 
                 const validation = validateMultipleCheckout(checkoutCartItems as any);
                 if (!validation.valid) {
-                  toast({
-                    title: "Gagal Checkout",
-                    description: validation.error,
-                    variant: "destructive",
-                  });
+                  warning("Tidak bisa checkout", validation.error);
                   return;
                 }
 
-                // Strip the product object back out before storing in localStorage to save space, or just keep it since CheckoutPage needs it.
-                // Actually CheckoutPage fetches data anyway, so we just map to productId and quantity.
                 const storageItems = checkoutCartItems.map(item => ({
                   productId: item.productId,
                   quantity: item.quantity,

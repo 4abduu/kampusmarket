@@ -4,7 +4,7 @@ import { useState } from "react"
 // import { mockOrders } from "@/lib/mock-data"
 import type { OrderListItem } from "@/components/pages/user/orders-list/ordersList.types"
 import { offerPrice, confirmPrice, setShippingFee, payOrder } from '@/lib/api/orders'
-import { useToast } from '@/hooks/use-toast'
+import { useAppToast } from '@/hooks/use-app-toast'
 
 type PaymentRequest = {
   orderId: string
@@ -17,7 +17,7 @@ interface UseDashboardOrderActionsParams {
 }
 
 export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderActionsParams = {}) {
-  const { toast } = useToast()
+  const { success, error: toastError } = useAppToast()
   
   const [selectedShippingOrderId, setSelectedShippingOrderId] = useState<string | null>(null)
   const [showShippingDialog, setShowShippingDialogState] = useState(false)
@@ -65,10 +65,10 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
       setShowServicePriceDialog(false)
       setSelectedServiceOrder(null)
       setServicePriceForm({ price: "", notes: "" })
-      toast({ title: 'Penawaran harga dikirim', description: 'Menunggu konfirmasi pembeli' })
+      success('Penawaran harga dikirim', 'Menunggu konfirmasi pembeli')
       onOrderUpdated?.()
     } catch (err: any) {
-      toast({ title: 'Gagal mengirim penawaran', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+      toastError('Gagal mengirim penawaran', err?.message || 'Terjadi kesalahan')
     }
   }
 
@@ -84,10 +84,10 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
   const handleRejectPrice = async (orderId: string) => {
     try {
       await confirmPrice(orderId, false)
-      toast({ title: 'Harga ditolak', description: 'Penjual akan mendapat notifikasi' })
+      success('Harga ditolak', 'Penjual akan mendapat notifikasi')
       onOrderUpdated?.()
     } catch (err: any) {
-      toast({ title: 'Gagal menolak harga', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+      toastError('Gagal menolak harga', err?.message || 'Terjadi kesalahan')
     }
   }
 
@@ -100,10 +100,10 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
       setShowShippingDialogState(false)
       setShippingFeeState("")
       setSelectedShippingOrderId(null)
-      toast({ title: 'Ongkir berhasil diatur' })
+      success('Ongkir berhasil diatur')
       onOrderUpdated?.()
     } catch (err: any) {
-      toast({ title: 'Gagal mengatur ongkir', description: err?.message || 'Terjadi kesalahan', variant: 'destructive' })
+      toastError('Gagal mengatur ongkir', err?.message || 'Terjadi kesalahan')
     }
   }
 
@@ -113,10 +113,10 @@ export function useDashboardOrderActions({ onOrderUpdated }: UseDashboardOrderAc
       await payOrder(paymentRequest.orderId, 'wallet')
       setShowPaymentDialog(false)
       setPaymentRequest(null)
-      toast({ title: 'Pembayaran berhasil', description: 'Pesanan sedang diproses' })
+      success('Pembayaran berhasil', 'Pesanan sedang diproses')
       onOrderUpdated?.()
     } catch (err: any) {
-      toast({ title: 'Pembayaran gagal', description: err?.message || 'Saldo tidak cukup', variant: 'destructive' })
+      toastError('Pembayaran gagal', err?.message || 'Saldo tidak cukup')
     }
   }
 

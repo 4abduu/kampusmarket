@@ -13,7 +13,7 @@ import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/Pr
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ImageGallery from "@/components/common/ImageGallery";
 import apiClient from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface ServiceDetailPageProps {
   onNavigate: (
@@ -40,7 +40,7 @@ export default function ServiceDetailPage({
   isLoggedIn,
   currentUser,
 }: ServiceDetailPageProps) {
-  const { toast } = useToast();
+  const { success, error: toastError } = useAppToast();
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,11 +71,7 @@ export default function ServiceDetailPage({
 
   const handleReportSubmit = async () => {
     if (!reportReason || !reportDescription) {
-      toast({
-        title: "Laporan belum lengkap",
-        description: "Pilih alasan dan masukkan deskripsi laporan",
-        variant: "destructive",
-      });
+      toastError("Laporan belum lengkap", "Pilih alasan dan masukkan deskripsi laporan");
       return;
     }
 
@@ -85,11 +81,7 @@ export default function ServiceDetailPage({
         : REPORT_SERVICE_REASONS.find((r) => r.id === reportReason)?.label;
 
     if (!finalReason) {
-      toast({
-        title: "Laporan belum lengkap",
-        description: "Alasan laporan tidak boleh kosong",
-        variant: "destructive",
-      });
+      toastError("Laporan belum lengkap", "Alasan laporan tidak boleh kosong");
       return;
     }
 
@@ -102,17 +94,10 @@ export default function ServiceDetailPage({
         type: "service", // Send type as requested
       });
 
-      toast({
-        title: "Laporan berhasil dikirim",
-        description: `Laporan layanan sudah masuk ke admin untuk ditinjau`,
-      });
+      success("Laporan berhasil dikirim", "Laporan layanan sudah masuk ke admin untuk ditinjau");
       setShowReportModal(false);
     } catch (error: any) {
-      toast({
-        title: "Gagal mengirim laporan",
-        description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
+      toastError("Gagal mengirim laporan", error?.response?.data?.message || error?.message || "Terjadi kesalahan");
     }
   };
 

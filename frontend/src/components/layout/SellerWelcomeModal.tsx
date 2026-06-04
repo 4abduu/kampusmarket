@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { PartyPopper } from "lucide-react";
 
 type SellerWelcomeModalProps = {
   open: boolean;
@@ -17,7 +18,7 @@ export default function SellerWelcomeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md mx-4 p-6 text-center animate-in fade-in-0 zoom-in-95">
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center">
-          <span className="text-4xl">🎉</span>
+          <PartyPopper className="h-10 w-10 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           Selamat Bergabung sebagai Seller!

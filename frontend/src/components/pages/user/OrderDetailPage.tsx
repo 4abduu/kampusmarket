@@ -31,7 +31,7 @@ import type { PaymentMethod } from "@/components/pages/user/shared/PaymentMethod
 import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
 import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
 import RatingPromptDialog from "@/components/pages/user/order-detail/RatingPromptDialog";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface OrderDetailPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -44,7 +44,7 @@ export default function OrderDetailPage({
   orderId,
   currentUser,
 }: OrderDetailPageProps) {
-  const { toast } = useToast();
+  const { toast, success, warning, error: toastError } = useAppToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -86,11 +86,7 @@ export default function OrderDetailPage({
       const data = await getOrderDetail(orderId);
       setOrder(data);
     } catch (err: any) {
-      toast({
-        title: "Gagal memuat pesanan",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
+      toastError("Gagal memuat pesanan", err?.message || "Terjadi kesalahan");
       // Redirect to not-found/home if unauthorized or not found
       onNavigate("/not-found");
     } finally {
@@ -337,14 +333,10 @@ export default function OrderDetailPage({
     setActionLoading(true);
     try {
       await confirmOrder(order.id);
-      toast({ title: "Pesanan diterima!" });
+      success("Pesanan diterima!");
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -354,14 +346,10 @@ export default function OrderDetailPage({
     setActionLoading(true);
     try {
       await cancelOrder(order.id, "Ditolak oleh penjual");
-      toast({ title: "Pesanan ditolak" });
+      success("Pesanan ditolak");
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -376,16 +364,12 @@ export default function OrderDetailPage({
         parseInt(inputShippingFee),
         shippingNotes || undefined,
       );
-      toast({ title: "Ongkir berhasil dikirim" });
+      success("Ongkir berhasil dikirim");
       await fetchOrder();
       setInputShippingFee("");
       setShippingNotes("");
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -400,16 +384,12 @@ export default function OrderDetailPage({
         parseInt(servicePriceInput),
         servicePriceNotes || undefined,
       );
-      toast({ title: "Penawaran harga terkirim" });
+      success("Penawaran harga terkirim");
       await fetchOrder();
       setServicePriceInput("");
       setServicePriceNotes("");
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -422,15 +402,11 @@ export default function OrderDetailPage({
     setActionLoading(true);
     try {
       await apiConfirmPrice(order.id, false);
-      toast({ title: "Penawaran ditolak" });
+      success("Penawaran ditolak");
       setShowRejectDialog(false);
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -450,18 +426,12 @@ export default function OrderDetailPage({
     setActionLoading(true);
     try {
       await deliverOrder(order.id);
-      toast({
-        title: isService
+      success(isService
           ? "Layanan dikonfirmasi selesai"
-          : "Barang dikonfirmasi dikirim",
-      });
+          : "Barang dikonfirmasi dikirim");
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -471,16 +441,12 @@ export default function OrderDetailPage({
     setActionLoading(true);
     try {
       await completeOrder(order.id);
-      toast({ title: "Pesanan dikonfirmasi selesai!" });
+      success("Pesanan dikonfirmasi selesai!");
       setShowCompleteConfirmDialog(false);
       // Let the auto-trigger handle showing the rating prompt after refetch
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -499,12 +465,7 @@ export default function OrderDetailPage({
       // Check if snap is loaded
       if (!(window as any).snap) {
         console.error("[Midtrans] Snap.js not loaded yet");
-        toast({
-          title: "Error",
-          description:
-            "Payment gateway belum siap. Silakan refresh dan coba lagi.",
-          variant: "destructive",
-        });
+        toastError("Error", "Payment gateway belum siap. Silakan refresh dan coba lagi.");
         setActionLoading(false);
         return;
       }
@@ -518,10 +479,7 @@ export default function OrderDetailPage({
         (window as any).snap.pay(token, {
           onSuccess: async (result: any) => {
             console.log("[Midtrans] Payment success:", result);
-            toast({
-              title: "Pembayaran berhasil!",
-              description: "Mengonfirmasi pembayaran...",
-            });
+            success("Pembayaran berhasil!", "Mengonfirmasi pembayaran...");
             try {
               if (paymentUuid) {
                 await confirmPaymentClient(paymentUuid);
@@ -534,10 +492,7 @@ export default function OrderDetailPage({
           },
           onPending: async (result: any) => {
             console.log("[Midtrans] Payment pending:", result);
-            toast({
-              title: "⏳ Pembayaran pending",
-              description: "Selesaikan pembayaran Anda untuk melanjutkan.",
-            });
+            warning("Pembayaran pending", "Selesaikan pembayaran Anda untuk melanjutkan.");
             try {
               if (paymentUuid) {
                 await confirmPaymentClient(paymentUuid);
@@ -550,11 +505,7 @@ export default function OrderDetailPage({
           },
           onError: (result: any) => {
             console.error("[Midtrans] Payment error:", result);
-            toast({
-              title: "❌ Pembayaran gagal",
-              description: "Terjadi kesalahan. Silakan coba lagi.",
-              variant: "destructive",
-            });
+            toastError("Pembayaran gagal", "Terjadi kesalahan. Silakan coba lagi.");
             setActionLoading(false);
             fetchOrder();
           },
@@ -566,11 +517,7 @@ export default function OrderDetailPage({
         });
       } catch (error) {
         console.error("[Midtrans] Error calling snap.pay:", error);
-        toast({
-          title: "Error",
-          description: "Gagal membuka payment gateway. Coba lagi.",
-          variant: "destructive",
-        });
+        toastError("Error", "Gagal membuka payment gateway. Coba lagi.");
         setActionLoading(false);
       }
     };
@@ -586,12 +533,7 @@ export default function OrderDetailPage({
       );
 
       if (!clientKey) {
-        toast({
-          title: "❌ Configuration Error",
-          description:
-            "Midtrans client key tidak ditemukan. Hubungi administrator.",
-          variant: "destructive",
-        });
+        toastError("Configuration Error", "Midtrans client key tidak ditemukan. Hubungi administrator.");
         setActionLoading(false);
         return;
       }
@@ -603,12 +545,7 @@ export default function OrderDetailPage({
 
       script.onerror = (error) => {
         console.error("[Midtrans] Failed to load Snap.js:", error);
-        toast({
-          title: "❌ Network Error",
-          description:
-            "Gagal memuat payment gateway. Periksa koneksi internet Anda.",
-          variant: "destructive",
-        });
+        toastError("Network Error", "Gagal memuat payment gateway. Periksa koneksi internet Anda.");
         setActionLoading(false);
       };
 
@@ -642,12 +579,7 @@ export default function OrderDetailPage({
             console.error(
               "[Midtrans] Snap object still not available after wait",
             );
-            toast({
-              title: "Error",
-              description:
-                "Payment gateway tidak dapat dimuat. Refresh halaman dan coba lagi.",
-              variant: "destructive",
-            });
+            toastError("Error", "Payment gateway tidak dapat dimuat. Refresh halaman dan coba lagi.");
             setActionLoading(false);
           }
         }, 500);
@@ -672,7 +604,7 @@ export default function OrderDetailPage({
         ) {
           if (updated.status === "waiting_shipping_fee") {
             // Needs shipping fee first — just accepted price, wait for seller
-            toast({ title: "Harga diterima, menunggu ongkir dari penjual" });
+            success("Harga diterima, menunggu ongkir dari penjual");
             setActionLoading(false);
             return;
           }
@@ -687,15 +619,12 @@ export default function OrderDetailPage({
         if (token) {
           openMidtransSnap(token, paymentUuid);
         } else {
-          toast({
-            title: "Gagal mendapatkan token pembayaran",
-            variant: "destructive",
-          });
+          toastError("Gagal mendapatkan token pembayaran", "");
         }
       } else if (method === "cash") {
         // Cash payment - langsung mark as processing
         await payOrder(order.id, 'cash');
-        toast({ title: "Pembayaran cash diterima. Pesanan dalam proses!" });
+        success("Pembayaran cash diterima. Pesanan dalam proses!");
         await fetchOrder();
       } else {
         // wallet payment
@@ -707,11 +636,7 @@ export default function OrderDetailPage({
           if (balanceResponse.success) {
             const currentBalance = balanceResponse.data.balance;
             if (currentBalance < order.totalPrice) {
-              toast({
-                title: "Saldo tidak mencukupi",
-                description: `Saldo Anda (${formatPrice(currentBalance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`,
-                variant: "destructive",
-              });
+              toastError("Saldo tidak mencukupi", `Saldo Anda (${formatPrice(currentBalance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`);
               setActionLoading(false);
               return;
             }
@@ -719,11 +644,7 @@ export default function OrderDetailPage({
         } catch (e) {
           console.warn("[OrderDetail] Failed to fetch balance, using cached value", e);
           if (balance < order.totalPrice) {
-            toast({
-              title: "Saldo tidak mencukupi",
-              description: `Saldo Anda (${formatPrice(balance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`,
-              variant: "destructive",
-            });
+            toastError("Saldo tidak mencukupi", `Saldo Anda (${formatPrice(balance)}) kurang dari total pembayaran (${formatPrice(order.totalPrice)})`);
             setActionLoading(false);
             return;
           }
@@ -741,15 +662,11 @@ export default function OrderDetailPage({
         } catch (e) {
           console.warn("[OrderDetail] Failed to sync balance after wallet payment", e);
         }
-        toast({ title: "Pembayaran berhasil!" });
+        success("Pembayaran berhasil!");
         await fetchOrder();
       }
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -790,16 +707,12 @@ export default function OrderDetailPage({
     try {
       await walletApi.setWalletPin(pin);
       setShowSetPinDialog(false);
-      toast({ title: "PIN berhasil diatur" });
+      success("PIN berhasil diatur");
       // After setting PIN, show verify dialog for the payment
       setPendingPaymentMethod('wallet');
       setShowVerifyPinDialog(true);
     } catch (err: any) {
-      toast({
-        title: "Gagal mengatur PIN",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal mengatur PIN", err?.message);
     } finally {
       setIsSettingPin(false);
     }
@@ -815,18 +728,14 @@ export default function OrderDetailPage({
         ? `${finalReasonKey}: ${cancelDescription}`
         : finalReasonKey;
       await cancelOrder(order.id, fullReason);
-      toast({ title: "Pesanan dibatalkan" });
+      success("Pesanan berhasil dibatalkan");
       setShowCancelDialog(false);
       setCancelReason("");
       setCancelDescription("");
       setOtherReasonText("");
       await fetchOrder();
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message,
-        variant: "destructive",
-      });
+      toastError("Gagal", err?.message);
     } finally {
       setActionLoading(false);
     }
@@ -850,20 +759,13 @@ export default function OrderDetailPage({
         description,
       });
 
-      toast({
-        title: "Permohonan pembatalan dikirim",
-        description: "Menunggu persetujuan admin",
-      });
+      success("Pengajuan pembatalan terkirim", "Menunggu konfirmasi");
       setShowCancelRequestDialog(false);
       setCancelReason("");
       setCancelDescription("");
       setOtherReasonText("");
     } catch (err: any) {
-      toast({
-        title: "Gagal mengirim permohonan",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
+      toastError("Gagal mengirim permohonan", err?.message || "Terjadi kesalahan");
     } finally {
       setActionLoading(false);
     }

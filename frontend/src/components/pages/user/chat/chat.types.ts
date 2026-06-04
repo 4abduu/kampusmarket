@@ -7,10 +7,7 @@
 
 // ── Konstanta ──────────────────────────────────────────────────────────────
 
-export const EMOJIS = [
-  '😀', '😂', '🥰', '😍', '🙏', '👍', '👌', '❤️', '🔥', '⭐',
-  '💰', '📦', '🚀', '✨', '🙌', '😅', '🤔', '😢', '😮', '🎉',
-];
+export const EMOJI_LIST: string[] = [];
 
 // ── API Response Types (sinkron dengan Laravel Resources) ──────────────────
 

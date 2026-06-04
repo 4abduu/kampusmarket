@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { mockAddresses, mockOrders, type Address as AddressType, type Product } from "@/lib/mock-data"
 import { BANK_OPTIONS, EWALLET_OPTIONS } from "@/components/pages/user/dashboard/constants"
-import { AlertCircle, Building, Check, CheckCircle2, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2, TriangleAlert } from "lucide-react"
+import { AlertCircle, Building, Check, Clock3, DollarSign, Eye, EyeOff, Home, MapPin, Monitor, Plus, Smartphone, Truck, Loader2, TriangleAlert, Info, XCircle } from "lucide-react"
 import PaymentMethodDialog from "@/components/pages/user/shared/PaymentMethodDialog"
 import AddProductImagesSection from "@/components/pages/user/add-product/AddProductImagesSection"
 import type { NavigateFn } from "@/app/navigation/types"
@@ -139,9 +139,7 @@ type Props = {
   handlePayWithWallet: () => void
   handlePayWithMidtrans: () => void
 
-  showPasswordSuccess: boolean
-  showTopUpSuccess: boolean
-  showWithdrawSuccess: boolean
+
   onNavigate?: NavigateFn
   currentUserEmail?: string
 }
@@ -219,9 +217,7 @@ export default function UserDashboardDialogs({
   paymentRequest,
   handlePayWithWallet,
   handlePayWithMidtrans,
-  showPasswordSuccess,
-  showTopUpSuccess,
-  showWithdrawSuccess,
+
   onNavigate,
   currentUserEmail,
 }: Props) {
@@ -539,10 +535,10 @@ export default function UserDashboardDialogs({
                   </SelectContent>
                 </Select>
                 {editingProduct.type === "barang" && editingProduct.stock === 0 && (
-                  <p className="text-xs text-amber-600 mt-1">ℹ️ Status otomatis "Terjual" karena stok = 0</p>
+                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><Info className="h-3 w-3" /> Status otomatis "Terjual" karena stok = 0</p>
                 )}
                 {editingProduct.type === "barang" && editingProduct.stock > 0 && editingProduct.status === "sold_out" && (
-                  <p className="text-xs text-red-600 mt-1">❌ Tidak bisa "Terjual" saat stok {'>'}0. Kurangi stok ke 0 dulu.</p>
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><XCircle className="h-3 w-3" /> Tidak bisa "Terjual" saat stok {'>'}0. Kurangi stok ke 0 dulu.</p>
                 )}
               </div>
 
@@ -1054,21 +1050,7 @@ export default function UserDashboardDialogs({
         </div>
       )}
 
-      {showPasswordSuccess && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5" />Password berhasil diubah!
-        </div>
-      )}
-      {showTopUpSuccess && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5" />Top up berhasil! Saldo akan masuk dalam 1x24 jam.
-        </div>
-      )}
-      {showWithdrawSuccess && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5" />Penarikan diajukan! Dana akan dikirim dalam 1x24 jam.
-        </div>
-      )}
+
     </>
   )
 }

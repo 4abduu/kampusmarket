@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
-import { toast } from 'sonner';
+import { useAppToast } from "@/hooks/use-app-toast";
 
 import ChatListPanel from '@/components/pages/user/chat/ChatListPanel';
 import ChatConversationPanel from '@/components/pages/user/chat/ChatConversationPanel';
@@ -53,6 +53,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
   // currentUser dari props (App.tsx → AppRoutes → ChatPageWrapper → sini)
   // BUKAN dari localStorage — auth pakai HttpOnly cookie, user tidak disimpan di localStorage
   const currentUserId = currentUser?.id ?? '';
+
+  const { success, error: toastError } = useAppToast();
 
   const [chats, setChats] = useState<ApiChat[]>([]);
   const [chatsLoading, setChatsLoading] = useState(true);
@@ -357,7 +359,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
             const existingIdx = prev.findIndex(m => m.id === incoming.id);
             if (existingIdx !== -1) {
               const next = [...prev];
-              next[existingIdx] = { ...incoming, isRead: shouldMarkAsRead || incoming.isRead };
+              next[existingIdx] = { ...incoming, isRead: prev[existingIdx].isRead || shouldMarkAsRead || incoming.isRead };
               return next;
             }
             
@@ -365,7 +367,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
             const pendingIdx = prev.findIndex(m => m._pending && m.senderId === incoming.senderId && m.type === incoming.type);
             if (pendingIdx !== -1) {
               const next = [...prev];
-              next[pendingIdx] = { ...incoming, isRead: shouldMarkAsRead || incoming.isRead };
+              next[pendingIdx] = { ...incoming, isRead: prev[pendingIdx].isRead || shouldMarkAsRead || incoming.isRead };
               return next;
             }
 
@@ -421,7 +423,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       }
     } catch (err) {
       console.error('[Chat] openChat error', err);
-      toast.error('Gagal memuat chat');
+      toastError('Gagal memuat chat', '');
     } finally {
       setChatLoading(false);
     }
@@ -470,11 +472,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         console.error('[Chat] startChat error', err);
         const errMsg: string = err?.response?.data?.message || err?.message || '';
         if (errMsg.toLowerCase().includes('diri sendiri') || err?.response?.status === 400) {
-          toast.error(errMsg || 'Tidak dapat membuka chat ini', {
-            description: 'Kamu tidak dapat chat dengan produk milikmu sendiri.',
-          });
+          toastError(errMsg || 'Tidak dapat membuka chat ini', 'Kamu tidak dapat chat dengan produk milikmu sendiri.');
         } else {
-          toast.error('Gagal membuka chat dengan penjual');
+          toastError('Gagal membuka chat dengan penjual', '');
         }
       }
     })();
@@ -515,7 +515,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         await openChat(chat.id);
       } catch (err: any) {
         console.error('[Chat] startChatWithSeller error', err);
-        toast.error('Gagal membuka chat dengan penjual');
+        toastError('Gagal membuka chat dengan penjual', '');
       }
     })();
   }, [initialSellerId, currentUserId, initialContextId, openChat]);
@@ -567,14 +567,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     const validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
     if (!validMimeTypes.includes(file.type) && (!fileExtension || !validExtensions.includes(fileExtension))) {
-      toast.error('Format gambar harus JPG, JPEG, PNG, atau WEBP');
+      toastError('Format gambar tidak valid', 'Format gambar harus JPG, JPEG, PNG, atau WEBP');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     // Validasi Ukuran File (Maksimal 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Ukuran gambar maksimal 2 MB');
+      toastError('Gambar terlalu besar', 'Ukuran gambar maksimal 2 MB');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -624,7 +624,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         type: fileToUpload ? 'image' : 'text',
         imageUrls: fileToUpload ? uploadedUrls : undefined,
       });
-      setMessages(prev => prev.map(m => m.id === tempId ? sent : m));
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...sent, isRead: m.isRead || sent.isRead } : m));
       setChats(prev => prev.map(c => c.id === chatDetail.id ? { ...c, lastMessage: content || '[gambar]', lastMessageAt: sent.createdAt } : c));
     } catch (error) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
@@ -635,7 +635,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         reader.onloadend = () => setAttachedImage(reader.result as string);
         reader.readAsDataURL(fileToUpload);
       }
-      toast.error('Gagal mengirim pesan');
+      toastError('Gagal mengirim pesan', '');
       console.error('Send message failed:', error);
     } finally {
       setIsSending(false);
@@ -647,16 +647,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
   };
 
   const handleSubmitNego = async () => {
-    if (!chatDetail?.product || !negoPrice || isSending) return;
+    if (!chatProduct || !negoPrice || isSending) return;
     const price = parseInt(negoPrice.replace(/\D/g, ''), 10);
     if (!price || price <= 0) return;
-    setIsSending(true); setShowNegoModal(false); 
-    // [REVISI] Tetap tampilkan context card sesuai request user
-    // setShowContextCard(false);
-    // Optimistic dengan tempId agar Echo dedup bisa bekerja (replace tempId -> real ID)
+    setIsSending(true);
+    
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {
-      id: tempId, chatId: chatDetail.id, senderId: currentUserId,
+      id: tempId, chatId: chatDetail!.id, senderId: currentUserId,
       content: 'Halo, saya ingin menawar harga untuk produk ini.',
       type: 'offer', offerPrice: price, offerStatus: null,
       imageUrls: [], fileUrls: [], fileUrl: null,
@@ -668,14 +666,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         content: 'Halo, saya ingin menawar harga untuk produk ini.',
         type: 'offer', offerPrice: price,
       });
-      // Replace tempId dengan real ID — Echo dedup akan nangkap jika event datang kemudian
-      setMessages(prev => prev.map(m => m.id === tempId ? msg : m));
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, isRead: m.isRead || msg.isRead } : m));
       setChats(prev => prev.map(c => c.id === chatDetail.id ? { ...c, lastMessage: '\u{1F4B0} Penawaran harga', lastMessageAt: msg.createdAt } : c));
       setNegoPrice('');
-      toast.success('Penawaran terkirim!');
+      success('Penawaran terkirim!', '');
+      setShowNegoModal(false);
     } catch {
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      toast.error('Gagal mengirim penawaran'); setShowNegoModal(true);
+      toastError('Gagal mengirim penawaran', ''); setShowNegoModal(true);
     }
     finally { setIsSending(false); }
   };
@@ -684,8 +682,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     if (!chatDetail || !selectedOfferProduct || !offerPrice || isSending) return;
     const price = parseInt(offerPrice.replace(/\D/g, ''), 10);
     if (!price || price <= 0) return;
-    setIsSending(true); setShowOfferModal(false);
-    // Optimistic dengan tempId agar Echo dedup bisa bekerja
+    setIsSending(true);
+
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {
       id: tempId, chatId: chatDetail.id, senderId: currentUserId,
@@ -700,13 +698,13 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         content: `Penawaran khusus untuk ${selectedOfferProduct.title}`,
         type: 'offer', offerPrice: price,
       });
-      // Replace tempId dengan real ID — Echo dedup akan nangkap jika event datang kemudian
-      setMessages(prev => prev.map(m => m.id === tempId ? msg : m));
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, isRead: m.isRead || msg.isRead } : m));
       setOfferPrice(''); setSelectedOfferProduct(null);
-      toast.success('Penawaran terkirim!');
+      success('Penawaran terkirim!', '');
+      setShowOfferModal(false);
     } catch {
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      toast.error('Gagal mengirim penawaran'); setShowOfferModal(true);
+      toastError('Gagal mengirim penawaran', ''); setShowOfferModal(true);
     }
     finally { setIsSending(false); }
   };
@@ -717,8 +715,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     try {
       const updated = await acceptOffer(chatDetail.id, message.id);
       setMessages(prev => prev.map(m => m.id === message.id ? updated : m));
-      toast.success('Penawaran diterima!');
-    } catch { toast.error('Gagal menerima penawaran'); }
+      success('Penawaran diterima!', '');
+    } catch { toastError('Gagal menerima penawaran', ''); }
     finally { setIsSending(false); }
   };
 
@@ -728,14 +726,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     try {
       const updated = await rejectOffer(chatDetail.id, message.id);
       setMessages(prev => prev.map(m => m.id === message.id ? updated : m));
-      toast.success('Penawaran ditolak');
-    } catch { toast.error('Gagal menolak penawaran'); }
+      success('Penawaran ditolak', '');
+    } catch { toastError('Gagal menolak penawaran', ''); }
     finally { setIsSending(false); }
   };
 
   // FIX #6: Bayar Sekarang → langsung checkout, tanpa dialog pilih metode
   const handleBayarSekarang = (message: ApiMessage) => {
-    const product = chatDetail?.product;
+    const product = chatProduct;
     if (!product) return;
     onNavigate('checkout', {
       productId: product.id,
@@ -779,11 +777,11 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         messageId: selectedReportMessage.id,
         type: 'chat',
       });
-      toast.success('Pesan berhasil dilaporkan');
+      success('Pesan berhasil dilaporkan', '');
       setShowReportModal(false);
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Gagal melaporkan pesan';
-      toast.error(msg);
+      toastError('Gagal melaporkan', msg);
     } finally {
       setIsSending(false);
     }

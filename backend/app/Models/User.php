@@ -20,6 +20,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'uuid',
         'name',
         'email',
         'password',
@@ -114,6 +115,12 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        static::creating(function (self $user) {
+            if (empty($user->uuid)) {
+                $user->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
         static::saving(function (self $user) {
             if (($user->role?->value ?? $user->role) === UserRole::ADMIN->value) {
                 $user->faculty_id = null;

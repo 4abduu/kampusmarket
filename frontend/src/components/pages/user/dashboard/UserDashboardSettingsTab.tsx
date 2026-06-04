@@ -76,7 +76,7 @@ export default function UserDashboardSettingsTab({
   profileError = null,
   isLoadingAddresses = false,
   addressError = null,
-  onNavigate, // 🛠️ FIX: Destrukturisasi onNavigate supaya bisa dipakai di dalam komponen
+  onNavigate, // FIX: Destrukturisasi onNavigate supaya bisa dipakai di dalam komponen
   onProfilePictureUpdate,
 }: Props) {
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
@@ -179,7 +179,7 @@ export default function UserDashboardSettingsTab({
                 <p className="text-xs text-red-600 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   Email belum diverifikasi.{" "}
-                  {/* 🛠️ FIX: Mengubah tag <a> menjadi button dengan onNavigate agar siklus render halaman OTP aman */}
+                  {/* FIX: Mengubah tag <a> menjadi button dengan onNavigate agar siklus render halaman OTP aman */}
                   <button 
                     type="button"
                     onClick={() => onNavigate?.("email-verification")}

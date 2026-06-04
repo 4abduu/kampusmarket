@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { getEcho } from "@/lib/echo";
 import { openWhatsApp } from "@/lib/whatsapp";
-import { toast } from "sonner";
 import { useFavoritesStore } from "@/lib/favorites-store";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface ServiceDetailSidebarProps {
   service: any;
@@ -49,12 +49,14 @@ export default function ServiceDetailSidebar({
   onOpenReport,
   currentUser,
 }: ServiceDetailSidebarProps) {
+  const { success, error: toastError } = useAppToast();
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const [liveRating, setLiveRating] = useState(service.rating || 0);
 
+  // Listen to realtime review updates
   useEffect(() => {
     if (!service?.id) return;
 
@@ -83,7 +85,6 @@ export default function ServiceDetailSidebar({
         console.error("Failed to check favorite status:", err);
       }
     };
-
     checkFavoriteStatus();
   }, [service.id]);
 
@@ -95,26 +96,16 @@ export default function ServiceDetailSidebar({
       if (isFavorited) {
         await removeFavorite(service.id);
         setIsFavorited(false);
-        toast.success("Dihapus dari favorit", {
-          description: `${service.title} telah dihapus dari favorit.`,
-        });
+        success("Dihapus dari favorit", `${service.title} telah dihapus dari favorit.`);
       } else {
         await addFavorite(service.id);
         setIsFavorited(true);
-        toast.success("Berhasil ditambahkan", {
-          description: `${service.title} telah masuk ke favorit.`,
-          action: {
-            label: "Lihat Favorit",
-            onClick: () => onNavigate("favorites"),
-          },
-        });
+        success("Berhasil ditambahkan ke favorit", `${service.title} telah masuk ke favorit.`);
       }
       void useFavoritesStore.getState().fetchCount();
     } catch (err: any) {
       console.error("Failed to toggle favorite:", err);
-      toast.error("Gagal mengubah status favorit", {
-        description: err?.message || "Silakan coba lagi nanti.",
-      });
+      toastError("Gagal mengubah status favorit", err?.message || "Silakan coba lagi nanti.");
     } finally {
       setIsLoadingFavorite(false);
     }

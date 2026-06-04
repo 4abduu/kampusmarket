@@ -32,7 +32,7 @@ import { getBuyerOrders } from "@/lib/api/orders";
 import type { Order } from "@/lib/api/orders";
 import { getGivenReviews, submitReview } from "@/lib/api/reviews";
 import { uploadImages } from "@/lib/api/images";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface RatingPageProps {
   onNavigate: (page: string) => void;
@@ -43,7 +43,7 @@ const MAX_IMAGES = 5;
 
 export default function RatingPage({ onNavigate }: RatingPageProps) {
   const { orderId } = useParams<{ orderId?: string }>();
-  const { toast } = useToast();
+  const { toast, success, error: toastError } = useAppToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,13 +96,13 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
           } else {
             // Either already reviewed, not completed, or not found.
             if (reviewedOrderIds.includes(orderId)) {
-              toast({ title: "Pesanan ini sudah diulas" });
+              success("Pesanan ini sudah diulas");
             }
           }
         }
       } catch (error) {
         console.error("Failed to load data for rating", error);
-        toast({ title: "Gagal memuat data", variant: "destructive" });
+        toastError("Gagal memuat data", "");
       } finally {
         setIsLoading(false);
       }
@@ -183,10 +183,10 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
         images: uploadedImageUrls && uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
       });
 
-      toast({ title: "Ulasan berhasil dikirim!" });
+      success("Ulasan berhasil dikirim!");
       setStep("success");
     } catch (error: any) {
-      toast({ title: "Gagal mengirim ulasan", description: error?.message, variant: "destructive" });
+      toastError("Gagal mengirim ulasan", error?.message);
     } finally {
       setIsSubmitting(false);
       setShowPreview(false);

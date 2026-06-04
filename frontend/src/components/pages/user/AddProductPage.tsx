@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createProduct } from "@/lib/api/products";
@@ -57,6 +57,7 @@ const defaultShippingOptions: AddProductShippingOptions = {
 };
 
 export default function AddProductPage({ onNavigate }: AddProductPageProps) {
+  const { success, error: toastError } = useAppToast();
   const [productType, setProductType] = useState<ProductType>("barang");
   const [pricingType, setPricingType] = useState<PricingType>("tetap");
   const [durationUnit, setDurationUnit] = useState<DurationUnit>("hari");
@@ -93,7 +94,7 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
         );
       } catch (err) {
         console.error("Failed to fetch categories:", err);
-        toast.error("Gagal memuat kategori");
+        toastError("Gagal", "Gagal memuat kategori");
       }
     };
     fetchCategories();
@@ -230,7 +231,7 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
       };
 
       await createProduct(finalPayload);
-      toast.success(productType === "jasa" ? "Jasa berhasil dibuat!" : "Produk berhasil disimpan!");
+      success("Berhasil", productType === "jasa" ? "Jasa berhasil dibuat!" : "Produk berhasil disimpan!");
       onNavigate("dashboard");
     } catch (err: any) {
       console.error('Failed to create product:', err);

@@ -16,7 +16,7 @@ import ProfileServicesTab from "@/components/pages/user/profile/ProfileServicesT
 import ProfileSidebar from "@/components/pages/user/profile/ProfileSidebar";
 import ProductDetailReportDialog from "@/components/pages/guest/product-detail/ProductDetailReportDialog";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 import apiClient from "@/lib/api/client";
 import { ProfilePageSkeleton } from "@/components/skeleton";
 
@@ -44,7 +44,7 @@ const REPORT_ACCOUNT_REASONS = [
 ];
 
 export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUser }: ProfilePageProps) {
-  const { toast } = useToast();
+  const { success, error: toastError } = useAppToast();
   // BUGFIX: Gunakan currentUser dari App.tsx jika ada, agar tidak loading mock data saat menunggu fetch
   const [authUser, setAuthUser] = useState<User | null>(currentUser || null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -61,11 +61,10 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
 
   const handleReportSubmit = async () => {
     if (!reportReason || !reportDescription) {
-      toast({
-        title: "Laporan belum lengkap",
-        description: "Pilih alasan dan masukkan deskripsi laporan",
-        variant: "destructive",
-      });
+      toastError(
+        "Laporan belum lengkap",
+        "Pilih alasan dan masukkan deskripsi laporan"
+      );
       return;
     }
 
@@ -75,11 +74,10 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
         : REPORT_ACCOUNT_REASONS.find((r) => r.id === reportReason)?.label;
 
     if (!finalReason) {
-      toast({
-        title: "Laporan belum lengkap",
-        description: "Alasan laporan tidak boleh kosong",
-        variant: "destructive",
-      });
+      toastError(
+        "Laporan belum lengkap",
+        "Alasan laporan tidak boleh kosong"
+      );
       return;
     }
 
@@ -91,20 +89,19 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
         type: "account",
       });
 
-      toast({
-        title: "Laporan berhasil dikirim",
-        description: "Laporan akun sudah masuk ke admin untuk ditinjau",
-      });
+      success(
+        "Laporan berhasil dikirim",
+        "Laporan akun sudah masuk ke admin untuk ditinjau"
+      );
       setShowReportModal(false);
       setReportReason("");
       setReportDescription("");
       setReportOtherReason("");
     } catch (error: any) {
-      toast({
-        title: "Gagal mengirim laporan",
-        description: error?.response?.data?.message || error?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
+      toastError(
+        "Gagal mengirim laporan",
+        error?.response?.data?.message || error?.message || "Terjadi kesalahan"
+      );
     }
   };
 

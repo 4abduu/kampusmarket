@@ -507,9 +507,7 @@ export default function UserDashboardPage({
         handlePayWithWallet={orderActions.handlePayWithWallet}
         handlePayWithMidtrans={orderActions.handlePayWithMidtrans}
         handleSetShippingFee={orderActions.handleSetShippingFee}
-        showPasswordSuccess={settings.showPasswordSuccess}
-        showTopUpSuccess={wallet.showTopUpSuccess}
-        showWithdrawSuccess={wallet.showWithdrawSuccess}
+
         onNavigate={onNavigate}
         currentUserEmail={currentUser?.email}
       />

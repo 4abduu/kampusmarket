@@ -8,8 +8,9 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 5
+const TOAST_REMOVE_DELAY = 350   // ms after dismiss animation before removal
+const TOAST_AUTO_DISMISS_MS = 3500 // 3.5 detik auto-close
 
 type ToasterToast = ToastProps & {
   id: string
@@ -57,6 +58,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const autoDismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -74,19 +76,37 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+const scheduleAutoDismiss = (toastId: string) => {
+  // Clear existing auto-dismiss if any
+  if (autoDismissTimeouts.has(toastId)) {
+    clearTimeout(autoDismissTimeouts.get(toastId)!)
+    autoDismissTimeouts.delete(toastId)
+  }
+
+  const timeout = setTimeout(() => {
+    autoDismissTimeouts.delete(toastId)
+    dispatch({ type: "DISMISS_TOAST", toastId })
+  }, TOAST_AUTO_DISMISS_MS)
+
+  autoDismissTimeouts.set(toastId, timeout)
+}
+
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST": {
-      // Cari berdasarkan ID atau kesamaan title & description yang masih aktif (open !== false)
-      const existing = state.toasts.find(t => 
+      // Deduplication: cek berdasarkan title + description yang masih open
+      const existing = state.toasts.find(t =>
         t.open !== false && (
-          t.id === action.toast.id || 
-          (t.title === action.toast.title && t.description === action.toast.description && action.toast.title)
+          t.id === action.toast.id ||
+          (action.toast.title &&
+            t.title === action.toast.title &&
+            t.description === action.toast.description)
         )
       )
-      
+
       if (existing) {
-        // Jika sudah ada toast dengan konten/ID yang sama, update props-nya saja tanpa membuat duplikat
+        // Reset auto-dismiss timer untuk toast yang sudah ada
+        scheduleAutoDismiss(existing.id)
         return {
           ...state,
           toasts: state.toasts.map(t =>
@@ -111,8 +131,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -181,6 +199,9 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Schedule auto-dismiss
+  scheduleAutoDismiss(id)
 
   return {
     id: id,

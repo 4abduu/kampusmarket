@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import apiClient from "@/lib/api/client"
-import { useToast } from "@/hooks/use-toast"
+import { useAppToast } from "@/hooks/use-app-toast"
 import { walletApi } from "@/lib/api/wallet"
 // @mock-flagged — digantikan oleh fetchTransactions() dari API /wallet/transactions
 // import { mockWalletTransactions } from "@/lib/mock-data"
@@ -13,7 +13,7 @@ interface UseDashboardWalletParams {
 }
 
 export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardWalletParams) {
-  const { toast } = useToast()
+  const { success, error: toastError, warning } = useAppToast()
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
   const [withdrawForm, setWithdrawForm] = useState({
     type: "bank" as "bank" | "ewallet",
@@ -168,12 +168,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
         : "https://app.midtrans.com/snap/snap.js"
 
       if (!clientKey) {
-        toast({
-          title: "❌ Configuration Error",
-          description:
-            "Midtrans client key tidak ditemukan. Hubungi administrator.",
-          variant: "destructive",
-        })
+        toastError("Configuration Error", "Midtrans client key tidak ditemukan. Hubungi administrator.")
         setIsLoadingTopUp(false)
         setShowTopUpDialog(true)
         return
@@ -182,12 +177,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
       const doSnap = () => {
         if (!(window as any).snap) {
           console.error("[Midtrans] Snap.js not loaded yet")
-          toast({
-            title: "Error",
-            description:
-              "Payment gateway belum siap. Silakan refresh dan coba lagi.",
-            variant: "destructive",
-          })
+          toastError("Error", "Payment gateway belum siap. Silakan refresh dan coba lagi.")
           setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
           return
@@ -208,10 +198,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               console.log("[Midtrans] Top-up success:", result)
               console.warn = originalWarn
               setIsLoadingTopUp(false)
-              toast({
-                title: "Pembayaran berhasil!",
-                description: "Mengonfirmasi top-up...",
-              })
+              success("Top up berhasil!", "Saldo akan masuk dalam beberapa saat.");
               try {
                 const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
                 if (confirmResponse.status === 'paid') {
@@ -232,21 +219,14 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               } catch (e) {
                 console.error("Failed to confirm payment", e)
                 setIsLoadingTopUp(false)
-                toast({
-                  title: "Pembayaran Terkirim",
-                  description: "Pembayaran diproses tetapi konfirmasi gagal. Silakan refresh halaman.",
-                  variant: "default",
-                })
+                toastError("Pembayaran Terkirim", "Pembayaran diproses tetapi konfirmasi gagal. Silakan refresh halaman.")
               }
             },
             onPending: async (result: any) => {
               console.log("[Midtrans] Top-up pending:", result)
               console.warn = originalWarn
               setIsLoadingTopUp(false)
-              toast({
-                title: "⏳ Pembayaran pending",
-                description: "Selesaikan pembayaran Anda untuk melanjutkan.",
-              })
+              warning("Pembayaran pending", "Selesaikan pembayaran Anda untuk melanjutkan.")
               try {
                 const confirmResponse = await walletApi.confirmTopUpPayment(payment_uuid)
                 if (confirmResponse.status === 'paid') {
@@ -264,11 +244,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
               console.error("[Midtrans] Top-up error:", result)
               console.warn = originalWarn
               setIsLoadingTopUp(false)
-              toast({
-                title: "❌ Pembayaran gagal",
-                description: "Terjadi kesalahan. Silakan coba lagi.",
-                variant: "destructive",
-              })
+              toastError("Pembayaran gagal", "Terjadi kesalahan. Silakan coba lagi.")
             },
             onClose: () => {
               console.log("[Midtrans] Payment popup closed by user")
@@ -278,11 +254,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
           })
         } catch (error) {
           console.error("[Midtrans] Error calling snap.pay:", error)
-          toast({
-            title: "Error",
-            description: "Gagal membuka payment gateway. Coba lagi.",
-            variant: "destructive",
-          })
+          toastError("Error", "Gagal membuka payment gateway. Coba lagi.")
           setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
         }
@@ -307,12 +279,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
         }
 
         script.onerror = () => {
-          toast({
-            title: "Error",
-            description:
-              "Gagal memuat payment gateway. Coba refresh halaman.",
-            variant: "destructive",
-          })
+          toastError("Error", "Gagal memuat payment gateway. Coba refresh halaman.")
           setIsLoadingTopUp(false)
           setShowTopUpDialog(true)
         }
@@ -324,11 +291,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
       }
     } catch (err: any) {
       console.error("[Wallet TopUp Error]", err)
-      toast({
-        title: "Gagal memulai top-up",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      })
+      toastError("Gagal memulai top-up", err?.message || "Terjadi kesalahan")
       setIsLoadingTopUp(false)
       setShowTopUpDialog(true)
     }
@@ -337,11 +300,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
   const handleWithdrawClick = () => {
     const amount = parseInt(withdrawForm.amount, 10)
     if (!amount || amount < 10000) {
-      toast({
-        title: "Nominal tidak valid",
-        description: "Minimal penarikan Rp 10.000",
-        variant: "destructive",
-      })
+      toastError("Nominal tidak valid", "Minimal penarikan Rp 10.000")
       return
     }
 
@@ -356,11 +315,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
           : withdrawForm.ewalletType)
 
     if (!bankName || !withdrawForm.accountNumber || !withdrawForm.accountName) {
-      toast({
-        title: "Data belum lengkap",
-        description: "Lengkapi detail rekening/e-wallet",
-        variant: "destructive",
-      })
+      toastError("Data belum lengkap", "Lengkapi detail rekening/e-wallet")
       return
     }
 
@@ -383,11 +338,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
           : withdrawForm.ewalletType)
 
     if (!bankName || !withdrawForm.accountNumber || !withdrawForm.accountName) {
-      toast({
-        title: "Data belum lengkap",
-        description: "Lengkapi detail rekening/e-wallet",
-        variant: "destructive",
-      })
+      toastError("Data belum lengkap", "Lengkapi detail rekening/e-wallet")
       return
     }
 
@@ -417,16 +368,9 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
       setTimeout(() => setShowWithdrawSuccess(false), 3000)
       void fetchBalance()
       void fetchTransactions()
-      toast({
-        title: "Permintaan penarikan dibuat",
-        description: "Admin akan memproses penarikan Anda",
-      })
+      success("Permintaan penarikan dibuat", "Admin akan memproses penarikan Anda")
     } catch (err: any) {
-      toast({
-        title: "Gagal menarik dana",
-        description: err?.message || "Terjadi kesalahan",
-        variant: "destructive",
-      })
+      toastError("Gagal menarik dana", err?.message || "Terjadi kesalahan")
     } finally {
       setIsWithdrawing(false)
     }
@@ -439,16 +383,9 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
       setHasPin(true)
       setShowSetPinDialog(false)
       window.dispatchEvent(new CustomEvent("wallet-pin-updated"))
-      toast({
-        title: "Berhasil",
-        description: "PIN dompet berhasil diatur",
-      })
+      success("Berhasil", "PIN dompet berhasil diatur")
     } catch (err: any) {
-      toast({
-        title: "Gagal",
-        description: err?.message || "Gagal mengatur PIN",
-        variant: "destructive",
-      })
+      toastError("Gagal", err?.message || "Gagal mengatur PIN")
     } finally {
       setIsSettingPin(false)
     }

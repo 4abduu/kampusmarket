@@ -1,4 +1,4 @@
-import { toast } from "@/hooks/use-toast";
+import { appToast } from "@/hooks/use-app-toast";
 
 /**
  * Opens WhatsApp chat with the given phone number and template message.
@@ -11,11 +11,7 @@ export function openWhatsApp(
   isService: boolean = false
 ) {
   if (!phone || phone === "-" || phone.trim() === "") {
-    toast({
-      title: `${sellerName} belum mencantumkan nomor WhatsApp`,
-      description: "Silakan gunakan fitur Chat di aplikasi untuk menghubungi.",
-      variant: "destructive",
-    });
+    appToast.error(`${sellerName} belum mencantumkan nomor WhatsApp`, "Silakan gunakan fitur Chat di aplikasi untuk menghubungi.");
     return;
   }
 

@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle, Clock3 } from 'lucide-react';
-import type { ApiMessage, ApiChatDetail } from '@/components/pages/user/chat/chat.types';
+import type { ApiMessage, ApiChatDetail, ApiChatProduct } from '@/components/pages/user/chat/chat.types';
 
 interface Props {
   message: ApiMessage;
   currentUserId: string;
   chat: ApiChatDetail;
+  chatProduct?: ApiChatProduct | null;
   formatPrice: (price: number) => string;
   onNavigate: (page: string, productId?: string) => void;
   onAcceptOffer: (message: ApiMessage) => void;
@@ -19,7 +20,7 @@ function formatTime(iso: string): string {
 }
 
 export default function ChatMessageItem({
-  message, currentUserId, chat, formatPrice,
+  message, currentUserId, chat, chatProduct, formatPrice,
   onNavigate, onAcceptOffer, onRejectOffer, onOpenPaymentDialog, onReportMessage
 }: Props) {
   const isMe = message.senderId === currentUserId;
@@ -73,7 +74,7 @@ export default function ChatMessageItem({
     );
   }
 
-  const product = chat.product;
+  const product = message.product || chatProduct || chat.product;
 
   return (
     <div className={`flex group ${isMe ? 'justify-end' : 'justify-start'} items-center gap-2`}>

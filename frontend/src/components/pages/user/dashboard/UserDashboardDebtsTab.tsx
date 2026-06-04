@@ -6,7 +6,7 @@ import { debtsApi, type DebtSummary } from "@/lib/api/debts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { useAppToast } from "@/hooks/use-app-toast";
 import VerifyPinDialog from "./VerifyPinDialog";
 
 export default function UserDashboardDebtsTab({ 
@@ -21,7 +21,7 @@ export default function UserDashboardDebtsTab({
   const [payWalletOpen, setPayWalletOpen] = useState(false);
   const [isPayingWallet, setIsPayingWallet] = useState(false);
   const [isPayingMidtrans, setIsPayingMidtrans] = useState(false);
-  const { toast } = useToast();
+  const { success, error: toastError } = useAppToast();
 
   const fetchSummary = async () => {
     try {
@@ -30,11 +30,7 @@ export default function UserDashboardDebtsTab({
       setSummary((data as any).data || data);
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Gagal",
-        description: "Gagal mengambil data tunggakan",
-        variant: "destructive"
-      });
+      toastError("Gagal", "Gagal mengambil data tunggakan");
     } finally {
       setLoading(false);
     }
@@ -48,18 +44,11 @@ export default function UserDashboardDebtsTab({
     try {
       setIsPayingWallet(true);
       await debtsApi.payWithWallet(pin);
-      toast({
-        title: "Berhasil",
-        description: "Tunggakan komisi berhasil dilunasi via Dompet",
-      });
+      success("Berhasil", "Tunggakan komisi berhasil dilunasi via Dompet");
       setPayWalletOpen(false);
       fetchSummary();
     } catch (error: any) {
-      toast({
-        title: "Gagal Melunasi",
-        description: error.message || "Pastikan saldo dompet mencukupi dan PIN benar.",
-        variant: "destructive"
-      });
+      toastError("Gagal Melunasi", error.message || "Pastikan saldo dompet mencukupi dan PIN benar.");
     } finally {
       setIsPayingWallet(false);
     }
@@ -74,14 +63,14 @@ export default function UserDashboardDebtsTab({
       if ((window as any).snap) {
         (window as any).snap.pay((res as any).snap_token, {
           onSuccess: function () {
-            toast({ title: "Pembayaran Berhasil", description: "Tunggakan telah dilunasi." });
+            success("Pembayaran Berhasil", "Tunggakan telah dilunasi.");
             fetchSummary();
           },
           onPending: function () {
-            toast({ title: "Pembayaran Tertunda", description: "Selesaikan pembayaran sesuai instruksi." });
+            toastError("Pembayaran Tertunda", "Selesaikan pembayaran sesuai instruksi.");
           },
           onError: function () {
-            toast({ title: "Pembayaran Gagal", description: "Silakan coba lagi.", variant: "destructive" });
+            toastError("Pembayaran Gagal", "Silakan coba lagi.");
           },
           onClose: function () {
             // User closed the popup
@@ -89,11 +78,7 @@ export default function UserDashboardDebtsTab({
         });
       }
     } catch (error: any) {
-      toast({
-        title: "Gagal Menginisiasi Pembayaran",
-        description: error.message || "Terjadi kesalahan sistem.",
-        variant: "destructive"
-      });
+      toastError("Gagal Menginisiasi Pembayaran", error.message || "Terjadi kesalahan sistem.");
     } finally {
       setIsPayingMidtrans(false);
     }

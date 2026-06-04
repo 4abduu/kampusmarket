@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react"
 import type { Product } from "@/lib/mock-data"
 import { updateProduct, deleteProduct as apiDeleteProduct, getMyProducts } from "@/lib/api/products"
-import { toast } from "sonner"
+import { useAppToast } from "@/hooks/use-app-toast"
 
 type ProductFilter = "semua" | "barang" | "jasa"
 
@@ -10,6 +10,7 @@ interface UseDashboardProductsParams {
 }
 
 export function useDashboardProducts({ initialProducts }: UseDashboardProductsParams) {
+  const { success, error: toastError } = useAppToast()
   const [userProducts, setUserProducts] = useState<Product[]>([])
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showEditProductDialog, setShowEditProductDialog] = useState(false)
@@ -28,7 +29,7 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
         setUserProducts(products as Product[])
       } catch (err) {
         console.error("Failed to fetch user products:", err)
-        toast.error("Gagal memuat produk anda")
+        toastError("Gagal memuat produk anda", "")
         // Fallback to initialProducts if API fails
         setUserProducts(initialProducts)
       } finally {
@@ -119,7 +120,7 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
     }
 
     if (errors.length > 0) {
-      toast.error(errors.join("\n"))
+      toastError("Validasi gagal", errors.join("\n"))
       return
     }
 
@@ -183,11 +184,11 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
 
       setShowEditProductDialog(false)
       setEditingProduct(null)
-      toast.success(editingProduct.type === "jasa" ? "Jasa berhasil diperbarui!" : "Produk berhasil diperbarui!")
+      success(editingProduct.type === "jasa" ? "Jasa berhasil diperbarui!" : "Produk berhasil diperbarui!", "")
     } catch (err: any) {
       console.error('Failed to update product:', err)
       const errorMessage = err?.response?.data?.message || err?.message || 'Gagal memperbarui produk. Silakan coba lagi.'
-      toast.error(errorMessage)
+      toastError("Gagal memperbarui", errorMessage)
     }
   }
 
@@ -205,10 +206,10 @@ export function useDashboardProducts({ initialProducts }: UseDashboardProductsPa
       setUserProducts((previous) => previous.filter((product) => product.id !== productToDelete))
       setShowDeleteProductDialog(false)
       setProductToDelete(null)
-      toast.success(deletedProduct?.type === "jasa" ? "Jasa berhasil dihapus!" : "Produk berhasil dihapus!")
+      success(deletedProduct?.type === "jasa" ? "Jasa berhasil dihapus!" : "Produk berhasil dihapus!", "")
     } catch (err: any) {
       console.error('Failed to delete product:', err)
-      toast.error(err?.message || 'Gagal menghapus produk. Silakan coba lagi.')
+      toastError("Gagal menghapus", err?.message || 'Gagal menghapus produk. Silakan coba lagi.')
     }
   }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, Truck, Home, Store, Monitor, Clock, Briefcase, TriangleAlert } from "lucide-react";
+import { ChevronRight, Truck, Home, Store, Monitor, Clock, Briefcase, XCircle, TriangleAlert } from "lucide-react";
 import { getProductDetail } from "@/lib/api/products";
 import { createOrder } from "@/lib/api/orders";
 import { removeFromCart } from "@/lib/api/cart";
@@ -464,7 +464,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                 <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className="h-5 w-5 text-red-600 shrink-0 mt-0.5">❌</div>
+                      <XCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                       <div className="text-sm">
                         <p className="font-medium text-red-800 dark:text-red-200 mb-1">
                           Metode Pengiriman Tidak Tersedia

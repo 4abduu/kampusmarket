@@ -13,10 +13,10 @@ import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
 import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Phone, Share2, Shield, Star, Truck, User, ShoppingCart, Loader2 } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { addToCart } from "@/lib/api/cart";
-import { toast } from "sonner";
 import { useCartStore } from "@/lib/cart-store";
 import { useFavoritesStore } from "@/lib/favorites-store";
 import { getEcho } from "@/lib/echo";
+import { useAppToast } from "@/hooks/use-app-toast";
 
 interface ProductSeller {
   id: string;
@@ -65,6 +65,7 @@ export default function ProductDetailSidebar({
   onOpenReport,
   currentUser,
 }: ProductDetailSidebarProps) {
+  const { success, error: toastError } = useAppToast();
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -74,6 +75,7 @@ export default function ProductDetailSidebar({
   const [showErrorAnim, setShowErrorAnim] = useState(false);
   const [liveRating, setLiveRating] = useState(product.rating || 0);
 
+  // Listen to realtime review updates
   useEffect(() => {
     if (!product?.id) return;
 
@@ -102,7 +104,6 @@ export default function ProductDetailSidebar({
         console.error("Failed to check favorite status:", err);
       }
     };
-
     checkFavoriteStatus();
   }, [product.id]);
 
@@ -114,26 +115,16 @@ export default function ProductDetailSidebar({
       if (isFavorited) {
         await removeFavorite(product.id);
         setIsFavorited(false);
-        toast.success("Dihapus dari favorit", {
-          description: `${product.title} telah dihapus dari favorit.`,
-        });
+        success("Dihapus dari favorit", `${product.title} telah dihapus dari favorit.`);
       } else {
         await addFavorite(product.id);
         setIsFavorited(true);
-        toast.success("Berhasil ditambahkan", {
-          description: `${product.title} telah masuk ke favorit.`,
-          action: {
-            label: "Lihat Favorit",
-            onClick: () => onNavigate("favorites"),
-          },
-        });
+        success("Berhasil ditambahkan ke favorit", `${product.title} telah masuk ke favorit.`);
       }
       void useFavoritesStore.getState().fetchCount();
     } catch (err: any) {
       console.error("Failed to toggle favorite:", err);
-      toast.error("Gagal mengubah status favorit", {
-        description: err?.message || "Silakan coba lagi nanti.",
-      });
+      toastError("Gagal mengubah status favorit", err?.message || "Silakan coba lagi nanti.");
     } finally {
       setIsLoadingFavorite(false);
     }
@@ -152,7 +143,7 @@ export default function ProductDetailSidebar({
   };
 
   const handleChatWithSeller = () => {
-    onNavigate("chat", { sellerId: product.sellerId || product.seller?.id });
+    onNavigate("chat", { productId: product.id, chatAction: "chat" });
   };
 
   const handleNegoWithSeller = () => {
@@ -165,30 +156,24 @@ export default function ProductDetailSidebar({
     try {
       setIsAddingToCart(true);
       await addToCart(product.id, quantity);
-
+      
       useCartStore.getState().fetchCount();
 
-      toast.success("Berhasil ditambahkan", {
-        description: `${quantity}x ${product.title} telah masuk ke keranjang.`,
-        action: {
-          label: "Lihat Keranjang",
-          onClick: () => onNavigate("cart"),
-        },
-      });
+      success(
+        "Produk berhasil ditambahkan ke keranjang",
+        `${quantity}x ${product.title} telah masuk ke keranjang.`
+      );
 
       setShowSuccessAnim(true);
       setTimeout(() => setShowSuccessAnim(false), 2000);
     } catch (err: any) {
       console.error("Failed to add to cart:", err);
       const errorMessage = err?.response?.data?.message || err?.message || "Silakan coba lagi nanti.";
-
+      
       setShowErrorAnim(true);
       setTimeout(() => setShowErrorAnim(false), 500);
 
-      toast.error("Gagal menambah ke keranjang", {
-        description: errorMessage,
-        duration: 4000,
-      });
+      toastError("Gagal menambah ke keranjang", errorMessage);
     } finally {
       setIsAddingToCart(false);
     }
