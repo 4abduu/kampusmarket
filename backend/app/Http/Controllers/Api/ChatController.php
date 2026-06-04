@@ -45,9 +45,21 @@ class ChatController extends Controller
             ->latest('last_message_at')
             ->get();
 
+        // Deduplikasi chat dengan user yang sama (untuk data legacy yang sempat double)
+        $uniqueChats = collect();
+        $seenUserIds = [];
+
+        foreach ($chats as $chat) {
+            $otherUserId = $chat->buyer_id === $userId ? $chat->seller_id : $chat->buyer_id;
+            if (!in_array($otherUserId, $seenUserIds)) {
+                $seenUserIds[] = $otherUserId;
+                $uniqueChats->push($chat);
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => $chats->map(fn ($chat) => (new ChatResource($chat))->toListArray($userId)),
+            'data'    => $uniqueChats->map(fn ($chat) => (new ChatResource($chat))->toListArray($userId)),
         ]);
     }
 
@@ -83,11 +95,20 @@ class ChatController extends Controller
             $sellerId = $product->seller_id;
         }
 
-        // Unique per buyer+seller — satu chat saja untuk semua produk
-        $chat = Chat::firstOrCreate(
-            ['buyer_id' => $buyerId, 'seller_id' => $sellerId],
-            ['is_active' => true]
-        );
+        // Cari apakah sudah ada chat antara kedua user ini (bolak-balik)
+        $chat = Chat::where(function ($q) use ($buyerId, $sellerId) {
+            $q->where('buyer_id', $buyerId)->where('seller_id', $sellerId);
+        })->orWhere(function ($q) use ($buyerId, $sellerId) {
+            $q->where('buyer_id', $sellerId)->where('seller_id', $buyerId);
+        })->first();
+
+        if (!$chat) {
+            $chat = Chat::create([
+                'buyer_id'  => $buyerId,
+                'seller_id' => $sellerId,
+                'is_active' => true,
+            ]);
+        }
 
         // Check if the latest product inquiry message in this chat is for this product
         $lastProductMsg = $chat->messages()->where('type', 'system')->whereNotNull('product_id')->latest()->first();
@@ -142,11 +163,20 @@ class ChatController extends Controller
             ], 400);
         }
 
-        // Unique per buyer+seller — kalau sudah ada chat, return yang lama
-        $chat = Chat::firstOrCreate(
-            ['buyer_id' => $user->id, 'seller_id' => $seller->id],
-            ['is_active' => true]
-        );
+        // Cari apakah sudah ada chat antara kedua user ini (bolak-balik)
+        $chat = Chat::where(function ($q) use ($user, $seller) {
+            $q->where('buyer_id', $user->id)->where('seller_id', $seller->id);
+        })->orWhere(function ($q) use ($user, $seller) {
+            $q->where('buyer_id', $seller->id)->where('seller_id', $user->id);
+        })->first();
+
+        if (!$chat) {
+            $chat = Chat::create([
+                'buyer_id'  => $user->id,
+                'seller_id' => $seller->id,
+                'is_active' => true,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -165,7 +195,6 @@ class ChatController extends Controller
             'product.seller',
             'buyer',
             'seller',
-            'messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images'])->oldest(),
         ])->where('uuid', $id)->firstOrFail();
 
         $userId = $request->user()->id;
@@ -189,17 +218,7 @@ class ChatController extends Controller
             'product.seller',
             'buyer',
             'seller',
-            'messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images'])->oldest(),
         ]);
-
-        $chat->setRelation('messages', $chat->messages->map(function (Message $message) use ($userId) {
-            if ($message->sender_id !== $userId) {
-                $message->is_read = true;
-                $message->read_at = now();
-            }
-
-            return $message;
-        }));
 
         try {
             broadcast(new MessagesRead($chat->uuid, $request->user()->uuid, $readAt->toISOString()));
@@ -292,6 +311,13 @@ class ChatController extends Controller
                 'offer_price'  => $request->offer_price,
                 'offer_status' => $request->type === 'offer' ? 'pending' : null,
             ];
+
+            if ($request->has('product_id')) {
+                $product = \App\Models\Product::where('uuid', $request->product_id)->first();
+                if ($product) {
+                    $msgData['product_id'] = $product->id;
+                }
+            }
 
             $message = Message::create($msgData);
 

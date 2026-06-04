@@ -106,29 +106,26 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
     }
   }, [productType, formData.canNego]);
 
-  const formatPrice = (price: string) => {
-    if (!price) return "";
-    return new Intl.NumberFormat("id-ID").format(parseInt(price, 10) || 0);
-  };
+
 
   const getPricePreview = () => {
     if (productType === "barang") {
       if (!formData.price) return "Rp -";
-      return `Rp ${formatPrice(formData.price)}`;
+      return `Rp ${formData.price}`;
     }
 
     if (pricingType === "tetap") {
       if (!formData.price) return "Rp -";
-      return `Rp ${formatPrice(formData.price)}`;
+      return `Rp ${formData.price}`;
     }
 
     if (pricingType === "mulai_dari") {
       if (!formData.priceMin) return "Mulai Rp -";
-      return `Mulai Rp ${formatPrice(formData.priceMin)}`;
+      return `Mulai Rp ${formData.priceMin}`;
     }
 
     if (!formData.priceMin && !formData.priceMax) return "Rp - - Rp -";
-    return `Rp ${formatPrice(formData.priceMin) || "-"} - Rp ${formatPrice(formData.priceMax) || "-"}`;
+    return `Rp ${formData.priceMin || "-"} - Rp ${formData.priceMax || "-"}`;
   };
 
   const getDurationPreview = () => {
@@ -215,18 +212,9 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
         shippingOptions,
       );
 
-      // Prices are now sent directly as Rupiah (not in cents)
-      const normalizedPayload = {
-        ...payload,
-        price: formData.price ? parseInt(formData.price.replace(/\./g, '')) : undefined,
-        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice.replace(/\./g, '')) : undefined,
-        priceMin: formData.priceMin ? parseInt(formData.priceMin.replace(/\./g, '')) : undefined,
-        priceMax: formData.priceMax ? parseInt(formData.priceMax.replace(/\./g, '')) : undefined,
-      };
-
-      // Kirim images (sudah berupa URL dari uploadImage()) ke backend
+      // Payload is now processed correctly by buildAddProductPayload
       const finalPayload = {
-        ...normalizedPayload,
+        ...payload,
         images, // array URL string
       };
 

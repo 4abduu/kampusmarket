@@ -10,6 +10,7 @@
  * agar tidak redirect ke /unauthorized saat proses logout berlangsung.
  */
 import { lazy, Suspense, useEffect, type RefObject } from "react";
+import PageLoadingOverlay from "@/components/shared/PageLoadingOverlay";
 import {
   Navigate,
   Route,
@@ -294,11 +295,7 @@ export default function AppRoutes({
 
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-[40vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-        </div>
-      }
+      fallback={<PageLoadingOverlay />}
     >
       <Routes>
         {/* ── PUBLIC AUTH ── */}

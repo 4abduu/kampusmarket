@@ -446,6 +446,21 @@ class NotificationHelper
     }
 
     /**
+     * Produk Dipulihkan Admin - untuk Seller
+     */
+    public static function adminProductRestored(int $userId, $product): void
+    {
+        SendUserNotification::dispatch(
+            userId: $userId,
+            type: NotificationType::SYSTEM->value,
+            title: 'Produk Dipulihkan oleh Admin',
+            message: "Produk Anda \"{$product->title}\" telah dipulihkan oleh Admin dan kembali aktif.",
+            link: "/dashboard/products",
+            data: ['product_id' => $product->uuid, 'action' => 'view_my_products'],
+        );
+    }
+
+    /**
      * Peringatan Akun - untuk User
      */
     public static function adminUserWarning(int $userId, string $reason): void
@@ -457,6 +472,24 @@ class NotificationHelper
             message: "Akun Anda mendapat peringatan dari Admin. Alasan: {$reason}",
             link: "/dashboard/settings",
             data: ['action' => 'view_account_settings'],
+        );
+    }
+
+    /**
+     * Registrasi User Baru - untuk Admin
+     */
+    public static function adminNewUser($user): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::SYSTEM->value,
+            title: 'Pengguna Baru Terdaftar',
+            message: "Pengguna baru \"{$user->name}\" telah mendaftar. Email: {$user->email}",
+            link: "/admin/users",
+            data: [
+                'user_id' => $user->uuid,
+                'action' => 'view_user_details',
+                'action_tab' => 'users',
+            ],
         );
     }
 }

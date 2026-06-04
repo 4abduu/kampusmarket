@@ -8,7 +8,10 @@ import type {
   ProductType,
 } from "@/components/pages/user/add-product/types";
 
-const toInt = (value: string): number => parseInt(value || "0", 10) || 0;
+const toInt = (value: string): number => {
+  if (!value) return 0;
+  return parseInt(value.replace(/\./g, ""), 10) || 0;
+};
 
 const toPriceType = (pricingType: PricingType): "fixed" | "starting" | "range" => {
   if (pricingType === "mulai_dari") return "starting";

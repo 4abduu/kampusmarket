@@ -24,6 +24,7 @@ import {
   Star,
   User,
   Wallet,
+  Loader2,
 } from "lucide-react";
 import { getEcho } from "@/lib/echo";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -54,6 +55,8 @@ export default function ServiceDetailSidebar({
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [isNavigatingToChat, setIsNavigatingToChat] = useState(false);
+  const [isNavigatingToCheckout, setIsNavigatingToCheckout] = useState(false);
   const [liveRating, setLiveRating] = useState(service.rating || 0);
 
   // Listen to realtime review updates
@@ -244,14 +247,29 @@ export default function ServiceDetailSidebar({
             </div>
           ) : (
             <div className="space-y-2">
-              <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onAction(() => onNavigate("checkout", serviceId))} disabled={service.availabilityStatus === "full"}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
+              <Button 
+                className="w-full bg-primary-600 hover:bg-primary-700" 
+                onClick={() => onAction(() => {
+                  setIsNavigatingToCheckout(true);
+                  onNavigate("checkout", serviceId);
+                })} 
+                disabled={service.availabilityStatus === "full" || isNavigatingToCheckout}
+              >
+                {isNavigatingToCheckout ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Calendar className="h-4 w-4 mr-2" />
+                )}
+                {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={() => onAction(() => onNavigate("chat", { sellerId: service.providerId || service.provider?.id }))}>
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Chat Penjual
+              <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { sellerId: service.providerId || service.provider?.id }); })}>
+                {isNavigatingToChat ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                )}
+                {isNavigatingToChat ? "Membuka Chat..." : "Chat Penjual"}
               </Button>
             </div>
           )}

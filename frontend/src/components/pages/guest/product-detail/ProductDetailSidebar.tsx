@@ -73,6 +73,8 @@ export default function ProductDetailSidebar({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showSuccessAnim, setShowSuccessAnim] = useState(false);
   const [showErrorAnim, setShowErrorAnim] = useState(false);
+  const [isNavigatingToChat, setIsNavigatingToChat] = useState(false);
+  const [isNavigatingToCheckout, setIsNavigatingToCheckout] = useState(false);
   const [liveRating, setLiveRating] = useState(product.rating || 0);
 
   // Listen to realtime review updates
@@ -143,10 +145,12 @@ export default function ProductDetailSidebar({
   };
 
   const handleChatWithSeller = () => {
+    setIsNavigatingToChat(true);
     onNavigate("chat", { productId: product.id, chatAction: "chat" });
   };
 
   const handleNegoWithSeller = () => {
+    setIsNavigatingToChat(true);
     onNavigate("chat", { productId: product.id, chatAction: "nego" });
   };
 
@@ -264,10 +268,15 @@ export default function ProductDetailSidebar({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => onAction(() => onNavigate("checkout", product.id))}
-                  disabled={product.stock === 0}
+                  onClick={() => onAction(() => {
+                    setIsNavigatingToCheckout(true);
+                    onNavigate("checkout", product.id);
+                  })}
+                  disabled={product.stock === 0 || isNavigatingToCheckout}
                 >
-                  {product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
+                  {isNavigatingToCheckout ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Memproses...</>
+                  ) : product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
                 </Button>
                 <Button
                   variant="outline"
@@ -301,9 +310,14 @@ export default function ProductDetailSidebar({
                   variant="outline"
                   className="w-full"
                   onClick={() => onAction(handleNegoWithSeller)}
+                  disabled={isNavigatingToChat}
                 >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Ajukan Nego
+                  {isNavigatingToChat ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                  )}
+                  {isNavigatingToChat ? "Membuka Chat..." : "Ajukan Nego"}
                 </Button>
               )}
             </>
@@ -406,9 +420,13 @@ export default function ProductDetailSidebar({
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={() => onAction(handleChatWithSeller)}>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Chat
+                    <Button variant="outline" onClick={() => onAction(handleChatWithSeller)} disabled={isNavigatingToChat}>
+                      {isNavigatingToChat ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {isNavigatingToChat ? "Membuka..." : "Chat"}
                     </Button>
                     <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
                       <User className="h-4 w-4 mr-2" />

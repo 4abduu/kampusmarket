@@ -45,6 +45,8 @@ class AuthController extends Controller
                 'faculty_id' => $user->faculty_id,
             ]);
 
+            \App\Helpers\NotificationHelper::adminNewUser($user);
+
             $response = response()->json([
                 'success' => true,
                 'message' => 'Registrasi berhasil',

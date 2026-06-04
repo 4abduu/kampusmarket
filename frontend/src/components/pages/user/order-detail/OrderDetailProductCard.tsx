@@ -69,7 +69,12 @@ export default function OrderDetailProductCard({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium line-clamp-2">{order.productTitle || order.product.title}</p>
+            <p 
+              className="font-medium line-clamp-2 hover:text-primary-600 hover:underline cursor-pointer transition-colors"
+              onClick={() => onNavigate("product", { id: order.product?.id || order.product?.uuid, type: order.product?.type || (isService ? "jasa" : "barang") })}
+            >
+              {order.productTitle || order.product.title}
+            </p>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="outline" className={`text-xs ${isService ? "border-emerald-300 text-emerald-700" : ""}`}>
                 {isService ? "Jasa" : "Barang"}
@@ -125,16 +130,25 @@ export default function OrderDetailProductCard({
         <Separator />
 
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={isSellerView ? order.buyer?.avatar : order.seller?.avatar} alt={isSellerView ? order.buyer?.name : order.seller?.name} />
-            <AvatarFallback className={isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}>
-              {((isSellerView ? order.buyer?.name : order.seller?.name) || "U").split(" ").map((name: string) => name[0]).join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <p className="font-medium">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
-            <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 -ml-2 rounded-lg transition-colors"
+            onClick={() => {
+              const targetId = isSellerView ? order.buyer?.id || order.buyer?.uuid : order.seller?.id || order.seller?.uuid;
+              if (targetId) onNavigate("profile", { id: targetId });
+            }}
+          >
+            <Avatar>
+              <AvatarImage src={isSellerView ? order.buyer?.avatar : order.seller?.avatar} alt={isSellerView ? order.buyer?.name : order.seller?.name} />
+              <AvatarFallback className={isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}>
+                {((isSellerView ? order.buyer?.name : order.seller?.name) || "U").split(" ").map((name: string) => name[0]).join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="font-medium hover:text-primary-600 transition-colors">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
+              <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
+            </div>
           </div>
+          <div className="flex-1"></div>
           <Button variant="outline" size="sm" onClick={() => {
             const chatPayload: any = { 
               productId: order.product?.id || order.product?.uuid,

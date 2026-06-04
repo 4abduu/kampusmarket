@@ -266,11 +266,13 @@ export const confirmPrice = async (orderId: string, accepted: boolean): Promise<
 export const setShippingFee = async (
   orderId: string,
   fee: number,
-  method?: string
+  method?: string,
+  notes?: string
 ): Promise<Order> => {
   const response = await apiClient.post(`/orders/${orderId}/set-shipping-fee`, {
     shippingFee: fee,
     shippingMethod: method,
+    shippingNotes: notes,
   });
   return unwrapApiData<Order>(response);
 };
