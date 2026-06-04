@@ -106,8 +106,8 @@ export default function ChatMessageItem({
                 onClick={() => onNavigate('product', product.id)}
               >
                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-600 rounded-lg flex items-center justify-center shrink-0">
-                  {product.images?.[0]
-                    ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover rounded-lg" />
+                  {'images' in product && product.images?.[0] || 'image' in product && product.image
+                    ? <img src={'images' in product ? product.images[0] : (product as any).image} alt={product.title} className="w-full h-full object-cover rounded-lg" />
                     : <Package className="h-4 w-4 text-muted-foreground/50" />
                   }
                 </div>

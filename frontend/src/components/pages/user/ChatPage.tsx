@@ -662,12 +662,12 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     };
     setMessages(prev => [...prev, optimistic]);
     try {
-      const msg = await sendMessage(chatDetail.id, {
+      const msg = await sendMessage(chatDetail!.id, {
         content: 'Halo, saya ingin menawar harga untuk produk ini.',
         type: 'offer', offerPrice: price,
       });
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, isRead: m.isRead || msg.isRead } : m));
-      setChats(prev => prev.map(c => c.id === chatDetail.id ? { ...c, lastMessage: '\u{1F4B0} Penawaran harga', lastMessageAt: msg.createdAt } : c));
+      setChats(prev => prev.map(c => c.id === chatDetail!.id ? { ...c, lastMessage: '\u{1F4B0} Penawaran harga', lastMessageAt: msg.createdAt } : c));
       setNegoPrice('');
       success('Penawaran terkirim!', '');
       setShowNegoModal(false);
