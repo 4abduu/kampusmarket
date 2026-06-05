@@ -12,9 +12,9 @@ export default function LandingFeaturesSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pb-6 md:pb-0 snap-x snap-mandatory px-4 md:px-0 -mx-4 md:mx-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {landingFeatures.map((feature) => (
-            <Card key={feature.title} className="text-center p-6 hover:shadow-md transition-shadow">
+            <Card key={feature.title} className="text-center p-6 hover:shadow-md transition-shadow w-[260px] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
                 <feature.icon className="h-6 w-6 text-primary-600" />
               </div>

@@ -40,8 +40,8 @@ export default function LandingServicesSection({
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {services.slice(0, 3).map((service) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          {services.slice(0, 6).map((service) => (
             <Card
               key={service.id}
               className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
@@ -57,31 +57,31 @@ export default function LandingServicesSection({
                 />
               </div>
 
-              <CardContent className="p-4">
-                <Badge variant="outline" className="mb-2">
+              <CardContent className="p-3 md:p-4">
+                <Badge variant="outline" className="mb-2 text-[10px] md:text-xs px-1.5 py-0 md:px-2 md:py-0.5">
                   {service.category}
                 </Badge>
 
-                <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                <p className="font-medium text-sm md:text-base line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
                   {service.title}
                 </p>
 
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
                   {service.description}
                 </p>
 
-                <div className="flex items-center gap-1 mb-3">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium">
+                <div className="flex items-center gap-1 mb-2 md:mb-3">
+                  <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs md:text-sm font-medium">
                     {service.rating ?? 0}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[10px] md:text-sm text-muted-foreground truncate">
                     ({(service as any).soldCount ?? service.orderCount ?? 0} pesanan)
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-primary-600">
+                  <span className="text-sm md:text-lg font-bold text-primary-600 line-clamp-1">
                     {(() => {
                       const min = Number(service.priceMin);
                       const max = Number(service.priceMax);

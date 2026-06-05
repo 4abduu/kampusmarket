@@ -32,7 +32,7 @@ export default function ServicesPageSkeleton({
           {/* Main Content */}
           <main className="flex-1">
             {/* Services Grid - 3 columns for services */}
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
               {Array.from({ length: itemCount }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
                   <div className="relative bg-purple-100 dark:bg-purple-900/20 h-40 flex items-center justify-center">

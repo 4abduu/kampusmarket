@@ -19,7 +19,7 @@ export default function LandingServicesSectionSkeleton({ itemCount = 3 }: Landin
           <Skeleton className="h-10 w-32" />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {Array.from({ length: itemCount }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <div className="relative bg-emerald-50 dark:bg-emerald-900/20 h-40 flex items-center justify-center">
