@@ -2491,6 +2491,11 @@ export function useAdminDashboardController() {
         label: "Banned",
         className: "bg-red-600 text-white hover:bg-red-700 border-transparent",
       },
+      dismissed: {
+        variant: "destructive",
+        label: "Ditolak",
+        className: "bg-red-500 text-white hover:bg-red-600 border-transparent",
+      },
     };
     const statusConfig = config[status] || config.pending;
     return (

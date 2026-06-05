@@ -4,7 +4,7 @@ import { Tabs, TabsList } from "@/components/ui/tabs";
 
 export default function AdminNotificationsPageSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary-50 dark:to-secondary-900/10 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -44,9 +44,7 @@ export default function AdminNotificationsPageSkeleton() {
             <Tabs defaultValue="all">
               <TabsList className="grid grid-cols-5 w-full">
                 {["All", "Unread", "Moderation", "Dispute", "Withdrawal"].map((tab) => (
-                  <div key={tab} className="h-10 bg-muted rounded">
-                    <Skeleton className="h-full w-full" />
-                  </div>
+                  <Skeleton key={tab} className="h-10 w-full rounded" />
                 ))}
               </TabsList>
             </Tabs>
