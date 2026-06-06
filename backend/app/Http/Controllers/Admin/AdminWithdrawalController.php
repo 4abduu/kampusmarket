@@ -60,6 +60,8 @@ class AdminWithdrawalController extends Controller
             // Notify user that withdrawal is approved and processing
             NotificationHelper::withdrawalPending($withdrawal->user_id, $withdrawal);
 
+            $withdrawal->load('user');
+
             return $this->success(
                 new WithdrawalResource($withdrawal),
                 'Withdrawal disetujui'
@@ -87,6 +89,8 @@ class AdminWithdrawalController extends Controller
 
                 return $withdrawal;
             });
+
+            $withdrawal->load('user');
 
             return $this->success(
                 new WithdrawalResource($withdrawal),
@@ -140,6 +144,8 @@ class AdminWithdrawalController extends Controller
 
             // Notify user that withdrawal was rejected
             NotificationHelper::withdrawalFailed($withdrawal->user_id, $withdrawal, $request->rejectionReason);
+
+            $withdrawal->load('user');
 
             return $this->success(
                 new WithdrawalResource($withdrawal),
@@ -197,6 +203,8 @@ class AdminWithdrawalController extends Controller
             // Notify user that withdrawal failed and funds were refunded
             NotificationHelper::withdrawalFailed($withdrawal->user_id, $withdrawal, $request->failureReason);
 
+            $withdrawal->load('user');
+
             return $this->success(
                 new WithdrawalResource($withdrawal),
                 'Withdrawal gagal dan dana dikembalikan'
@@ -231,6 +239,8 @@ class AdminWithdrawalController extends Controller
 
             // Notify user that withdrawal completed successfully
             NotificationHelper::withdrawalSuccess($withdrawal->user_id, $withdrawal);
+
+            $withdrawal->load('user');
 
             return $this->success(
                 new WithdrawalResource($withdrawal),

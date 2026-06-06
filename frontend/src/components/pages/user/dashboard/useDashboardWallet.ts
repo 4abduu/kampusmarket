@@ -324,6 +324,7 @@ export function useDashboardWallet({ userId, initialBalance = 0 }: UseDashboardW
   }
 
   const handleWithdrawWithPin = async (pin: string) => {
+    if (isWithdrawing) return
     setIsWithdrawing(true)
     const amount = parseInt(withdrawForm.amount, 10)
 

@@ -335,11 +335,8 @@ export default function UserDashboardPage({
               ))}
 
             {activeTab === "orders" && (
-              isLoading ? (
-                <UserDashboardOrdersTabSkeleton />
-              ) : (
+              <div key={`orders-tab-wrapper-${ordersRefreshKey}`}>
                 <UserDashboardOrdersTab
-                  key={`orders-tab-${ordersRefreshKey}`}
                   onNavigate={onNavigate}
                   formatPrice={products.formatPrice}
                   getStatusBadge={getStatusBadge}
@@ -353,7 +350,7 @@ export default function UserDashboardPage({
                   handleRejectPrice={orderActions.handleRejectPrice}
                   handleAcceptPrice={orderActions.handleAcceptPrice}
                 />
-              )
+              </div>
             )}
 
             {activeTab === "wallet" && (

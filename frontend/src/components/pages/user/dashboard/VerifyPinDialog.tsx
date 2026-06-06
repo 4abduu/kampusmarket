@@ -29,9 +29,13 @@ export default function VerifyPinDialog({ open, onOpenChange, onSuccess, isLoadi
   }, [open])
 
   useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
     if (pin.length === 6) {
       // Auto-submit when all filled
-      setTimeout(() => onSuccess(pin), 300)
+      timeout = setTimeout(() => onSuccess(pin), 300)
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout)
     }
   }, [pin, onSuccess])
 

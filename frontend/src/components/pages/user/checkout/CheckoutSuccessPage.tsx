@@ -1,4 +1,4 @@
-import CheckoutSuccessfulPage from "@/components/pages/user/CheckoutSuccessfulPage";
+import CheckoutSuccessfulPage from "@/components/pages/user/checkout/CheckoutSuccessfulPage";
 import type { NavigationData } from "@/app/navigation/types";
 
 interface CheckoutSuccessPageProps {
