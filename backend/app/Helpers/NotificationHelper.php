@@ -24,8 +24,12 @@ class NotificationHelper
      * menjadi label yang rapi (misal "Berubah pikiran").
      * Jika nilai tidak dikenali sebagai enum, kembalikan string aslinya.
      */
-    public static function formatCancelReason(string $reason): string
+    public static function formatCancelReason(string|CancelReason $reason): string
     {
+        if ($reason instanceof CancelReason) {
+            return $reason->label();
+        }
+
         try {
             return CancelReason::from($reason)->label();
         } catch (\ValueError) {
@@ -268,15 +272,20 @@ class NotificationHelper
      */
     public static function reviewReceived(int $userId, $review): void
     {
+        $review->loadMissing(['reviewer', 'reviewee', 'order']);
         $rating = $review->rating ?? 0;
+        $reviewerName = $review->reviewer->name ?? 'Pembeli';
+        $sellerUuid = $review->reviewee->uuid ?? '';
+
+        $shortComment = \Illuminate\Support\Str::limit($review->comment ?? '', 50);
 
         SendUserNotification::dispatch(
             userId: $userId,
             type: NotificationType::REVIEW->value,
             title: "Review Baru ({$rating}/5)",
-            message: "Anda menerima review baru: \"{$review->comment}\" - dari {$review->reviewer_name}",
-            link: "/rating/{$review->order_uuid}",
-            data: ['review_id' => $review->uuid, 'order_id' => $review->order_uuid, 'action' => 'view_review'],
+            message: "Anda menerima review baru: \"{$shortComment}\" - dari {$reviewerName}",
+            link: "/profile/{$sellerUuid}?tab=reviews",
+            data: ['review_id' => $review->uuid, 'seller_uuid' => $sellerUuid, 'action' => 'view_review'],
         );
     }
 
@@ -285,13 +294,18 @@ class NotificationHelper
      */
     public static function reviewReplyReceived(int $userId, $review): void
     {
+        $review->loadMissing(['reviewee', 'order']);
+        $sellerUuid = $review->reviewee->uuid ?? '';
+
+        $shortResponse = \Illuminate\Support\Str::limit($review->seller_response ?? '', 50);
+
         SendUserNotification::dispatch(
             userId: $userId,
             type: NotificationType::REVIEW->value,
             title: 'Ada Balasan untuk Review Anda',
-            message: "Penjual merespons review Anda: \"{$review->reply}\"",
-            link: "/rating/{$review->order_uuid}",
-            data: ['review_id' => $review->uuid, 'order_id' => $review->order_uuid, 'action' => 'view_reply'],
+            message: "Penjual merespons review Anda: \"{$shortResponse}\"",
+            link: "/profile/{$sellerUuid}?tab=reviews",
+            data: ['review_id' => $review->uuid, 'seller_uuid' => $sellerUuid, 'action' => 'view_reply'],
         );
     }
 
@@ -338,6 +352,7 @@ class NotificationHelper
      */
     public static function adminCancelRequest($cancelRequest): void
     {
+        $cancelRequest->loadMissing('order');
         $formattedReason = self::formatCancelReason($cancelRequest->reason);
 
         SendAdminNotification::dispatch(
@@ -359,6 +374,7 @@ class NotificationHelper
      */
     public static function adminProductReport($report): void
     {
+        $report->loadMissing('product');
         SendAdminNotification::dispatch(
             type: NotificationType::SYSTEM->value,
             title: 'Laporan Produk Baru',
@@ -378,14 +394,18 @@ class NotificationHelper
      */
     public static function adminUserReport($report): void
     {
+        $report->loadMissing('reportedUser');
+        $reportedUserName = $report->reportedUser->name ?? 'User';
+        $reportedUserUuid = $report->reportedUser->uuid ?? '';
+
         SendAdminNotification::dispatch(
             type: NotificationType::SYSTEM->value,
             title: 'Laporan User Baru',
-            message: "Ada laporan user \"{$report->reported_user->name}\" - Alasan: {$report->reason}",
+            message: "Ada laporan user \"{$reportedUserName}\" - Alasan: {$report->reason}",
             link: "/admin/reports",
             data: [
                 'report_id' => $report->uuid,
-                'reported_user_id' => $report->reported_user->uuid,
+                'reported_user_id' => $reportedUserUuid,
                 'action' => 'view_report_and_user',
                 'action_tab' => 'reports',
             ],
@@ -397,6 +417,7 @@ class NotificationHelper
      */
     public static function adminWithdrawalRequest($withdrawal): void
     {
+        $withdrawal->loadMissing('user');
         SendAdminNotification::dispatch(
             type: NotificationType::SYSTEM->value,
             title: 'Permintaan Penarikan Baru',
@@ -416,6 +437,7 @@ class NotificationHelper
      */
     public static function adminProductVerification($product): void
     {
+        $product->loadMissing('seller');
         SendAdminNotification::dispatch(
             type: NotificationType::SYSTEM->value,
             title: 'Produk Menunggu Verifikasi',
@@ -489,6 +511,24 @@ class NotificationHelper
                 'user_id' => $user->uuid,
                 'action' => 'view_user_details',
                 'action_tab' => 'users',
+            ],
+        );
+    }
+
+    /**
+     * Top-up Berhasil - untuk Admin
+     */
+    public static function adminTopupSuccess($user, $amount): void
+    {
+        SendAdminNotification::dispatch(
+            type: NotificationType::PAYMENT->value,
+            title: 'Top-up Berhasil',
+            message: "Pengguna \"{$user->name}\" berhasil melakukan top-up Rp " . number_format($amount, 0, ',', '.'),
+            link: "/admin/finance",
+            data: [
+                'user_id' => $user->uuid,
+                'action' => 'view_finance',
+                'action_tab' => 'finance',
             ],
         );
     }

@@ -152,6 +152,9 @@ class WalletTopUpController extends Controller
                     'description' => 'Top up via Midtrans',
                     'status' => 'completed',
                 ]);
+
+                NotificationHelper::topupSuccess($user->id, $payment->gross_amount);
+                NotificationHelper::adminTopupSuccess($user, $payment->gross_amount);
             }
         } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
             $payment->status = 'failed';
@@ -251,6 +254,7 @@ class WalletTopUpController extends Controller
                 ]);
 
                 NotificationHelper::topupSuccess($user->id, $payment->gross_amount);
+                NotificationHelper::adminTopupSuccess($user, $payment->gross_amount);
             }
 
             return response()->json([

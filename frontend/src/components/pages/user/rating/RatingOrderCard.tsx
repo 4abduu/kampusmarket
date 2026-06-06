@@ -33,7 +33,7 @@ export default function RatingOrderCard({ order, isSelected, onSelect, formatPri
         <div className="flex gap-4">
           <div className="w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
             <ProductImage
-              src={order.product?.images?.[0] || order.product?.image}
+              src={order.product?.images?.[0] || order.product?.image || (order as any).productImage || (order as any).product_image}
               alt={order.productTitle}
               type={order.productType}
               className="w-full h-full"

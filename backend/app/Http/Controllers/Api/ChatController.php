@@ -246,7 +246,7 @@ class ChatController extends Controller
         }
 
         $messages = $chat->messages()
-            ->with(['sender', 'chat', 'attachments', 'product.images'])
+            ->with(['sender', 'chat', 'attachments', 'product.images', 'product.seller'])
             ->oldest()
             ->paginate(100);
 
@@ -416,7 +416,7 @@ class ChatController extends Controller
         $chat->markAsReadFor($userId);
 
         $readAt = now()->toISOString();
-        $chat->loadMissing(['messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images'])->oldest()]);
+        $chat->loadMissing(['messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images', 'product.seller'])->oldest()]);
         $chat->setRelation('messages', $chat->messages->map(function (Message $message) use ($userId, $readAt) {
             if ($message->sender_id !== $userId) {
                 $message->is_read = true;

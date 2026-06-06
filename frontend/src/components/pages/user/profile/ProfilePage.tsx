@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, Package } from "lucide-react";
 import {
@@ -222,7 +223,15 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
     return loggedInId === targetProfileId;
   }, [userId, authUser, user]);
 
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ActiveTab>("products");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "reviews") {
+      setActiveTab("reviews");
+    }
+  }, [searchParams]);
   const [productCategory, setProductCategory] = useState<string | null>(null);
   const [productPriceRange, setProductPriceRange] = useState<number[]>([
     0, 20000000,

@@ -132,7 +132,7 @@ export default function AdminUsersTab({
                 ))}
               </TableBody>
             </Table>
-            {renderPagination(currentPage, totalPages || getTotalPages(filteredUsers.length), setUserPage)}
+            {renderPagination(currentPage, totalPages, setUserPage)}
           </>
         )}
       </CardContent>

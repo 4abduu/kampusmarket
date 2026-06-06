@@ -23,11 +23,30 @@ export default function ChatMessageItem({
   message, currentUserId, chat, chatProduct, formatPrice,
   onNavigate, onAcceptOffer, onRejectOffer, onOpenPaymentDialog, onReportMessage
 }: Props) {
-  const isMe = message.senderId === currentUserId;
-  const isSeller = chat.seller?.id === currentUserId;
+  const product = message.product || chatProduct || chat.product;
+  let sellerId = chat.seller?.id;
+  if (product) {
+    if ('sellerId' in product && product.sellerId) {
+      sellerId = product.sellerId;
+    } else if ('seller' in product && (product as any).seller?.id) {
+      sellerId = (product as any).seller.id;
+    }
+  }
+
+  const normalizedSellerId = sellerId ? String(sellerId) : undefined;
+  const normalizedSenderId = String(message.senderId);
+  const normalizedCurrentUserId = String(currentUserId);
   
-  const senderIsSeller = message.senderId === chat.seller?.id;
-  const senderIsBuyer = message.senderId === chat.buyer?.id;
+  const isMe = normalizedSenderId === normalizedCurrentUserId;
+  const isSeller = normalizedSellerId === normalizedCurrentUserId;
+  
+  const senderIsSeller = normalizedSenderId === normalizedSellerId;
+  const buyerId = (chat.buyer?.id && String(chat.buyer.id) === normalizedSellerId) 
+    ? chat.seller?.id 
+    : chat.buyer?.id;
+  const normalizedBuyerId = buyerId ? String(buyerId) : undefined;
+  const senderIsBuyer = normalizedSenderId === normalizedBuyerId;
+
   const canRespondToOffer = !isMe
     && message.offerStatus === 'pending'
     && ((isSeller && senderIsBuyer) || (!isSeller && senderIsSeller));
@@ -74,7 +93,7 @@ export default function ChatMessageItem({
     );
   }
 
-  const product = message.product || chatProduct || chat.product;
+  // product sudah dideklarasikan di atas untuk penentuan peran dinamis
 
   return (
     <div className={`flex group ${isMe ? 'justify-end' : 'justify-start'} items-center gap-2`}>

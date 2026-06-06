@@ -81,7 +81,7 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
           icon = DollarSign;
           iconColor = "text-primary-600";
           iconBg = "bg-primary-100 dark:bg-primary-900/30";
-          action = "Proses Penarikan";
+          action = type === 'payment' ? "Lihat Keuangan" : "Proses Penarikan";
         } else if (actionTab === 'cancel-requests') {
           frontendType = "dispute"; // map to dispute type in UI
           icon = AlertTriangle;

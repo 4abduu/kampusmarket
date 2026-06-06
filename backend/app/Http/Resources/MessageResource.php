@@ -69,7 +69,7 @@ class MessageResource extends JsonResource
                 'price' => (int) $this->product->price,
                 'image' => $this->product->images->first()?->url ?? null,
                 'canNego' => $this->product->can_nego,
-                'sellerId' => $this->product->seller_id,
+                'sellerId' => $this->product->seller ? $this->product->seller->uuid : $this->product->seller_id,
             ] : null,
             
             // Offer (if type = 'offer')

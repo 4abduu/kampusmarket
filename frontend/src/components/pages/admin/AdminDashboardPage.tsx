@@ -230,6 +230,9 @@ export default function AdminDashboardPage({
     cancelRequestSearchTerm,
     setCancelRequestSearchTerm,
     filteredCancelRequests,
+    paginatedCancelRequests,
+    cancelRequestPage,
+    setCancelRequestPage,
     setShowCategoryDialog,
     selectedCategory,
     categoryForm,
@@ -520,6 +523,7 @@ export default function AdminDashboardPage({
                 filteredReports={filteredReports}
                 paginatedReports={paginatedReports}
                 currentPage={reportPage}
+                totalPages={getTotalPages(filteredReports.length)}
                 reportSearchTerm={reportSearchTerm}
                 setReportSearchTerm={setReportSearchTerm}
                 reportStatusFilter={reportStatusFilter}
@@ -541,6 +545,7 @@ export default function AdminDashboardPage({
             ) : (
               <AdminCancelRequestsTab
                 cancelRequests={filteredCancelRequests}
+                paginatedCancelRequests={paginatedCancelRequests}
                 cancelRequestRoleFilter={cancelRequestRoleFilter}
                 setCancelRequestRoleFilter={setCancelRequestRoleFilter}
                 cancelRequestSearchTerm={cancelRequestSearchTerm}
@@ -548,6 +553,10 @@ export default function AdminDashboardPage({
                 formatPrice={formatPrice}
                 handleApproveCancelRequest={handleApproveCancelRequest}
                 handleRejectCancelRequest={handleRejectCancelRequest}
+                currentPage={cancelRequestPage}
+                setCancelRequestPage={setCancelRequestPage}
+                getTotalPages={getTotalPages}
+                renderPagination={renderPagination}
               />
             )}
           </TabsContent>

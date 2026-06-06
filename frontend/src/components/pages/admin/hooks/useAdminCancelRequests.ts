@@ -23,6 +23,7 @@ export function useAdminCancelRequests({
   const [cancelRejectReasonInput, setCancelRejectReasonInput] = useState("");
   const [cancelRequestRoleFilter, setCancelRequestRoleFilter] = useState<"all" | "pembeli" | "penjual">("all");
   const [cancelRequestSearchTerm, setCancelRequestSearchTerm] = useState("");
+  const [cancelRequestPage, setCancelRequestPage] = useState(1);
 
   const loadCancelRequestsData = async () => {
     setCancelRequestsLoading(true);
@@ -149,6 +150,12 @@ export function useAdminCancelRequests({
     });
   }, [cancelRequests, cancelRequestRoleFilter, cancelRequestSearchTerm]);
 
+  const ITEMS_PER_PAGE = 10;
+  const paginatedCancelRequests = useMemo(() => {
+    const startIndex = (cancelRequestPage - 1) * ITEMS_PER_PAGE;
+    return filteredCancelRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredCancelRequests, cancelRequestPage]);
+
   return {
     cancelRequests,
     setCancelRequests,
@@ -168,11 +175,14 @@ export function useAdminCancelRequests({
     setCancelRequestRoleFilter,
     cancelRequestSearchTerm,
     setCancelRequestSearchTerm,
+    cancelRequestPage,
+    setCancelRequestPage,
     loadCancelRequestsData,
     handleApproveCancelRequest,
     confirmApproveCancelRequest,
     handleRejectCancelRequest,
     confirmRejectCancelRequest,
     filteredCancelRequests,
+    paginatedCancelRequests,
   };
 }
