@@ -426,7 +426,6 @@ export default function AdminDashboardPage({
                 userFacultyFilter={userFacultyFilter}
                 setUserFacultyFilter={setUserFacultyFilter}
                 setUserPage={setUserPage}
-                getTotalPages={getTotalPages}
                 renderPagination={renderPagination}
                 getInitials={getInitials}
                 getFacultyName={getFacultyName}
@@ -529,7 +528,6 @@ export default function AdminDashboardPage({
                 reportStatusFilter={reportStatusFilter}
                 setReportStatusFilter={setReportStatusFilter}
                 setReportPage={setReportPage}
-                getTotalPages={getTotalPages}
                 renderPagination={renderPagination}
                 getReportStatusBadge={getReportStatusBadge}
                 handleSendWarning={handleSendWarning}

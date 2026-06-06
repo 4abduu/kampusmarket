@@ -22,7 +22,6 @@ interface AdminUsersTabProps {
   userFacultyFilter: string;
   setUserFacultyFilter: (value: string) => void;
   setUserPage: (value: number) => void;
-  getTotalPages: (value: number) => number;
   renderPagination: (currentPage: number, totalPages: number, setPage: (page: number) => void) => React.ReactNode;
   getInitials: (value?: string | null) => string;
   getFacultyName: (value: string | null) => string;
@@ -46,7 +45,6 @@ export default function AdminUsersTab({
   userFacultyFilter,
   setUserFacultyFilter,
   setUserPage,
-  getTotalPages,
   renderPagination,
   getInitials,
   getFacultyName,
