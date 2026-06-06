@@ -38,7 +38,6 @@ import {
   UserDashboardOverviewSkeleton,
   UserDashboardOverviewTabSkeleton,
   UserDashboardProductsTabSkeleton,
-  UserDashboardOrdersTabSkeleton,
   UserDashboardSettingsSkeleton,
   UserDashboardWalletSkeleton,
 } from "@/components/skeleton";
