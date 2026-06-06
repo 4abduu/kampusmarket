@@ -11,9 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { AlertCircle, Loader2, ShieldCheck, Lock, Mail, Key } from "lucide-react";
 import { API_BASE_URL } from "@/lib/config";
-import { usePinMasking } from "@/hooks/usePinMasking";
 
 interface ForgotPinDialogProps {
   open: boolean;
@@ -38,12 +38,9 @@ export default function ForgotPinDialog({
 }: ForgotPinDialogProps) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [newPin, setNewPin] = useState(["", "", "", "", "", ""]);
-  const [confirmPin, setConfirmPin] = useState(["", "", "", "", "", ""]);
-
-  const newPinMask = usePinMasking(500);
-  const confirmPinMask = usePinMasking(500);
+  const [otp, setOtp] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -100,63 +97,6 @@ export default function ForgotPinDialog({
     return () => clearInterval(timer);
   }, [step]);
 
-  // PIN change handlers
-  const handleNewPinChange = (index: number, value: string) => {
-    const val = value.replace(/\D/g, "");
-    const arr = [...newPin];
-    arr[index] = val;
-    setNewPin(arr);
-    setError("");
-
-    if (val) {
-      if (index < 5) {
-        newPinMask.hideDigit(index);
-        document.getElementById(`new-pin-${index + 1}`)?.focus();
-      } else {
-        newPinMask.showDigit(index);
-      }
-    } else {
-      newPinMask.hideDigit(index);
-    }
-  };
-
-  const handleConfirmPinChange = (index: number, value: string) => {
-    const val = value.replace(/\D/g, "");
-    const arr = [...confirmPin];
-    arr[index] = val;
-    setConfirmPin(arr);
-    setError("");
-
-    if (val) {
-      if (index < 5) {
-        confirmPinMask.hideDigit(index);
-        document.getElementById(`confirm-pin-${index + 1}`)?.focus();
-      } else {
-        confirmPinMask.showDigit(index);
-      }
-    } else {
-      confirmPinMask.hideDigit(index);
-    }
-  };
-
-  const handleNewPinKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace") {
-      newPinMask.hideDigit(index);
-      if (!newPin[index] && index > 0) {
-        document.getElementById(`new-pin-${index - 1}`)?.focus();
-      }
-    }
-  };
-
-  const handleConfirmPinKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace") {
-      confirmPinMask.hideDigit(index);
-      if (!confirmPin[index] && index > 0) {
-        document.getElementById(`confirm-pin-${index - 1}`)?.focus();
-      }
-    }
-  };
-
   const handleSendOtp = async () => {
     setError("");
     setIsSendingOtp(true);
@@ -186,7 +126,7 @@ export default function ForgotPinDialog({
       setCountdown(OTP_EXPIRATION_SECONDS);
       setResendCooldown(60);
       setCanResend(false);
-      setOtp(["", "", "", "", "", ""]);
+      setOtp("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
@@ -198,7 +138,7 @@ export default function ForgotPinDialog({
     if (!canResend) return;
 
     setError("");
-    setOtp(["", "", "", "", "", ""]);
+    setOtp("");
     setIsSendingOtp(true);
 
     try {
@@ -244,7 +184,7 @@ export default function ForgotPinDialog({
   // Auto-submit when OTP complete
   useEffect(() => {
     if (step !== "otp") return;
-    if (!otp.every(d => d !== "")) return;
+    if (otp.length !== 6) return;
     if (isVerifyingOtp) return;
     if (error) return; // Prevent looping if OTP is wrong
 
@@ -255,8 +195,7 @@ export default function ForgotPinDialog({
   }, [step, otp, isVerifyingOtp, error]);
 
   const handleVerifyOtp = async () => {
-    const otpStr = otp.join("");
-    if (otpStr.length !== 6) {
+    if (otp.length !== 6) {
       setError("Kode OTP harus 6 digit");
       return;
     }
@@ -272,7 +211,7 @@ export default function ForgotPinDialog({
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ otp: otpStr }),
+        body: JSON.stringify({ otp: otp }),
       });
 
       const data = await response.json();
@@ -294,21 +233,17 @@ export default function ForgotPinDialog({
     e.preventDefault();
     setError("");
 
-    const newPinStr = newPin.join("");
-    const confirmPinStr = confirmPin.join("");
-    const otpStr = otp.join("");
-
-    if (newPinStr.length !== 6) {
+    if (newPin.length !== 6) {
       setError("PIN baru harus 6 digit");
       return;
     }
 
-    if (confirmPinStr.length !== 6) {
+    if (confirmPin.length !== 6) {
       setError("Konfirmasi PIN harus 6 digit");
       return;
     }
 
-    if (newPinStr !== confirmPinStr) {
+    if (newPin !== confirmPin) {
       setError("Konfirmasi PIN tidak cocok");
       return;
     }
@@ -324,8 +259,8 @@ export default function ForgotPinDialog({
           Accept: "application/json",
         },
         body: JSON.stringify({
-          otp: otpStr,
-          pin: newPinStr,
+          otp: otp,
+          pin: newPin,
         }),
       });
 
@@ -351,13 +286,11 @@ export default function ForgotPinDialog({
     }
     onOpenChange(false);
     setStep("email");
-    setOtp(["", "", "", "", "", ""]);
-    setNewPin(["", "", "", "", "", ""]);
-    setConfirmPin(["", "", "", "", "", ""]);
+    setOtp("");
+    setNewPin("");
+    setConfirmPin("");
     setError("");
     setCountdown(OTP_EXPIRATION_SECONDS);
-    newPinMask.hideAll();
-    confirmPinMask.hideAll();
   };
 
   const formatCountdown = useCallback((seconds: number) => formatCountdownValue(seconds), []);
@@ -437,38 +370,29 @@ export default function ForgotPinDialog({
           {/* OTP Step */}
           {step === "otp" && (
             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-              <div className="space-y-3">
+              <div className="space-y-3 flex flex-col items-center">
                 <Label className="text-center block">Masukkan Kode OTP (6 digit)</Label>
-                <div className="flex justify-center gap-2">
-                  {otp.map((digit, index) => (
-                    <Input
-                      key={index}
-                      id={`forgot-otp-${index}`}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "")
-                        const newArray = [...otp]
-                        newArray[index] = val
-                        setOtp(newArray)
-                        setError("")
-                        if (val && index < 5) {
-                          document.getElementById(`forgot-otp-${index + 1}`)?.focus()
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Backspace" && !otp[index] && index > 0) {
-                          document.getElementById(`forgot-otp-${index - 1}`)?.focus()
-                        }
-                      }}
-                      className="w-10 h-12 text-center text-lg font-bold"
-                      disabled={isVerifyingOtp}
-                      autoFocus={index === 0}
-                    />
-                  ))}
-                </div>
+                <InputOTP 
+                  maxLength={6} 
+                  value={otp} 
+                  onChange={(val) => {
+                    setOtp(val)
+                    setError("")
+                  }} 
+                  disabled={isVerifyingOtp}
+                  autoFocus
+                >
+                  <InputOTPGroup className="gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <InputOTPSlot 
+                        key={index} 
+                        index={index} 
+                        className="w-10 h-12 text-lg font-bold rounded-md border" 
+                        // OTP is NOT obscured
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
 
               {/* Countdown & Resend */}
@@ -523,50 +447,54 @@ export default function ForgotPinDialog({
               </div>
 
               {/* New PIN */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col items-center">
                 <Label className="text-center block">PIN Baru (6 digit angka)</Label>
-                <div className="flex justify-center gap-2">
-                  {newPin.map((digit, index) => (
-                    <Input
-                      key={index}
-                      id={`new-pin-${index}`}
-                      type={newPinMask.isVisible(index) ? "text" : "password"}
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleNewPinChange(index, e.target.value)}
-                      onKeyDown={(e) => handleNewPinKeyDown(index, e)}
-                      onFocus={() => { if (newPin[index]) newPinMask.showDigit(index) }}
-                      onBlur={() => newPinMask.hideDigit(index)}
-                      className="w-10 h-12 text-center text-lg font-bold"
-                      disabled={isResettingPin}
-                      autoFocus={index === 0}
-                    />
-                  ))}
-                </div>
+                <InputOTP 
+                  maxLength={6} 
+                  value={newPin} 
+                  onChange={(val) => {
+                    setNewPin(val)
+                    setError("")
+                  }} 
+                  disabled={isResettingPin}
+                  autoFocus
+                >
+                  <InputOTPGroup className="gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <InputOTPSlot 
+                        key={index} 
+                        index={index} 
+                        isPassword
+                        className="w-10 h-12 text-lg font-bold rounded-md border" 
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
 
               {/* Confirm PIN */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col items-center">
                 <Label className="text-center block">Konfirmasi PIN (6 digit angka)</Label>
-                <div className="flex justify-center gap-2">
-                  {confirmPin.map((digit, index) => (
-                    <Input
-                      key={index}
-                      id={`confirm-pin-${index}`}
-                      type={confirmPinMask.isVisible(index) ? "text" : "password"}
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleConfirmPinChange(index, e.target.value)}
-                      onKeyDown={(e) => handleConfirmPinKeyDown(index, e)}
-                      onFocus={() => { if (confirmPin[index]) confirmPinMask.showDigit(index) }}
-                      onBlur={() => confirmPinMask.hideDigit(index)}
-                      className="w-10 h-12 text-center text-lg font-bold"
-                      disabled={isResettingPin}
-                    />
-                  ))}
-                </div>
+                <InputOTP 
+                  maxLength={6} 
+                  value={confirmPin} 
+                  onChange={(val) => {
+                    setConfirmPin(val)
+                    setError("")
+                  }} 
+                  disabled={isResettingPin}
+                >
+                  <InputOTPGroup className="gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <InputOTPSlot 
+                        key={index} 
+                        index={index} 
+                        isPassword
+                        className="w-10 h-12 text-lg font-bold rounded-md border" 
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
 
               {/* Info Box */}
@@ -583,7 +511,7 @@ export default function ForgotPinDialog({
 
               <Button
                 type="submit"
-                disabled={isResettingPin || newPin.some(d => d === "") || confirmPin.some(d => d === "")}
+                disabled={isResettingPin || newPin.length < 6 || confirmPin.length < 6}
                 className="w-full bg-primary-600 hover:bg-primary-700 font-medium"
               >
                 {isResettingPin ? (

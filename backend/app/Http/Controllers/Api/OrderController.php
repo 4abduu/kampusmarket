@@ -895,8 +895,6 @@ class OrderController extends Controller
                     'actor_id' => $user->id,
                 ]);
 
-                // UPDATE product sold count - ONLY HERE, not in store()
-                $order->product->incrementSoldCount($order->quantity);
 
                 // ESCROW RELEASE: Transfer dana ke penjual (hanya untuk pembayaran digital, bukan COD)
                 if ($order->payment_status === PaymentStatus::PAID && in_array($order->payment_method, ['balance', 'midtrans'])) {

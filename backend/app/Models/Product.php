@@ -294,6 +294,15 @@ class Product extends Model
     }
 
     /**
+     * Decrement sold count with a minimum of 0.
+     */
+    public function decrementSoldCount(int $quantity = 1): void
+    {
+        $this->sold_count = max(0, $this->sold_count - $quantity);
+        $this->save();
+    }
+
+    /**
      * Get duration string.
      */
     public function getDurationString(): ?string

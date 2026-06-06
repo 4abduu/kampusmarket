@@ -42,8 +42,6 @@ class AutoConfirmOrders extends Command
                 'actor_id' => null,
             ]);
 
-            // Update product sold count
-            $order->product->incrementSoldCount($order->quantity);
 
             // ESCROW RELEASE for digital payments
             if ($order->payment_status === PaymentStatus::PAID) {

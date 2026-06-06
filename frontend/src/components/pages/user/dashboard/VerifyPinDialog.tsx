@@ -1,11 +1,10 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { useState, useEffect } from "react"
 import { Loader2, Lock, AlertCircle, ShieldCheck } from "lucide-react"
 import ForgotPinDialog from "./ForgotPinDialog"
-import { usePinMasking } from "@/hooks/usePinMasking"
 
 type Props = {
   open: boolean
@@ -17,75 +16,31 @@ type Props = {
 }
 
 export default function VerifyPinDialog({ open, onOpenChange, onSuccess, isLoading, error, description }: Props) {
-  const [pin, setPin] = useState(["", "", "", "", "", ""])
+  const [pin, setPin] = useState("")
   const [internalError, setInternalError] = useState("")
   const [showForgotPin, setShowForgotPin] = useState(false)
-  const pinMask = usePinMasking(500)
 
   useEffect(() => {
     if (!open) {
-      setPin(["", "", "", "", "", ""])
+      setPin("")
       setInternalError("")
       setShowForgotPin(false)
-      pinMask.hideAll()
     }
   }, [open])
 
-  const handlePinChange = (index: number, value: string) => {
-    if (value.length > 1) return
-    const digit = value.replace(/\D/g, "")
-    const newPin = [...pin]
-    newPin[index] = digit
-    setPin(newPin)
-    setInternalError("")
-
-    if (digit) {
-      // Show the digit as plaintext first
-      pinMask.showDigit(index)
-      if (index < 5) {
-        // Brief delay so user sees the digit, then move focus (blur will mask it)
-        setTimeout(() => {
-          document.getElementById(`verify-pin-${index + 1}`)?.focus()
-        }, 150)
-      }
-    } else {
-      pinMask.hideDigit(index)
+  useEffect(() => {
+    if (pin.length === 6) {
+      // Auto-submit when all filled
+      setTimeout(() => onSuccess(pin), 300)
     }
-
-    // Auto-submit when all filled
-    if (newPin.every(d => d !== "")) {
-      const pinStr = newPin.join("")
-      setTimeout(() => onSuccess(pinStr), 300)
-    }
-  }
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace") {
-      pinMask.hideDigit(index)
-      if (!pin[index] && index > 0) {
-        document.getElementById(`verify-pin-${index - 1}`)?.focus()
-      }
-    }
-  }
-
-  const handleFocus = (index: number) => {
-    // Show digit as text only if there's a digit and it's the active box
-    if (pin[index]) {
-      pinMask.showDigit(index)
-    }
-  }
-
-  const handleBlur = (index: number) => {
-    pinMask.hideDigit(index)
-  }
+  }, [pin, onSuccess])
 
   const handleSubmit = () => {
-    const pinStr = pin.join("")
-    if (pinStr.length !== 6) {
+    if (pin.length !== 6) {
       setInternalError("PIN harus 6 digit")
       return
     }
-    onSuccess(pinStr)
+    onSuccess(pin)
   }
 
   const displayError = error || internalError
@@ -121,27 +76,29 @@ export default function VerifyPinDialog({ open, onOpenChange, onSuccess, isLoadi
             )}
 
             {/* PIN Input */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center">
               <Label className="text-center block">PIN Dompet (6 digit angka)</Label>
-              <div className="flex justify-center gap-2">
-                {pin.map((digit, index) => (
-                  <Input
-                    key={index}
-                    id={`verify-pin-${index}`}
-                    type={pinMask.isVisible(index) ? "text" : "password"}
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onFocus={() => handleFocus(index)}
-                    onBlur={() => handleBlur(index)}
-                    className="w-10 h-12 text-center text-lg font-bold"
-                    disabled={isLoading}
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </div>
+              <InputOTP 
+                maxLength={6} 
+                value={pin} 
+                onChange={(val) => {
+                  setPin(val)
+                  setInternalError("")
+                }} 
+                disabled={isLoading}
+                autoFocus
+              >
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <InputOTPSlot 
+                      key={index} 
+                      index={index} 
+                      isPassword
+                      className="w-10 h-12 text-lg font-bold rounded-md border" 
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             {/* Info Box */}
@@ -162,7 +119,7 @@ export default function VerifyPinDialog({ open, onOpenChange, onSuccess, isLoadi
             <Button 
               className="w-full bg-primary-600 hover:bg-primary-700" 
               onClick={handleSubmit}
-              disabled={pin.some(d => d === "") || isLoading}
+              disabled={pin.length < 6 || isLoading}
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Verifikasi
