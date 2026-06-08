@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle, Clock3 } from 'lucide-react';
+import { CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle, Clock3 } from 'lucide-react';
 import type { ApiMessage, ApiChatDetail, ApiChatProduct } from '@/components/pages/user/chat/chat.types';
 
 interface Props {
