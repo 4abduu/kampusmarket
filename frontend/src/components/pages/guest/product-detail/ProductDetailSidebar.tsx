@@ -95,7 +95,7 @@ export default function ProductDetailSidebar({
     };
   }, [product?.id, product?.rating]);
 
-  const productShareUrl = `https://kampusmarket.id/p/${product.id}`;
+  const productShareUrl = typeof window !== "undefined" ? `${window.location.origin}/product/${product.id}` : `https://kampusmarket.id/product/${product.id}`;
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -132,13 +132,41 @@ export default function ProductDetailSidebar({
     }
   };
 
+  const copyToClipboardFallback = (text: string): boolean => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
+  };
+
   const handleCopyProductLink = async () => {
     try {
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(productShareUrl);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 1800);
+      } else {
+        const success = copyToClipboardFallback(productShareUrl);
+        if (success) {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1800);
+        } else {
+          setIsCopied(false);
+        }
       }
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 1800);
     } catch {
       setIsCopied(false);
     }
@@ -199,6 +227,7 @@ export default function ProductDetailSidebar({
         title="Bagikan Produk"
         description="Bagikan produk ini ke:"
         inputAriaLabel="Link produk"
+        itemTitle={product.title}
       />
 
       <Card>
@@ -354,18 +383,18 @@ export default function ProductDetailSidebar({
         <CardContent className="p-6">
           <div
             className="flex items-center gap-3 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}
+            onClick={() => onNavigate("profile", product.sellerId || product.seller?.id)}
           >
             <Avatar className="h-12 w-12">
-              {product.seller.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
+              {product.seller?.avatar && <AvatarImage src={product.seller.avatar} alt={product.seller.name} />}
               <AvatarFallback className="bg-primary-100 text-primary-700">
-                {product.seller.name.split(" ").map((n) => n[0]).join("")}
+                {product.seller?.name?.split(" ").map((n) => n[0]).join("") || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium hover:text-primary-600">{product.seller.name}</p>
-                {product.seller.isVerified && (
+                <p className="font-medium hover:text-primary-600">{product.seller?.name || "Penjual"}</p>
+                {product.seller?.isVerified && (
                   <Badge variant="outline" className="text-xs">
                     <Shield className="h-3 w-3 mr-1 text-primary-600" />
                     Terverifikasi
@@ -393,14 +422,14 @@ export default function ProductDetailSidebar({
             </div>
             <div>
               <p className="font-bold text-lg uppercase">
-                {product.seller.facultyCode || product.seller.facultyName || "N/A"}
+                {product.seller?.facultyCode || product.seller?.facultyName || "N/A"}
               </p>
               <p className="text-muted-foreground">Fakultas</p>
             </div>
           </div>
 
           {isOwner ? (
-            <Button variant="outline" className="w-full" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+            <Button variant="outline" className="w-full" onClick={() => onNavigate("profile", product.sellerId || product.seller?.id)}>
               <User className="h-4 w-4 mr-2" />
               Lihat Profil
             </Button>
@@ -408,11 +437,11 @@ export default function ProductDetailSidebar({
             <>
               {product.canNego ? (
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                  <Button variant="outline" onClick={() => openWhatsApp(product.seller?.phone, product.seller?.name || "Penjual", product.title, false)}>
                     <Phone className="h-4 w-4 mr-2" />
                     WhatsApp
                   </Button>
-                  <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                  <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller?.id)}>
                     <User className="h-4 w-4 mr-2" />
                     Lihat Profil
                   </Button>
@@ -428,12 +457,12 @@ export default function ProductDetailSidebar({
                       )}
                       {isNavigatingToChat ? "Membuka..." : "Chat"}
                     </Button>
-                    <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller.id)}>
+                    <Button variant="outline" onClick={() => onNavigate("profile", product.sellerId || product.seller?.id)}>
                       <User className="h-4 w-4 mr-2" />
                       Lihat Profil
                     </Button>
                   </div>
-                  <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(product.seller.phone, product.seller.name, product.title, false)}>
+                  <Button variant="outline" className="w-full mt-2" onClick={() => openWhatsApp(product.seller?.phone, product.seller?.name || "Penjual", product.title, false)}>
                     <Phone className="h-4 w-4 mr-2" />
                     WhatsApp
                   </Button>

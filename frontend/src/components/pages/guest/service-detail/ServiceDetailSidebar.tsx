@@ -77,7 +77,7 @@ export default function ServiceDetailSidebar({
     };
   }, [service?.id, service?.rating]);
 
-  const serviceShareUrl = `https://kampusmarket.id/s/${service.id}`;
+  const serviceShareUrl = typeof window !== "undefined" ? `${window.location.origin}/service/${service.id}` : `https://kampusmarket.id/service/${service.id}`;
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -114,13 +114,41 @@ export default function ServiceDetailSidebar({
     }
   };
 
+  const copyToClipboardFallback = (text: string): boolean => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
+  };
+
   const handleCopyServiceLink = async () => {
     try {
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(serviceShareUrl);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 1800);
+      } else {
+        const success = copyToClipboardFallback(serviceShareUrl);
+        if (success) {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1800);
+        } else {
+          setIsCopied(false);
+        }
       }
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 1800);
     } catch {
       setIsCopied(false);
     }
@@ -142,6 +170,7 @@ export default function ServiceDetailSidebar({
         title="Bagikan Layanan"
         description="Bagikan layanan ini ke:"
         inputAriaLabel="Link layanan"
+        itemTitle={service.title}
       />
 
       <Card>
@@ -351,7 +380,7 @@ export default function ServiceDetailSidebar({
             </div>
             <div>
               <p className="font-bold text-lg uppercase">
-                {service.seller.facultyCode || service.seller.facultyName || "N/A"}
+                {service.seller?.facultyCode || service.seller?.facultyName || "N/A"}
               </p>
               <p className="text-muted-foreground">Fakultas</p>
             </div>
