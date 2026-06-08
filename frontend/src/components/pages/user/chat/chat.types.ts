@@ -88,6 +88,7 @@ export interface ApiChatDetail {
     images: string[];
     type: string;
     canNego: boolean;
+    stock: number;
     condition?: string;
     seller: ApiUser;
   } | null;
