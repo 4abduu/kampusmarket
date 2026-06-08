@@ -34,7 +34,8 @@ export default function UserNotificationsList({
     }
 
     if (link.startsWith("/rating/")) {
-      navigate(link);
+      const id = link.replace("/rating/", "");
+      navigate(`/order-detail/${id}`);
       return;
     }
 
