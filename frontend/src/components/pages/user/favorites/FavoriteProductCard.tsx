@@ -154,7 +154,10 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
 
   if (viewMode === "list") {
     return (
-      <Card className="group overflow-hidden border-slate-200/80 dark:border-slate-800">
+      <Card 
+        onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())}
+        className="group overflow-hidden border-slate-200/80 cursor-pointer dark:border-slate-800"
+      >
         <div className="grid md:grid-cols-[240px_1fr]">
           <div className="relative h-48 bg-slate-100 md:h-auto dark:bg-slate-800">
             <ProductImage
@@ -177,7 +180,15 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">Disimpan</p>
                   <h3 className="mt-0.5 text-lg font-semibold leading-snug text-slate-900 dark:text-slate-50">{product.title}</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onRemove(product.uuid || product.id.toString())} className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(product.uuid || product.id.toString());
+                  }} 
+                  className="shrink-0 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -211,11 +222,26 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())} className="gap-1.5">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigate(detailPage, product.uuid || product.id.toString());
+                  }} 
+                  className="gap-1.5"
+                >
                   Detail <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
                 {product.seller && (
-                  <Button size="sm" onClick={() => onNavigate("profile", { userId: product.seller!.uuid })} className="bg-primary-600 hover:bg-primary-700">
+                  <Button 
+                    size="sm" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigate("profile", { userId: product.seller!.uuid });
+                    }} 
+                    className="bg-primary-600 hover:bg-primary-700"
+                  >
                     Penjual
                   </Button>
                 )}
@@ -229,7 +255,8 @@ export default function FavoriteProductCard({ product, viewMode, onRemove, onNav
 
   return (
     <Card
-      className="group overflow-hidden border-slate-200/80 transition-all duration-200 hover:shadow-md dark:border-slate-800"
+      onClick={() => onNavigate(detailPage, product.uuid || product.id.toString())}
+      className="group overflow-hidden border-slate-200/80 transition-all duration-200 hover:shadow-md cursor-pointer dark:border-slate-800"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
         <ProductImage
