@@ -253,7 +253,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
             });
             const existingTimeout = typingTimeoutsRef.current.get(e.chatId);
             if (existingTimeout) clearTimeout(existingTimeout);
-            
+
             const newTimeout = setTimeout(() => {
               setTypingChatIds(prev => {
                 const next = new Set(prev);
@@ -262,7 +262,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               });
               typingTimeoutsRef.current.delete(e.chatId);
             }, 3000);
-            
+
             typingTimeoutsRef.current.set(e.chatId, newTimeout);
           }
         })
@@ -354,7 +354,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           const isFromMe = incoming.senderId === currentUserId;
           // Only force isRead to true if the message is from someone else and the window is active
           const shouldMarkAsRead = !isFromMe && isVisible;
-          
+
           setMessages(prev => {
             const existingIdx = prev.findIndex(m => m.id === incoming.id);
             if (existingIdx !== -1) {
@@ -362,7 +362,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               next[existingIdx] = { ...incoming, isRead: prev[existingIdx].isRead || shouldMarkAsRead || incoming.isRead };
               return next;
             }
-            
+
             // Deduplicate optimistic messages
             const pendingIdx = prev.findIndex(m => m._pending && m.senderId === incoming.senderId && m.type === incoming.type);
             if (pendingIdx !== -1) {
@@ -381,7 +381,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           ));
 
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-          
+
           if (isVisible && !isFromMe) {
             markChatRead(chatUuid).catch(() => null);
             // Update unread count global
@@ -393,7 +393,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         channel.listen('.MessagesRead', (event: { chatId: string, readerId: string, readAt: string }) => {
           if (event.readerId !== currentUserId) {
             // Jika orang lain yang baca, tandai semua pesan saya sebagai read
-            setMessages(prev => prev.map(m => 
+            setMessages(prev => prev.map(m =>
               m.senderId === currentUserId ? { ...m, isRead: true, readAt: event.readAt } : m
             ));
           }
@@ -427,7 +427,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     } finally {
       setChatLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChatId, onlineUserIds]);
 
   // ── Trigger dari detail produk ─────────────────────────────────────────────
@@ -445,7 +445,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           payload.buyerId = initialBuyerId;
         }
         const chat = await startChat(payload);
-        setChats(prev => {          if (prev.some(c => c.id === chat.id)) return prev;
+        setChats(prev => {
+          if (prev.some(c => c.id === chat.id)) return prev;
           const item: ApiChat = {
             id: chat.id,
             product: {
@@ -589,9 +590,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     if (!chatDetail || (!newMessage.trim() && !attachedImage) || isSending) return;
     const content = newMessage.trim();
     setIsSending(true);
-    
+
     const fileToUpload = imageFile;
-    
+
     setNewMessage('');
     setAttachedImage(null);
     setImageFile(null);
@@ -651,7 +652,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     const price = parseInt(negoPrice.replace(/\D/g, ''), 10);
     if (!price || price <= 0) return;
     setIsSending(true);
-    
+
     const tempId = `temp-${Date.now()}`;
     const optimistic: ApiMessage = {
       id: tempId, chatId: chatDetail!.id, senderId: currentUserId,
@@ -794,15 +795,15 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
   const chatProduct: ApiChatProduct | null = activeProduct
     ? {
-        id: activeProduct.id,
-        title: activeProduct.title,
-        slug: activeProduct.slug,
-        price: activeProduct.price,
-        image: activeProduct.image ?? '',
-        type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
-        canNego: activeProduct.canNego ?? false,
-        sellerId: chatDetail?.seller?.id ?? '',
-      }
+      id: activeProduct.id,
+      title: activeProduct.title,
+      slug: activeProduct.slug,
+      price: activeProduct.price,
+      image: activeProduct.image ?? '',
+      type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
+      canNego: activeProduct.canNego ?? false,
+      sellerId: chatDetail?.seller?.id ?? '',
+    }
     : null;
 
   const otherUser = chatDetail
@@ -902,7 +903,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Alasan Laporan</label>
-                <select 
+                <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
@@ -916,7 +917,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Detail Tambahan</label>
-                <textarea 
+                <textarea
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground"
                   placeholder="Ceritakan detail lebih lanjut..."
                   value={reportDescription}
@@ -925,13 +926,13 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               </div>
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
-              <button 
+              <button
                 className="px-4 py-2 text-sm border rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
                 onClick={() => setShowReportModal(false)}
               >
                 Batal
               </button>
-              <button 
+              <button
                 className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                 onClick={handleSubmitReport}
                 disabled={isSending}
