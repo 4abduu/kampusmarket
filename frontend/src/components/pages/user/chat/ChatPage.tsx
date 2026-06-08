@@ -26,6 +26,7 @@ import { uploadImage } from '@/lib/api/images';
 import { getEcho } from '@/lib/echo';
 import apiClient from '@/lib/api/client';
 import { useChatStore } from '@/lib/chat-store';
+import { useNotificationStore } from '@/lib/notification-store';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -346,6 +347,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       
       setChats(prev => prev.map(c => c.id === chatUuid ? { ...c, unreadCount: 0 } : c));
 
+      // Update general notifications count
+      void useNotificationStore.getState().fetchUnreadCount();
+
       // [REVISI] Terapkan status online dari presence channel ke chatDetail juga
       if (detail.seller) {
         detail.seller.isOnline = onlineUserIds.has(detail.seller.id) || detail.seller.isOnline;
@@ -394,7 +398,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
           
           if (isVisible && !isFromMe) {
-            markChatRead(chatUuid).catch(() => null);
+            markChatRead(chatUuid).then(() => {
+              void useNotificationStore.getState().fetchUnreadCount();
+            }).catch(() => null);
             // Update unread count global
             useChatStore.getState().decrementUnreadCount();
           }
@@ -558,7 +564,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
   const handleSelectChat = useCallback(async (chat: ApiChat) => {
     await openChat(chat.id);
-    void markChatRead(chat.id).catch(() => null);
+    void markChatRead(chat.id).then(() => {
+      void useNotificationStore.getState().fetchUnreadCount();
+    }).catch(() => null);
   }, [openChat]);
 
   const handleBackToList = () => {

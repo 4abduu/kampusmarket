@@ -213,6 +213,16 @@ class ChatController extends Controller
 
         $chat->markAsReadFor($userId);
 
+        // Clear database notifications of type chat for this user and chat
+        \App\Models\Notification::where('user_id', $userId)
+            ->where('type', \App\Enums\NotificationType::CHAT)
+            ->where('is_read', false)
+            ->where('data->chat_id', $chat->uuid)
+            ->update([
+                'is_read' => true,
+                'read_at' => $readAt,
+            ]);
+
         $chat->load([
             'product.images',
             'product.seller',
@@ -259,6 +269,16 @@ class ChatController extends Controller
             ->update(['is_read' => true, 'read_at' => $readAt]);
 
         $chat->markAsReadFor($userId);
+
+        // Clear database notifications of type chat for this user and chat
+        \App\Models\Notification::where('user_id', $userId)
+            ->where('type', \App\Enums\NotificationType::CHAT)
+            ->where('is_read', false)
+            ->where('data->chat_id', $chat->uuid)
+            ->update([
+                'is_read' => true,
+                'read_at' => $readAt,
+            ]);
 
         $items = collect($messages->items())->map(function (Message $message) use ($userId) {
             if ($message->sender_id !== $userId) {
@@ -369,7 +389,7 @@ class ChatController extends Controller
         // dan notifikasi realtime meski penerima tidak sedang membuka chat ini.
         try {
             $chat->loadMissing(['buyer', 'seller']);
-            $receiverUuid = $chat->buyer_id === $userId
+            $receiverUuid = $chat->buyer_id == $userId
                 ? $chat->seller?->uuid
                 : $chat->buyer?->uuid;
 
@@ -377,8 +397,8 @@ class ChatController extends Controller
                 broadcast(new NewMessageNotification($message, $receiverUuid));
 
                 // Persist a notification so it shows in the notification center
-                $receiver = $chat->buyer_id === $userId ? $chat->seller : $chat->buyer;
-                $sender   = $chat->buyer_id === $userId ? $chat->buyer  : $chat->seller;
+                $receiver = $chat->buyer_id == $userId ? $chat->seller : $chat->buyer;
+                $sender   = $chat->buyer_id == $userId ? $chat->buyer  : $chat->seller;
                 if ($receiver && $message->type->value === 'offer') {
                     NotificationHelper::chatPriceOffer($receiver->id, $chat, $message->offer_price, $sender);
                 } elseif ($receiver && $message->type->value === 'text') {
@@ -414,6 +434,16 @@ class ChatController extends Controller
             ->update(['is_read' => true, 'read_at' => now()]);
 
         $chat->markAsReadFor($userId);
+
+        // Clear database notifications of type chat for this user and chat
+        \App\Models\Notification::where('user_id', $userId)
+            ->where('type', \App\Enums\NotificationType::CHAT)
+            ->where('is_read', false)
+            ->where('data->chat_id', $chat->uuid)
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
 
         $readAt = now()->toISOString();
         $chat->loadMissing(['messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images', 'product.seller'])->oldest()]);
