@@ -272,9 +272,10 @@ class NotificationHelper
      */
     public static function reviewReceived(int $userId, $review): void
     {
-        $review->loadMissing(['reviewer', 'reviewee', 'order']);
+        $review->loadMissing(['reviewer', 'reviewee', 'order.product']);
         $rating = $review->rating ?? 0;
         $reviewerName = $review->reviewer->name ?? 'Pembeli';
+        $productUuid = $review->order->product->uuid ?? '';
         $sellerUuid = $review->reviewee->uuid ?? '';
 
         $shortComment = \Illuminate\Support\Str::limit($review->comment ?? '', 50);
@@ -284,7 +285,7 @@ class NotificationHelper
             type: NotificationType::REVIEW->value,
             title: "Review Baru ({$rating}/5)",
             message: "Anda menerima review baru: \"{$shortComment}\" - dari {$reviewerName}",
-            link: "/profile/{$sellerUuid}?tab=reviews",
+            link: "/product/{$productUuid}#reviews",
             data: ['review_id' => $review->uuid, 'seller_uuid' => $sellerUuid, 'action' => 'view_review'],
         );
     }
@@ -294,7 +295,8 @@ class NotificationHelper
      */
     public static function reviewReplyReceived(int $userId, $review): void
     {
-        $review->loadMissing(['reviewee', 'order']);
+        $review->loadMissing(['reviewee', 'order.product']);
+        $productUuid = $review->order->product->uuid ?? '';
         $sellerUuid = $review->reviewee->uuid ?? '';
 
         $shortResponse = \Illuminate\Support\Str::limit($review->seller_response ?? '', 50);
@@ -304,7 +306,7 @@ class NotificationHelper
             type: NotificationType::REVIEW->value,
             title: 'Ada Balasan untuk Review Anda',
             message: "Penjual merespons review Anda: \"{$shortResponse}\"",
-            link: "/profile/{$sellerUuid}?tab=reviews",
+            link: "/product/{$productUuid}#reviews",
             data: ['review_id' => $review->uuid, 'seller_uuid' => $sellerUuid, 'action' => 'view_reply'],
         );
     }
@@ -314,26 +316,11 @@ class NotificationHelper
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Pesan Baru - untuk recipient
-     */
-    public static function newMessage(int $userId, $chat, $sender): void
-    {
-        SendUserNotification::dispatch(
-            userId: $userId,
-            type: NotificationType::CHAT->value,
-            title: "Pesan dari {$sender->name}",
-            message: "Ada pesan baru untuk '{$chat->product->title}'",
-            link: "/chat",
-            data: ['chat_id' => $chat->uuid, 'sender_id' => $sender->uuid, 'action' => 'open_chat'],
-        );
-    }
-
-    /**
      * Penawaran Harga di Chat - untuk recipient
      */
     public static function chatPriceOffer(int $userId, $chat, $offerPrice, $sender): void
     {
-        SendUserNotification::dispatch(
+        SendUserNotification::dispatchSync(
             userId: $userId,
             type: NotificationType::CHAT->value,
             title: "Penawaran Harga dari {$sender->name}",

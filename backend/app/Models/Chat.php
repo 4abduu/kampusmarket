@@ -25,6 +25,8 @@ class Chat extends Model
     ];
 
     protected $casts = [
+        'buyer_id' => 'integer',
+        'seller_id' => 'integer',
         'buyer_unread' => 'integer',
         'seller_unread' => 'integer',
         'is_active' => 'boolean',
@@ -84,7 +86,7 @@ class Chat extends Model
      */
     public function getOtherParticipant(int $userId): User
     {
-        return $this->buyer_id === $userId ? $this->seller : $this->buyer;
+        return $this->buyer_id == $userId ? $this->seller : $this->buyer;
     }
 
     /**
@@ -102,7 +104,7 @@ class Chat extends Model
      */
     public function incrementUnreadFor(int $senderId): void
     {
-        if ($senderId === $this->buyer_id) {
+        if ($senderId == $this->buyer_id) {
             $this->increment('seller_unread');
         } else {
             $this->increment('buyer_unread');
@@ -114,7 +116,7 @@ class Chat extends Model
      */
     public function markAsReadFor(int $userId): void
     {
-        if ($userId === $this->buyer_id) {
+        if ($userId == $this->buyer_id) {
             $this->buyer_unread = 0;
         } else {
             $this->seller_unread = 0;
@@ -127,7 +129,7 @@ class Chat extends Model
      */
     public function getUnreadCountFor(int $userId): int
     {
-        return $userId === $this->buyer_id ? $this->buyer_unread : $this->seller_unread;
+        return $userId == $this->buyer_id ? $this->buyer_unread : $this->seller_unread;
     }
 
     /**

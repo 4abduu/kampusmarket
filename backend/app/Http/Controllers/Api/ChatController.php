@@ -50,7 +50,7 @@ class ChatController extends Controller
         $seenUserIds = [];
 
         foreach ($chats as $chat) {
-            $otherUserId = $chat->buyer_id === $userId ? $chat->seller_id : $chat->buyer_id;
+            $otherUserId = $chat->buyer_id == $userId ? $chat->seller_id : $chat->buyer_id;
             if (!in_array($otherUserId, $seenUserIds)) {
                 $seenUserIds[] = $otherUserId;
                 $uniqueChats->push($chat);
@@ -59,7 +59,7 @@ class ChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $uniqueChats->map(fn ($chat) => (new ChatResource($chat))->toListArray($userId)),
+            'data'    => $uniqueChats->map(fn($chat) => (new ChatResource($chat))->toListArray($userId)),
         ]);
     }
 
@@ -120,13 +120,13 @@ class ChatController extends Controller
                 'content'    => 'Menanyakan produk',
                 'type'       => 'system',
             ]);
-            
+
             $chat->update([
                 'last_message'    => 'Menanyakan produk',
                 'last_message_at' => now(),
             ]);
             $chat->incrementUnreadFor($sellerId);
-            
+
             try {
                 broadcast(new MessageSent($msg->loadMissing(['sender', 'chat', 'attachments', 'product'])));
             } catch (\Throwable $e) {
@@ -199,7 +199,7 @@ class ChatController extends Controller
 
         $userId = $request->user()->id;
 
-        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+        if ($chat->buyer_id != $userId && $chat->seller_id != $userId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
@@ -251,7 +251,7 @@ class ChatController extends Controller
         $chat   = Chat::where('uuid', $id)->firstOrFail();
         $userId = $request->user()->id;
 
-        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+        if ($chat->buyer_id != $userId && $chat->seller_id != $userId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
@@ -318,8 +318,22 @@ class ChatController extends Controller
         $chat   = Chat::where('uuid', $id)->firstOrFail();
         $userId = $request->user()->id;
 
-        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+        if ($chat->buyer_id != $userId && $chat->seller_id != $userId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        // Validasi stok untuk penawaran
+        if ($request->type === 'offer') {
+            $product = null;
+            if ($request->has('product_id')) {
+                $product = \App\Models\Product::where('uuid', $request->product_id)->first();
+            } else {
+                $product = $chat->product;
+            }
+
+            if ($product && $product->stock <= 0) {
+                return response()->json(['success' => false, 'message' => 'Barang sudah habis terjual'], 400);
+            }
         }
 
         $message = DB::transaction(function () use ($request, $chat, $userId) {
@@ -346,7 +360,7 @@ class ChatController extends Controller
                 $urls = collect($request->input('attachment_urls', []))
                     ->take($request->type === 'image' ? 5 : 1)
                     ->values()
-                    ->map(fn ($url, $i) => [
+                    ->map(fn($url, $i) => [
                         'type'       => $request->type,
                         'url'        => $url,
                         'sort_order' => $i + 1,
@@ -394,16 +408,15 @@ class ChatController extends Controller
                 : $chat->buyer?->uuid;
 
             if ($receiverUuid) {
-                broadcast(new NewMessageNotification($message, $receiverUuid));
-
-                // Persist a notification so it shows in the notification center
+                // Persist a notification FIRST before broadcasting WebSocket.
+                // This prevents the frontend from firing markAsRead before the DB write is finished.
                 $receiver = $chat->buyer_id == $userId ? $chat->seller : $chat->buyer;
                 $sender   = $chat->buyer_id == $userId ? $chat->buyer  : $chat->seller;
                 if ($receiver && $message->type->value === 'offer') {
                     NotificationHelper::chatPriceOffer($receiver->id, $chat, $message->offer_price, $sender);
-                } elseif ($receiver && $message->type->value === 'text') {
-                    NotificationHelper::newMessage($receiver->id, $chat, $sender);
                 }
+
+                broadcast(new NewMessageNotification($message, $receiverUuid));
             }
         } catch (\Throwable $e) {
             \Log::warning('[Chat] Broadcast NewMessageNotification failed', ['error' => $e->getMessage()]);
@@ -424,7 +437,7 @@ class ChatController extends Controller
         $chat   = Chat::where('uuid', $id)->firstOrFail();
         $userId = $request->user()->id;
 
-        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+        if ($chat->buyer_id != $userId && $chat->seller_id != $userId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
@@ -446,7 +459,7 @@ class ChatController extends Controller
             ]);
 
         $readAt = now()->toISOString();
-        $chat->loadMissing(['messages' => fn ($q) => $q->with(['sender', 'attachments', 'product.images', 'product.seller'])->oldest()]);
+        $chat->loadMissing(['messages' => fn($q) => $q->with(['sender', 'attachments', 'product.images', 'product.seller'])->oldest()]);
         $chat->setRelation('messages', $chat->messages->map(function (Message $message) use ($userId, $readAt) {
             if ($message->sender_id !== $userId) {
                 $message->is_read = true;
@@ -490,7 +503,7 @@ class ChatController extends Controller
         $chat   = Chat::where('uuid', $chatId)->firstOrFail();
         $userId = $request->user()->id;
 
-        if ($chat->buyer_id !== $userId && $chat->seller_id !== $userId) {
+        if ($chat->buyer_id != $userId && $chat->seller_id != $userId) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
@@ -498,7 +511,7 @@ class ChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $message->attachments->map(fn ($a) => [
+            'data'    => $message->attachments->map(fn($a) => [
                 'id'        => $a->id,
                 'type'      => $a->type,
                 'url'       => $a->url,
@@ -517,11 +530,11 @@ class ChatController extends Controller
         $message = Message::where('uuid', $messageId)->firstOrFail();
         $userId  = $request->user()->id;
 
-        $expectedResponderId = $message->sender_id === $chat->buyer_id
+        $expectedResponderId = $message->sender_id == $chat->buyer_id
             ? $chat->seller_id
             : $chat->buyer_id;
 
-        if ($expectedResponderId !== $userId) {
+        if ($expectedResponderId != $userId) {
             return response()->json(['success' => false, 'message' => 'Hanya penerima penawaran yang dapat menerima penawaran'], 403);
         }
 
@@ -548,7 +561,7 @@ class ChatController extends Controller
                 broadcast(new MessageSent($sysMsg));
 
                 $chat->loadMissing(['buyer', 'seller']);
-                $receiverUuid = $userId === $chat->buyer_id
+                $receiverUuid = $userId == $chat->buyer_id
                     ? $chat->seller?->uuid
                     : $chat->buyer?->uuid;
 
@@ -576,11 +589,11 @@ class ChatController extends Controller
         $message = Message::where('uuid', $messageId)->firstOrFail();
         $userId  = $request->user()->id;
 
-        $expectedResponderId = $message->sender_id === $chat->buyer_id
+        $expectedResponderId = $message->sender_id == $chat->buyer_id
             ? $chat->seller_id
             : $chat->buyer_id;
 
-        if ($expectedResponderId !== $userId) {
+        if ($expectedResponderId != $userId) {
             return response()->json(['success' => false, 'message' => 'Hanya penerima penawaran yang dapat menolak penawaran'], 403);
         }
 
@@ -604,7 +617,7 @@ class ChatController extends Controller
                 broadcast(new MessageSent($sysMsg));
 
                 $chat->loadMissing(['buyer', 'seller']);
-                $receiverUuid = $userId === $chat->buyer_id
+                $receiverUuid = $userId == $chat->buyer_id
                     ? $chat->seller?->uuid
                     : $chat->buyer?->uuid;
 

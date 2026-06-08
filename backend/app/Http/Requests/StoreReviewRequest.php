@@ -22,7 +22,7 @@ class StoreReviewRequest extends FormRequest
         return [
             'orderId' => ['required', 'exists:orders,uuid'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'comment' => ['nullable', 'string', 'max:1000'],
+            'comment' => ['required', 'string', 'min:20', 'max:1000'],
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['string', 'max:500'],
         ];
@@ -39,6 +39,8 @@ class StoreReviewRequest extends FormRequest
             'rating.required' => 'Rating wajib diisi',
             'rating.min' => 'Rating minimal 1',
             'rating.max' => 'Rating maksimal 5',
+            'comment.required' => 'Ulasan/komentar wajib diisi',
+            'comment.min' => 'Komentar minimal 20 karakter',
             'comment.max' => 'Komentar maksimal 1000 karakter',
             'images.max' => 'Maksimal 5 gambar',
         ];

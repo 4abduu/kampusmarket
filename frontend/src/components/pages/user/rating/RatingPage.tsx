@@ -203,7 +203,7 @@ export default function RatingPage({ onNavigate }: RatingPageProps) {
     onNavigate("orders");
   };
 
-  const isFormValid = rating > 0;
+  const isFormValid = rating > 0 && comment.trim().length >= 20;
 
   if (isLoading) {
     return (

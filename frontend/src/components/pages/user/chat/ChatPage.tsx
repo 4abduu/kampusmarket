@@ -347,8 +347,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       
       setChats(prev => prev.map(c => c.id === chatUuid ? { ...c, unreadCount: 0 } : c));
 
-      // Update general notifications count
+      // Update general notifications count and chat count
       void useNotificationStore.getState().fetchUnreadCount();
+      void useChatStore.getState().fetchUnreadCount();
 
       // [REVISI] Terapkan status online dari presence channel ke chatDetail juga
       if (detail.seller) {
@@ -566,6 +567,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     await openChat(chat.id);
     void markChatRead(chat.id).then(() => {
       void useNotificationStore.getState().fetchUnreadCount();
+      void useChatStore.getState().fetchUnreadCount();
     }).catch(() => null);
   }, [openChat]);
 
@@ -829,6 +831,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         image: activeProduct.image ?? '',
         type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
         canNego: activeProduct.canNego ?? false,
+        stock: activeProduct.stock ?? 0,
         sellerId: activeProduct.sellerId ?? chatDetail?.seller?.id ?? '',
       }
     : null;
