@@ -137,7 +137,12 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       }
       // [REVISI] Lepas user channel dan presence channel
       if (userChannelRef.current) {
-        userChannelRef.current.stopListening('.NewMessageNotification');
+        const handler = (userChannelRef.current as any)._messageHandler;
+        if (handler) {
+          userChannelRef.current.stopListening('.NewMessageNotification', handler);
+        } else {
+          userChannelRef.current.stopListening('.NewMessageNotification');
+        }
         userChannelRef.current = null;
       }
       if (presenceChannelRef.current) {
@@ -162,7 +167,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       const echo = getEcho();
       const channel = echo.private(`users.${currentUserId}`);
 
-      channel.listen('.NewMessageNotification', (event: {
+      const handleNewMessageNotification = (event: {
         message: ApiMessage;
         chatId: string;
         chatInfo: { lastMessage: string | null; lastMessageAt: string | null };
@@ -201,22 +206,47 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           });
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
         }
-      });
+      };
+
+      channel.listen('.NewMessageNotification', handleNewMessageNotification);
 
       userChannelRef.current = channel;
       channelOk = true;
+      
+      // Store handler on ref for cleanup
+      (userChannelRef.current as any)._messageHandler = handleNewMessageNotification;
     } catch {
       console.info('[Chat] Reverb users channel tidak aktif — online status dari REST saja');
     }
 
     return () => {
       if (channelOk && userChannelRef.current) {
-        userChannelRef.current.stopListening('.NewMessageNotification');
+        const handler = (userChannelRef.current as any)._messageHandler;
+        if (handler) {
+          userChannelRef.current.stopListening('.NewMessageNotification', handler);
+        } else {
+          // Fallback if not saved
+          userChannelRef.current.stopListening('.NewMessageNotification');
+        }
         userChannelRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
+
+  // ── [REVISI] Mark active chat as read when window regains focus ─────────────
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeChatIdRef.current) {
+        markChatRead(activeChatIdRef.current).then(() => {
+          void useNotificationStore.getState().fetchUnreadCount();
+        }).catch(() => null);
+        useChatStore.getState().fetchUnreadCount();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   // ── [REVISI] Subscribe ke presence channel "online" ───────────────────────
   // Untuk status online/offline realtime semua user.
@@ -366,10 +396,10 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         const channel = echo.private(`chat.${chatUuid}`);
         channel.listen('.MessageSent', (event: { message: ApiMessage }) => {
           const incoming = event.message;
-          const isVisible = document.visibilityState === 'visible';
+          const isFocused = document.hasFocus();
           const isFromMe = incoming.senderId === currentUserId;
-          // Only force isRead to true if the message is from someone else and the window is active
-          const shouldMarkAsRead = !isFromMe && isVisible;
+          // Only force isRead to true if the message is from someone else and the window is actively focused
+          const shouldMarkAsRead = !isFromMe && isFocused;
 
           setMessages(prev => {
             const existingIdx = prev.findIndex(m => m.id === incoming.id);
@@ -398,7 +428,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
-          if (isVisible && !isFromMe) {
+          if (shouldMarkAsRead) {
             markChatRead(chatUuid).then(() => {
               void useNotificationStore.getState().fetchUnreadCount();
             }).catch(() => null);
@@ -559,7 +589,14 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       if (echoChannelRef.current) echoChannelRef.current.stopListening('.MessageSent');
       if (pollingRef.current) clearInterval(pollingRef.current);
       // [REVISI] Cleanup user channel dan presence channel saat unmount
-      if (userChannelRef.current) userChannelRef.current.stopListening('.NewMessageNotification');
+      if (userChannelRef.current) {
+        const handler = (userChannelRef.current as any)._messageHandler;
+        if (handler) {
+          userChannelRef.current.stopListening('.NewMessageNotification', handler);
+        } else {
+          userChannelRef.current.stopListening('.NewMessageNotification');
+        }
+      }
       try { getEcho().leave('online'); } catch { /* silent */ }
     };
   }, []);

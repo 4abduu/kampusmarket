@@ -210,15 +210,19 @@ export default function ChatMessageItem({
         {/* Timestamp + read */}
         <div className="flex items-center justify-end gap-1 mt-1">
           <span className="text-[10px] sm:text-xs opacity-70">{formatTime(message.createdAt)}</span>
-          {isMe && (
+          {isMe && !message._pending && (
             <span title={message.isRead ? 'Sudah dibaca' : 'Terkirim'} className="inline-flex">
               {message.isRead
                 ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                : <Check className="h-3 w-3 opacity-50" />
+                : <CheckCheck className="h-3 w-3 opacity-50" />
               }
             </span>
           )}
-          {message._pending && <Clock3 size={12} className="opacity-50" />}
+          {isMe && message._pending && (
+            <span title="Mengirim..." className="inline-flex">
+              <Clock3 size={12} className="opacity-50" />
+            </span>
+          )}
         </div>
       </div>
     </div>
