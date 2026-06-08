@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
 import apiClient from "@/lib/api/client";
@@ -42,6 +42,7 @@ export default function ProductDetailPage({
 }: ProductDetailPageProps) {
   const { success, error: toastError } = useAppToast();
   const params = useParams();
+  const navigate = useNavigate();
   const productId = params.id as string | undefined;
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -68,9 +69,7 @@ export default function ProductDetailPage({
       try {
         const data = await getProductDetail(productId);
         if (data.type !== "barang") {
-          setError(
-            "URL tidak valid untuk halaman ini. Silakan periksa kembali.",
-          );
+          navigate(`/service/${productId}${window.location.hash}`, { replace: true });
           return;
         }
         setProduct(data);

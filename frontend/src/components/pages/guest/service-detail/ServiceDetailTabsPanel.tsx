@@ -33,13 +33,31 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" });
 }
 
+import { useLocation } from "react-router-dom";
+
 export default function ServiceDetailTabsPanel({ description, service, productId }: ServiceDetailTabsPanelProps) {
+  const location = useLocation();
   const shippingOptions = service?.shippingOptions || [];
   const [reviews, setReviews] = useState<Review[]>([]);
   const [meta, setMeta] = useState<ReviewsMeta | null>(null);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewsError, setReviewsError] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.hash === "#reviews" ? "reviews" : "description";
+  });
+
+  useEffect(() => {
+    if (location.hash === "#reviews") {
+      setActiveTab("reviews");
+      // Delay scroll to ensure tab content is rendered
+      setTimeout(() => {
+        const el = document.getElementById("service-tabs");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  }, [location.hash]);
 
   const [activeReview, setActiveReview] = useState<Review | null>(null);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
@@ -116,7 +134,7 @@ export default function ServiceDetailTabsPanel({ description, service, productId
 
   return (
     <Card>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs id="service-tabs" value={activeTab} onValueChange={setActiveTab}>
         <CardHeader className="pb-0">
           <TabsList className="w-full">
             <TabsTrigger value="description" className="flex-1">Deskripsi</TabsTrigger>

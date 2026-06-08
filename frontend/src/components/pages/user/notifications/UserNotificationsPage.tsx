@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import type { MouseEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import UserNotificationsHeader from "@/components/pages/user/notifications/UserNotificationsHeader";
 import UserNotificationsList from "@/components/pages/user/notifications/UserNotificationsList";
@@ -14,6 +15,7 @@ import type {
 } from "@/components/pages/user/notifications/notifications.types";
 
 export default function UserNotificationsPage({ onNavigate }: UserNotificationsPageProps) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const {
     notifications,
@@ -51,14 +53,19 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
       const link = notification.link;
 
       if (link.startsWith("/order-detail/")) {
-        const id = link.replace("/order-detail/", "");
+        const id = link.replace("/order-detail/", "").split(/[#?]/)[0];
         onNavigate("order-detail", id);
         return;
       }
 
       if (link.startsWith("/rating/")) {
-        const id = link.replace("/rating/", "");
+        const id = link.replace("/rating/", "").split(/[#?]/)[0];
         onNavigate("order-detail", id);
+        return;
+      }
+
+      if (link.startsWith("/product/") || link.startsWith("/service/")) {
+        navigate(link);
         return;
       }
 

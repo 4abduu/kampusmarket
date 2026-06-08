@@ -36,7 +36,7 @@ export const getServiceMethodLabel = (method: string) => {
 };
 
 export function extractOrderData(order: Order) {
-  const isService = order.productType === "jasa";
+  const isService = order.productType === "jasa" || (order as any)?.product_type === "jasa" || (order as any)?.product?.type === "jasa" || (order as any)?.product?.type === "JASA";
   const createdAt = (order as any)?.createdAt || (order as any)?.created_at;
   const serviceMethodRaw = String(
     (order as any)?.shippingType || (order as any)?.shipping_type || "online"

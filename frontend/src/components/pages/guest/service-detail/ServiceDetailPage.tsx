@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
@@ -43,6 +43,7 @@ export default function ServiceDetailPage({
 }: ServiceDetailPageProps) {
   const { success, error: toastError } = useAppToast();
   const params = useParams();
+  const navigate = useNavigate();
   const serviceId = params.id || serviceIdFromProps || "s1";
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -117,9 +118,7 @@ export default function ServiceDetailPage({
       try {
         const data = await getProductDetail(serviceId);
         if (data.type !== "jasa") {
-          setError(
-            "URL tidak valid untuk halaman ini. Silakan periksa kembali.",
-          );
+          navigate(`/product/${serviceId}${window.location.hash}`, { replace: true });
           return;
         }
         setService(data);
