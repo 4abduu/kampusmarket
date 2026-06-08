@@ -37,10 +37,16 @@ export function ServicePriceDialog({
           <DialogDescription>Masukkan harga untuk layanan ini berdasarkan kebutuhan pembeli</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          {selectedServiceOrder?.serviceNotes && (
+          {selectedServiceOrder?.notes && (
             <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
               <p className="text-xs text-purple-600 font-medium mb-1">Kebutuhan Pembeli:</p>
-              <p className="text-sm text-purple-800 dark:text-purple-200 line-clamp-3">{selectedServiceOrder.serviceNotes}</p>
+              <p className="text-sm text-purple-800 dark:text-purple-200 line-clamp-3">{selectedServiceOrder.notes}</p>
+            </div>
+          )}
+          {selectedServiceOrder?.serviceNotes && (
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <p className="text-xs text-slate-500 font-medium mb-1">Catatan Tambahan:</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-3">{selectedServiceOrder.serviceNotes}</p>
             </div>
           )}
           <div className="space-y-2">

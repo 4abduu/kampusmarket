@@ -23,6 +23,7 @@ import { formatCancelReason } from "./constants"
 
 type ServiceData = {
   serviceNotes: string
+  notes: string
 }
 
 interface Props {
@@ -180,8 +181,14 @@ export default function OrderDetailStatusSection({
           <CardContent className="space-y-4">
             <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border">
               <p className="text-sm text-muted-foreground">Kebutuhan Pembeli:</p>
-              <p className="mt-1">{serviceData.serviceNotes || "—"}</p>
+              <p className="mt-1">{serviceData.notes || "—"}</p>
             </div>
+            {serviceData.serviceNotes && (
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border">
+                <p className="text-sm text-muted-foreground">Catatan Tambahan:</p>
+                <p className="mt-1">{serviceData.serviceNotes}</p>
+              </div>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="servicePrice">Harga Jasa (Rp) *</Label>

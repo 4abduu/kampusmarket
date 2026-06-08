@@ -217,8 +217,8 @@ export function useAdminDashboardController() {
           if (!isResourceLoaded("revenue")) {
             await financeTab.loadPlatformRevenueData();
           }
-          if (!overviewTab.stats) {
-            await financeTab.loadStatsFallbackForFinance();
+          if (!isResourceLoaded("overview")) {
+            await overviewTab.loadOverviewData();
           }
           break;
         case "cancel-requests":
