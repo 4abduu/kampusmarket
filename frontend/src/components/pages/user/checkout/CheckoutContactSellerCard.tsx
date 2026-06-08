@@ -20,6 +20,15 @@ export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
   const uniqueSellers = Array.from(new Map(sellers.map(s => [s.name, s])).values());
   const isMultiple = uniqueSellers.length > 1;
 
+  const handleWhatsApp = (phone?: string) => {
+    if (!phone) return;
+    let formatted = phone.replace(/\D/g, "");
+    if (formatted.startsWith("0")) {
+      formatted = "62" + formatted.substring(1);
+    }
+    window.open(`https://wa.me/${formatted}`, "_blank");
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -46,7 +55,13 @@ export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
                   <MessageCircle className="h-4 w-4 mr-1" />
                   Chat
                 </Button>
-                <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden sm:flex"
+                  onClick={() => handleWhatsApp(seller.phone)}
+                  disabled={!seller.phone}
+                >
                   <Phone className="h-4 w-4 mr-1" />
                   WA
                 </Button>
