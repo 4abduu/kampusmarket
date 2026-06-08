@@ -24,6 +24,7 @@ import {
   Star,
   User,
   Wallet,
+  Loader2,
 } from "lucide-react";
 import { getEcho } from "@/lib/echo";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -54,6 +55,8 @@ export default function ServiceDetailSidebar({
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [isNavigatingToChat, setIsNavigatingToChat] = useState(false);
+  const [isNavigatingToCheckout, setIsNavigatingToCheckout] = useState(false);
   const [liveRating, setLiveRating] = useState(service.rating || 0);
 
   // Listen to realtime review updates
@@ -74,7 +77,7 @@ export default function ServiceDetailSidebar({
     };
   }, [service?.id, service?.rating]);
 
-  const serviceShareUrl = `https://kampusmarket.id/s/${service.id}`;
+  const serviceShareUrl = typeof window !== "undefined" ? `${window.location.origin}/service/${service.id}` : `https://kampusmarket.id/service/${service.id}`;
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -111,13 +114,41 @@ export default function ServiceDetailSidebar({
     }
   };
 
+  const copyToClipboardFallback = (text: string): boolean => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
+  };
+
   const handleCopyServiceLink = async () => {
     try {
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(serviceShareUrl);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 1800);
+      } else {
+        const success = copyToClipboardFallback(serviceShareUrl);
+        if (success) {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1800);
+        } else {
+          setIsCopied(false);
+        }
       }
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 1800);
     } catch {
       setIsCopied(false);
     }
@@ -139,6 +170,7 @@ export default function ServiceDetailSidebar({
         title="Bagikan Layanan"
         description="Bagikan layanan ini ke:"
         inputAriaLabel="Link layanan"
+        itemTitle={service.title}
       />
 
       <Card>
@@ -244,14 +276,29 @@ export default function ServiceDetailSidebar({
             </div>
           ) : (
             <div className="space-y-2">
-              <Button className="w-full bg-primary-600 hover:bg-primary-700" onClick={() => onAction(() => onNavigate("checkout", serviceId))} disabled={service.availabilityStatus === "full"}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
+              <Button 
+                className="w-full bg-primary-600 hover:bg-primary-700" 
+                onClick={() => onAction(() => {
+                  setIsNavigatingToCheckout(true);
+                  onNavigate("checkout", serviceId);
+                })} 
+                disabled={service.availabilityStatus === "full" || isNavigatingToCheckout}
+              >
+                {isNavigatingToCheckout ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Calendar className="h-4 w-4 mr-2" />
+                )}
+                {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={() => onAction(() => onNavigate("chat", { sellerId: service.providerId || service.provider?.id }))}>
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Chat Penjual
+              <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { sellerId: service.providerId || service.provider?.id }); })}>
+                {isNavigatingToChat ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                )}
+                {isNavigatingToChat ? "Membuka Chat..." : "Chat Penjual"}
               </Button>
             </div>
           )}
@@ -333,7 +380,7 @@ export default function ServiceDetailSidebar({
             </div>
             <div>
               <p className="font-bold text-lg uppercase">
-                {service.seller.facultyCode || service.seller.facultyName || "N/A"}
+                {service.seller?.facultyCode || service.seller?.facultyName || "N/A"}
               </p>
               <p className="text-muted-foreground">Fakultas</p>
             </div>

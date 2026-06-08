@@ -602,7 +602,7 @@ export default function CatalogPage({
               <>
                 {/* Product Grid */}
                 {viewMode === "grid" ? (
-                  <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
                     {paginatedProducts.map((product) => (
                       <Card
                         key={product.uuid}
@@ -637,49 +637,49 @@ export default function CatalogPage({
                             </Badge>
                           )}
                         </div>
-                        <CardContent className="p-4">
-                          <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                        <CardContent className="p-3 md:p-4">
+                          <p className="font-medium text-sm md:text-base line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
                             {product.title}
                           </p>
                           <div className="flex items-center gap-1 mb-2">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">
+                            <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs md:text-sm font-medium">
                               {product.rating}
                             </span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[10px] md:text-sm text-muted-foreground truncate">
                               ({product.reviewCount || 0} ulasan)
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg font-bold text-primary">
+                          <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-2">
+                            <span className="text-sm md:text-lg font-bold text-primary">
                               {formatPrice(product.price)}
                             </span>
                             {product.originalPrice && (
-                              <span className="text-sm text-muted-foreground line-through">
+                              <span className="text-[10px] md:text-sm text-muted-foreground line-through">
                                 {formatPrice(product.originalPrice)}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center justify-between pt-2 border-t">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarFallback className="text-xs">
+                          <div className="flex items-center justify-between pt-2 border-t gap-1">
+                            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden">
+                              <Avatar className="h-5 w-5 md:h-6 md:w-6 shrink-0">
+                                <AvatarFallback className="text-[8px] md:text-xs">
                                   {product.seller.name
                                     .substring(0, 2)
                                     .toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-xs font-medium truncate">
-                                {product.seller.name}
+                              <span className="text-[10px] md:text-xs font-medium truncate">
+                                {product.seller.name.split(" ")[0]}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              {product.location}
+                            <div className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs text-muted-foreground shrink-0">
+                              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                              <span className="truncate max-w-[60px] md:max-w-none">{product.location.split(",")[0]}</span>
                             </div>
                           </div>
                           {product.canNego && (
-                            <Badge variant="outline" className="mt-2 text-xs">
+                            <Badge variant="outline" className="mt-2 text-[10px] md:text-xs px-1.5 py-0 md:px-2 md:py-0.5">
                               Bisa Nego
                             </Badge>
                           )}

@@ -56,6 +56,10 @@ class CartController extends Controller
             return $this->error('Anda tidak dapat menambahkan produk Anda sendiri ke keranjang', null, 400);
         }
 
+        if ($product->status->value !== 'active') {
+            return $this->error('Produk sudah tidak tersedia atau tidak aktif', null, 400);
+        }
+
         $cart = Cart::where('user_id', $request->user()->id)
             ->where('product_id', $product->id)
             ->first();

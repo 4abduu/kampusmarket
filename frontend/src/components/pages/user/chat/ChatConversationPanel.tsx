@@ -334,7 +334,7 @@ export default function ChatConversationPanel({
 
             {/* Tombol aksi nego */}
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
-              {!isSeller && chatProduct?.canNego && (
+              {!isSeller && chatProduct?.canNego && chatProduct.stock > 0 && (
                 <Button
                   variant="outline"
                   size="sm"

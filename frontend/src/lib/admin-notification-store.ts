@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { ShieldAlert, AlertTriangle, DollarSign, UserPlus, CheckCircle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+let activeAdminEchoUserId: string | null = null;
 
 export interface AdminNotification {
   id: string; // UUID string from backend
@@ -78,7 +81,7 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
           icon = DollarSign;
           iconColor = "text-primary-600";
           iconBg = "bg-primary-100 dark:bg-primary-900/30";
-          action = "Proses Penarikan";
+          action = type === 'payment' ? "Lihat Keuangan" : "Proses Penarikan";
         } else if (actionTab === 'cancel-requests') {
           frontendType = "dispute"; // map to dispute type in UI
           icon = AlertTriangle;
@@ -204,12 +207,18 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
   },
 
   initEcho: (userId: string) => {
+    activeAdminEchoUserId = userId;
     import('@/lib/echo').then(({ getEcho }) => {
       try {
         const echo = getEcho();
         const channel = echo.private(`users.${userId}`);
-        channel.listen('.NewNotification', () => {
+        channel.listen('.NewNotification', (e: any) => {
            get().fetchNotifications();
+           toast({
+             variant: "default",
+             title: e.title || "Notifikasi Admin",
+             description: e.message || "Ada update terbaru di dashboard admin."
+           });
         });
       } catch (e) {
         console.info('Reverb echo not active');
@@ -218,6 +227,17 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
   },
 
   cleanupEcho: () => {
-    // Nothing needed to explicitly clean up
+    if (activeAdminEchoUserId) {
+      const userId = activeAdminEchoUserId;
+      activeAdminEchoUserId = null;
+      import('@/lib/echo').then(({ getEcho }) => {
+        try {
+          const echo = getEcho();
+          echo.private(`users.${userId}`).stopListening('.NewNotification');
+        } catch (e) {
+          // Ignore
+        }
+      });
+    }
   }
 }));

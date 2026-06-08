@@ -9,12 +9,12 @@ interface Props {
   filteredReports: any[];
   paginatedReports: any[];
   currentPage: number;
+  totalPages: number;
   reportSearchTerm: string;
   setReportSearchTerm: (value: string) => void;
   reportStatusFilter: string;
   setReportStatusFilter: (value: any) => void;
   setReportPage: (value: number) => void;
-  getTotalPages: (value: number) => number;
   renderPagination: (currentPage: number, totalPages: number, setPage: (page: number) => void) => any;
   getReportStatusBadge: (status: string) => React.ReactNode;
   handleSendWarning: (report: any) => void;
@@ -23,7 +23,7 @@ interface Props {
   handleDismissReport: (report: any) => void;
 }
 
-export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, getTotalPages, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleResolveReport, handleDismissReport }: Props) {
+export default function AdminReportsTab({ filteredReports, paginatedReports, currentPage, totalPages, reportSearchTerm, setReportSearchTerm, reportStatusFilter, setReportStatusFilter, setReportPage, renderPagination, getReportStatusBadge, handleSendWarning, handleBanFromReport, handleResolveReport, handleDismissReport }: Props) {
 
   const renderReportTypeBadge = (type: string) => {
     switch (type) {
@@ -220,7 +220,7 @@ export default function AdminReportsTab({ filteredReports, paginatedReports, cur
                 </div>
               ))}
             </div>
-            {renderPagination(currentPage, getTotalPages(filteredReports.length), setReportPage)}
+            {renderPagination(currentPage, totalPages, setReportPage)}
           </>
         )}
       </CardContent>

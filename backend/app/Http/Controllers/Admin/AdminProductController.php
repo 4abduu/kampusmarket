@@ -231,6 +231,15 @@ class AdminProductController extends Controller
             ->firstOrFail();
 
         $product->restore();
+        
+        // Optional: clear deleted_by and delete_reason
+        $product->update([
+            'deleted_by' => null,
+            'delete_reason' => null
+        ]);
+
+        // Notify seller (async via queue)
+        NotificationHelper::adminProductRestored($product->seller_id, $product);
 
         Log::info('[AdminProductController] Product restored', [
             'product_id' => $product->uuid,

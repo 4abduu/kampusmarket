@@ -76,6 +76,7 @@ class ChatResource extends JsonResource
             'image'    => $primaryImage,
             'type'     => $product->type->value ?? 'barang',
             'canNego'  => (bool) $product->can_nego,
+            'stock'    => (int) $product->stock,
             'sellerId' => $product->seller->uuid,
         ];
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
@@ -20,7 +21,7 @@ interface ServiceDetailPageProps {
     page: string,
     data?: string | { productId?: string; chatAction?: "chat" | "nego" },
   ) => void;
-  serviceId: string;
+  serviceId?: string;
   isLoggedIn: boolean;
   currentUser?: any;
 }
@@ -36,11 +37,13 @@ const REPORT_SERVICE_REASONS = [
 
 export default function ServiceDetailPage({
   onNavigate,
-  serviceId,
+  serviceId: serviceIdFromProps,
   isLoggedIn,
   currentUser,
 }: ServiceDetailPageProps) {
   const { success, error: toastError } = useAppToast();
+  const params = useParams();
+  const serviceId = params.id || serviceIdFromProps || "s1";
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -15,9 +15,14 @@ interface Props {
   formatPrice: (value: number) => string;
   handleApproveCancelRequest: (request: any) => void;
   handleRejectCancelRequest: (request: any) => void;
+  paginatedCancelRequests: any[];
+  currentPage: number;
+  setCancelRequestPage: (page: number) => void;
+  getTotalPages: (total: number) => number;
+  renderPagination: (currentPage: number, totalPages: number, setPage: (page: number) => void) => any;
 }
 
-export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRoleFilter, setCancelRequestRoleFilter, cancelRequestSearchTerm, setCancelRequestSearchTerm, formatPrice, handleApproveCancelRequest, handleRejectCancelRequest }: Props) {
+export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRoleFilter, setCancelRequestRoleFilter, cancelRequestSearchTerm, setCancelRequestSearchTerm, formatPrice, handleApproveCancelRequest, handleRejectCancelRequest, paginatedCancelRequests, currentPage, setCancelRequestPage, getTotalPages, renderPagination }: Props) {
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -60,7 +65,7 @@ export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRo
           <div className="text-center py-8 text-muted-foreground"><XCircle className="h-12 w-12 mx-auto mb-4 opacity-30" /><p>Tidak ada permintaan pembatalan</p></div>
         ) : (
           <div className="space-y-4">
-            {cancelRequests.map((cancelReq) => (
+            {paginatedCancelRequests.map((cancelReq) => (
               <div key={cancelReq.id} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-5 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700/50 transition-all duration-200 bg-white dark:bg-slate-900/10">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   
@@ -166,6 +171,7 @@ export default function AdminCancelRequestsTab({ cancelRequests, cancelRequestRo
                 </div>
               </div>
             ))}
+            {renderPagination(currentPage, getTotalPages(cancelRequests.length), setCancelRequestPage)}
           </div>
         )}
       </CardContent>

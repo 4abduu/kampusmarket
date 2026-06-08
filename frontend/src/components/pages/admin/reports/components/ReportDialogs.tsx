@@ -114,6 +114,22 @@ export default function ReportDialogs({
             ) : (
               <p className="text-sm text-muted-foreground">Percakapan Chat</p>
             )}
+            
+            {report.chatAttachments && report.chatAttachments.length > 0 && (
+              <div className="mt-3 border-t border-slate-200 dark:border-slate-700 pt-3">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Lampiran Gambar Chat:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {report.chatAttachments.map((url: string, idx: number) => (
+                    <a href={url} target="_blank" rel="noreferrer" key={idx} className="block border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden hover:opacity-90 transition-opacity bg-white dark:bg-slate-900 shadow-sm">
+                      <img src={url} alt="Attachment" className="h-20 w-auto object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
@@ -125,7 +141,7 @@ export default function ReportDialogs({
     <>
       {/* 1. Kirim Warning Dialog */}
       <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <MessageCircle className="h-5 w-5" />
@@ -172,7 +188,7 @@ export default function ReportDialogs({
 
       {/* 2. Ban dari Report Dialog */}
       <Dialog open={showBanReportDialog} onOpenChange={(open) => { setShowBanReportDialog(open); if (!open) setBanReportReason(""); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Ban className="h-5 w-5" />
@@ -230,7 +246,7 @@ export default function ReportDialogs({
 
       {/* 3. Selesaikan Laporan Dialog */}
       <Dialog open={showResolveReportDialog} onOpenChange={setShowResolveReportDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-emerald-600">
               <CheckCircle2 className="h-5 w-5" />
@@ -277,7 +293,7 @@ export default function ReportDialogs({
 
       {/* 4. Tolak Laporan Dialog */}
       <Dialog open={showDismissReportDialog} onOpenChange={setShowDismissReportDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600">
               <XCircle className="h-5 w-5" />

@@ -27,7 +27,7 @@ import {
   ProfilePage,
 } from "@/components/pages/user";
 import AdminDashboardPage from "@/components/pages/admin/AdminDashboardPage";
-import AdminNotificationsPage from "@/components/pages/admin/AdminNotificationsPage";
+import AdminNotificationsPage from "@/components/pages/admin/notifications/AdminNotificationsPage";
 import type { GooglePendingSession, NavigateFn } from "@/app/navigation/types";
 
 interface RenderPageParams {

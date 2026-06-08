@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Package, MessageCircle, CheckCircle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export interface NotificationAction {
   label: string;
@@ -213,8 +214,13 @@ export const useNotificationStore = create<NotificationState & {
       try {
         const echo = getEcho();
         const channel = echo.private(`users.${userId}`);
-        channel.listen('.NewNotification', () => {
+        channel.listen('.NewNotification', (e: any) => {
            get().fetchNotifications();
+           toast({
+             variant: "default",
+             title: e.title || "Notifikasi Baru",
+             description: e.message || "Anda memiliki notifikasi baru."
+           });
         });
       } catch (e) {
         console.info('Reverb echo not active');

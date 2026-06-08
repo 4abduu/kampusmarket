@@ -6,6 +6,7 @@ import { useAppToast } from "@/hooks/use-app-toast";
 import ChatListPanel from '@/components/pages/user/chat/ChatListPanel';
 import ChatConversationPanel from '@/components/pages/user/chat/ChatConversationPanel';
 import ChatActionModals, { type SellerProduct } from '@/components/pages/user/chat/ChatActionModals';
+import PageLoadingOverlay from '@/components/shared/PageLoadingOverlay';
 
 import type { ApiChat, ApiChatDetail, ApiMessage, ApiChatProduct } from '@/components/pages/user/chat/chat.types';
 import type { User } from '@/lib/mock-data';
@@ -13,6 +14,7 @@ import {
   fetchChats,
   startChat,
   fetchChatDetail,
+  fetchMessages,
   sendMessage,
   markChatRead,
   acceptOffer,
@@ -24,6 +26,7 @@ import { uploadImage } from '@/lib/api/images';
 import { getEcho } from '@/lib/echo';
 import apiClient from '@/lib/api/client';
 import { useChatStore } from '@/lib/chat-store';
+import { useNotificationStore } from '@/lib/notification-store';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -332,8 +335,21 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     try {
       const detail = await fetchChatDetail(chatUuid);
       setChatDetail(detail);
-      setMessages(detail.messages ?? []);
+      
+      // Fetch messages page 1
+      const messagesRes = await fetchMessages(chatUuid, 1);
+      
+      // The API returns paginated data (latest first). We need to reverse them for the chat UI if it expects oldest first.
+      // Or maybe the API returns oldest first? Let's assume it returns oldest first since it's a chat. 
+      // Actually, standard pagination usually returns latest first, but the previous `messages` eager load used `oldest()`.
+      // Wait, let's check what `fetchMessages` returns from the backend.
+      setMessages(messagesRes.data ?? []);
+      
       setChats(prev => prev.map(c => c.id === chatUuid ? { ...c, unreadCount: 0 } : c));
+
+      // Update general notifications count and chat count
+      void useNotificationStore.getState().fetchUnreadCount();
+      void useChatStore.getState().fetchUnreadCount();
 
       // [REVISI] Terapkan status online dari presence channel ke chatDetail juga
       if (detail.seller) {
@@ -383,7 +399,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
           if (isVisible && !isFromMe) {
-            markChatRead(chatUuid).catch(() => null);
+            markChatRead(chatUuid).then(() => {
+              void useNotificationStore.getState().fetchUnreadCount();
+            }).catch(() => null);
             // Update unread count global
             useChatStore.getState().decrementUnreadCount();
           }
@@ -440,6 +458,9 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
     void (async () => {
       try {
+        setShowChatList(false);
+        setChatLoading(true);
+        
         const payload: StartChatPayload = { productId: initialContextId };
         if (initialBuyerId) {
           payload.buyerId = initialBuyerId;
@@ -457,6 +478,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               image: chat.product?.images?.[0] ?? '',
               type: (chat.product?.type ?? 'barang') as 'barang' | 'jasa',
               canNego: chat.product?.canNego ?? false,
+              stock: chat.product?.stock ?? 0,
               sellerId: chat.seller?.id ?? '',
             },
             otherUser: chat.seller ?? { id: '', name: '', avatar: '', faculty: null, rating: 0, reviewCount: 0, isVerified: false, isOnline: false, lastSeen: null },
@@ -470,6 +492,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         await openChat(chat.id);
         if (initialChatAction === 'nego' && chat.product?.canNego) setShowNegoModal(true);
       } catch (err: any) {
+        setChatLoading(false);
+        setShowChatList(true);
         console.error('[Chat] startChat error', err);
         const errMsg: string = err?.response?.data?.message || err?.message || '';
         if (errMsg.toLowerCase().includes('diri sendiri') || err?.response?.status === 400) {
@@ -490,6 +514,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
     void (async () => {
       try {
+        setShowChatList(false);
+        setChatLoading(true);
         const chat = await startChatWithSeller(initialSellerId);
         setChats(prev => {
           if (prev.some(c => c.id === chat.id)) return prev;
@@ -503,6 +529,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
               image: chat.product.images?.[0] ?? '',
               type: (chat.product.type ?? 'barang') as 'barang' | 'jasa',
               canNego: chat.product.canNego ?? false,
+              stock: chat.product.stock ?? 0,
               sellerId: chat.seller?.id ?? '',
             } : null,
             otherUser: chat.seller ?? { id: '', name: '', avatar: '', faculty: null, rating: 0, reviewCount: 0, isVerified: false, isOnline: false, lastSeen: null },
@@ -515,6 +542,8 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         });
         await openChat(chat.id);
       } catch (err: any) {
+        setChatLoading(false);
+        setShowChatList(true);
         console.error('[Chat] startChatWithSeller error', err);
         toastError('Gagal membuka chat dengan penjual', '');
       }
@@ -539,7 +568,10 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
   const handleSelectChat = useCallback(async (chat: ApiChat) => {
     await openChat(chat.id);
-    void markChatRead(chat.id).catch(() => null);
+    void markChatRead(chat.id).then(() => {
+      void useNotificationStore.getState().fetchUnreadCount();
+      void useChatStore.getState().fetchUnreadCount();
+    }).catch(() => null);
   }, [openChat]);
 
   const handleBackToList = () => {
@@ -663,12 +695,12 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     };
     setMessages(prev => [...prev, optimistic]);
     try {
-      const msg = await sendMessage(chatDetail.id, {
+      const msg = await sendMessage(chatDetail!.id, {
         content: 'Halo, saya ingin menawar harga untuk produk ini.',
-        type: 'offer', offerPrice: price,
+        type: 'offer', offerPrice: price, productId: activeProduct?.id,
       });
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, isRead: m.isRead || msg.isRead } : m));
-      setChats(prev => prev.map(c => c.id === chatDetail.id ? { ...c, lastMessage: '\u{1F4B0} Penawaran harga', lastMessageAt: msg.createdAt } : c));
+      setChats(prev => prev.map(c => c.id === chatDetail!.id ? { ...c, lastMessage: '\u{1F4B0} Penawaran harga', lastMessageAt: msg.createdAt } : c));
       setNegoPrice('');
       success('Penawaran terkirim!', '');
       setShowNegoModal(false);
@@ -697,7 +729,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     try {
       const msg = await sendMessage(chatDetail.id, {
         content: `Penawaran khusus untuk ${selectedOfferProduct.title}`,
-        type: 'offer', offerPrice: price,
+        type: 'offer', offerPrice: price, productId: selectedOfferProduct.id,
       });
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, isRead: m.isRead || msg.isRead } : m));
       setOfferPrice(''); setSelectedOfferProduct(null);
@@ -788,26 +820,29 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     }
   };
 
-  const isSeller = chatDetail ? chatDetail.seller?.id === currentUserId : false;
+  const isSellerGlobal = chatDetail ? chatDetail.seller?.id === currentUserId : false;
 
   const lastProductMessage = [...messages].reverse().find(m => m.type === 'system' && m.product);
   const activeProduct = lastProductMessage?.product;
 
   const chatProduct: ApiChatProduct | null = activeProduct
     ? {
-      id: activeProduct.id,
-      title: activeProduct.title,
-      slug: activeProduct.slug,
-      price: activeProduct.price,
-      image: activeProduct.image ?? '',
-      type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
-      canNego: activeProduct.canNego ?? false,
-      sellerId: chatDetail?.seller?.id ?? '',
-    }
+        id: activeProduct.id,
+        title: activeProduct.title,
+        slug: activeProduct.slug,
+        price: activeProduct.price,
+        image: activeProduct.image ?? '',
+        type: (activeProduct.type ?? 'barang') as 'barang' | 'jasa',
+        canNego: activeProduct.canNego ?? false,
+        stock: activeProduct.stock ?? 0,
+        sellerId: activeProduct.sellerId ?? chatDetail?.seller?.id ?? '',
+      }
     : null;
 
+  const isSeller = chatProduct ? chatProduct.sellerId === currentUserId : isSellerGlobal;
+
   const otherUser = chatDetail
-    ? (isSeller ? chatDetail.buyer : chatDetail.seller)
+    ? (isSellerGlobal ? chatDetail.buyer : chatDetail.seller)
     : null;
 
   // [REVISI] Terapkan status online realtime dari presence channel ke otherUser
@@ -816,10 +851,12 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     : null;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
-        <ChatListPanel
-          chats={chats}
+    <>
+      {chatLoading && !chatDetail && <PageLoadingOverlay message="Membuka chat..." />}
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
+          <ChatListPanel
+            chats={chats}
           selectedChatId={activeChatId}
           showChatList={showChatList}
           isSellerView={isSeller}
@@ -944,5 +981,6 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         </div>
       )}
     </div>
+    </>
   );
 }

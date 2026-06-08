@@ -4,65 +4,73 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AdminFinanceTabSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Finance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 4 Cards Finance Statistics Row */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-8 rounded-lg" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-7 w-32 mb-2" />
-              <Skeleton className="h-4 w-40" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-32 mb-1" />
+              <Skeleton className="h-3 w-40 mt-2" />
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Revenue Chart */}
+      {/* Subtab Selector */}
+      <div className="flex gap-2 border-b pb-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-32 rounded-md" />
+        ))}
+      </div>
+
+      {/* Main Table Content */}
       <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
+        <CardHeader className="pb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <Skeleton className="h-6 w-56 mb-2" />
+                <Skeleton className="h-4 w-72" />
+              </div>
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-9 flex-1 min-w-[200px] max-w-md" />
+              <Skeleton className="h-9 w-[130px]" />
+              <Skeleton className="h-9 w-[90px]" />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-end justify-between gap-2">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="flex-1">
-                <Skeleton className="h-full w-full rounded" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-8 gap-4 pb-4 border-b">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-16" />
+              ))}
+            </div>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-8 gap-4 py-3 border-b last:border-0 items-center">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <div className="flex justify-end"><Skeleton className="h-8 w-16" /></div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Withdrawals Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {/* Header */}
-            <div className="grid grid-cols-6 gap-4 pb-4 border-b">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-4 w-20" />
-              ))}
-            </div>
-
-            {/* Withdrawal Rows */}
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-6 gap-4 py-3 border-b last:border-0 items-center">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
+          <div className="flex justify-center items-center gap-2 mt-6">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-9 rounded" />
             ))}
           </div>
         </CardContent>

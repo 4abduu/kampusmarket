@@ -2,12 +2,11 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { useState, useEffect } from "react"
 import { Loader2, Lock, AlertCircle, ShieldCheck } from "lucide-react"
 import ForgotPinDialog from "./ForgotPinDialog"
-import { usePinMasking } from "@/hooks/usePinMasking"
 
 type Props = {
   open: boolean
@@ -17,121 +16,48 @@ type Props = {
 }
 
 export default function SetPinDialog({ open, onOpenChange, onSuccess, isLoading }: Props) {
-  const [pin, setPin] = useState(["", "", "", "", "", ""])
-  const [confirmPin, setConfirmPin] = useState(["", "", "", "", "", ""])
+  const [pin, setPin] = useState("")
+  const [confirmPin, setConfirmPin] = useState("")
   const [error, setError] = useState("")
   const [showForgotPin, setShowForgotPin] = useState(false)
 
-  const pinMask = usePinMasking(500)
-  const confirmPinMask = usePinMasking(500)
-
   useEffect(() => {
     if (!open) {
-      setPin(["", "", "", "", "", ""])
-      setConfirmPin(["", "", "", "", "", ""])
+      setPin("")
+      setConfirmPin("")
       setError("")
       setShowForgotPin(false)
-      pinMask.hideAll()
-      confirmPinMask.hideAll()
     }
   }, [open])
 
-  const handlePinChange = (index: number, value: string) => {
-    if (value.length > 1) return
-    const digit = value.replace(/\D/g, "")
-    const newPin = [...pin]
-    newPin[index] = digit
-    setPin(newPin)
-    setError("")
-
-    if (digit) {
-      if (index < 5) {
-        pinMask.hideDigit(index)
-        document.getElementById(`pin-${index + 1}`)?.focus()
+  useEffect(() => {
+    // Auto-submit when both are fully filled
+    if (pin.length === 6 && confirmPin.length === 6) {
+      if (pin === confirmPin) {
+        setTimeout(() => onSuccess(pin), 100)
       } else {
-        pinMask.showDigit(index)
+        setError("PIN dan Konfirmasi PIN tidak cocok")
       }
     } else {
-      pinMask.hideDigit(index)
+      setError("")
     }
-  }
-
-  const handleConfirmPinChange = (index: number, value: string) => {
-    if (value.length > 1) return
-    const digit = value.replace(/\D/g, "")
-    const newConfirmPin = [...confirmPin]
-    newConfirmPin[index] = digit
-    setConfirmPin(newConfirmPin)
-    setError("")
-
-    if (digit) {
-      if (index < 5) {
-        confirmPinMask.hideDigit(index)
-        document.getElementById(`confirm-pin-${index + 1}`)?.focus()
-      } else {
-        confirmPinMask.showDigit(index)
-      }
-    } else {
-      confirmPinMask.hideDigit(index)
-    }
-
-    // Auto-submit when all filled and pins match
-    if (
-      newConfirmPin.every(d => d !== "") &&
-      pin.every(d => d !== "")
-    ) {
-      const pinStr = pin.join("")
-      const confirmStr = newConfirmPin.join("")
-      if (pinStr === confirmStr) {
-        setTimeout(() => onSuccess(pinStr), 100)
-      }
-    }
-  }
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent, field: "pin" | "confirm") => {
-    if (e.key === "Backspace") {
-      if (field === "pin") {
-        pinMask.hideDigit(index)
-        if (!pin[index] && index > 0) {
-          document.getElementById(`pin-${index - 1}`)?.focus()
-        }
-      } else {
-        confirmPinMask.hideDigit(index)
-        if (!confirmPin[index] && index > 0) {
-          document.getElementById(`confirm-pin-${index - 1}`)?.focus()
-        }
-      }
-    }
-  }
-
-  const handlePinFocus = (index: number) => {
-    if (pin[index]) pinMask.showDigit(index)
-  }
-  const handlePinBlur = (index: number) => pinMask.hideDigit(index)
-
-  const handleConfirmFocus = (index: number) => {
-    if (confirmPin[index]) confirmPinMask.showDigit(index)
-  }
-  const handleConfirmBlur = (index: number) => confirmPinMask.hideDigit(index)
+  }, [pin, confirmPin, onSuccess])
 
   const handleSubmit = () => {
-    const pinStr = pin.join("")
-    const confirmStr = confirmPin.join("")
-
-    if (pinStr.length !== 6) {
+    if (pin.length !== 6) {
       setError("PIN harus 6 digit")
       return
     }
-    if (confirmStr.length !== 6) {
+    if (confirmPin.length !== 6) {
       setError("Konfirmasi PIN harus 6 digit")
       return
     }
-    if (pinStr !== confirmStr) {
+    if (pin !== confirmPin) {
       setError("PIN dan Konfirmasi PIN tidak cocok")
       return
     }
 
-    onSuccess(pinStr)
+    onSuccess(pin)
   }
 
   const handleForgotPinSuccess = () => {
@@ -141,8 +67,8 @@ export default function SetPinDialog({ open, onOpenChange, onSuccess, isLoading 
 
   const handleOpenChange = (val: boolean) => {
     if (!val) {
-      setPin(["", "", "", "", "", ""])
-      setConfirmPin(["", "", "", "", "", ""])
+      setPin("")
+      setConfirmPin("")
       setError("")
     }
     onOpenChange(val)
@@ -183,50 +109,48 @@ export default function SetPinDialog({ open, onOpenChange, onSuccess, isLoading 
             )}
 
             {/* PIN Input */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center">
               <Label className="text-center block">PIN Baru (6 digit angka)</Label>
-              <div className="flex justify-center gap-2">
-                {pin.map((digit, index) => (
-                  <Input
-                    key={index}
-                    id={`pin-${index}`}
-                    type={pinMask.isVisible(index) ? "text" : "password"}
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e, "pin")}
-                    onFocus={() => handlePinFocus(index)}
-                    onBlur={() => handlePinBlur(index)}
-                    className="w-10 h-12 text-center text-lg font-bold"
-                    disabled={isLoading}
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </div>
+              <InputOTP 
+                maxLength={6} 
+                value={pin} 
+                onChange={setPin} 
+                disabled={isLoading}
+                autoFocus
+              >
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <InputOTPSlot 
+                      key={index} 
+                      index={index} 
+                      isPassword
+                      className="w-10 h-12 text-lg font-bold rounded-md border" 
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             {/* Confirm PIN Input */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center">
               <Label className="text-center block">Konfirmasi PIN (6 digit angka)</Label>
-              <div className="flex justify-center gap-2">
-                {confirmPin.map((digit, index) => (
-                  <Input
-                    key={index}
-                    id={`confirm-pin-${index}`}
-                    type={confirmPinMask.isVisible(index) ? "text" : "password"}
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleConfirmPinChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e, "confirm")}
-                    onFocus={() => handleConfirmFocus(index)}
-                    onBlur={() => handleConfirmBlur(index)}
-                    className="w-10 h-12 text-center text-lg font-bold"
-                    disabled={isLoading}
-                  />
-                ))}
-              </div>
+              <InputOTP 
+                maxLength={6} 
+                value={confirmPin} 
+                onChange={setConfirmPin} 
+                disabled={isLoading}
+              >
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <InputOTPSlot 
+                      key={index} 
+                      index={index} 
+                      isPassword
+                      className="w-10 h-12 text-lg font-bold rounded-md border" 
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             {/* Info Box */}
@@ -248,7 +172,7 @@ export default function SetPinDialog({ open, onOpenChange, onSuccess, isLoading 
             <Button 
               className="w-full bg-primary-600 hover:bg-primary-700" 
               onClick={handleSubmit}
-              disabled={pin.some(d => d === "") || confirmPin.some(d => d === "") || isLoading}
+              disabled={pin.length < 6 || confirmPin.length < 6 || isLoading}
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Simpan PIN

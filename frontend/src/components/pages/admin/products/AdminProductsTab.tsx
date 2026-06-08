@@ -148,7 +148,13 @@ export default function AdminProductsTab(props: Props) {
                     <TableCell><Badge variant={product.type === "jasa" ? "secondary" : "outline"} className={product.type === "jasa" ? "bg-purple-50 text-purple-700 border-purple-200" : ""}>{product.type === "jasa" ? "Jasa" : "Barang"}</Badge></TableCell>
                     <TableCell className="font-medium text-primary-600">{formatProductPrice(product)}</TableCell>
                     <TableCell className="text-sm">{product.seller?.name}</TableCell>
-                    <TableCell><Badge variant={product.status === "active" ? "default" : "secondary"} className={product.status === "active" ? "bg-primary-500" : ""}>{product.status === "active" ? "Aktif" : "Nonaktif"}</Badge></TableCell>
+                    <TableCell>
+                      {product.deletedAt ? (
+                        <Badge variant="destructive" className="bg-red-500 text-white">Dihapus</Badge>
+                      ) : (
+                        <Badge variant={product.status === "active" ? "default" : "secondary"} className={product.status === "active" ? "bg-primary-500" : ""}>{product.status === "active" ? "Aktif" : "Nonaktif"}</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewProduct(product)}><Eye className="h-4 w-4" /></Button>
                     {!product.deletedAt ? (
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteProduct(product)}><Trash2 className="h-4 w-4" /></Button>

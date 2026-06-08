@@ -48,7 +48,7 @@ export default function RatingPreviewModal({
             <div className="flex gap-4">
               <div className="w-16 h-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <ProductImage
-                  src={selectedOrder.product?.images?.[0] || selectedOrder.product?.image}
+                  src={selectedOrder.product?.images?.[0] || selectedOrder.product?.image || (selectedOrder as any).productImage || (selectedOrder as any).product_image}
                   alt={selectedOrder.productTitle}
                   type={selectedOrder.productType}
                   className="w-full h-full"

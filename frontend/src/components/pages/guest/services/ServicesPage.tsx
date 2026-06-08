@@ -457,7 +457,7 @@ export default function ServicesPage({
               <>
                 {/* Service Grid */}
                 {viewMode === "grid" ? (
-                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {paginatedServices.map((service) => (
                       <Card
                         key={service.id}
@@ -476,24 +476,24 @@ export default function ServicesPage({
                             fallbackImageUrl="https://placehold.net/default.svg"
                           />
                         </div>
-                        <CardContent className="p-4">
-                          <Badge variant="outline" className="mb-2">
+                        <CardContent className="p-3 md:p-4">
+                          <Badge variant="outline" className="mb-2 text-[10px] md:text-xs px-1.5 py-0 md:px-2 md:py-0.5">
                             {service.category?.name || "Jasa"}
                           </Badge>
-                          <p className="font-medium line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                          <p className="font-medium text-sm md:text-base line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
                             {service.title}
                           </p>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
                             {service.description}
                           </p>
-                          <div className="flex items-center gap-1 mb-3">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">
+                          <div className="flex items-center gap-1 mb-2 md:mb-3">
+                            <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs md:text-sm font-medium">
                               {service.rating || 0}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-primary-600">
+                            <span className="text-sm md:text-lg font-bold text-primary-600 line-clamp-1">
                               Rp{" "}
                               {(
                                 service.price ||
@@ -503,21 +503,23 @@ export default function ServicesPage({
                               ).toLocaleString("id-ID")}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 mt-3">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
-                                {service.seller?.name
-                                  ?.split(" ")
-                                  .map((n: string) => n[0])
-                                  .join("") || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-muted-foreground">
-                              {service.seller?.name || "Unknown"}
-                            </span>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
-                              <MapPin className="h-3 w-3" />
-                              {service.location || "-"}
+                          <div className="flex items-center gap-1 md:gap-2 mt-2 md:mt-3 pt-2 border-t">
+                            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden">
+                              <Avatar className="h-5 w-5 md:h-6 md:w-6 shrink-0">
+                                <AvatarFallback className="text-[8px] md:text-xs bg-primary-100 text-primary-700">
+                                  {service.seller?.name
+                                    ?.split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("") || "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-[10px] md:text-xs text-muted-foreground truncate">
+                                {service.seller?.name?.split(" ")[0] || "Unknown"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs text-muted-foreground shrink-0 ml-auto">
+                              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                              <span className="truncate max-w-[60px] md:max-w-none">{service.location?.split(",")[0] || "-"}</span>
                             </div>
                           </div>
                         </CardContent>

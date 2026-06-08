@@ -46,7 +46,7 @@ export default function SearchResultsOverviewTab({
               Dari Pengguna yang Ditemukan
             </h2>
           </div>
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
             {results.userProducts.slice(0, 4).map((product) => (
               <SearchProductCard key={product.id} product={product} viewMode={viewMode} onNavigate={onNavigate} />
             ))}
@@ -66,7 +66,7 @@ export default function SearchResultsOverviewTab({
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
             {results.products.slice(0, 4).map((product) => (
               <SearchProductCard key={product.id} product={product} viewMode={viewMode} onNavigate={onNavigate} />
             ))}
@@ -86,7 +86,7 @@ export default function SearchResultsOverviewTab({
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
             {results.services.slice(0, 4).map((service) => (
               <SearchProductCard key={service.id} product={service} viewMode={viewMode} onNavigate={onNavigate} />
             ))}

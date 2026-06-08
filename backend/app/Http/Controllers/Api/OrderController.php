@@ -25,7 +25,6 @@ use App\Enums\ShippingType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\NotificationHelper;
-use App\Jobs\ReleaseOrderEscrow;
 use App\Models\CodInvoice;
 use App\Jobs\AutoConfirmOrderJob;
 use App\Jobs\DebtReminderJob;
@@ -113,6 +112,35 @@ class OrderController extends Controller
                 $basePrice = $product->price;
                 $negoPrice = $request->nego_price ?? null;
                 $finalPrice = $negoPrice ?? $basePrice;
+
+                // Validate Nego Price
+                if ($negoPrice !== null) {
+                    $isFromCart = (bool) $request->input('from_cart', false);
+
+                    // We must verify that there's an accepted offer in the chat for this exact price and product.
+                    // If it's from cart, we STILL need to verify it because anyone could inject the parameter.
+                    
+                    $chat = \App\Models\Chat::where(function ($q) use ($user, $product) {
+                        $q->where('buyer_id', $user->id)->where('seller_id', $product->seller_id);
+                    })->orWhere(function ($q) use ($user, $product) {
+                        $q->where('buyer_id', $product->seller_id)->where('seller_id', $user->id);
+                    })->first();
+
+                    if (!$chat) {
+                        throw new \Exception('Tidak ada riwayat chat untuk negosiasi ini', 400);
+                    }
+
+                    $acceptedOffer = \App\Models\Message::where('chat_id', $chat->id)
+                        ->where('type', 'offer')
+                        ->where('offer_status', 'accepted')
+                        ->where('product_id', $product->id)
+                        ->where('offer_price', $negoPrice)
+                        ->exists();
+
+                    if (!$acceptedOffer) {
+                        throw new \Exception('Harga negosiasi tidak valid atau penawaran belum disetujui penjual', 400);
+                    }
+                }
 
                 $selectedShippingOption = null;
                 if ($request->selected_shipping_option_id) {
@@ -335,12 +363,12 @@ class OrderController extends Controller
 
                 $shippingFee = (int) $request->shippingFee;
 
-                // Update order
                 $order->update([
                     'shipping_fee' => $shippingFee,
                     'shipping_method' => $request->shippingMethod,
                     'shipping_notes' => $request->shippingNotes,
                     'total_price' => $order->final_price + $shippingFee,
+                    'net_income' => $order->final_price - $order->admin_fee_deducted + $shippingFee,
                     'status' => OrderStatus::WAITING_PAYMENT,
                 ]);
 
@@ -867,8 +895,6 @@ class OrderController extends Controller
                     'actor_id' => $user->id,
                 ]);
 
-                // UPDATE product sold count - ONLY HERE, not in store()
-                $order->product->incrementSoldCount($order->quantity);
 
                 // ESCROW RELEASE: Transfer dana ke penjual (hanya untuk pembayaran digital, bukan COD)
                 if ($order->payment_status === PaymentStatus::PAID && in_array($order->payment_method, ['balance', 'midtrans'])) {
@@ -997,28 +1023,6 @@ class OrderController extends Controller
                         'related_order_id' => $order->id,
                         'status' => 'completed',
                     ]);
-
-                    // IMPORTANT FIX: Only deduct from seller if order was COMPLETED
-                    // (meaning escrow was already released to them).
-                    // If order is cancelled before completion, seller never received the money,
-                    // so we should NOT deduct from them.
-                    if ($order->status === OrderStatus::COMPLETED) {
-                        $seller = $order->seller;
-                        $sellerBalanceBefore = $seller->wallet_balance;
-                        $seller->wallet_balance -= $order->net_income;
-                        $seller->save();
-
-                        WalletTransaction::create([
-                            'user_id' => $seller->id,
-                            'type' => 'refund_deduction',
-                            'amount' => -$order->net_income,
-                            'balance_before' => $sellerBalanceBefore,
-                            'balance_after' => $seller->wallet_balance,
-                            'description' => 'Refund deduction for cancelled order ' . $order->order_number,
-                            'related_order_id' => $order->id,
-                            'status' => 'completed',
-                        ]);
-                    }
 
                     $order->update(['payment_status' => PaymentStatus::REFUNDED]);
                 }

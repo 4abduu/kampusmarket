@@ -11,6 +11,7 @@ import { useFavoritesStore } from "@/lib/favorites-store";
 import type { User } from "@/lib/mock-data";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useChatStore } from "@/lib/chat-store";
+import { useAdminNotificationStore } from "@/lib/admin-notification-store";
 import { getEcho } from "@/lib/echo";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -65,6 +66,10 @@ function AppContent() {
         useNotificationStore.getState().initEcho(user.id);
         void useChatStore.getState().fetchUnreadCount();
         useChatStore.getState().initEcho(user.id);
+        if (user.role === "admin") {
+          void useAdminNotificationStore.getState().fetchNotifications();
+          useAdminNotificationStore.getState().initEcho(user.id);
+        }
         return true;
       } else {
         setAuthUser(null);
@@ -350,6 +355,10 @@ function AppContent() {
         useNotificationStore.getState().initEcho(user.id);
         void useChatStore.getState().fetchUnreadCount();
         useChatStore.getState().initEcho(user.id);
+        if (user.role === "admin") {
+          void useAdminNotificationStore.getState().fetchNotifications();
+          useAdminNotificationStore.getState().initEcho(user.id);
+        }
       }
     }).catch(() => {
       // Ignore - user tetap login, cookie valid, me() akan retry saat refresh
@@ -374,6 +383,10 @@ function AppContent() {
     useNotificationStore.getState().cleanupEcho();
     // Clear lastNonAuthPath to prevent redirect to protected pages
     sessionStorage.removeItem("lastNonAuthPath");
+    
+    // Clear checkout items from local storage to prevent leakage between users
+    localStorage.removeItem("checkoutCartItems");
+    localStorage.removeItem("recentCheckoutOrderIds");
 
     // Navigasi ke "/" dilakukan setelah state di-clear (aman karena isLoggingOutRef = true)
     navigate("/");

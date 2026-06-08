@@ -23,11 +23,30 @@ export default function ChatMessageItem({
   message, currentUserId, chat, chatProduct, formatPrice,
   onNavigate, onAcceptOffer, onRejectOffer, onOpenPaymentDialog, onReportMessage
 }: Props) {
-  const isMe = message.senderId === currentUserId;
-  const isSeller = chat.seller?.id === currentUserId;
+  const product = message.product || chatProduct || chat.product;
+  let sellerId = chat.seller?.id;
+  if (product) {
+    if ('sellerId' in product && product.sellerId) {
+      sellerId = product.sellerId;
+    } else if ('seller' in product && (product as any).seller?.id) {
+      sellerId = (product as any).seller.id;
+    }
+  }
+
+  const normalizedSellerId = sellerId ? String(sellerId) : undefined;
+  const normalizedSenderId = String(message.senderId);
+  const normalizedCurrentUserId = String(currentUserId);
   
-  const senderIsSeller = message.senderId === chat.seller?.id;
-  const senderIsBuyer = message.senderId === chat.buyer?.id;
+  const isMe = normalizedSenderId === normalizedCurrentUserId;
+  const isSeller = normalizedSellerId === normalizedCurrentUserId;
+  
+  const senderIsSeller = normalizedSenderId === normalizedSellerId;
+  const buyerId = (chat.buyer?.id && String(chat.buyer.id) === normalizedSellerId) 
+    ? chat.seller?.id 
+    : chat.buyer?.id;
+  const normalizedBuyerId = buyerId ? String(buyerId) : undefined;
+  const senderIsBuyer = normalizedSenderId === normalizedBuyerId;
+
   const canRespondToOffer = !isMe
     && message.offerStatus === 'pending'
     && ((isSeller && senderIsBuyer) || (!isSeller && senderIsSeller));
@@ -74,7 +93,7 @@ export default function ChatMessageItem({
     );
   }
 
-  const product = message.product || chatProduct || chat.product;
+  // product sudah dideklarasikan di atas untuk penentuan peran dinamis
 
   return (
     <div className={`flex group ${isMe ? 'justify-end' : 'justify-start'} items-center gap-2`}>
@@ -106,8 +125,8 @@ export default function ChatMessageItem({
                 onClick={() => onNavigate('product', product.id)}
               >
                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-600 rounded-lg flex items-center justify-center shrink-0">
-                  {product.images?.[0]
-                    ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover rounded-lg" />
+                  {'images' in product && product.images?.[0] || 'image' in product && product.image
+                    ? <img src={'images' in product ? product.images[0] : (product as any).image} alt={product.title} className="w-full h-full object-cover rounded-lg" />
                     : <Package className="h-4 w-4 text-muted-foreground/50" />
                   }
                 </div>

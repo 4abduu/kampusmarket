@@ -51,7 +51,6 @@ class AutoConfirmOrderJob implements ShouldQueue
             'actor_id' => null,
         ]);
 
-        $order->product->incrementSoldCount($order->quantity);
 
         // ESCROW RELEASE untuk pembayaran digital
         if ($order->payment_status === PaymentStatus::PAID && in_array($order->payment_method, ['balance', 'midtrans'])) {

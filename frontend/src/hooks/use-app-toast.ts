@@ -7,24 +7,25 @@
  *   error("Gagal memuat data", "Pesan detail dari backend");
  */
 
+import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
 
 export function useAppToast() {
   const { toast } = useToast()
 
-  const success = (title: string, description?: string) =>
-    toast({ variant: "success", title, description })
+  const success = React.useCallback((title: string, description?: string) =>
+    toast({ variant: "success", title, description }), [toast])
 
-  const error = (title: string, description?: string) =>
-    toast({ variant: "destructive", title, description })
+  const error = React.useCallback((title: string, description?: string) =>
+    toast({ variant: "destructive", title, description }), [toast])
 
-  const warning = (title: string, description?: string) =>
-    toast({ variant: "warning", title, description })
+  const warning = React.useCallback((title: string, description?: string) =>
+    toast({ variant: "warning", title, description }), [toast])
 
-  const info = (title: string, description?: string) =>
-    toast({ variant: "info", title, description })
+  const info = React.useCallback((title: string, description?: string) =>
+    toast({ variant: "info", title, description }), [toast])
 
-  return { success, error, warning, info, toast }
+  return React.useMemo(() => ({ success, error, warning, info, toast }), [success, error, warning, info, toast])
 }
 
 /**

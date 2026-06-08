@@ -9,14 +9,9 @@ import FavoriteProductCard from "@/components/pages/user/favorites/FavoriteProdu
 import FavoritesFilterBar from "@/components/pages/user/favorites/FavoritesFilterBar";
 import FavoritesHeader from "@/components/pages/user/favorites/FavoritesHeader";
 import { getSavings } from "@/components/pages/user/favorites/favorites.helpers";
-import { INITIAL_FAVORITES } from "@/components/pages/user/favorites/favorites.mock";
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 import { getFavorites, removeFavorite } from "@/lib/api/products";
 import { useFavoritesStore } from "@/lib/favorites-store";
-
-const INITIAL_FAVORITE_PRODUCTS: Product[] = INITIAL_FAVORITES
-  .map((favorite) => favorite.product)
-  .filter(Boolean) as Product[];
 
 interface FavoritesPageProps {
   onNavigate: (page: string, data?: string | NavigationData) => void;
@@ -103,8 +98,6 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
     }
   };
 
-  const handleRestore = () => setFavorites(INITIAL_FAVORITE_PRODUCTS);
-
   const handleReset = () => {
     setSearchQuery("");
     setTypeFilter("all");
@@ -157,19 +150,35 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
               />
             ))}
           </div>
+        ) : products.length === 0 ? (
+          <Card className="border-dashed border-slate-300 bg-white/80 dark:border-slate-700 dark:bg-slate-950/60">
+            <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-900/50 dark:text-slate-500">
+                <Heart className="h-7 w-7" />
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Belum ada favorit</h2>
+              <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
+                Anda belum menambahkan produk atau jasa apa pun ke daftar favorit. Yuk mulai jelajahi katalog kami!
+              </p>
+              <div className="mt-5">
+                <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => onNavigate("/")}>
+                  Mulai Belanja
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="border-dashed border-slate-300 bg-white/80 dark:border-slate-700 dark:bg-slate-950/60">
             <CardContent className="flex flex-col items-center px-6 py-16 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500">
                 <Heart className="h-7 w-7" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Belum ada item yang cocok</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Pencarian Tidak Ditemukan</h2>
               <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
-                Coba ubah kata kunci atau filter. Kalau favorit sudah kosong, mulai lagi dari katalog.
+                Tidak ada favorit yang cocok dengan pencarian atau filter Anda. Coba kata kunci lain atau reset filter.
               </p>
-              <div className="mt-5 flex gap-2">
+              <div className="mt-5">
                 <Button variant="outline" size="sm" onClick={handleReset}>Reset Filter</Button>
-                <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={handleRestore}>Pulihkan Contoh</Button>
               </div>
             </CardContent>
           </Card>

@@ -44,16 +44,16 @@ export default function AdminOverviewTabSkeleton() {
             <Skeleton className="h-6 w-40" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-12" />
+            <div className="flex flex-col items-center justify-center gap-6 h-[300px]">
+              <Skeleton className="h-48 w-48 rounded-full" />
+              <div className="flex flex-wrap justify-center gap-4 w-full px-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-3 rounded-full" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
-                  <Skeleton className="h-2 w-full" />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

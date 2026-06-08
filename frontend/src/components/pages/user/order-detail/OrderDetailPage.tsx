@@ -362,6 +362,7 @@ export default function OrderDetailPage({
       await apiSetShippingFee(
         order.id,
         parseInt(inputShippingFee),
+        "Manual", // Default shipping method
         shippingNotes || undefined,
       );
       success("Ongkir berhasil dikirim");

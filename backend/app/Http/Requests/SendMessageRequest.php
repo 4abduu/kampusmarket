@@ -30,6 +30,7 @@ class SendMessageRequest extends FormRequest
         // If type is offer, validate offer price
         if ($this->input('type') === 'offer') {
             $rules['offerPrice'] = ['required', 'integer', 'min:0'];
+            $rules['productId'] = ['required', 'exists:products,uuid'];
         }
 
         return $rules;
@@ -73,6 +74,10 @@ class SendMessageRequest extends FormRequest
 
         if ($this->has('offerPrice') && $this->offerPrice !== null && $this->offerPrice !== '') {
             $payload['offer_price'] = $this->offerPrice;
+        }
+
+        if ($this->has('productId')) {
+            $payload['product_id'] = $this->productId;
         }
 
         if ($this->has('imageUrls') && is_array($this->imageUrls)) {

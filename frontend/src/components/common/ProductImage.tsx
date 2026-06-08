@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Package, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,14 @@ export default function ProductImage({
     onLoad?.();
   };
 
+  // Check if image is already cached and loaded
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      handleImageLoad();
+    }
+  }, [src]);
+
   // Fallback jika gambar bernilai null, kosong, atau gagal dimuat
   if (!hasImage || imageError) {
     const isService = type === "jasa";
@@ -92,6 +100,7 @@ export default function ProductImage({
   return (
     <div className={cn("relative overflow-hidden w-full h-full", className)}>
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         className={cn(

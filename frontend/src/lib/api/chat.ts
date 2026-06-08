@@ -23,6 +23,7 @@ export interface SendMessagePayload {
   content?: string;
   type: 'text' | 'offer' | 'image' | 'file';
   offerPrice?: number;    // dalam Rupiah (direct IDR, bukan cent)
+  productId?: string;     // UUID produk untuk penawaran
   imageUrls?: string[];
   fileUrl?: string;
 }

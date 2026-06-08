@@ -31,7 +31,7 @@ export default function CatalogPageSkeleton({ itemCount = 8, hideSidebar = false
           <main className="flex-1">
 
             {/* Products Grid */}
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
               {Array.from({ length: itemCount }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
                   <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">

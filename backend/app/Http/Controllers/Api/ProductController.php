@@ -176,6 +176,11 @@ class ProductController extends Controller
         $this->syncImages($product, $request->images ?? []);
         $this->syncShippingOptions($product, $request);
 
+        // Notifikasi ke Admin jika butuh verifikasi
+        if ($initialStatus === 'review') {
+            \App\Helpers\NotificationHelper::adminProductVerification($product);
+        }
+
         return $this->created(
             new ProductResource($product->load(['category', 'images', 'shippingOptions', 'seller.faculty'])),
             'Produk berhasil dibuat'

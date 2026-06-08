@@ -100,9 +100,6 @@ class ReviewController extends Controller
             }
         }
 
-        // Update user and product ratings
-        $order->seller->recalculateRating();
-        $order->product->recalculateRating();
 
         NotificationHelper::reviewReceived($review->reviewee_id, $review);
 
@@ -153,9 +150,6 @@ class ReviewController extends Controller
             }
         }
 
-        // Recalculate ratings
-        $review->reviewee->recalculateRating();
-        $review->product->recalculateRating();
 
         return $this->success(
             new ReviewResource($review->fresh(['reviewer', 'reviewee', 'product', 'images'])),
@@ -180,9 +174,6 @@ class ReviewController extends Controller
 
         $review->delete();
 
-        // Recalculate ratings
-        $reviewee->recalculateRating();
-        $product->recalculateRating();
 
         return $this->success(null, 'Ulasan berhasil dihapus');
     }

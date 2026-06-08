@@ -33,6 +33,7 @@ export interface ApiChatProduct {
   image: string;
   type: 'barang' | 'jasa';
   canNego: boolean;   // [BARU]
+  stock: number;
   sellerId: string;
 }
 
@@ -87,6 +88,7 @@ export interface ApiChatDetail {
     images: string[];
     type: string;
     canNego: boolean;
+    stock: number;
     condition?: string;
     seller: ApiUser;
   } | null;
