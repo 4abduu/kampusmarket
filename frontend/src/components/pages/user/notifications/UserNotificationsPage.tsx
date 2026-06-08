@@ -58,7 +58,7 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
 
       if (link.startsWith("/rating/")) {
         const id = link.replace("/rating/", "");
-        onNavigate("rating", id);
+        onNavigate("order-detail", id);
         return;
       }
 
@@ -85,7 +85,7 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
     }
 
     if (notification.type === "review" && notification.orderId) {
-      onNavigate("rating", notification.orderId);
+      onNavigate("order-detail", notification.orderId);
       return;
     }
 
