@@ -28,6 +28,7 @@ import {
   Bell,
   ShieldCheck,
   PlusCircle,
+  ReceiptText,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
@@ -409,7 +410,7 @@ export default function Navbar({
                     <span>Tambah Produk</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onNavigate("orders")}>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    <ReceiptText className="mr-2 h-4 w-4" />
                     <span>Pesanan Saya</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onNavigate("wallet")}>
@@ -594,7 +595,7 @@ export default function Navbar({
                         onClick={() => { onNavigate("orders"); closeMobileMenu(); }}
                         className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
-                        <ShoppingCart className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
+                        <ReceiptText className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
                         <span>Pesanan Saya</span>
                       </Button>
                       <Button

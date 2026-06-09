@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Building2, Package, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react";
+import { AlertCircle, Building2, Package, ReceiptText, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react";
 
 type SidebarUser = {
   name: string;
@@ -31,7 +31,7 @@ export default function UserDashboardSidebar({
   const navItems = [
     { id: "overview", label: "Dashboard", icon: TrendingUp },
     { id: "products", label: "Produk & Jasa", icon: Package },
-    { id: "orders", label: "Pesanan", icon: ShoppingCart },
+    { id: "orders", label: "Pesanan", icon: ReceiptText },
     { id: "wallet", label: "Dompet", icon: Wallet },
     ...(hasDebt ? [{ id: "debts", label: "Tunggakan Komisi", icon: AlertCircle, isAlert: true }] : []),
     { id: "settings", label: "Pengaturan", icon: Settings },
