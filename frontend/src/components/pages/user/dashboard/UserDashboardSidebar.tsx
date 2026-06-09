@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Building2, Package, ReceiptText, Settings, ShoppingCart, Star, TrendingUp, Wallet } from "lucide-react";
+import { AlertCircle, Building2, Package, ReceiptText, Settings, Star, TrendingUp, Wallet } from "lucide-react";
 
 type SidebarUser = {
   name: string;
