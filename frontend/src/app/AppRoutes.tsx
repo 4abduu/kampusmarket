@@ -263,6 +263,29 @@ export default function AppRoutes({
   const location = useLocation();
   const unauthorizedState = location.state as { reason?: string } | null;
 
+  // GLOBAL ROUTE GUARD
+  const protectedPrefixes = ["/dashboard", "/cart", "/checkout", "/orders", "/favorites", "/rating", "/chat", "/notifications", "/add-product", "/profile", "/order-detail"];
+  const adminPrefixes = ["/admin", "/stats"];
+
+  if (userRole === "admin") {
+    // Admin hanya boleh akses /admin, /stats, dan auth route
+    const isAdminRoute = adminPrefixes.some(p => location.pathname.startsWith(p));
+    const isAuthRoute = ["/login", "/unauthorized", "/not-found"].includes(location.pathname);
+    if (!isAdminRoute && !isAuthRoute) {
+      return <Navigate to="/admin" replace />;
+    }
+  } else if (!isLoggedIn && !isLoggingOut?.current) {
+    // Guest dilarang akses rute user atau admin (termasuk sub-path yang ngawur)
+    if ([...protectedPrefixes, ...adminPrefixes].some(p => location.pathname.startsWith(p))) {
+      return <Navigate to="/unauthorized" replace state={{ from: location.pathname }} />;
+    }
+  } else if (userRole === "user") {
+    // User biasa dilarang akses rute admin (termasuk sub-path yang ngawur)
+    if (adminPrefixes.some(p => location.pathname.startsWith(p))) {
+      return <Navigate to="/unauthorized" replace state={{ from: location.pathname, reason: "forbidden" }} />;
+    }
+  }
+
   useEffect(() => {
     const authPaths = new Set([
       "/login",

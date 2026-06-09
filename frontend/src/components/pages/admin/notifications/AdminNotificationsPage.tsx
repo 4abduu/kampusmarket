@@ -17,6 +17,7 @@ import {
   Trash2,
   ArrowLeft,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAdminNotificationStore } from "@/lib/admin-notification-store";
 
 interface AdminNotificationsPageProps {
@@ -24,6 +25,7 @@ interface AdminNotificationsPageProps {
 }
 
 export default function AdminNotificationsPage({ onNavigate }: AdminNotificationsPageProps) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, fetchNotifications } = useAdminNotificationStore();
 
@@ -73,7 +75,7 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => onNavigate("admin")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { createProduct } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
 import AddProductTypeSelector from "@/components/pages/user/add-product/AddProductTypeSelector";
@@ -57,6 +58,7 @@ const defaultShippingOptions: AddProductShippingOptions = {
 };
 
 export default function AddProductPage({ onNavigate }: AddProductPageProps) {
+  const navigate = useNavigate();
   const { success, error: toastError } = useAppToast();
   const [productType, setProductType] = useState<ProductType>("barang");
   const [pricingType, setPricingType] = useState<PricingType>("tetap");
@@ -235,7 +237,7 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => onNavigate("dashboard")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -303,7 +305,7 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
           <AddProductActions
             productType={productType}
             submitDisabled={submitDisabled || isLoading}
-            onCancel={() => onNavigate("dashboard")}
+            onCancel={() => navigate(-1)}
             isLoading={isLoading}
           />
         </form>

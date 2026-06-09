@@ -60,7 +60,7 @@ export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-emerald-600/80">
                 404
               </p>
-              <h1 className="max-w-xl text-4xl font-black tracking-tight text-emerald-950 sm:text-6xl lg:text-7xl">
+              <h1 className="max-w-xl text-3xl font-black tracking-tight text-emerald-950 sm:text-5xl lg:text-6xl xl:text-7xl">
                 Halaman yang kamu cari tidak ada.
               </h1>
               <p className="max-w-2xl text-base leading-8 text-emerald-900/75 sm:text-lg">
@@ -99,14 +99,14 @@ export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
             <div className="relative w-full max-w-md">
               <div className="absolute inset-x-10 top-10 h-56 rounded-full bg-emerald-300/30 blur-3xl" />
 
-              <div className="relative mx-auto aspect-square w-full max-w-[26rem]">
-                <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-emerald-300/70 bg-white/35 backdrop-blur-sm" />
+              <div className="relative mx-auto aspect-square w-full max-w-[20rem] sm:max-w-[26rem]">
+                <div className="absolute left-1/2 top-1/2 h-56 w-56 sm:h-72 sm:w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-emerald-300/70 bg-white/35 backdrop-blur-sm" />
 
-                <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-5">
+                <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-4 sm:gap-5">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-full bg-emerald-300/40 blur-2xl" />
-                    <div className="relative flex h-40 w-40 items-center justify-center rounded-full border border-emerald-200 bg-gradient-to-br from-emerald-100 to-emerald-200 shadow-xl shadow-emerald-900/10">
-                      <AlertCircle className="h-20 w-20 text-emerald-800" />
+                    <div className="relative flex h-32 w-32 sm:h-40 sm:w-40 items-center justify-center rounded-full border border-emerald-200 bg-gradient-to-br from-emerald-100 to-emerald-200 shadow-xl shadow-emerald-900/10">
+                      <AlertCircle className="h-16 w-16 sm:h-20 sm:w-20 text-emerald-800" />
                     </div>
                   </div>
 

@@ -366,7 +366,6 @@ function AppContent() {
       // FIX: Clear flag setelah me() selesai (berhasil atau gagal)
       isJustLoggedInRef.current = false;
     });
-    navigate(role === "admin" ? "/admin" : "/");
   };
 
   const handleLogout = async () => {

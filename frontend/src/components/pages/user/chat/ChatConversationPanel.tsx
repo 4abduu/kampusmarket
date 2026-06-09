@@ -281,7 +281,7 @@ export default function ChatConversationPanel({
             {showEmojiPicker && (
               <div className="absolute bottom-[calc(100%+0.5rem)] left-2 sm:left-4 z-50 shadow-2xl rounded-lg">
                 <EmojiPicker
-                  onEmojiClick={(emojiObject) => onEmojiSelect(emojiObject.emoji)}
+                  onEmojiClick={(emojiObject: any) => onEmojiSelect(emojiObject.emoji)}
                   theme={Theme.AUTO}
                   lazyLoadEmojis={true}
                   searchPlaceHolder="Cari emoji..."

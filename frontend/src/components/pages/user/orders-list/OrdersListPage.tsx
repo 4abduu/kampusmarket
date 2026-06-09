@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import OrdersListStatusLegend from "@/components/pages/user/orders-list/OrdersListStatusLegend";
 import OrdersListTabs from "@/components/pages/user/orders-list/OrdersListTabs";
 import { getUserOrders, type Order } from "@/lib/api/orders";
@@ -15,6 +16,7 @@ interface OrdersListPageProps {
 }
 
 export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
+  const navigate = useNavigate();
   const { error: toastError } = useAppToast();
   const [viewMode, setViewMode] = useState<OrdersViewMode>("buyer");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -60,7 +62,7 @@ export default function OrdersListPage({ onNavigate }: OrdersListPageProps) {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => onNavigate("dashboard")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

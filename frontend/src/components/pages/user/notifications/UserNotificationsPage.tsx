@@ -112,7 +112,7 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <UserNotificationsHeader
           unreadCount={unreadCount}
-          onBack={() => onNavigate("landing")}
+          onBack={() => navigate(-1)}
           onMarkAllAsRead={markAllAsRead}
         />
 

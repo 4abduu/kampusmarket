@@ -1,11 +1,13 @@
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import type { CartHeaderProps } from "@/components/pages/user/cart/cart.types";
 
-export default function CartHeader({ itemCount, onNavigate }: CartHeaderProps) {
+export default function CartHeader({ itemCount }: CartHeaderProps) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center gap-4 mb-6">
-      <Button variant="ghost" size="icon" onClick={() => onNavigate("landing")}>
+      <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
         <ArrowLeft className="h-5 w-5" />
       </Button>
       <div>

@@ -172,7 +172,7 @@ export default function Navbar({
                   <div className="flex flex-col space-y-2">
                     <p className="text-sm font-semibold">Admin KampusMarket</p>
                     <p className="text-xs text-muted-foreground">
-                      admin@kampusmarket.id
+                      admin@kampusmarket.com
                     </p>
                     <Badge variant="secondary" className="w-fit text-xs bg-amber-100 text-amber-700 hover:bg-amber-100">
                       Super Admin

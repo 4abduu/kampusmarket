@@ -198,7 +198,7 @@
    components can add `no-chrome` to body. This hides header/footer and
    prevents scrolling for a true full-page experience. */
 body.no-chrome {
-  overflow: hidden;
+  /* Dihapus agar halaman error tetap bisa di-scroll di mobile */
 }
 body.no-chrome header,
 body.no-chrome footer {
