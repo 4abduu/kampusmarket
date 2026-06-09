@@ -46,9 +46,15 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    let finalValue = value;
+    if (name === "name") {
+      finalValue = value.replace(/[^a-zA-Z\s']/g, "");
+    } else if (name === "phone") {
+      finalValue = value.replace(/\D/g, "");
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : finalValue,
     }));
   };
 
@@ -178,7 +184,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               <Label htmlFor="name">Nama Lengkap<span className="text-red-500">*</span></Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="name" name="name" type="text" placeholder="Masukkan nama lengkap" className="pl-10" value={formData.name} onChange={handleInputChange} disabled={isLoading} required />
+                <Input id="name" name="name" type="text" placeholder="Masukkan nama lengkap" className="pl-10" maxLength={50} value={formData.name} onChange={handleInputChange} disabled={isLoading} required />
               </div>
             </div>
 
@@ -203,10 +209,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               <Label htmlFor="phone">Nomor HP (WhatsApp)</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="phone" name="phone" type="tel" placeholder="08xx xxxx xxxx" className="pl-10" value={formData.phone} onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "");
-                  setFormData({ ...formData, phone: val });
-                }} disabled={isLoading} />
+                <Input id="phone" name="phone" type="tel" placeholder="08xxxxxxxxxx" className="pl-10" minLength={10} maxLength={15} value={formData.phone} onChange={handleInputChange} disabled={isLoading} required />
               </div>
             </div>
 

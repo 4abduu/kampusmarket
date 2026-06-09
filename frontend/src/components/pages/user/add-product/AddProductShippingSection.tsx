@@ -139,8 +139,9 @@ export default function AddProductShippingSection({
           <Input
             id="location"
             placeholder="Contoh: Limau Manis, Padang"
+            maxLength={100}
             value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value.replace(/[^a-zA-Z0-9\s.,\-()]/g, "") })}
           />
         </div>
 

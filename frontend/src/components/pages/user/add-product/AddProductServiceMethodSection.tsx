@@ -114,8 +114,9 @@ export default function AddProductServiceMethodSection({
           <Input
             id="locationJasa"
             placeholder="Contoh: Kampus Limau Manis, Padang"
+            maxLength={100}
             value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value.replace(/[^a-zA-Z0-9\s.,\-()]/g, "") })}
           />
           <p className="text-xs text-muted-foreground">Lokasi untuk metode ke lokasi penyedia jasa</p>
         </div>

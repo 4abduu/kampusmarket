@@ -149,8 +149,9 @@ export default function UserDashboardSettingsTab({
               <input 
                 type="text" 
                 value={profileForm.name} 
-                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value.replace(/[^a-zA-Z\s']/g, "") })}
                 aria-label="Nama Lengkap"
+                maxLength={50}
                 className="w-full border rounded-lg px-3 py-2" 
               />
             </div>
@@ -197,11 +198,10 @@ export default function UserDashboardSettingsTab({
               <input 
                 type="tel" 
                 value={profileForm.phone} 
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "");
-                  setProfileForm({ ...profileForm, phone: val });
-                }}
+                onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, "") })}
                 aria-label="Nomor HP"
+                minLength={10}
+                maxLength={15}
                 className="w-full border rounded-lg px-3 py-2" 
               />
             </div>

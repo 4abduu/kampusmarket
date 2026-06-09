@@ -57,6 +57,7 @@ export default function CheckoutAddressDialogs({
                 <Input
                   id="label"
                   placeholder="Contoh: Kos, Rumah, Kampus"
+                  maxLength={50}
                   value={newAddress.label}
                   onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
                 />
@@ -66,8 +67,10 @@ export default function CheckoutAddressDialogs({
                 <Input
                   id="phone"
                   placeholder="08xxxxxxxxxx"
+                  minLength={10}
+                  maxLength={15}
                   value={newAddress.phone}
-                  onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                  onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value.replace(/\D/g, "") })}
                 />
               </div>
             </div>
@@ -77,8 +80,9 @@ export default function CheckoutAddressDialogs({
               <Input
                 id="recipient"
                 placeholder="Nama lengkap penerima"
+                maxLength={50}
                 value={newAddress.recipient}
-                onChange={(e) => setNewAddress({ ...newAddress, recipient: e.target.value })}
+                onChange={(e) => setNewAddress({ ...newAddress, recipient: e.target.value.replace(/[^a-zA-Z\s']/g, "") })}
               />
             </div>
 
@@ -87,6 +91,7 @@ export default function CheckoutAddressDialogs({
               <Textarea
                 id="address"
                 placeholder="Jl. Nama Jalan No. 123, RT/RW, Kelurahan, Kecamatan, Kota, Kode Pos"
+                maxLength={500}
                 value={newAddress.address}
                 onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
                 rows={3}
@@ -98,6 +103,7 @@ export default function CheckoutAddressDialogs({
               <Input
                 id="notes"
                 placeholder="Patokan, warna rumah, dll"
+                maxLength={200}
                 value={newAddress.notes}
                 onChange={(e) => setNewAddress({ ...newAddress, notes: e.target.value })}
               />

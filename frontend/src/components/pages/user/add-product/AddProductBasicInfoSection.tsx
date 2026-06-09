@@ -44,8 +44,9 @@ export default function AddProductBasicInfoSection({
                 ? "Contoh: Kalkulator Scientific Casio FX-991EX"
                 : "Contoh: Jasa Desain Grafis untuk Logo"
             }
+            maxLength={100}
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value.replace(/[^a-zA-Z0-9\s.,\-()]/g, "") })}
           />
         </div>
 
@@ -59,6 +60,7 @@ export default function AddProductBasicInfoSection({
                 : "Jelaskan layanan yang ditawarkan, pengalaman, portofolio, dll..."
             }
             rows={5}
+            maxLength={2000}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />

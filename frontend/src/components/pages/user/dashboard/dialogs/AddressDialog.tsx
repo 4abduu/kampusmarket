@@ -44,25 +44,25 @@ export function AddressDialog({
         <div className="space-y-4">
           <div>
             <Label>Label Alamat <span className="text-red-500">*</span></Label>
-            <Input placeholder="Rumah, Kos, Kantor..." value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} />
+            <Input placeholder="Rumah, Kos, Kantor..." value={addressForm.label} maxLength={50} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Nama Penerima <span className="text-red-500">*</span></Label>
-              <Input value={addressForm.recipient} onChange={(e) => setAddressForm({ ...addressForm, recipient: e.target.value })} />
+              <Input value={addressForm.recipient} maxLength={50} onChange={(e) => setAddressForm({ ...addressForm, recipient: e.target.value.replace(/[^a-zA-Z\s']/g, "") })} />
             </div>
             <div>
               <Label>No. HP <span className="text-red-500">*</span></Label>
-              <Input value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value.replace(/\D/g, "") })} />
+              <Input value={addressForm.phone} minLength={10} maxLength={15} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value.replace(/\D/g, "") })} />
             </div>
           </div>
           <div>
             <Label>Alamat Lengkap <span className="text-red-500">*</span></Label>
-            <Textarea value={addressForm.address} onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })} rows={2} />
+            <Textarea value={addressForm.address} maxLength={500} onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })} rows={2} />
           </div>
           <div>
             <Label>Catatan (opsional)</Label>
-            <Input value={addressForm.notes} onChange={(e) => setAddressForm({ ...addressForm, notes: e.target.value })} placeholder="Patokan, warna rumah, dll" />
+            <Input value={addressForm.notes} maxLength={200} onChange={(e) => setAddressForm({ ...addressForm, notes: e.target.value })} placeholder="Patokan, warna rumah, dll" />
           </div>
           <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 dark:bg-slate-800/50">
             <div className="flex items-center gap-2">

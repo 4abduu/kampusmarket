@@ -77,12 +77,12 @@ export function WithdrawDialog({
             {isBankLainnya && (
               <div className="animate-in slide-in-from-top-2">
                 <Label>Nama Bank</Label>
-                <Input placeholder="Masukkan nama bank (contoh: Bank Sumut, Bank Nagari, dll)" value={withdrawForm.customBankName} onChange={(e) => setWithdrawForm({ ...withdrawForm, customBankName: e.target.value })} />
+                <Input placeholder="Masukkan nama bank (contoh: Bank Sumut, Bank Nagari, dll)" maxLength={50} value={withdrawForm.customBankName} onChange={(e) => setWithdrawForm({ ...withdrawForm, customBankName: e.target.value.replace(/[^a-zA-Z0-9\s]/g, "") })} />
                 <p className="text-xs text-muted-foreground mt-1">Masukkan nama bank yang tidak ada di daftar</p>
               </div>
             )}
-            <div><Label>Nomor Rekening</Label><Input placeholder="Masukkan nomor rekening" value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })} /></div>
-            <div><Label>Nama Pemilik Rekening</Label><Input placeholder="Nama sesuai buku rekening" value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} /></div>
+            <div><Label>Nomor Rekening</Label><Input placeholder="Masukkan nomor rekening" maxLength={50} value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value.replace(/\D/g, "") })} /></div>
+            <div><Label>Nama Pemilik Rekening</Label><Input placeholder="Nama sesuai buku rekening" maxLength={50} value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value.replace(/[^a-zA-Z\s']/g, "") })} /></div>
             <div>
               <Label>Jumlah Penarikan</Label>
               <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="text" placeholder="10.000" className="pl-10" value={withdrawForm.amount ? formatPrice(parseInt(withdrawForm.amount)).replace(/^Rp\s/, "") : ""} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value.replace(/\D/g, "") })} /></div>
@@ -101,12 +101,12 @@ export function WithdrawDialog({
             {isEwalletLainnya && (
               <div className="animate-in slide-in-from-top-2">
                 <Label>Nama E-Wallet</Label>
-                <Input placeholder="Masukkan nama e-wallet (contoh: i.saku, Sakuku, dll)" value={withdrawForm.customEwalletName} onChange={(e) => setWithdrawForm({ ...withdrawForm, customEwalletName: e.target.value })} />
+                <Input placeholder="Masukkan nama e-wallet (contoh: i.saku, Sakuku, dll)" maxLength={50} value={withdrawForm.customEwalletName} onChange={(e) => setWithdrawForm({ ...withdrawForm, customEwalletName: e.target.value.replace(/[^a-zA-Z0-9\s]/g, "") })} />
                 <p className="text-xs text-muted-foreground mt-1">Masukkan nama e-wallet yang tidak ada di daftar</p>
               </div>
             )}
-            <div><Label>Nomor HP</Label><Input placeholder="08xxxxxxxxxx" value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value.replace(/\D/g, "") })} /></div>
-            <div><Label>Nama Pemilik E-Wallet</Label><Input placeholder="Nama sesuai akun e-wallet" value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} /></div>
+            <div><Label>Nomor HP</Label><Input placeholder="08xxxxxxxxxx" minLength={10} maxLength={15} value={withdrawForm.accountNumber} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value.replace(/\D/g, "") })} /></div>
+            <div><Label>Nama Pemilik E-Wallet</Label><Input placeholder="Nama sesuai akun e-wallet" maxLength={50} value={withdrawForm.accountName} onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value.replace(/[^a-zA-Z\s']/g, "") })} /></div>
             <div>
               <Label>Jumlah Penarikan</Label>
               <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span><Input type="text" placeholder="10.000" className="pl-10" value={withdrawForm.amount ? formatPrice(parseInt(withdrawForm.amount)).replace(/^Rp\s/, "") : ""} onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value.replace(/\D/g, "") })} /></div>

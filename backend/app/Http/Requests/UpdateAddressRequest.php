@@ -21,8 +21,8 @@ class UpdateAddressRequest extends FormRequest
     {
         return [
             'label' => ['sometimes', 'string', 'max:50'],
-            'recipient' => ['sometimes', 'string', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'recipient' => ['sometimes', 'string', 'max:50', 'regex:/^[a-zA-Z\s\']+$/'],
+            'phone' => ['nullable', 'string', 'min:10', 'max:15', 'regex:/^[0-9]+$/'],
             'address' => ['sometimes', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:200'],
             'isPrimary' => ['sometimes', 'boolean'],

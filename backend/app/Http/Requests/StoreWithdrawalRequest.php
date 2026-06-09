@@ -24,8 +24,8 @@ class StoreWithdrawalRequest extends FormRequest
             'amount' => ['required', 'integer', 'min:10000'], // Min Rp 10.000
             'accountType' => ['required', 'in:bank,e_wallet'],
             'bankName' => ['required', 'string', 'max:50'],
-            'accountNumber' => ['required', 'string', 'max:50'],
-            'accountName' => ['required', 'string', 'max:100'],
+            'accountNumber' => ['required', 'string', 'max:50', 'regex:/^[0-9]+$/'],
+            'accountName' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\']+$/'],
             'wallet_pin' => ['required', 'string', 'size:6'],
         ];
     }

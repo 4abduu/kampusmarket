@@ -196,11 +196,11 @@ export default function AddProductPricingSection({
                   <Label htmlFor="durationMin" className="text-sm text-muted-foreground">Durasi Minimal</Label>
                   <Input
                     id="durationMin"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder={durationIsPlus ? "30" : "7"}
-                    min="1"
                     value={formData.durationMin}
-                    onChange={(e) => setFormData({ ...formData, durationMin: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, durationMin: e.target.value.replace(/\D/g, "") })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -209,11 +209,11 @@ export default function AddProductPricingSection({
                   </Label>
                   <Input
                     id="durationMax"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="14"
-                    min="1"
                     value={formData.durationMax}
-                    onChange={(e) => setFormData({ ...formData, durationMax: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, durationMax: e.target.value.replace(/\D/g, "") })}
                     disabled={durationIsPlus}
                     className={durationIsPlus ? "bg-slate-100 dark:bg-slate-800" : ""}
                   />
@@ -310,10 +310,10 @@ export default function AddProductPricingSection({
                 <Label htmlFor="stock">Stok <span className="text-red-500">*</span></Label>
                 <Input
                   id="stock"
-                  type="number"
-                  min="1"
+                  type="text"
+                  inputMode="numeric"
                   value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, stock: e.target.value.replace(/\D/g, "") })}
                 />
               </div>
               <div className="space-y-2">
@@ -323,11 +323,11 @@ export default function AddProductPricingSection({
                 </Label>
                 <Input
                   id="weight"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="500"
-                  min="1"
                   value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, weight: e.target.value.replace(/\D/g, "") })}
                 />
               </div>
             </div>

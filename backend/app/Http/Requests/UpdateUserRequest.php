@@ -28,9 +28,9 @@ class UpdateUserRequest extends FormRequest
             ->where(fn ($query) => $query->where('is_active', true)->where('code', '!=', 'admin'));
 
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name' => ['sometimes', 'string', 'max:50', 'regex:/^[a-zA-Z\s\']+$/'],
             'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $userId],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'phone' => ['nullable', 'string', 'min:10', 'max:15', 'regex:/^[0-9]+$/'],
             'facultyId' => $role === UserRole::ADMIN->value
                 ? ['nullable', 'string', $facultyRule]
                 : ['sometimes', 'string', $facultyRule],

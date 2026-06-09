@@ -23,10 +23,10 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\']+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'phone' => ['nullable', 'string', 'min:10', 'max:15', 'regex:/^[0-9]+$/'],
             'facultyId' => User::facultyIdRules(UserRole::USER->value, true), // facultyId is now required
         ];
     }
