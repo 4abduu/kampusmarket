@@ -330,6 +330,43 @@ class NotificationHelper
         );
     }
 
+    /**
+     * Pesan Chat Baru - untuk recipient
+     * Strategi Anti-Spam: Update notifikasi yang belum dibaca dari chat room yang sama,
+     * jika belum ada maka buat notifikasi baru.
+     */
+    public static function chatMessageReceived(int $userId, $chat, $message, $sender): void
+    {
+        $existingNotification = Notification::where('user_id', $userId)
+            ->where('type', NotificationType::CHAT->value)
+            ->where('is_read', false)
+            ->where('data->chat_id', $chat->uuid)
+            ->first();
+
+        if ($existingNotification) {
+            $existingNotification->update([
+                'title' => "Pesan baru dari {$sender->name}",
+                'message' => "Ada pesan baru yang belum Anda baca. Cek sekarang!",
+                'updated_at' => now(),
+            ]);
+
+            try {
+                broadcast(new \App\Events\NewNotification($existingNotification));
+            } catch (\Throwable $e) {
+                // Abaikan error broadcast
+            }
+        } else {
+            SendUserNotification::dispatchSync(
+                userId: $userId,
+                type: NotificationType::CHAT->value,
+                title: "Pesan baru dari {$sender->name}",
+                message: "Ada pesan baru masuk. Cek sekarang!",
+                link: "/chat",
+                data: ['chat_id' => $chat->uuid, 'action' => 'view_chat'],
+            );
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────
     // ADMIN NOTIFICATIONS
     // ─────────────────────────────────────────────────────────────

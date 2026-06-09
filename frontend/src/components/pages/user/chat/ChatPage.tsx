@@ -491,7 +491,13 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
         setShowChatList(false);
         setChatLoading(true);
         
-        const payload: StartChatPayload = { productId: initialContextId };
+        const payload: StartChatPayload = {};
+        if (initialContextId.includes(',')) {
+          payload.productIds = initialContextId.split(',');
+        } else {
+          payload.productId = initialContextId;
+        }
+        
         if (initialBuyerId) {
           payload.buyerId = initialBuyerId;
         }

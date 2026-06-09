@@ -22,6 +22,7 @@ import {
   User,
   ShieldAlert,
   Package,
+  Briefcase,
 } from 'lucide-react';
 import {
   type ApiChatDetail,
@@ -207,8 +208,8 @@ export default function ChatConversationPanel({
                     Lihat Profil
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => chatProduct && onNavigate('product', chatProduct.id)}>
-                    <Package className="h-4 w-4" />
-                    Lihat Produk
+                    {chatProduct?.type === 'jasa' ? <Briefcase className="h-4 w-4 mr-2" /> : <Package className="h-4 w-4 mr-2" />}
+                    {chatProduct?.type === 'jasa' ? 'Lihat Layanan' : 'Lihat Produk'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -30,6 +30,7 @@ export interface ApiChatProduct {
   title: string;
   slug: string;
   price: number;      // dalam Rupiah
+  formattedPrice?: string;
   image: string;
   type: 'barang' | 'jasa';
   canNego: boolean;   // [BARU]
@@ -85,6 +86,7 @@ export interface ApiChatDetail {
     title: string;
     slug: string;
     price: number;
+    formattedPrice?: string;
     images: string[];
     type: string;
     canNego: boolean;

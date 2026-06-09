@@ -17,7 +17,19 @@ interface Props {
 }
 
 export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
-  const uniqueSellers = Array.from(new Map(sellers.map(s => [s.name, s])).values());
+  const uniqueSellersMap = new Map<string, Seller & { productIds: string[] }>();
+  sellers.forEach(s => {
+    if (!uniqueSellersMap.has(s.name)) {
+      uniqueSellersMap.set(s.name, { ...s, productIds: [] });
+    }
+    if (s.productId) {
+      const existing = uniqueSellersMap.get(s.name)!;
+      if (!existing.productIds.includes(s.productId)) {
+        existing.productIds.push(s.productId);
+      }
+    }
+  });
+  const uniqueSellers = Array.from(uniqueSellersMap.values());
   const isMultiple = uniqueSellers.length > 1;
 
   const handleWhatsApp = (phone?: string) => {
@@ -51,7 +63,7 @@ export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
                 <p className="text-xs text-muted-foreground">{seller.phone || "-"}</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onChat(seller.productId || seller.id)}>
+                <Button variant="outline" size="sm" onClick={() => onChat(seller.productIds.join(',') || seller.id)}>
                   <MessageCircle className="h-4 w-4 mr-1" />
                   Chat
                 </Button>

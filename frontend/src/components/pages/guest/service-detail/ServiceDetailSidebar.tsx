@@ -292,7 +292,7 @@ export default function ServiceDetailSidebar({
                 {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
               </Button>
 
-              <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { sellerId: service.providerId || service.provider?.id }); })}>
+              <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { productId: service.id, chatAction: "chat" }); })}>
                 {isNavigatingToChat ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (

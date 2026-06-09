@@ -73,6 +73,7 @@ class ChatResource extends JsonResource
             'title'    => $product->title,
             'slug'     => $product->slug,
             'price'    => (int) $product->price,
+            'formattedPrice' => $product->getFormattedPrice(),
             'image'    => $primaryImage,
             'type'     => $product->type->value ?? 'barang',
             'canNego'  => (bool) $product->can_nego,

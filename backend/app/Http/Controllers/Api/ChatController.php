@@ -71,16 +71,41 @@ class ChatController extends Controller
     public function start(Request $request): JsonResponse
     {
         $request->validate([
-            'productId' => 'required|exists:products,uuid',
-            'buyerId'   => 'nullable|exists:users,uuid',
+            'productId'  => 'nullable|exists:products,uuid',
+            'productIds' => 'nullable|array',
+            'productIds.*' => 'exists:products,uuid',
+            'buyerId'    => 'nullable|exists:users,uuid',
         ]);
 
-        $user    = $request->user();
-        $product = Product::where('uuid', $request->productId)
-            ->with(['seller', 'images'])
-            ->firstOrFail();
+        $user = $request->user();
+        
+        $productIds = $request->input('productIds', []);
+        if ($request->has('productId')) {
+            $productIds[] = $request->productId;
+        }
+        $productIds = array_unique($productIds);
 
-        if ($product->seller_id === $user->id) {
+        if (empty($productIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product ID is required',
+            ], 400);
+        }
+
+        $products = Product::whereIn('uuid', $productIds)
+            ->with(['seller', 'images'])
+            ->get();
+
+        if ($products->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        $firstProduct = $products->first();
+
+        if ($firstProduct->seller_id === $user->id) {
             if (!$request->buyerId) {
                 return response()->json([
                     'success' => false,
@@ -92,7 +117,7 @@ class ChatController extends Controller
             $sellerId = $user->id;
         } else {
             $buyerId  = $user->id;
-            $sellerId = $product->seller_id;
+            $sellerId = $firstProduct->seller_id;
         }
 
         // Cari apakah sudah ada chat antara kedua user ini (bolak-balik)
@@ -110,22 +135,35 @@ class ChatController extends Controller
             ]);
         }
 
-        // Check if the latest product inquiry message in this chat is for this product
-        $lastProductMsg = $chat->messages()->where('type', 'system')->whereNotNull('product_id')->latest()->first();
-        if (!$lastProductMsg || $lastProductMsg->product_id !== $product->id) {
+        // Mencegah penumpukan: hapus system messages dari user ini yang ada di bagian paling bawah chat
+        $latestRealMessage = $chat->messages()
+            ->where(function($q) {
+                $q->where('type', '!=', 'system')
+                  ->orWhereNull('product_id'); 
+            })
+            ->latest()
+            ->first();
+
+        $queryToDelete = $chat->messages()
+            ->where('type', 'system')
+            ->whereNotNull('product_id')
+            ->where('sender_id', $user->id);
+
+        if ($latestRealMessage) {
+            $queryToDelete->where('created_at', '>', $latestRealMessage->created_at);
+        }
+
+        $queryToDelete->delete();
+
+        foreach ($products as $product) {
+            $msgContent = $product->isJasa() ? 'Menanyakan jasa' : 'Menanyakan produk';
             $msg = Message::create([
                 'chat_id'    => $chat->id,
                 'sender_id'  => $user->id,
                 'product_id' => $product->id,
-                'content'    => 'Menanyakan produk',
+                'content'    => $msgContent,
                 'type'       => 'system',
             ]);
-
-            $chat->update([
-                'last_message'    => 'Menanyakan produk',
-                'last_message_at' => now(),
-            ]);
-            $chat->incrementUnreadFor($sellerId);
 
             try {
                 broadcast(new MessageSent($msg->loadMissing(['sender', 'chat', 'attachments', 'product'])));
@@ -134,7 +172,14 @@ class ChatController extends Controller
             }
         }
 
-        $chat->setRelation('product', $product);
+        $lastMessageContent = $firstProduct->isJasa() ? 'Menanyakan jasa' : 'Menanyakan produk';
+        $chat->update([
+            'last_message'    => $lastMessageContent,
+            'last_message_at' => now(),
+        ]);
+        $chat->incrementUnreadFor($sellerId);
+
+        $chat->setRelation('product', $firstProduct);
 
         return response()->json([
             'success' => true,
@@ -412,8 +457,12 @@ class ChatController extends Controller
                 // This prevents the frontend from firing markAsRead before the DB write is finished.
                 $receiver = $chat->buyer_id == $userId ? $chat->seller : $chat->buyer;
                 $sender   = $chat->buyer_id == $userId ? $chat->buyer  : $chat->seller;
-                if ($receiver && $message->type->value === 'offer') {
-                    NotificationHelper::chatPriceOffer($receiver->id, $chat, $message->offer_price, $sender);
+                if ($receiver) {
+                    if ($message->type->value === 'offer') {
+                        NotificationHelper::chatPriceOffer($receiver->id, $chat, $message->offer_price, $sender);
+                    } else {
+                        NotificationHelper::chatMessageReceived($receiver->id, $chat, $message, $sender);
+                    }
                 }
 
                 broadcast(new NewMessageNotification($message, $receiverUuid));
@@ -566,6 +615,11 @@ class ChatController extends Controller
                     : $chat->buyer?->uuid;
 
                 if ($receiverUuid) {
+                    $receiver = $userId == $chat->buyer_id ? $chat->seller : $chat->buyer;
+                    $sender   = $userId == $chat->buyer_id ? $chat->buyer  : $chat->seller;
+                    if ($receiver) {
+                        NotificationHelper::chatMessageReceived($receiver->id, $chat, $sysMsg, $sender);
+                    }
                     broadcast(new NewMessageNotification($sysMsg, $receiverUuid));
                 }
             } catch (\Throwable $e) {
@@ -622,6 +676,11 @@ class ChatController extends Controller
                     : $chat->buyer?->uuid;
 
                 if ($receiverUuid) {
+                    $receiver = $userId == $chat->buyer_id ? $chat->seller : $chat->buyer;
+                    $sender   = $userId == $chat->buyer_id ? $chat->buyer  : $chat->seller;
+                    if ($receiver) {
+                        NotificationHelper::chatMessageReceived($receiver->id, $chat, $sysMsg, $sender);
+                    }
                     broadcast(new NewMessageNotification($sysMsg, $receiverUuid));
                 }
             } catch (\Throwable $e) {

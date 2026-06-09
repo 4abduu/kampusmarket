@@ -170,7 +170,7 @@ export default function CheckoutSuccessfulPage({
                     variant="outline"
                     size="sm"
                     className="border-primary-300 dark:border-primary-700"
-                    onClick={() => onNavigate("chat", { productId: orders[0]?.product?.id || orders[0]?.product?.uuid, chatAction: "chat" })}
+                    onClick={() => onNavigate("chat", { productId: firstOrderData?.product?.id, chatAction: "chat" })}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Chat
