@@ -166,6 +166,35 @@ class AdminDashboardController extends Controller
     }
 
     /**
+     * Get fast notification stats for admin badge/cards.
+     */
+    public function notificationStats(): JsonResponse
+    {
+        try {
+            $pendingCancellations = CancelRequest::where('status', CancelRequestStatus::PENDING)->count();
+            $pendingReports = Report::where('status', 'pending')->count();
+            $pendingWithdrawals = Withdrawal::where('status', 'pending')->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'moderation' => $pendingCancellations,
+                    'dispute' => $pendingReports,
+                    'withdrawal' => $pendingWithdrawals,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('[AdminDashboardController] Error getting notification stats', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik notifikasi',
+            ], 500);
+        }
+    }
+
+    /**
      * Get revenue statistics over time.
      */
     public function revenueStats(): JsonResponse

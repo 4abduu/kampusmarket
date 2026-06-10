@@ -280,6 +280,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 
     // ── DASHBOARD ──────────────────────────────────────────────────────────
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
+    Route::get('/dashboard/notification-stats', [AdminDashboardController::class, 'notificationStats']);
     Route::get('/dashboard/revenue', [AdminDashboardController::class, 'revenueStats']);
     Route::get('/dashboard/activity', [AdminDashboardController::class, 'activitySummary']);
     Route::get('/dashboard/platform-revenue', [AdminDashboardController::class, 'platformRevenue']);
