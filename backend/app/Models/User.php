@@ -29,6 +29,7 @@ class User extends Authenticatable
         'faculty_id',
         'major',
         'role',
+        'bio',
         'is_verified',
         'is_banned',
         'is_warned',
