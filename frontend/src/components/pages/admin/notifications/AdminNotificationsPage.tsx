@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bell,
   Clock,
@@ -27,19 +28,43 @@ interface AdminNotificationsPageProps {
 export default function AdminNotificationsPage({ onNavigate }: AdminNotificationsPageProps) {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, fetchNotifications } = useAdminNotificationStore();
+  const { notifications, adminStats, markAsRead, markAllAsRead, deleteNotification, fetchNotifications, fetchAdminStats } = useAdminNotificationStore();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
 
-  // Auto mark-all-read sekali saat halaman notif admin dibuka
+  // 1. Initial load: fetch notifications and mark as read if there are any unread
   useEffect(() => {
-    if (unreadCount > 0) {
-      markAllAsRead();
-    }
+    let cancelled = false;
+    fetchNotifications().then(() => {
+      if (cancelled) return;
+      const fresh = useAdminNotificationStore.getState().notifications;
+      if (fresh.some((n) => !n.read)) markAllAsRead();
+    });
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 2. Real-time stats
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchRealCounts = async () => {
+      // Don't show skeleton if we already have data in the store
+      if (adminStats.moderation === 0 && adminStats.dispute === 0 && adminStats.withdrawal === 0) {
+        setIsLoadingCounts(true);
+      }
+      
+      try {
+        await fetchAdminStats();
+      } finally {
+        if (!cancelled) setIsLoadingCounts(false);
+      }
+    };
+
+    fetchRealCounts();
+
+    return () => { cancelled = true; };
+  }, [notifications.length]); // Tetap refetch saat length notif berubah (ada notif baru)
 
   const filteredNotifications = notifications.filter((n) => {
     if (filter === "all") return true;
@@ -47,9 +72,9 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
     return n.type === filter;
   });
 
-  const moderationCount = notifications.filter((n) => n.type === "moderation" && !n.read).length;
-  const disputeCount = notifications.filter((n) => n.type === "dispute" && !n.read).length;
-  const withdrawalCount = notifications.filter((n) => n.type === "withdrawal" && !n.read).length;
+  const moderationCount = adminStats.moderation;
+  const disputeCount    = adminStats.dispute;
+  const withdrawalCount = adminStats.withdrawal;
 
   const handleNotificationClick = (notification: typeof notifications[0]) => {
     if (!notification.read) {
@@ -84,12 +109,12 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                 Notifikasi Admin
               </h1>
               <p className="text-sm text-muted-foreground">
-                {unreadCount > 0 ? `${unreadCount} notifikasi memerlukan perhatian` : "Tidak ada notifikasi baru"}
+                {notifications.some(n => !n.read) ? `${notifications.filter(n => !n.read).length} notifikasi memerlukan perhatian` : "Tidak ada notifikasi baru"}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            {unreadCount > 0 && (
+            {notifications.some(n => !n.read) && (
               <Button variant="outline" size="sm" onClick={markAllAsRead}>
                 <Check className="h-4 w-4 mr-1" />
                 Tandai Semua Dibaca
@@ -107,8 +132,12 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                   <ShieldAlert className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{moderationCount}</p>
-                  <p className="text-xs text-muted-foreground">Perlu Moderasi</p>
+                  {isLoadingCounts ? (
+                    <Skeleton className="h-8 w-12 mb-1" />
+                  ) : (
+                    <p className="text-2xl font-bold">{moderationCount}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Pembatalan Menunggu</p>
                 </div>
               </div>
             </CardContent>
@@ -120,8 +149,12 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{disputeCount}</p>
-                  <p className="text-xs text-muted-foreground">Dispute Aktif</p>
+                  {isLoadingCounts ? (
+                    <Skeleton className="h-8 w-12 mb-1 bg-red-200/50 dark:bg-red-800/50" />
+                  ) : (
+                    <p className="text-2xl font-bold">{disputeCount}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Laporan Belum Ditindak</p>
                 </div>
               </div>
             </CardContent>
@@ -133,8 +166,12 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                   <DollarSign className="h-5 w-5 text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{withdrawalCount}</p>
-                  <p className="text-xs text-muted-foreground">Penarikan Pending</p>
+                  {isLoadingCounts ? (
+                    <Skeleton className="h-8 w-12 mb-1 bg-primary-200/50 dark:bg-primary-800/50" />
+                  ) : (
+                    <p className="text-2xl font-bold">{withdrawalCount}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Penarikan Menunggu</p>
                 </div>
               </div>
             </CardContent>
@@ -147,9 +184,9 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
             <TabsTrigger value="all">Semua</TabsTrigger>
             <TabsTrigger value="unread" className="relative">
               Belum Dibaca
-              {unreadCount > 0 && (
+              {notifications.filter(n => !n.read).length > 0 && (
                 <Badge className="ml-1 h-4 w-4 p-0 text-[10px] bg-red-500">
-                  {unreadCount}
+                  {notifications.filter(n => !n.read).length}
                 </Badge>
               )}
             </TabsTrigger>

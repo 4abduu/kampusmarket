@@ -32,8 +32,10 @@ export interface AdminNotification {
 interface AdminNotificationState {
   notifications: AdminNotification[];
   unreadCount: number;
+  adminStats: { moderation: number; dispute: number; withdrawal: number };
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
+  fetchAdminStats: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -44,7 +46,24 @@ interface AdminNotificationState {
 export const useAdminNotificationStore = create<AdminNotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
+  adminStats: { moderation: 0, dispute: 0, withdrawal: 0 },
   
+  fetchAdminStats: async () => {
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      const res: any = await apiClient.get('/admin/dashboard/notification-stats');
+      set({ 
+        adminStats: {
+          moderation: res.data?.moderation ?? 0,
+          dispute:    res.data?.dispute ?? 0,
+          withdrawal: res.data?.withdrawal ?? 0,
+        }
+      });
+    } catch (err) {
+      console.error("[AdminNotificationStore] Failed to fetch admin stats", err);
+    }
+  },
+
   fetchNotifications: async () => {
     try {
       const apiClient = (await import('@/lib/api/client')).default;
@@ -76,14 +95,20 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
           iconColor = "text-red-600";
           iconBg = "bg-red-100 dark:bg-red-900/30";
           action = "Lihat Dispute";
-        } else if (actionTab === 'finance' || type === 'withdrawal') {
+        } else if (actionTab === 'finance' && type !== 'payment') {
           frontendType = "withdrawal";
           icon = DollarSign;
           iconColor = "text-primary-600";
           iconBg = "bg-primary-100 dark:bg-primary-900/30";
-          action = type === 'payment' ? "Lihat Keuangan" : "Proses Penarikan";
+          action = "Proses Penarikan";
+        } else if (actionTab === 'finance' && type === 'payment') {
+          frontendType = "system"; // Top-up goes to system, not withdrawal tab
+          icon = DollarSign;
+          iconColor = "text-green-600";
+          iconBg = "bg-green-100 dark:bg-green-900/30";
+          action = "Lihat Keuangan";
         } else if (actionTab === 'cancel-requests') {
-          frontendType = "dispute"; // map to dispute type in UI
+          frontendType = "moderation"; // map to moderation type in UI
           icon = AlertTriangle;
           iconColor = "text-orange-600";
           iconBg = "bg-orange-100 dark:bg-orange-900/30";
@@ -214,6 +239,7 @@ export const useAdminNotificationStore = create<AdminNotificationState>((set, ge
         const channel = echo.private(`users.${userId}`);
         channel.listen('.NewNotification', (e: any) => {
            get().fetchNotifications();
+           get().fetchAdminStats();
            toast({
              variant: "default",
              title: e.title || "Notifikasi Admin",
