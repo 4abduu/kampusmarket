@@ -166,7 +166,16 @@ class ChatController extends Controller
             ]);
 
             try {
-                broadcast(new MessageSent($msg->loadMissing(['sender', 'chat', 'attachments', 'product'])));
+                $msg->loadMissing(['sender', 'chat', 'attachments', 'product']);
+                broadcast(new MessageSent($msg));
+
+                // Notify the receiver about this system message
+                $receiverId = $user->id === $buyerId ? $sellerId : $buyerId;
+                $receiver = \App\Models\User::find($receiverId);
+                if ($receiver) {
+                    NotificationHelper::chatMessageReceived($receiver->id, $chat, $msg, $user);
+                    broadcast(new NewMessageNotification($msg, $receiver->uuid));
+                }
             } catch (\Throwable $e) {
                 \Log::warning('[Chat] Broadcast MessageSent failed', ['error' => $e->getMessage()]);
             }

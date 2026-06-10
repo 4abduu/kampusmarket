@@ -315,19 +315,36 @@ class NotificationHelper
     // CHAT NOTIFICATIONS
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Penawaran Harga di Chat - untuk recipient
-     */
     public static function chatPriceOffer(int $userId, $chat, $offerPrice, $sender): void
     {
-        SendUserNotification::dispatchSync(
-            userId: $userId,
-            type: NotificationType::CHAT->value,
-            title: "Penawaran Harga dari {$sender->name}",
-            message: "Rp " . number_format($offerPrice, 0, ',', '.') . " untuk '{$chat->product->title}'",
-            link: "/chat",
-            data: ['chat_id' => $chat->uuid, 'offer_price' => $offerPrice, 'action' => 'view_offer'],
-        );
+        $existingNotification = Notification::where('user_id', $userId)
+            ->where('type', NotificationType::CHAT->value)
+            ->where('is_read', false)
+            ->where('data->chat_id', $chat->uuid)
+            ->first();
+
+        if ($existingNotification) {
+            $existingNotification->update([
+                'title' => "Penawaran Harga dari {$sender->name}",
+                'message' => "Ada penawaran harga baru yang belum Anda baca. Cek sekarang!",
+                'updated_at' => now(),
+            ]);
+
+            try {
+                broadcast(new \App\Events\NewNotification($existingNotification));
+            } catch (\Throwable $e) {
+                // Abaikan error broadcast
+            }
+        } else {
+            SendUserNotification::dispatchSync(
+                userId: $userId,
+                type: NotificationType::CHAT->value,
+                title: "Penawaran Harga dari {$sender->name}",
+                message: "Rp " . number_format($offerPrice, 0, ',', '.') . " untuk '{$chat->product->title}'",
+                link: "/chat",
+                data: ['chat_id' => $chat->uuid, 'offer_price' => $offerPrice, 'action' => 'view_offer'],
+            );
+        }
     }
 
     /**

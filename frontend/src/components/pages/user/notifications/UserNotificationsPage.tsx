@@ -4,6 +4,8 @@ import { useMemo, useState, useEffect } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import UserNotificationsHeader from "@/components/pages/user/notifications/UserNotificationsHeader";
 import UserNotificationsList from "@/components/pages/user/notifications/UserNotificationsList";
 import UserNotificationsTabs from "@/components/pages/user/notifications/UserNotificationsTabs";
@@ -23,6 +25,7 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    deleteAllNotifications,
   } = useNotificationStore();
 
   // Auto mark-all-read sekali saat halaman notif dibuka
@@ -107,6 +110,12 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
     deleteNotification(id);
   };
 
+  const handleDeleteAll = () => {
+    if (confirm("Apakah Anda yakin ingin menghapus semua notifikasi ini?")) {
+      deleteAllNotifications(filter);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -120,6 +129,14 @@ export default function UserNotificationsPage({ onNavigate }: UserNotificationsP
           <UserNotificationsTabs unreadCount={unreadCount} />
 
           <TabsContent value={filter} className="mt-0">
+            {filteredNotifications.length > 0 && (
+              <div className="flex justify-end mb-4">
+                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteAll}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Hapus semua ({filteredNotifications.length})
+                </Button>
+              </div>
+            )}
             <UserNotificationsList
               notifications={filteredNotifications}
               onClickNotification={handleNotificationClick}

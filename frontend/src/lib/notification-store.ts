@@ -31,6 +31,7 @@ interface NotificationState {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
+  deleteAllNotifications: (type?: string) => Promise<void>;
   getUnreadCount: () => number;
 }
 
@@ -201,6 +202,27 @@ export const useNotificationStore = create<NotificationState & {
       }
     } catch (e) {
       console.error('Error deleting notification:', e);
+    }
+  },
+
+  deleteAllNotifications: async (type?: string) => {
+    set((state) => {
+      const filtered = state.notifications.filter(n => {
+        if (!type || type === 'all') return false; // Delete all
+        if (type === 'unread') return n.read; // Keep read, delete unread
+        return n.type !== type; // Delete specific type
+      });
+      return {
+        notifications: filtered,
+        unreadCount: filtered.filter((n) => !n.read).length,
+      };
+    });
+    
+    try {
+      const apiClient = (await import('@/lib/api/client')).default;
+      await apiClient.delete('/notifications/delete-all', { params: { type } });
+    } catch (e) {
+      console.error('Error deleting all notifications:', e);
     }
   },
   

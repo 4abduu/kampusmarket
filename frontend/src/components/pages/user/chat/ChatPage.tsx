@@ -176,16 +176,26 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
 
         // Update list chat: naikkan unreadCount dan update lastMessage
         // kecuali kalau chat tersebut sedang aktif dibuka (sudah terbaca)
-        setChats(prev => prev.map(c => {
-          if (c.id !== chatId) return c;
-          const isActiveChat = c.id === activeChatIdRef.current;
-          return {
-            ...c,
-            lastMessage: chatInfo.lastMessage ?? c.lastMessage,
-            lastMessageAt: chatInfo.lastMessageAt ?? c.lastMessageAt,
-            unreadCount: isActiveChat ? 0 : c.unreadCount + 1,
-          };
-        }));
+        setChats(prev => {
+          const exists = prev.some(c => c.id === chatId);
+          if (!exists) {
+            setTimeout(() => {
+              void loadChats();
+            }, 0);
+            return prev;
+          }
+
+          return prev.map(c => {
+            if (c.id !== chatId) return c;
+            const isActiveChat = c.id === activeChatIdRef.current;
+            return {
+              ...c,
+              lastMessage: chatInfo.lastMessage ?? c.lastMessage,
+              lastMessageAt: chatInfo.lastMessageAt ?? c.lastMessageAt,
+              unreadCount: isActiveChat ? 0 : c.unreadCount + 1,
+            };
+          });
+        });
 
         // Kalau chat ini sedang dibuka tapi Echo chat.{uuid} tidak aktif
         // (misal fallback polling sedang jalan), tambah pesan ke messages juga
@@ -232,7 +242,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserId]);
+  }, [currentUserId, loadChats]);
 
   // ── [REVISI] Mark active chat as read when window regains focus ─────────────
   useEffect(() => {

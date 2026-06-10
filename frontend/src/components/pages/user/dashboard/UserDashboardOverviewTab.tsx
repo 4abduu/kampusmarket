@@ -109,7 +109,7 @@ export default function UserDashboardOverviewTab({
               <Wallet className="h-4 w-4 mr-2" />{hasOverdueDebt ? "Tarik Dana (Dibatasi)" : "Tarik Dana"}
             </Button>
             <Button variant="outline" onClick={() => onNavigate("chat")}>
-              <MessageCircle className="h-4 w-4 mr-2" />Pesan (2)
+              <MessageCircle className="h-4 w-4 mr-2" />Pesan
             </Button>
           </div>
         </CardContent>

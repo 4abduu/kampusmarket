@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, ChevronRight, Handshake, Package, Receipt, AlertTriangle, Clock3, Briefcase } from 'lucide-react';
 import type { ApiMessage, ApiChatDetail, ApiChatProduct } from '@/components/pages/user/chat/chat.types';
+import ImageLightbox from '@/components/common/ImageLightbox';
 
 interface Props {
   message: ApiMessage;
@@ -50,6 +52,17 @@ export default function ChatMessageItem({
   const canRespondToOffer = !isMe
     && message.offerStatus === 'pending'
     && ((isSeller && senderIsBuyer) || (!isSeller && senderIsSeller));
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const lightboxPrev = selectedImageIndex > 0 ? () => setSelectedImageIndex(selectedImageIndex - 1) : null;
+  const lightboxNext = message.imageUrls && selectedImageIndex < message.imageUrls.length - 1 ? () => setSelectedImageIndex(selectedImageIndex + 1) : null;
 
   if (message.type === 'system') {
     if (message.product) {
@@ -202,9 +215,21 @@ export default function ChatMessageItem({
         {message.type === 'image' && message.imageUrls.length > 0 && (
           <div className="space-y-1">
             {message.imageUrls.map((url, i) => (
-              <img key={i} src={url} alt={`Gambar ${i + 1}`} className="rounded-lg max-h-56 w-auto cursor-pointer" onClick={() => window.open(url, '_blank')} />
+              <img key={i} src={url} alt={`Gambar ${i + 1}`} className="rounded-lg max-h-56 w-auto cursor-pointer" onClick={() => handleImageClick(i)} />
             ))}
             {message.content && <p className="text-xs mt-1 whitespace-pre-wrap break-words">{message.content}</p>}
+
+            {lightboxOpen && (
+              <ImageLightbox
+                src={message.imageUrls[selectedImageIndex]}
+                alt={`Gambar ${selectedImageIndex + 1}`}
+                onClose={() => setLightboxOpen(false)}
+                onPrev={lightboxPrev}
+                onNext={lightboxNext}
+                currentIndex={selectedImageIndex}
+                totalCount={message.imageUrls.length}
+              />
+            )}
           </div>
         )}
 

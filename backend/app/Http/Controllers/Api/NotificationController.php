@@ -103,6 +103,24 @@ class NotificationController extends Controller
     }
 
     /**
+     * Remove all notifications (optionally filtered by type).
+     */
+    public function deleteAll(Request $request): JsonResponse
+    {
+        $query = Notification::where('user_id', $request->user()->id);
+
+        if ($request->has('type') && $request->type !== 'all' && $request->type !== 'unread') {
+            $query->where('type', $request->type);
+        } elseif ($request->has('type') && $request->type === 'unread') {
+            $query->where('is_read', false);
+        }
+
+        $query->delete();
+
+        return $this->success(null, 'Notifikasi berhasil dihapus');
+    }
+
+    /**
      * Remove the specified notification.
      */
     public function destroy(string $id, Request $request): JsonResponse
