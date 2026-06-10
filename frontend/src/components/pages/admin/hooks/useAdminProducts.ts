@@ -37,6 +37,9 @@ export function useAdminProducts({
   const [productPriceMin, setProductPriceMin] = useState<string>("");
   const [productPriceMax, setProductPriceMax] = useState<string>("");
   const [productSellerFilter, setProductSellerFilter] = useState<string>("");
+  const [debouncedProductPriceMin, setDebouncedProductPriceMin] = useState<string>("");
+  const [debouncedProductPriceMax, setDebouncedProductPriceMax] = useState<string>("");
+  const [debouncedProductSellerFilter, setDebouncedProductSellerFilter] = useState<string>("");
 
   const [productPage, setProductPage] = useState(1);
   const [productTotalItems, setProductTotalItems] = useState(0);
@@ -51,6 +54,30 @@ export function useAdminProducts({
       clearTimeout(handler);
     };
   }, [productSearchTerm]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedProductPriceMin(productPriceMin);
+      setProductPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [productPriceMin]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedProductPriceMax(productPriceMax);
+      setProductPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [productPriceMax]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedProductSellerFilter(productSellerFilter);
+      setProductPage(1);
+    }, 800);
+    return () => clearTimeout(handler);
+  }, [productSellerFilter]);
 
   const [productsLoading, setProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState<string | null>(null);
@@ -72,9 +99,9 @@ export function useAdminProducts({
       if (productTypeFilter !== "all") params.type = productTypeFilter;
       if (productConditionFilter !== "all") params.condition = productConditionFilter;
       if (productCategoryFilter !== "all") params.category_id = productCategoryFilter;
-      if (productSellerFilter.trim()) params.seller_name = productSellerFilter.trim();
-      if (productPriceMin.trim()) params.price_min = Number(productPriceMin);
-      if (productPriceMax.trim()) params.price_max = Number(productPriceMax);
+      if (debouncedProductSellerFilter.trim()) params.seller_name = debouncedProductSellerFilter.trim();
+      if (debouncedProductPriceMin.trim()) params.price_min = Number(debouncedProductPriceMin);
+      if (debouncedProductPriceMax.trim()) params.price_max = Number(debouncedProductPriceMax);
 
       const res = await adminProductsApi.getProducts(params);
       if (requestId !== productRequestRef.current) return;
@@ -207,6 +234,9 @@ export function useAdminProducts({
     setProductPriceMax,
     productSellerFilter,
     setProductSellerFilter,
+    debouncedProductPriceMin,
+    debouncedProductPriceMax,
+    debouncedProductSellerFilter,
     productPage,
     setProductPage,
     productTotalItems,

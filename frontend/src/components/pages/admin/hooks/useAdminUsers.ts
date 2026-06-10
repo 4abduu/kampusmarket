@@ -10,6 +10,7 @@ interface UsersProps {
   markResourceLoaded: (key: string) => void;
   fetchFacultiesResource: () => Promise<boolean>;
   showSuccess: (msg: string) => void;
+  facultyOptions: Array<{ value: string; label: string }>;
 }
 
 export function useAdminUsers({
@@ -17,6 +18,7 @@ export function useAdminUsers({
   markResourceLoaded,
   fetchFacultiesResource,
   showSuccess,
+  facultyOptions,
 }: UsersProps) {
   const { mapUser, mapUsers } = useAdminDataMapping();
 
@@ -223,6 +225,7 @@ export function useAdminUsers({
     setUserStatusFilter,
     userFacultyFilter,
     setUserFacultyFilter,
+    facultyOptions,
     userPage,
     setUserPage,
     userTotalItems,

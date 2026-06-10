@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Admin Faculty Controller
@@ -206,19 +207,26 @@ class AdminFacultyController extends Controller
                 'is_active' => ['required', 'boolean'],
             ]);
 
-            $faculty->update([
-                'is_active' => $validated['is_active'],
-            ]);
+            DB::table('faculties')
+                ->where('id', $faculty->id)
+                ->update([
+                    'is_active' => $validated['is_active'],
+                    'updated_at' => now(),
+                ]);
 
             Log::info('[AdminFacultyController] Faculty status updated', [
                 'faculty_id' => $faculty->id,
                 'is_active' => $validated['is_active'],
             ]);
 
+            $freshFaculty = Faculty::managed()
+                ->where('id', $faculty->id)
+                ->firstOrFail();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Status fakultas berhasil diperbarui',
-                'data' => new FacultyResource($faculty->fresh()),
+                'data' => new FacultyResource($freshFaculty),
             ]);
         } catch (\Exception $e) {
             Log::error('[AdminFacultyController] Error updating status', [

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Product;
 use App\Http\Resources\ProductResource;
 use App\Helpers\NotificationHelper;
@@ -34,8 +35,20 @@ class AdminProductController extends Controller
             }
 
             // Filter by category
-            if ($request->has('category_id')) {
-                $query->where('category_id', $request->category_id);
+            if ($request->filled('category_id')) {
+                $rawCategoryId = (string) $request->category_id;
+                $category = Category::query()
+                    ->where('uuid', $rawCategoryId)
+                    ->orWhere('slug', $rawCategoryId)
+                    ->first();
+
+                if ($category) {
+                    $query->where('category_id', $category->id);
+                } elseif (ctype_digit($rawCategoryId)) {
+                    $query->where('category_id', (int) $rawCategoryId);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
             }
 
             // Filter by status

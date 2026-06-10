@@ -21,6 +21,7 @@ interface AdminUsersTabProps {
   setUserStatusFilter: (value: any) => void;
   userFacultyFilter: string;
   setUserFacultyFilter: (value: string) => void;
+  facultyOptions: Array<{ value: string; label: string }>;
   setUserPage: (value: number) => void;
   renderPagination: (currentPage: number, totalPages: number, setPage: (page: number) => void) => React.ReactNode;
   getInitials: (value?: string | null) => string;
@@ -44,6 +45,7 @@ export default function AdminUsersTab({
   setUserStatusFilter,
   userFacultyFilter,
   setUserFacultyFilter,
+  facultyOptions,
   setUserPage,
   renderPagination,
   getInitials,
@@ -87,12 +89,11 @@ export default function AdminUsersTab({
                 <SelectTrigger className="w-[180px]"><SelectValue placeholder="Fakultas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Fakultas</SelectItem>
-                  <SelectItem value="ft">Fakultas Teknik</SelectItem>
-                  <SelectItem value="feb">Fakultas Ekonomi & Bisnis</SelectItem>
-                  <SelectItem value="fkip">Fakultas Keguruan & Ilmu Pendidikan</SelectItem>
-                  <SelectItem value="fmipa">Fakultas MIPA</SelectItem>
-                  <SelectItem value="fh">Fakultas Hukum</SelectItem>
-                  <SelectItem value="fkb">Fakultas Kedokteran</SelectItem>
+                  {facultyOptions.map((faculty) => (
+                    <SelectItem key={faculty.value} value={faculty.value}>
+                      {faculty.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -25,10 +25,13 @@ interface Props {
   setProductCategoryFilter: (value: string) => void;
   productPriceMin: string;
   setProductPriceMin: (value: string) => void;
+  debouncedProductPriceMin: string;
   productPriceMax: string;
   setProductPriceMax: (value: string) => void;
+  debouncedProductPriceMax: string;
   productSellerFilter: string;
   setProductSellerFilter: (value: string) => void;
+  debouncedProductSellerFilter: string;
   productCategoryOptions: Array<{ id: string; name: string }>;
   setProductPage: (value: number) => void;
   getTotalPages: (value: number) => number;
@@ -57,10 +60,13 @@ export default function AdminProductsTab(props: Props) {
     setProductCategoryFilter,
     productPriceMin,
     setProductPriceMin,
+    debouncedProductPriceMin,
     productPriceMax,
     setProductPriceMax,
+    debouncedProductPriceMax,
     productSellerFilter,
     setProductSellerFilter,
+    debouncedProductSellerFilter,
     productCategoryOptions,
     currentPage,
     setProductPage,
@@ -71,6 +77,10 @@ export default function AdminProductsTab(props: Props) {
     handleDeleteProduct,
     handleRestoreProduct,
   } = props;
+  const isProductFilterSyncing =
+    productPriceMin !== debouncedProductPriceMin ||
+    productPriceMax !== debouncedProductPriceMax ||
+    productSellerFilter !== debouncedProductSellerFilter;
 
   return (
     <Card>
@@ -99,9 +109,14 @@ export default function AdminProductsTab(props: Props) {
             <div className="flex flex-wrap gap-2 pt-2 border-t">
               {(productTypeFilter === "all" || productTypeFilter === "barang") && (<Select value={productConditionFilter} onValueChange={(value) => { setProductConditionFilter(value); setProductPage(1); }}><SelectTrigger className="w-[120px]"><SelectValue placeholder="Kondisi" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Kondisi</SelectItem><SelectItem value="baru">Baru</SelectItem><SelectItem value="bekas">Bekas</SelectItem></SelectContent></Select>)}
               <Select value={productCategoryFilter} onValueChange={(value) => { setProductCategoryFilter(value); setProductPage(1); }}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Kategori" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Kategori</SelectItem>{productCategoryOptions.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select>
-              <Input type="number" min="0" placeholder="Harga min" value={productPriceMin} onChange={(e) => { setProductPriceMin(e.target.value); setProductPage(1); }} className="w-[120px]" />
-              <Input type="number" min="0" placeholder="Harga max" value={productPriceMax} onChange={(e) => { setProductPriceMax(e.target.value); setProductPage(1); }} className="w-[120px]" />
-              <Input type="search" placeholder="Cari penjual..." value={productSellerFilter} onChange={(e) => { setProductSellerFilter(e.target.value); setProductPage(1); }} className="w-[180px]" />
+              <Input type="number" min="0" placeholder="Harga min" value={productPriceMin} onChange={(e) => { setProductPriceMin(e.target.value); }} className="w-[120px]" />
+              <Input type="number" min="0" placeholder="Harga max" value={productPriceMax} onChange={(e) => { setProductPriceMax(e.target.value); }} className="w-[120px]" />
+              <Input type="search" placeholder="Cari penjual..." value={productSellerFilter} onChange={(e) => { setProductSellerFilter(e.target.value); }} className="w-[180px]" />
+              {isProductFilterSyncing && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                  Menerapkan filter...
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -149,11 +164,22 @@ export default function AdminProductsTab(props: Props) {
                     <TableCell className="font-medium text-primary-600">{formatProductPrice(product)}</TableCell>
                     <TableCell className="text-sm">{product.seller?.name}</TableCell>
                     <TableCell>
-                      {product.deletedAt ? (
-                        <Badge variant="destructive" className="bg-red-500 text-white">Dihapus</Badge>
-                      ) : (
-                        <Badge variant={product.status === "active" ? "default" : "secondary"} className={product.status === "active" ? "bg-primary-500" : ""}>{product.status === "active" ? "Aktif" : "Nonaktif"}</Badge>
-                      )}
+                    {product.deletedAt ? (
+                    <Badge variant="destructive" className="bg-red-500 text-white">
+                      Dihapus
+                    </Badge>
+                    ) : (
+                    <Badge
+                    variant={product.status === "active" ? "default" : "outline"}
+                    className={
+                    product.status === "active"
+                    ? "bg-primary-500"
+                    : "bg-white text-slate-700 border-slate-300"
+                    }
+                    >
+                    {product.status === "active" ? "Aktif" : "Nonaktif"}
+                    </Badge>
+                    )}
                     </TableCell>
                     <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewProduct(product)}><Eye className="h-4 w-4" /></Button>
                     {!product.deletedAt ? (

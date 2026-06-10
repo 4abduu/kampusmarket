@@ -8,6 +8,7 @@ interface FacultiesProps {
   faculties: Faculty[];
   setFaculties: (faculties: Faculty[]) => void;
   invalidateFaculties: () => void;
+  refreshFaculties: () => Promise<boolean>;
   showSuccess: (msg: string) => void;
 }
 
@@ -15,6 +16,7 @@ export function useAdminFaculties({
   faculties,
   setFaculties,
   invalidateFaculties,
+  refreshFaculties,
   showSuccess,
 }: FacultiesProps) {
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
@@ -133,39 +135,7 @@ export function useAdminFaculties({
         showSuccess(`Fakultas "${facultyForm.name}" berhasil ditambahkan`);
       }
     } catch {
-      if (selectedFaculty) {
-        setFaculties(
-          faculties.map((faculty) =>
-            faculty.id === selectedFaculty.id
-              ? {
-                  ...faculty,
-                  id: normalizedCode || faculty.id,
-                  code: normalizedCode || faculty.code,
-                  name: facultyForm.name.trim(),
-                  description: facultyForm.description?.trim() || "",
-                  sortOrder: facultyForm.sortOrder,
-                  isActive: facultyForm.isActive,
-                }
-              : faculty,
-          ),
-        );
-        showSuccess(
-          `Fakultas "${facultyForm.name}" berhasil diperbarui (mode lokal)`,
-        );
-      } else {
-        const newFaculty: Faculty = {
-          id: normalizedCode || `fac-${Date.now()}`,
-          code: normalizedCode || facultyForm.code.toLowerCase(),
-          name: facultyForm.name.trim(),
-          description: facultyForm.description?.trim() || "",
-          sortOrder: facultyForm.sortOrder,
-          isActive: facultyForm.isActive,
-        };
-        setFaculties([...faculties, newFaculty]);
-        showSuccess(
-          `Fakultas "${facultyForm.name}" berhasil ditambahkan (mode lokal)`,
-        );
-      }
+      showSuccess("Gagal menyimpan fakultas ke database. Silakan coba lagi.");
     }
 
     setShowFacultyDialog(false);
@@ -215,18 +185,12 @@ export function useAdminFaculties({
         ),
       );
       invalidateFaculties();
+      await refreshFaculties();
       showSuccess(
         `Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"}`,
       );
     } catch {
-      setFaculties(
-        faculties.map((item) =>
-          item.id === faculty.id ? { ...item, isActive: nextState } : item,
-        ),
-      );
-      showSuccess(
-        `Fakultas "${faculty.name}" ${nextState ? "diaktifkan" : "dinonaktifkan"} (mode lokal)`,
-      );
+      showSuccess("Gagal mengubah status fakultas. Silakan coba lagi.");
     }
   };
 

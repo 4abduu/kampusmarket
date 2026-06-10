@@ -199,6 +199,17 @@ export function useAdminReports({
   const filteredReports = useMemo(
     () =>
       reports.filter((report) => {
+        const normalizedStatus = report.status.toLowerCase();
+        const statusMatches = (() => {
+          if (reportStatusFilter === "all") return true;
+          if (reportStatusFilter === "warning") {
+            return normalizedStatus === "warning" || normalizedStatus === "warned";
+          }
+          if (reportStatusFilter === "banned") {
+            return normalizedStatus === "banned" || normalizedStatus === "ban";
+          }
+          return normalizedStatus === reportStatusFilter;
+        })();
         const matchesSearch =
           reportSearchTerm === "" ||
           report.reason
@@ -213,9 +224,7 @@ export function useAdminReports({
           report.reportedUser?.name
             ?.toLowerCase()
             ?.includes(reportSearchTerm.toLowerCase());
-        const matchesStatus =
-          reportStatusFilter === "all" || report.status === reportStatusFilter;
-        return matchesSearch && matchesStatus;
+        return matchesSearch && statusMatches;
       }),
     [reports, reportSearchTerm, reportStatusFilter],
   );

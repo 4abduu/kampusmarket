@@ -24,7 +24,7 @@ import { useAdminAddresses } from "./hooks/useAdminAddresses";
 import { adminCategoriesApi } from "@/lib/api/admin";
 import { facultiesApi } from "@/lib/api/faculties";
 import type { Category, Product } from "@/lib/mock-data";
-import { getInitials, seedFaculties } from "./admin-dashboard.shared";
+import { getInitials } from "./admin-dashboard.shared";
 import type { Faculty } from "./admin-dashboard.shared";
 import { useAdminDataMapping } from "./hooks/useAdminDataMapping";
 import { getFacultyName, CANCEL_REASONS } from "@/lib/mock-data";
@@ -62,7 +62,7 @@ export function useAdminDashboardController() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-  const [faculties, setFaculties] = useState<Faculty[]>(seedFaculties);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [facultiesLoading, setFacultiesLoading] = useState(false);
 
   const { mapCategory, mapFaculty } = useAdminDataMapping();
@@ -107,6 +107,7 @@ export function useAdminDashboardController() {
       return true;
     } catch (err) {
       console.error("Failed to fetch faculties resource:", err);
+      setFaculties([]);
       return false;
     } finally {
       setFacultiesLoading(false);
@@ -128,6 +129,12 @@ export function useAdminDashboardController() {
     markResourceLoaded,
     fetchFacultiesResource,
     showSuccess,
+    facultyOptions: faculties
+      .filter((faculty) => faculty.isActive)
+      .map((faculty) => ({
+        value: faculty.code,
+        label: faculty.name,
+      })),
   });
 
   const productsTab = useAdminProducts({
@@ -172,6 +179,7 @@ export function useAdminDashboardController() {
     faculties,
     setFaculties,
     invalidateFaculties,
+    refreshFaculties: fetchFacultiesResource,
     showSuccess,
   });
 
@@ -300,9 +308,9 @@ export function useAdminDashboardController() {
     productsTab.productTypeFilter,
     productsTab.productConditionFilter,
     productsTab.productCategoryFilter,
-    productsTab.productPriceMin,
-    productsTab.productPriceMax,
-    productsTab.productSellerFilter,
+    productsTab.debouncedProductPriceMin,
+    productsTab.debouncedProductPriceMax,
+    productsTab.debouncedProductSellerFilter,
   ]);
 
   useEffect(() => {
@@ -408,6 +416,13 @@ export function useAdminDashboardController() {
     name: cat.name,
   }));
 
+  const userFacultyOptions = faculties
+    .filter((faculty) => faculty.isActive)
+    .map((faculty) => ({
+      value: faculty.code,
+      label: faculty.name,
+    }));
+
   const categoryChartData = categories.map((cat, idx) => {
     const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#6b7280"];
     return {
@@ -505,6 +520,7 @@ export function useAdminDashboardController() {
     filteredUsers,
     filteredProducts,
     productCategoryOptions,
+    userFacultyOptions,
     categoryChartData,
 
     stats,

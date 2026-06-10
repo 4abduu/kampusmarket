@@ -16,9 +16,18 @@ const mapFacultyFromApi = (faculty: FacultyApiItem): Faculty => {
     name: rawName,
     description: faculty.description || "",
     sortOrder: Number(faculty.sortOrder ?? faculty.sort_order ?? 0),
-    isActive: Boolean(faculty.isActive ?? faculty.is_active ?? true),
+    isActive: Boolean(faculty.isActive ?? faculty.is_active ?? false),
     studentCount: Number(faculty.studentCount ?? faculty.student_count ?? 0),
   };
+};
+
+const extractFacultyArray = (payload: unknown): FacultyApiItem[] => {
+  if (Array.isArray(payload)) return payload as FacultyApiItem[];
+  if (payload && typeof payload === "object") {
+    const maybeData = (payload as { data?: unknown }).data;
+    if (Array.isArray(maybeData)) return maybeData as FacultyApiItem[];
+  }
+  return [];
 };
 
 const parseJson = async <T>(response: Response): Promise<T> => {
@@ -54,17 +63,14 @@ export const facultiesApi = {
       credentials: "include",
     });
     const payload = await response.json();
-    const data: FacultyApiItem[] = Array.isArray(payload?.data)
-      ? payload.data
-      : Array.isArray(payload)
-      ? payload
-      : [];
+    const data = extractFacultyArray(payload?.data ?? payload);
     return data.map(mapFacultyFromApi);
   },
 
   async listAdmin(): Promise<Faculty[]> {
-    const data = await request<FacultyApiItem[]>(`${API_BASE_URL}/admin/faculties`);
-    return Array.isArray(data) ? data.map(mapFacultyFromApi) : [];
+    const data = await request<FacultyApiItem[] | { data?: FacultyApiItem[] }>(`${API_BASE_URL}/admin/faculties`);
+    const items = extractFacultyArray(data);
+    return items.map(mapFacultyFromApi);
   },
 
   async create(input: Pick<Faculty, "code" | "name" | "sortOrder" | "isActive" | "description">): Promise<Faculty> {

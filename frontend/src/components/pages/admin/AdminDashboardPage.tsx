@@ -79,6 +79,7 @@ export default function AdminDashboardPage({
     productTotalItems,
     productTotalPages,
     productCategoryOptions,
+    userFacultyOptions,
     userPage,
     setUserPage,
     productPage,
@@ -115,10 +116,13 @@ export default function AdminDashboardPage({
     setProductCategoryFilter,
     productPriceMin,
     setProductPriceMin,
+    debouncedProductPriceMin,
     productPriceMax,
     setProductPriceMax,
+    debouncedProductPriceMax,
     productSellerFilter,
     setProductSellerFilter,
+    debouncedProductSellerFilter,
     withdrawalSearchTerm,
     setWithdrawalSearchTerm,
     withdrawalStatusFilter,
@@ -425,6 +429,7 @@ export default function AdminDashboardPage({
                 setUserStatusFilter={setUserStatusFilter}
                 userFacultyFilter={userFacultyFilter}
                 setUserFacultyFilter={setUserFacultyFilter}
+                facultyOptions={userFacultyOptions}
                 setUserPage={setUserPage}
                 renderPagination={renderPagination}
                 getInitials={getInitials}
@@ -461,7 +466,10 @@ export default function AdminDashboardPage({
                 setProductPriceMax={setProductPriceMax}
                 productSellerFilter={productSellerFilter}
                 setProductSellerFilter={setProductSellerFilter}
+                debouncedProductSellerFilter={debouncedProductSellerFilter}
                 productCategoryOptions={productCategoryOptions}
+                debouncedProductPriceMin={debouncedProductPriceMin}
+                debouncedProductPriceMax={debouncedProductPriceMax}
                 setProductPage={setProductPage}
                 getTotalPages={getTotalPages}
                 renderPagination={renderPagination}
