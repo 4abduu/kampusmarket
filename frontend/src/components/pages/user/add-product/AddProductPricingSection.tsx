@@ -90,11 +90,11 @@ export default function AddProductPricingSection({
                     key={option.value}
                     className={`flex items-center space-x-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       pricingType === option.value
-                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                         : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
                     }`}
                   >
-                    <RadioGroupItem value={option.value} id={option.value} />
+                    <RadioGroupItem value={option.value} id={option.value} className="text-purple-600 border-purple-400 data-[state=checked]:border-purple-600 [&_svg]:fill-purple-600" />
                     <Label htmlFor={option.value} className="cursor-pointer">
                       <span className="font-medium">{option.label}</span>
                       <p className="text-xs text-muted-foreground">{option.desc}</p>
@@ -187,7 +187,7 @@ export default function AddProductPricingSection({
                     <p className="font-medium text-sm">Mode Lebih dari</p>
                     <p className="text-xs text-muted-foreground">Contoh: 7 hari+ atau 30 hari+</p>
                   </div>
-                  <Switch checked={durationIsPlus} onCheckedChange={setDurationIsPlus} />
+                  <Switch checked={durationIsPlus} onCheckedChange={setDurationIsPlus} className="data-[state=checked]:bg-purple-600" />
                 </div>
               </div>
 
@@ -235,9 +235,9 @@ export default function AddProductPricingSection({
               </div>
 
               {(formData.durationMin || formData.durationMax) && (
-                <div className="mt-3 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+                <div className="mt-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
                   <p className="text-sm text-muted-foreground">Preview durasi:</p>
-                  <p className="font-medium text-primary-700 dark:text-primary-300">{getDurationPreview()}</p>
+                  <p className="font-medium text-purple-700 dark:text-purple-300">{getDurationPreview()}</p>
                 </div>
               )}
             </div>
@@ -249,7 +249,7 @@ export default function AddProductPricingSection({
               </Label>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { id: "available", label: "Tersedia", desc: "Siap menerima order", color: "border-primary-500 bg-primary-50 dark:bg-primary-900/20" },
+                  { id: "available", label: "Tersedia", desc: "Siap menerima order", color: "border-purple-500 bg-purple-50 dark:bg-purple-900/20" },
                   { id: "busy", label: "Sibuk", desc: "Tampil info tapi bisa chat", color: "border-amber-500 bg-amber-50 dark:bg-amber-900/20" },
                   { id: "full", label: "Penuh", desc: "Tidak bisa order baru", color: "border-red-500 bg-red-50 dark:bg-red-900/20" },
                 ].map((status) => (

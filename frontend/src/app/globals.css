@@ -174,3 +174,27 @@ Variabel ini dirancang untuk memastikan konsistensi visual di seluruh aplikasi, 
     @apply bg-background text-foreground;
   }
 }
+
+/* ==========================================
+   Responsive & Safe Area Utilities
+   ========================================== */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-bottom {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 768px) {
+  /* Auto padding bottom for the main content to make room for bottom nav */
+  #root > div {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Fallback for 100dvh */
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}

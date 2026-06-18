@@ -275,32 +275,63 @@ export default function ServiceDetailSidebar({
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
-              <Button 
-                className="w-full bg-primary-600 hover:bg-primary-700" 
-                onClick={() => onAction(() => {
-                  setIsNavigatingToCheckout(true);
-                  onNavigate("checkout", serviceId);
-                })} 
-                disabled={service.availabilityStatus === "full" || isNavigatingToCheckout}
-              >
-                {isNavigatingToCheckout ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Calendar className="h-4 w-4 mr-2" />
-                )}
-                {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
-              </Button>
+            <>
+              {/* Desktop Actions */}
+              <div className="hidden md:flex flex-col space-y-2">
+                <Button 
+                  className="w-full bg-primary-600 hover:bg-primary-700" 
+                  onClick={() => onAction(() => {
+                    setIsNavigatingToCheckout(true);
+                    onNavigate("checkout", serviceId);
+                  })} 
+                  disabled={service.availabilityStatus === "full" || isNavigatingToCheckout}
+                >
+                  {isNavigatingToCheckout ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Calendar className="h-4 w-4 mr-2" />
+                  )}
+                  {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
+                </Button>
 
-              <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { productId: service.id, chatAction: "chat" }); })}>
-                {isNavigatingToChat ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                )}
-                {isNavigatingToChat ? "Membuka Chat..." : "Chat Penjual"}
-              </Button>
-            </div>
+                <Button variant="outline" className="w-full" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { productId: service.id, chatAction: "chat" }); })}>
+                  {isNavigatingToChat ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                  )}
+                  {isNavigatingToChat ? "Membuka Chat..." : "Chat Penjual"}
+                </Button>
+              </div>
+
+              {/* Mobile Sticky CTA */}
+              <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-background border-t z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { productId: service.id, chatAction: "chat" }); })}>
+                    {isNavigatingToChat ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button 
+                    className="flex-[3] bg-primary-600 hover:bg-primary-700" 
+                    onClick={() => onAction(() => {
+                      setIsNavigatingToCheckout(true);
+                      onNavigate("checkout", serviceId);
+                    })} 
+                    disabled={service.availabilityStatus === "full" || isNavigatingToCheckout}
+                  >
+                    {isNavigatingToCheckout ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Calendar className="h-4 w-4 mr-2" />
+                    )}
+                    {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="flex gap-2 mt-4">

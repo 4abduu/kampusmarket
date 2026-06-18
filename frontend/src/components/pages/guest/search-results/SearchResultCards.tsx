@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Package, Star, User } from "lucide-react";
 import ProductImage from "@/components/common/ProductImage";
+import { PartialStarRating } from "@/components/common/PartialStarRating";
 import type { Product, User as UserType } from "@/lib/mock-data";
 import type {
   SearchNavigateFn,
@@ -93,63 +94,105 @@ export function SearchProductCard({
     );
   }
 
+  const rating = product.rating ?? 0;
+  const soldCount = (product as any).soldCount ?? 0;
+  const displaySoldCount = soldCount > 99 ? "99+" : soldCount;
+
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden group"
+      className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden group flex flex-col"
       onClick={() =>
         onNavigate(product.type === "jasa" ? "service" : "product", product.id)
       }
     >
       <div
-        className={`aspect-square relative ${
+        className={`h-32 md:aspect-square md:h-auto shrink-0 relative flex items-center justify-center overflow-hidden ${
           product.type === "jasa"
             ? "bg-emerald-50 dark:bg-emerald-900/20"
-            : "bg-slate-100 dark:bg-slate-800"
+            : "bg-muted md:bg-slate-100 md:dark:bg-slate-800"
         }`}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <ProductImage
-            src={product.images?.[0]}
-            alt={product.title}
-            type={product.type}
-            className="w-full h-full"
-            imageClassName="w-full h-full object-cover"
-            fallbackImageUrl="https://placehold.net/default.svg"
-          />
-        </div>
+        <ProductImage
+          src={product.images?.[0]}
+          alt={product.title}
+          type={product.type}
+          className="w-full h-full"
+          imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          fallbackImageUrl="https://placehold.net/default.svg"
+        />
+        {/* Desktop Badge */}
         <Badge
           variant={product.type === "jasa" ? "secondary" : "default"}
-          className="absolute top-2 left-2"
+          className="absolute top-2 left-2 hidden md:inline-flex"
         >
           {product.type === "jasa" ? "Jasa" : "Barang"}
         </Badge>
         {product.originalPrice && (
-          <Badge variant="destructive" className="absolute top-2 right-2">
+          <Badge variant="destructive" className="absolute top-2 right-2 hidden md:inline-flex">
+            Diskon
+          </Badge>
+        )}
+
+        {/* Mobile Badge */}
+        <Badge
+          className={`absolute top-1.5 left-1.5 px-1.5 py-0 text-[9px] border-0 text-white backdrop-blur-sm md:hidden ${
+            product.type === "jasa" ? "bg-slate-900/70" : "bg-primary-500/80"
+          }`}
+        >
+          {product.type === "jasa" ? "Jasa" : "Barang"}
+        </Badge>
+        {product.originalPrice && (
+          <Badge className="absolute top-1.5 right-1.5 px-1.5 py-0 text-[9px] bg-red-500 border-0 md:hidden">
             Diskon
           </Badge>
         )}
       </div>
-      <CardContent className="p-3">
-        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary-600 transition-colors">
+      <CardContent className="p-2 md:p-3 flex flex-col flex-grow">
+        <h3 className="font-medium md:font-semibold text-xs md:text-sm line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors leading-snug">
           {product.title}
         </h3>
-        <p className="font-bold text-primary-600 mt-1">
-          {product.priceType === "starting" && "Mulai "}
-          {product.priceType === "range" && product.priceMin
-            ? `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax || product.price)}`
-            : formatPrice(product.price)}
-        </p>
-        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span className="truncate">{product.location}</span>
+        
+        {/* DESKTOP LAYOUT */}
+        <div className="hidden md:flex flex-col flex-grow">
+          <p className="font-bold text-primary-600 mt-1">
+            {product.priceType === "starting" && "Mulai "}
+            {product.priceType === "range" && product.priceMin
+              ? `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax || product.price)}`
+              : formatPrice(product.price)}
+          </p>
+          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{product.location}</span>
+          </div>
+          <div className="flex items-center justify-between mt-auto pt-2 text-xs">
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              {product.rating ?? 0}
+            </span>
+            <span className="text-muted-foreground">
+              Terjual {(product as any).soldCount ?? 0}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center justify-between mt-2 text-xs">
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            {product.rating ?? 0}
-          </span>
-          <span className="text-muted-foreground">
-            Terjual {(product as any).soldCount ?? 0}
+
+        {/* MOBILE LAYOUT */}
+        <div className="mt-auto flex flex-col gap-1 pt-1 md:hidden">
+          <p className="font-bold text-sm text-primary-600 line-clamp-1">
+            {product.priceType === "starting" && "Mulai "}
+            {product.priceType === "range" && product.priceMin
+              ? `Rp${product.priceMin.toLocaleString("id-ID")} - Rp${(product.priceMax || product.price).toLocaleString("id-ID")}`
+              : `Rp${product.price.toLocaleString("id-ID")}`}
+          </p>
+          
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <PartialStarRating rating={rating} size={10} />
+            <span>{rating.toFixed(1)}</span>
+            <span className="text-[8px]">•</span>
+            <span>{displaySoldCount} {product.type === "jasa" ? "dipesan" : "terjual"}</span>
+          </div>
+
+          <span className="text-[10px] text-muted-foreground truncate mt-0.5">
+            {product.location.split(",")[0] || product.seller?.name}
           </span>
         </div>
       </CardContent>

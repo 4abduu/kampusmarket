@@ -126,76 +126,78 @@ export default function AdminFacultiesTab({
           </div>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[25%]">Fakultas</TableHead>
-                  <TableHead className="w-[10%]">Kode</TableHead>
-                  <TableHead className="w-[25%]">Deskripsi</TableHead>
-                  <TableHead className="w-[10%]">Mahasiswa</TableHead>
-                  <TableHead className="w-[10%]">Urutan</TableHead>
-                  <TableHead className="w-[10%]">Status</TableHead>
-                  <TableHead className="w-[10%]">Dibuat</TableHead>
-                  <TableHead className="w-[5%] text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedFaculties.map((faculty) => (
-                  <TableRow key={faculty.id} className={!faculty.isActive ? "opacity-60" : ""}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium text-sm">{faculty.name}</p>
-                          {!faculty.isActive && (
-                            <Badge variant="outline" className="text-xs text-slate-500 border-slate-300 mt-0.5">
-                              Nonaktif
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono text-xs bg-indigo-50 text-indigo-700 border-indigo-200 uppercase">
-                        {faculty.code}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[250px] truncate">
-                      {faculty.description || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium">{(faculty.studentCount || 0).toLocaleString()}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{faculty.sortOrder}</TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => handleToggleFacultyActive(faculty)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
-                      >
-                        <div className={`w-2 h-2 rounded-full ${faculty.isActive ? 'bg-green-500' : 'bg-slate-400'}`} />
-                        <span className={faculty.isActive ? 'text-green-700' : 'text-slate-500'}>
-                          {faculty.isActive ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatAdminDate(faculty.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFaculty(faculty)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteFaculty(faculty)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto border rounded-md">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[25%]">Fakultas</TableHead>
+                    <TableHead className="w-[10%]">Kode</TableHead>
+                    <TableHead className="w-[25%]">Deskripsi</TableHead>
+                    <TableHead className="w-[10%]">Mahasiswa</TableHead>
+                    <TableHead className="w-[10%]">Urutan</TableHead>
+                    <TableHead className="w-[10%]">Status</TableHead>
+                    <TableHead className="w-[10%]">Dibuat</TableHead>
+                    <TableHead className="w-[5%] text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedFaculties.map((faculty) => (
+                    <TableRow key={faculty.id} className={!faculty.isActive ? "opacity-60" : ""}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium text-sm">{faculty.name}</p>
+                            {!faculty.isActive && (
+                              <Badge variant="outline" className="text-xs text-slate-500 border-slate-300 mt-0.5">
+                                Nonaktif
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-mono text-xs bg-indigo-50 text-indigo-700 border-indigo-200 uppercase">
+                          {faculty.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground max-w-[250px] truncate">
+                        {faculty.description || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-medium">{(faculty.studentCount || 0).toLocaleString()}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{faculty.sortOrder}</TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => handleToggleFacultyActive(faculty)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
+                        >
+                          <div className={`w-2 h-2 rounded-full ${faculty.isActive ? 'bg-green-500' : 'bg-slate-400'}`} />
+                          <span className={faculty.isActive ? 'text-green-700' : 'text-slate-500'}>
+                            {faculty.isActive ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatAdminDate(faculty.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFaculty(faculty)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteFaculty(faculty)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {renderPagination(currentPage, getTotalPages(filteredFaculties.length), setFacultyPage)}
           </>
         )}

@@ -129,7 +129,7 @@ export default function CheckoutAddressDialogs({
             <Button
               className="bg-primary-600 hover:bg-primary-700"
               onClick={handleSaveAddress}
-              disabled={!newAddress.label || !newAddress.recipient || !newAddress.address}
+              disabled={!newAddress.label || !newAddress.recipient || !newAddress.address || (newAddress.phone ? newAddress.phone.length < 10 : false)}
             >
               {editingAddress ? "Simpan Perubahan" : "Tambah Alamat"}
             </Button>

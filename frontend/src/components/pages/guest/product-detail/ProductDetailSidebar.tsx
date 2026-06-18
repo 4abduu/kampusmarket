@@ -276,54 +276,107 @@ export default function ProductDetailSidebar({
             </div>
           ) : (
             <>
-              <div className="space-y-2">
-                <Label>Jumlah</Label>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
-                  <Input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-20 text-center"
-                    disabled={product.stock === 0}
-                  />
-                  <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={product.stock === 0}>+</Button>
-                  <span className={`text-sm ${product.stock === 0 ? "text-red-600 font-bold" : "text-muted-foreground"}`}>
-                    {product.stock === 0 ? "HABIS" : `Stok: ${product.stock}`}
-                  </span>
+                <div className="space-y-2 hidden md:block">
+                  <Label>Jumlah</Label>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
+                    <Input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      className="w-20 text-center"
+                      disabled={product.stock === 0}
+                    />
+                    <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={product.stock === 0}>+</Button>
+                    <span className={`text-sm ${product.stock === 0 ? "text-red-600 font-bold" : "text-muted-foreground"}`}>
+                      {product.stock === 0 ? "HABIS" : `Stok: ${product.stock}`}
+                    </span>
+                  </div>
                 </div>
+
+              {/* Desktop Actions */}
+              <div className="hidden md:block space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => onAction(() => {
+                      setIsNavigatingToCheckout(true);
+                      onNavigate("checkout", product.id);
+                    })}
+                    disabled={product.stock === 0 || isNavigatingToCheckout}
+                  >
+                    {isNavigatingToCheckout ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Memproses...</>
+                    ) : product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={`relative overflow-hidden transition-all ${
+                      showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" :
+                      showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
+                    }`}
+                    style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
+                    onClick={() => onAction(handleAddToCart)}
+                    disabled={product.stock === 0 || isAddingToCart}
+                  >
+                    {isAddingToCart ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <ShoppingCart className={`h-4 w-4 mr-2 ${showSuccessAnim ? "animate-bounce" : ""}`} />
+                    )}
+                    {showSuccessAnim ? "Ditambahkan!" : showErrorAnim ? "Maksimal" : "+ Keranjang"}
+                  </Button>
+                </div>
+
+                {product.canNego && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => onAction(handleNegoWithSeller)}
+                    disabled={isNavigatingToChat}
+                  >
+                    {isNavigatingToChat ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                    )}
+                    {isNavigatingToChat ? "Membuka Chat..." : "Ajukan Nego"}
+                  </Button>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => onAction(() => {
-                    setIsNavigatingToCheckout(true);
-                    onNavigate("checkout", product.id);
-                  })}
-                  disabled={product.stock === 0 || isNavigatingToCheckout}
-                >
-                  {isNavigatingToCheckout ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Memproses...</>
-                  ) : product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className={`relative overflow-hidden transition-all ${
-                    showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" :
-                    showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
-                  }`}
-                  style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
-                  onClick={() => onAction(handleAddToCart)}
-                  disabled={product.stock === 0 || isAddingToCart}
-                >
-                  {isAddingToCart ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <ShoppingCart className={`h-4 w-4 mr-2 ${showSuccessAnim ? "animate-bounce" : ""}`} />
-                  )}
-                  {showSuccessAnim ? "Ditambahkan!" : showErrorAnim ? "Sudah Maksimal" : "+ Keranjang"}
-                </Button>
+              {/* Mobile Sticky CTA */}
+              <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-background border-t z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className={`flex-1 relative overflow-hidden transition-all ${
+                      showSuccessAnim ? "border-green-500 text-green-600 bg-green-50" :
+                      showErrorAnim ? "border-red-500 text-red-600 bg-red-50 animate-shake" : ""
+                    }`}
+                    style={showErrorAnim ? { animation: "shake 0.2s ease-in-out 0s 2" } : {}}
+                    onClick={() => onAction(handleAddToCart)}
+                    disabled={product.stock === 0 || isAddingToCart}
+                  >
+                    {isAddingToCart ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className={`h-4 w-4 ${showSuccessAnim ? "animate-bounce" : ""}`} />
+                    )}
+                  </Button>
+                  <Button
+                    className="flex-[3] bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => onAction(() => {
+                      setIsNavigatingToCheckout(true);
+                      onNavigate("checkout", product.id);
+                    })}
+                    disabled={product.stock === 0 || isNavigatingToCheckout}
+                  >
+                    {isNavigatingToCheckout ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Memproses...</>
+                    ) : product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
+                  </Button>
+                </div>
               </div>
 
               <style dangerouslySetInnerHTML={{ __html: `
@@ -333,22 +386,6 @@ export default function ProductDetailSidebar({
                   75% { transform: translateX(5px); }
                 }
               `}} />
-
-              {product.canNego && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => onAction(handleNegoWithSeller)}
-                  disabled={isNavigatingToChat}
-                >
-                  {isNavigatingToChat ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                  )}
-                  {isNavigatingToChat ? "Membuka Chat..." : "Ajukan Nego"}
-                </Button>
-              )}
             </>
           )}
 

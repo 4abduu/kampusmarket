@@ -229,7 +229,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         info: {
           title: opt.label,
           description: `Biaya: Rp ${opt.price.toLocaleString("id-ID")}`,
-          color: "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800",
+          color: isService ? "bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-900/20 dark:border-purple-800" : "bg-primary-50 border-primary-200 text-primary-800 dark:bg-primary-900/20 dark:border-primary-800",
         },
       }))
     : [];
@@ -275,18 +275,18 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         await updateAddress(editingAddress.id, {
           label: newAddress.label,
           recipient: newAddress.recipient,
-          phone: newAddress.phone,
+          phone: newAddress.phone || undefined,
           address: newAddress.address,
-          notes: newAddress.notes,
+          notes: newAddress.notes || undefined,
           is_primary: editingAddress.isPrimary,
         });
       } else {
         const response = await createAddress({
           label: newAddress.label,
           recipient: newAddress.recipient,
-          phone: newAddress.phone,
+          phone: newAddress.phone || undefined,
           address: newAddress.address,
-          notes: newAddress.notes,
+          notes: newAddress.notes || undefined,
           is_primary: addresses.length === 0,
         });
         const savedAddress = response.data || response;
@@ -300,9 +300,16 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
 
       setShowAddressModal(false);
       setShowSaveAddressDialog(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save address:", err);
-      setValidationError("Gagal menyimpan alamat. Silakan coba lagi.");
+      let errorMsg = "Gagal menyimpan alamat. Silakan coba lagi.";
+      if (err.response?.data?.errors) {
+        const firstErrorKey = Object.keys(err.response.data.errors)[0];
+        errorMsg = err.response.data.errors[firstErrorKey][0];
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      setValidationError(errorMsg);
     }
   };
 
@@ -406,7 +413,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pb-32 lg:pb-8">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <button onClick={() => onNavigate("landing")} className="hover:text-primary-600">
             Beranda
@@ -602,6 +609,7 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
                   productId: item.product.id || item.product.uuid,
                 }))}
                 onChat={(productId) => onNavigate("chat", { productId, chatAction: "chat" })}
+                isService={isService}
               />
             </div>
 

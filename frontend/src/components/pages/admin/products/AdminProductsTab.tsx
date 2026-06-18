@@ -283,143 +283,145 @@ export default function AdminProductsTab(props: Props) {
           </div>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[35%]">Produk</TableHead>
-                  <TableHead className="w-[10%]">Tipe</TableHead>
-                  <TableHead className="w-[15%]">Harga</TableHead>
-                  <TableHead className="w-[20%]">Penjual</TableHead>
-                  <TableHead className="w-[10%]">Status</TableHead>
-                  <TableHead className="w-[10%] text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedProducts.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    className={
-                      product.deletedAt ? "bg-red-50/50 dark:bg-red-950/20" : ""
-                    }
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center overflow-hidden shrink-0">
-                          <ProductImage
-                            src={product.images?.[0]}
-                            alt={product.title}
-                            type={product.type}
-                            className="w-full h-full"
-                            imageClassName="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm line-clamp-1">
-                              {product.title}
-                            </p>
-                            {product.deletedAt && (
-                              <Badge
-                                variant={
-                                  product.deletedBy === "user"
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                                className={`text-[10px] px-1 py-0 h-4 ${product.deletedBy === "user" ? "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200" : ""}`}
-                              >
-                                Dihapus (
-                                {product.deletedBy === "user"
-                                  ? "User"
-                                  : "Admin"}
-                                )
-                              </Badge>
-                            )}
+            <div className="overflow-x-auto border rounded-md">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[35%]">Produk</TableHead>
+                    <TableHead className="w-[10%]">Tipe</TableHead>
+                    <TableHead className="w-[15%]">Harga</TableHead>
+                    <TableHead className="w-[20%]">Penjual</TableHead>
+                    <TableHead className="w-[10%]">Status</TableHead>
+                    <TableHead className="w-[10%] text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedProducts.map((product) => (
+                    <TableRow
+                      key={product.id}
+                      className={
+                        product.deletedAt ? "bg-red-50/50 dark:bg-red-950/20" : ""
+                      }
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center overflow-hidden shrink-0">
+                            <ProductImage
+                              src={product.images?.[0]}
+                              alt={product.title}
+                              type={product.type}
+                              className="w-full h-full"
+                              imageClassName="w-full h-full object-cover"
+                            />
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            {product.category}
-                          </p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm line-clamp-1">
+                                {product.title}
+                              </p>
+                              {product.deletedAt && (
+                                <Badge
+                                  variant={
+                                    product.deletedBy === "user"
+                                      ? "secondary"
+                                      : "destructive"
+                                  }
+                                  className={`text-[10px] px-1 py-0 h-4 ${product.deletedBy === "user" ? "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200" : ""}`}
+                                >
+                                  Dihapus (
+                                  {product.deletedBy === "user"
+                                    ? "User"
+                                    : "Admin"}
+                                  )
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {product.category}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          product.type === "jasa" ? "secondary" : "outline"
-                        }
-                        className={
-                          product.type === "jasa"
-                            ? "bg-purple-50 text-purple-700 border-purple-200"
-                            : ""
-                        }
-                      >
-                        {product.type === "jasa" ? "Jasa" : "Barang"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium text-primary-600">
-                      {formatProductPrice(product)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {product.seller?.name}
-                    </TableCell>
-                    <TableCell>
-                      {product.deletedAt ? (
-                        <Badge
-                          variant="destructive"
-                          className="bg-red-500 text-white"
-                        >
-                          Dihapus
-                        </Badge>
-                      ) : (
+                      </TableCell>
+                      <TableCell>
                         <Badge
                           variant={
-                            product.status === "active" ? "default" : "outline"
+                            product.type === "jasa" ? "secondary" : "outline"
                           }
                           className={
-                            product.status === "active"
-                              ? "bg-primary-500"
-                              : "bg-white text-slate-700 border-slate-300"
+                            product.type === "jasa"
+                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              : ""
                           }
                         >
-                          {product.status === "active" ? "Aktif" : "Nonaktif"}
+                          {product.type === "jasa" ? "Jasa" : "Barang"}
                         </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleViewProduct(product)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {!product.deletedAt ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500"
-                            onClick={() => handleDeleteProduct(product)}
+                      </TableCell>
+                      <TableCell className="font-medium text-primary-600">
+                        {formatProductPrice(product)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {product.seller?.name}
+                      </TableCell>
+                      <TableCell>
+                        {product.deletedAt ? (
+                          <Badge
+                            variant="destructive"
+                            className="bg-red-500 text-white"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            Dihapus
+                          </Badge>
                         ) : (
+                          <Badge
+                            variant={
+                              product.status === "active" ? "default" : "outline"
+                            }
+                            className={
+                              product.status === "active"
+                                ? "bg-primary-500"
+                                : "bg-white text-slate-700 border-slate-300"
+                            }
+                          >
+                            {product.status === "active" ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-green-500"
-                            onClick={() => handleRestoreProduct(product)}
-                            title="Pulihkan"
+                            className="h-8 w-8"
+                            onClick={() => handleViewProduct(product)}
                           >
-                            <RefreshCcw className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          {!product.deletedAt ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500"
+                              onClick={() => handleDeleteProduct(product)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-green-500"
+                              onClick={() => handleRestoreProduct(product)}
+                              title="Pulihkan"
+                            >
+                              <RefreshCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {renderPagination(
               currentPage,
               totalPages || getTotalPages(filteredProducts.length),

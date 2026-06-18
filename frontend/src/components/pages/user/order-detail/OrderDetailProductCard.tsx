@@ -76,7 +76,7 @@ export default function OrderDetailProductCard({
               {order.productTitle || order.product.title}
             </p>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className={`text-xs ${isService ? "border-emerald-300 text-emerald-700" : ""}`}>
+              <Badge variant="outline" className={`text-xs ${isService ? "border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-900/20" : ""}`}>
                 {isService ? "Jasa" : "Barang"}
               </Badge>
               <p className="text-sm text-muted-foreground">{order.quantity}x</p>
@@ -94,7 +94,7 @@ export default function OrderDetailProductCard({
             <Separator />
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-emerald-600" />
+                <Calendar className="h-4 w-4 text-purple-600" />
                 <span className="text-muted-foreground">Tanggal Pelaksanaan:</span>
                 <span className="font-medium">{serviceData.serviceDate}</span>
               </div>
@@ -107,7 +107,7 @@ export default function OrderDetailProductCard({
               )}
               {serviceData.notes && (
                 <div className="flex items-start gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-emerald-600 mt-0.5" />
+                  <FileText className="h-4 w-4 text-purple-600 mt-0.5" />
                   <div>
                     <span className="font-medium text-slate-800 dark:text-slate-200">Detail Kebutuhan:</span>
                     <p className="mt-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-md whitespace-pre-wrap">{serviceData.notes}</p>
@@ -139,7 +139,7 @@ export default function OrderDetailProductCard({
           >
             <Avatar>
               <AvatarImage src={isSellerView ? order.buyer?.avatar : order.seller?.avatar} alt={isSellerView ? order.buyer?.name : order.seller?.name} />
-              <AvatarFallback className={isService ? "bg-emerald-100 text-emerald-700" : "bg-primary-100 text-primary-700"}>
+              <AvatarFallback className={isService ? "bg-purple-100 text-purple-700" : "bg-primary-100 text-primary-700"}>
                 {((isSellerView ? order.buyer?.name : order.seller?.name) || "U").split(" ").map((name: string) => name[0]).join("")}
               </AvatarFallback>
             </Avatar>

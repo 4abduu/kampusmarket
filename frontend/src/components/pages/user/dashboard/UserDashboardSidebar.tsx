@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+
 import { AlertCircle, Building2, Package, ReceiptText, Settings, Star, TrendingUp, Wallet } from "lucide-react";
 
 type SidebarUser = {
@@ -36,10 +37,42 @@ export default function UserDashboardSidebar({
     ...(hasDebt ? [{ id: "debts", label: "Tunggakan Komisi", icon: AlertCircle, isAlert: true }] : []),
     { id: "settings", label: "Pengaturan", icon: Settings },
   ];
-
   return (
     <aside className="lg:col-span-1">
-      <Card className="sticky top-20">
+      {/* Mobile: Grid Icon Tabs */}
+      <div className="lg:hidden mb-6 bg-white dark:bg-slate-800 rounded-xl p-2 sm:p-3 shadow-sm border border-slate-100 dark:border-slate-700">
+        <div 
+          className="grid gap-1 sm:gap-2" 
+          style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        >
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex flex-col items-center justify-center gap-1.5 p-1.5 sm:p-2 rounded-lg transition-all ${
+                activeTab === item.id
+                  ? "alert" in item && item.isAlert
+                    ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium"
+                  : "alert" in item && item.isAlert
+                    ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <item.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${activeTab === item.id ? "scale-110" : ""} transition-transform`} />
+                {"isAlert" in item && item.isAlert && (
+                  <span className="absolute -top-1 -right-1 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-red-500 border border-white dark:border-slate-800 animate-pulse" />
+                )}
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-center leading-tight line-clamp-1 w-full">{item.label === "Tunggakan Komisi" ? "Tunggakan" : item.label === "Produk & Jasa" ? "Produk" : item.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop: Original vertical sidebar card */}
+      <Card className="sticky top-20 hidden lg:block">
         <CardContent className="p-6">
           <div className="text-center mb-6">
             <Avatar className="h-20 w-20 mx-auto mb-3">
@@ -94,3 +127,4 @@ export default function UserDashboardSidebar({
     </aside>
   );
 }
+

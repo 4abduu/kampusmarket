@@ -14,9 +14,10 @@ interface Seller {
 interface Props {
   sellers: Seller[]
   onChat: (productId?: string) => void
+  isService?: boolean
 }
 
-export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
+export default function CheckoutContactSellerCard({ sellers, onChat, isService }: Props) {
   const uniqueSellersMap = new Map<string, Seller & { productIds: string[] }>();
   sellers.forEach(s => {
     if (!uniqueSellersMap.has(s.name)) {
@@ -54,7 +55,7 @@ export default function CheckoutContactSellerCard({ sellers, onChat }: Props) {
           <div key={idx} className="space-y-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary-100 text-primary-700 text-sm">
+                <AvatarFallback className={`text-sm ${isService ? "bg-purple-100 text-purple-700" : "bg-primary-100 text-primary-700"}`}>
                   {seller.name.split(" ").map((name) => name[0]).join("")}
                 </AvatarFallback>
               </Avatar>

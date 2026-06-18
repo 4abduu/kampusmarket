@@ -40,6 +40,7 @@ import {
 import { CatalogPageSkeleton } from "@/components/skeleton";
 import CatalogFilterSidebar from "@/components/pages/guest/catalog/CatalogFilterSidebar";
 import ProductImage from "@/components/common/ProductImage";
+import { PartialStarRating } from "@/components/common/PartialStarRating";
 import EmptyState from "@/components/shared/EmptyState";
 
 interface Product {
@@ -453,19 +454,21 @@ export default function CatalogPage({
                 {/* Mobile Filter */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden">
+                    <Button variant="outline" className="lg:hidden flex-1 justify-center rounded-full border-slate-300">
                       <SlidersHorizontal className="h-4 w-4 mr-2" />
-                      Filter
+                      Filter & Urutkan
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-80 overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Filter</SheetTitle>
-                      <SheetDescription>
-                        Filter produk sesuai kebutuhanmu
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
+                  <SheetContent side="left" className="w-[85vw] sm:w-80 overflow-y-auto bg-background p-0">
+                    <div className="p-6 pb-0">
+                      <SheetHeader className="text-left">
+                        <SheetTitle className="text-xl">Filter Produk</SheetTitle>
+                        <SheetDescription>
+                          Pilih filter sesuai kebutuhanmu
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
+                    <div className="p-6">
                       <CatalogFilterSidebar {...filterSidebarProps} />
                     </div>
                   </SheetContent>
@@ -602,17 +605,22 @@ export default function CatalogPage({
               <>
                 {/* Product Grid */}
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                    {paginatedProducts.map((product) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                    {paginatedProducts.map((product) => {
+                      const soldCount = (product as any).soldCount ?? 0;
+                      const displaySoldCount = soldCount > 99 ? "99+" : soldCount;
+                      const rating = product.rating ?? 0;
+                      
+                      return (
                       <Card
                         key={product.uuid}
-                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group flex flex-col"
                         onClick={() => {
                           console.log("Product clicked:", product);
                           onNavigate("product", product.id || product.uuid);
                         }}
                       >
-                        <div className="relative bg-muted h-48 flex items-center justify-center overflow-hidden">
+                        <div className="relative bg-muted h-32 md:h-48 flex items-center justify-center overflow-hidden shrink-0">
                           <ProductImage
                             src={getProductImageUrl(product.images?.[0])}
                             alt={product.title}
@@ -621,71 +629,95 @@ export default function CatalogPage({
                             imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             fallbackImageUrl="https://placehold.net/default.svg"
                           />
+                          {/* Desktop Discount Badge */}
                           {product.originalPrice && (
-                            <Badge className="absolute top-2 left-2 bg-red-500">
-                              -
-                              {Math.round(
-                                (1 - product.price / product.originalPrice) *
-                                  100,
-                              )}
-                              %
+                            <Badge className="absolute top-2 left-2 bg-red-500 hidden md:flex">
+                              -{Math.round((1 - product.price / product.originalPrice) * 100)}%
                             </Badge>
                           )}
+                          {/* Desktop Baru Badge */}
                           {product.condition === "baru" && (
-                            <Badge className="absolute top-2 right-2 bg-primary-500">
+                            <Badge className="absolute top-2 right-2 bg-primary-500 hidden md:flex">
+                              Baru
+                            </Badge>
+                          )}
+                          
+                          {/* Mobile Baru Badge */}
+                          {product.condition === "baru" && (
+                            <Badge className="absolute top-1.5 right-1.5 px-1.5 py-0 text-[9px] bg-primary-500 md:hidden">
                               Baru
                             </Badge>
                           )}
                         </div>
-                        <CardContent className="p-3 md:p-4">
-                          <p className="font-medium text-sm md:text-base line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                        <CardContent className="p-2 md:p-4 flex flex-col flex-grow">
+                          <p className="font-medium text-xs md:text-base line-clamp-2 mb-1 md:mb-2 group-hover:text-primary-600 transition-colors leading-snug">
                             {product.title}
                           </p>
-                          <div className="flex items-center gap-1 mb-2">
-                            <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs md:text-sm font-medium">
-                              {product.rating}
-                            </span>
-                            <span className="text-[10px] md:text-sm text-muted-foreground truncate">
-                              ({product.reviewCount || 0} ulasan)
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-2">
-                            <span className="text-sm md:text-lg font-bold text-primary">
-                              {formatPrice(product.price)}
-                            </span>
-                            {product.originalPrice && (
-                              <span className="text-[10px] md:text-sm text-muted-foreground line-through">
-                                {formatPrice(product.originalPrice)}
+
+                          {/* DESKTOP LAYOUT */}
+                          <div className="hidden md:flex flex-col flex-grow">
+                            <div className="flex items-center gap-1 mb-2">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-sm font-medium">
+                                {product.rating}
                               </span>
+                              <span className="text-sm text-muted-foreground truncate">
+                                ({product.reviewCount || 0} ulasan)
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="text-lg font-bold text-primary">
+                                {formatPrice(product.price)}
+                              </span>
+                              {product.originalPrice && (
+                                <span className="text-sm text-muted-foreground line-through">
+                                  {formatPrice(product.originalPrice)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t gap-1 mt-auto">
+                              <div className="flex items-center gap-2 overflow-hidden">
+                                <Avatar className="h-6 w-6 shrink-0">
+                                  <AvatarFallback className="text-xs">
+                                    {product.seller.name
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs font-medium truncate">
+                                  {product.seller.name.split(" ")[0]}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[60px]">{product.location.split(",")[0]}</span>
+                              </div>
+                            </div>
+                            {product.canNego && (
+                              <Badge variant="outline" className="mt-2 text-xs px-2 py-0.5 w-fit">
+                                Bisa Nego
+                              </Badge>
                             )}
                           </div>
-                          <div className="flex items-center justify-between pt-2 border-t gap-1">
-                            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden">
-                              <Avatar className="h-5 w-5 md:h-6 md:w-6 shrink-0">
-                                <AvatarFallback className="text-[8px] md:text-xs">
-                                  {product.seller.name
-                                    .substring(0, 2)
-                                    .toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-[10px] md:text-xs font-medium truncate">
-                                {product.seller.name.split(" ")[0]}
-                              </span>
+
+                          {/* MOBILE LAYOUT */}
+                          <div className="mt-auto flex flex-col gap-1 pt-1 md:hidden">
+                            <span className="text-sm font-bold text-primary-600 line-clamp-1">
+                              {formatPrice(product.price)}
+                            </span>
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <PartialStarRating rating={rating} size={10} />
+                              <span>{rating.toFixed(1)}</span>
+                              <span className="text-[8px]">•</span>
+                              <span>{displaySoldCount} terjual</span>
                             </div>
-                            <div className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs text-muted-foreground shrink-0">
-                              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              <span className="truncate max-w-[60px] md:max-w-none">{product.location.split(",")[0]}</span>
-                            </div>
+                            <span className="text-[10px] text-muted-foreground truncate mt-0.5">
+                              {product.seller.name}
+                            </span>
                           </div>
-                          {product.canNego && (
-                            <Badge variant="outline" className="mt-2 text-[10px] md:text-xs px-1.5 py-0 md:px-2 md:py-0.5">
-                              Bisa Nego
-                            </Badge>
-                          )}
                         </CardContent>
                       </Card>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   // List View
@@ -775,16 +807,19 @@ export default function CatalogPage({
                           variant={currentPage === page ? "default" : "outline"}
                           size="icon"
                           onClick={() => setCurrentPage(page)}
-                          className={
+                          className={`hidden sm:inline-flex ${
                             currentPage === page
                               ? "bg-primary-600 hover:bg-primary-700"
                               : ""
-                          }
+                          }`}
                         >
                           {page}
                         </Button>
                       ),
                     )}
+                    <span className="text-sm font-medium sm:hidden">
+                      {currentPage} / {totalPages}
+                    </span>
 
                     <Button
                       variant="outline"

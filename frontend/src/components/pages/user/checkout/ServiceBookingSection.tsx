@@ -122,8 +122,8 @@ export default function ServiceBookingSection({
         </div>
 
         {bookingDate && (durationMin || durationMax) && (
-          <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
-            <p className="font-medium text-primary-800 dark:text-primary-200 mb-3">Timeline Pengerjaan</p>
+          <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+            <p className="font-medium text-purple-800 dark:text-purple-200 mb-3">Timeline Pengerjaan</p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground w-24">Mulai:</span>
@@ -153,8 +153,8 @@ export default function ServiceBookingSection({
               </div>
               {deadlineDate && (
                 <div
-                  className={`flex items-center gap-2 text-sm pt-2 border-t border-primary-200 dark:border-primary-700 ${
-                    deadlineDate >= bookingDate ? "text-primary-700 dark:text-primary-300" : "text-red-600"
+                  className={`flex items-center gap-2 text-sm pt-2 border-t border-purple-200 dark:border-purple-700 ${
+                    deadlineDate >= bookingDate ? "text-purple-700 dark:text-purple-300" : "text-red-600"
                   }`}
                 >
                   <span className="text-muted-foreground w-24">Deadline:</span>
@@ -166,7 +166,7 @@ export default function ServiceBookingSection({
                     estDate.setDate(estDate.getDate() + maxDays)
 
                     if (deadlineDate >= estDate) {
-                      return <span className="text-primary-600 text-xs ml-2">Timeline aman</span>
+                      return <span className="text-purple-600 text-xs ml-2">Timeline aman</span>
                     }
                     return <span className="text-red-500 text-xs ml-2">Deadline lebih cepat dari estimasi</span>
                   })()}

@@ -176,7 +176,8 @@ export default function AdminOrdersTab({
               <Skeleton className="h-4 w-1/4" />
               <Skeleton className="h-4 w-1/12" />
             </div>
-            <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[10%]">Order</TableHead>
@@ -200,7 +201,8 @@ export default function AdminOrdersTab({
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground flex flex-col items-center justify-center">
@@ -211,7 +213,7 @@ export default function AdminOrdersTab({
         ) : (
           <>
             <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
-              <Table>
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order</TableHead>

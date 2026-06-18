@@ -48,8 +48,8 @@ export default function DetailPageShell({
         </nav>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">{mainContent}</div>
-          {sidebarContent}
+          <div className="space-y-4 lg:col-span-2 pb-24 lg:pb-0">{mainContent}</div>
+          <div className="pb-24 lg:pb-0">{sidebarContent}</div>
         </div>
 
         {bottomContent}

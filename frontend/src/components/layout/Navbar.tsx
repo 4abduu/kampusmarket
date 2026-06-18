@@ -29,6 +29,8 @@ import {
   ShieldCheck,
   PlusCircle,
   ReceiptText,
+  Home,
+  Briefcase,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/lib/notification-store";
@@ -81,6 +83,17 @@ export default function Navbar({
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(currentUser?.walletBalance || 0);
+
+  const isActive = (page: string) => {
+    if (page === "landing" && (currentPage === "/" || currentPage === "")) return true;
+    return currentPage.startsWith(`/${page}`);
+  };
+
+  // Check if we're on any "account" page (dashboard, profile, settings, wallet, orders, my-products, etc.)
+  const isAccountActive = () => {
+    const accountPages = ["/dashboard", "/profile", "/settings", "/wallet", "/orders", "/my-products", "/add-product", "/favorites", "/notifications"];
+    return accountPages.some(p => currentPage.startsWith(p));
+  };
 
   // User nav links
   const userNavLinks = [
@@ -245,6 +258,7 @@ export default function Navbar({
 
   // Regular User Navbar
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
@@ -269,7 +283,7 @@ export default function Navbar({
               href={link.href}
               onClick={(e) => handleNavClick(link.page, e)}
               className={`text-sm font-medium transition-colors hover:text-primary-600 ${
-                currentPage === link.page
+                isActive(link.page)
                   ? "text-primary-600"
                   : "text-muted-foreground"
               }`}
@@ -320,7 +334,7 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hidden sm:flex"
+                className="relative hidden md:flex"
                 onClick={() => onNavigate("chat")}
               >
                 <MessageCircle className="h-5 w-5" />
@@ -335,7 +349,7 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hidden sm:flex"
+                className="relative"
                 onClick={() => onNavigate("notifications")}
               >
                 <Bell className="h-5 w-5" />
@@ -349,7 +363,7 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hidden sm:flex text-slate-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
+                className="relative hidden md:flex text-slate-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
                 onClick={() => onNavigate("favorites")}
               >
                 <Heart className="h-5 w-5" />
@@ -363,10 +377,10 @@ export default function Navbar({
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full ml-1">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={displayAvatar} alt={displayName} />
-                      <AvatarFallback className="bg-green-100 text-green-700">
+                      <AvatarFallback className="bg-primary-100 text-primary-700 font-bold">
                         {displayInitials}
                       </AvatarFallback>
                     </Avatar>
@@ -390,17 +404,15 @@ export default function Navbar({
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("favorites") }>
-                    <Heart className="mr-2 h-4 w-4" />
-                    <span>Favorit</span>
+                  <DropdownMenuItem onClick={() => onNavigate("wallet")}>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    <span>Dompet ({walletText})</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("notifications")}>
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span>Notifikasi</span>
-                    {userUnreadCount > 0 && (
-                      <Badge className="ml-auto bg-red-500 text-white text-xs">{userUnreadCount}</Badge>
-                    )}
+                  <DropdownMenuItem onClick={() => onNavigate("orders")}>
+                    <ReceiptText className="mr-2 h-4 w-4" />
+                    <span>Pesanan Saya</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onNavigate("my-products")}>
                     <Package className="mr-2 h-4 w-4" />
                     <span>Produk Saya</span>
@@ -409,26 +421,24 @@ export default function Navbar({
                     <PlusCircle className="mr-2 h-4 w-4" />
                     <span>Tambah Produk</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("orders")}>
-                    <ReceiptText className="mr-2 h-4 w-4" />
-                    <span>Pesanan Saya</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("wallet")}>
-                    <Wallet className="mr-2 h-4 w-4" />
-                    <span>Dompet ({walletText})</span>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onNavigate("favorites")}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Favorit</span>
+                    {favoritesCount > 0 && (
+                      <Badge className="ml-auto text-xs bg-rose-100 text-rose-700">{favoritesCount > 99 ? '99+' : favoritesCount}</Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onNavigate("settings")}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Pengaturan</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => currentUser?.id && onNavigate("profile", currentUser.id)}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Lihat Profil Saya</span>
                   </DropdownMenuItem>
-                  
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onLogout}>
+                  <DropdownMenuItem onClick={onLogout} className="text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Keluar</span>
                   </DropdownMenuItem>
@@ -453,46 +463,25 @@ export default function Navbar({
             </>
           )}
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Sheet */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
             <SheetContent 
               side="right" 
-              className="w-80 overflow-y-auto bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 [&>button]:top-[6px]"
+              className="w-[85vw] sm:w-80 overflow-y-auto bg-background p-0"
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
-              <div className="flex flex-col gap-4 mt-6 pb-8">
-                {/* Mobile Search */}
-                <div className="relative px-2">
-                  <Search 
-                    className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground cursor-pointer hover:text-primary-600 transition-colors"
-                    onClick={handleSearch}
-                  />
-                  <Input
-                    type="search"
-                    placeholder="Cari barang, jasa..."
-                    className="pl-10 pr-4 bg-white dark:bg-slate-800 border-0 rounded-xl shadow-sm focus:shadow-md transition-shadow"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                  />
-                </div>
-
+              <div className="flex flex-col py-6 pb-8">
                 {/* Mobile Nav Links */}
-                <nav className="flex flex-col gap-1 px-2">
+                <nav className="flex flex-col gap-1 px-3">
                   {userNavLinks.map((link) => (
                     <a
                       key={link.page}
                       href={link.href}
                       onClick={(e) => {
-                        handleNavClick(link.page, e);
-                        closeMobileMenu();
+                         handleNavClick(link.page, e);
+                         closeMobileMenu();
                       }}
-                      className="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:text-primary-600 transition-colors duration-200"
+                      className="flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                     >
                       {link.label}
                     </a>
@@ -501,156 +490,117 @@ export default function Navbar({
 
                 {isLoggedIn ? (
                   <>
-                    <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2 px-2">
-                      <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-950/30 dark:to-secondary-950/30 rounded-xl border border-primary-100 dark:border-primary-900/50">
-                        <Avatar className="h-11 w-11 border-2 border-white dark:border-slate-800 shadow-sm">
+                    <div className="px-5 py-4 mt-2">
+                      <div className="flex items-center gap-3 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
+                        <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-700 shadow-sm">
                           <AvatarImage src={displayAvatar} alt={displayName} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900 dark:to-secondary-900 text-primary-700 dark:text-primary-300 font-bold">
+                          <AvatarFallback className="bg-primary-100 text-primary-700 font-bold text-lg">
                             {displayInitials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate">{displayName}</p>
+                          <p className="text-base font-bold truncate text-slate-900 dark:text-slate-100">{displayName}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{displayEmail}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-0.5 px-2">
+                    <div className="flex flex-col gap-1 px-3">
                       <Button
                         variant="ghost"
                         onClick={() => { onNavigate("dashboard"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
-                        <LayoutDashboard className="h-4 w-4 mr-3 text-primary-600" />
-                        <span className="font-medium">Dashboard</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("cart"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-3 text-primary-600" />
-                        <span className="font-medium">Keranjang</span>
-                        {cartCount > 0 && (
-                          <Badge className="ml-auto text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">{cartCount > 99 ? '99+' : cartCount}</Badge>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("chat"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-3 text-primary-600" />
-                        <span className="font-medium">Pesan</span>
-                        {chatUnreadCount > 0 && (
-                          <Badge className="ml-auto text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">{chatUnreadCount > 99 ? '99+' : chatUnreadCount}</Badge>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("favorites"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors duration-200"
-                      >
-                        <Heart className="h-4 w-4 mr-3 text-rose-500" />
-                        <span className="font-medium">Favorit</span>
-                        {favoritesCount > 0 && (
-                          <Badge className="ml-auto text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">{favoritesCount > 99 ? '99+' : favoritesCount}</Badge>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("notifications"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors duration-200"
-                      >
-                        <Bell className="h-4 w-4 mr-3 text-amber-500" />
-                        <span className="font-medium">Notifikasi</span>
-                        {userUnreadCount > 0 && (
-                          <Badge className="ml-auto text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">{userUnreadCount}</Badge>
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="border-t border-slate-200 dark:border-slate-700 my-2 mx-2"></div>
-
-                    <div className="flex flex-col gap-0.5 px-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("my-products"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                      >
-                        <Package className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                        <span>Produk Saya</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("add-product"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                      >
-                        <PlusCircle className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                        <span>Tambah Produk</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => { onNavigate("orders"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                      >
-                        <ReceiptText className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                        <span>Pesanan Saya</span>
+                        <LayoutDashboard className="h-5 w-5 mr-3 text-primary-600" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Dashboard Utama</span>
                       </Button>
                       <Button
                         variant="ghost"
                         onClick={() => { onNavigate("wallet"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
-                        <Wallet className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                        <span>Dompet</span>
-                        <span className="ml-auto text-xs text-muted-foreground font-medium">{walletText}</span>
+                        <Wallet className="h-5 w-5 mr-3 text-slate-500" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Dompet Saya</span>
+                        <span className="ml-auto text-xs text-primary-600 font-bold">{walletText}</span>
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => { onNavigate("settings"); closeMobileMenu(); }}
-                        className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                        onClick={() => { onNavigate("orders"); closeMobileMenu(); }}
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                       >
-                        <Settings className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                        <span>Pengaturan</span>
+                        <ReceiptText className="h-5 w-5 mr-3 text-slate-500" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Pesanan Saya</span>
+                      </Button>
+                    </div>
+
+                    <div className="border-t border-slate-200 dark:border-slate-800 my-4 mx-5"></div>
+
+                    <div className="flex flex-col gap-1 px-3">
+                      <Button
+                        variant="ghost"
+                        onClick={() => { onNavigate("my-products"); closeMobileMenu(); }}
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                      >
+                        <Package className="h-5 w-5 mr-3 text-slate-500" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Produk Saya</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => { onNavigate("add-product"); closeMobileMenu(); }}
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                      >
+                        <PlusCircle className="h-5 w-5 mr-3 text-slate-500" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Tambah Produk</span>
+                      </Button>
+                    </div>
+
+                    <div className="border-t border-slate-200 dark:border-slate-800 my-4 mx-5"></div>
+
+                    <div className="flex flex-col gap-1 px-3">
+                      <Button
+                        variant="ghost"
+                        onClick={() => { onNavigate("settings"); closeMobileMenu(); }}
+                        className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                      >
+                        <Settings className="h-5 w-5 mr-3 text-slate-500" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Pengaturan</span>
                       </Button>
                       {currentUser?.id && (
                         <Button
                           variant="ghost"
                           onClick={() => { onNavigate("profile", currentUser.id); closeMobileMenu(); }}
-                          className="w-full justify-start h-11 px-4 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+                          className="w-full justify-start h-12 px-4 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                         >
-                          <User className="h-4 w-4 mr-3 text-slate-600 dark:text-slate-400" />
-                          <span>Lihat Profil</span>
+                          <User className="h-5 w-5 mr-3 text-slate-500" />
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">Lihat Profil</span>
                         </Button>
                       )}
                     </div>
 
-                    <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4 px-2">
+                    <div className="mt-8 px-5">
                       <Button
                         onClick={() => { onLogout(); closeMobileMenu(); }}
-                        className="w-full h-11 px-4 text-sm font-medium bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                        className="w-full h-12 px-4 text-sm font-bold bg-slate-100 hover:bg-red-50 text-red-600 hover:text-red-700 dark:bg-slate-800 dark:hover:bg-red-950/30 rounded-xl transition-colors duration-200"
                       >
-                        <LogOut className="h-4 w-4 mr-2" />
+                        <LogOut className="h-5 w-5 mr-2" />
                         Keluar
                       </Button>
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col gap-3 mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 px-2">
+                  <div className="flex flex-col gap-3 mt-6 px-5">
                     <Button
                       variant="outline"
                       onClick={() => { onNavigate("login"); closeMobileMenu(); }}
-                      className="w-full h-11 px-4 text-sm font-medium rounded-lg border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
+                      className="w-full h-12 px-4 text-sm font-bold rounded-xl border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
                     >
                       Masuk
                     </Button>
                     <Button
                       onClick={() => { onNavigate("register"); closeMobileMenu(); }}
-                      className="w-full h-11 px-4 text-sm font-medium bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                      className="w-full h-12 px-4 text-sm font-bold bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                     >
-                      Daftar
+                      Daftar Sekarang
                     </Button>
                   </div>
                 )}
@@ -659,6 +609,62 @@ export default function Navbar({
           </Sheet>
         </div>
       </div>
+
+      {/* Mobile Search Bar */}
+        <div className="pb-3 px-3 md:hidden">
+          <div className="relative w-full">
+            <Search 
+              className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-primary-600 transition-colors"
+              onClick={handleSearch}
+            />
+            <Input
+              type="search"
+              placeholder="Cari barang, jasa..."
+              className="pl-11 pr-4 w-full h-11 bg-slate-100 dark:bg-slate-800/50 border-transparent rounded-2xl focus:bg-background focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all text-sm shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+            />
+          </div>
+        </div>
     </header>
+
+    {/* Bottom Navigation (Mobile Only) */}
+    <div className="fixed bottom-0 left-0 z-40 w-full h-[68px] bg-background/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 flex justify-around items-center pb-safe md:hidden shadow-[0_-8px_16px_rgba(0,0,0,0.03)]">
+      <button onClick={() => onNavigate("landing")} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive("landing") ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+        <Home className={`h-6 w-6 ${isActive("landing") ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isActive("landing") ? 2 : 1.5} />
+        <span className="text-[10px] font-semibold tracking-wide">Beranda</span>
+      </button>
+      <button onClick={() => onNavigate("catalog")} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive("catalog") ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+        <Package className={`h-6 w-6 ${isActive("catalog") ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isActive("catalog") ? 2 : 1.5} />
+        <span className="text-[10px] font-semibold tracking-wide">Katalog</span>
+      </button>
+      <button onClick={() => onNavigate("services")} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive("services") ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+        <Briefcase className={`h-6 w-6 ${isActive("services") ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isActive("services") ? 2 : 1.5} />
+        <span className="text-[10px] font-semibold tracking-wide">Jasa</span>
+      </button>
+
+      {isLoggedIn ? (
+        <>
+          <button onClick={() => onNavigate("chat")} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive("chat") ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+            <div className="relative">
+              <MessageCircle className={`h-6 w-6 ${isActive("chat") ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isActive("chat") ? 2 : 1.5} />
+              {chatUnreadCount > 0 && <Badge className="absolute -top-1.5 -right-2 h-[18px] min-w-[18px] px-1 flex items-center justify-center text-[10px] bg-red-500 shadow-sm border-2 border-background">{chatUnreadCount > 99 ? '99+' : chatUnreadCount}</Badge>}
+            </div>
+            <span className="text-[10px] font-semibold tracking-wide">Pesan</span>
+          </button>
+          <button onClick={() => onNavigate("dashboard")} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isAccountActive() ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+            <User className={`h-6 w-6 ${isAccountActive() ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isAccountActive() ? 2 : 1.5} />
+            <span className="text-[10px] font-semibold tracking-wide">Profil</span>
+          </button>
+        </>
+      ) : (
+        <button onClick={() => setMobileMenuOpen(true)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${mobileMenuOpen ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
+          <Menu className={`h-6 w-6 ${mobileMenuOpen ? "text-primary-600" : ""}`} strokeWidth={mobileMenuOpen ? 2 : 1.5} />
+          <span className="text-[10px] font-semibold tracking-wide">Lainnya</span>
+        </button>
+      )}
+    </div>
+    </>
   );
 }

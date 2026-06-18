@@ -12,10 +12,10 @@ export default function LandingCtaSection({ isLoggedIn, onNavigate }: LandingCta
   }
 
   return (
-    <section className="py-16 bg-gradient-to-r from-primary-600 to-secondary-600 text-white">
+    <section className="py-10 sm:py-16 bg-gradient-to-r from-primary-600 to-secondary-600 text-white">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Siap Mulai Berjualan?</h2>
-        <p className="text-primary-100 mb-8 max-w-2xl mx-auto">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4">Siap Mulai Berjualan?</h2>
+        <p className="text-sm sm:text-base text-primary-100 mb-6 sm:mb-8 max-w-2xl mx-auto">
           Daftar sekarang dan mulai jual barang bekas atau jasa kamu. Gratis tanpa biaya pendaftaran!
         </p>
         <Button

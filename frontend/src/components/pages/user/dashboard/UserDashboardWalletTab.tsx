@@ -115,47 +115,47 @@ export default function UserDashboardWalletTab({
       )}
 
       <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-primary-100 text-sm">Saldo Tersedia</p>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="min-w-0">
+              <p className="text-primary-100 text-xs sm:text-sm">Saldo Tersedia</p>
               <div className="flex items-center gap-2 mt-1">
                 {isLoadingStats ? (
-                  <Skeleton className="h-9 w-52 bg-white/20" />
+                  <Skeleton className="h-7 sm:h-9 w-40 sm:w-52 bg-white/20" />
                 ) : (
-                  <h2 className="text-3xl font-bold">{showBalance ? formatPrice(currentWalletBalance) : "Rp ••••••••"}</h2>
+                  <h2 className="text-xl sm:text-3xl font-bold truncate">{showBalance ? formatPrice(currentWalletBalance) : "Rp ••••••••"}</h2>
                 )}
-                <button onClick={() => setShowBalance(!showBalance)} className="p-1 hover:bg-primary-500/50 rounded transition-colors">
-                  {showBalance ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                <button onClick={() => setShowBalance(!showBalance)} className="p-1 hover:bg-primary-500/50 rounded transition-colors shrink-0">
+                  {showBalance ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
                 </button>
               </div>
             </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center"><Wallet className="h-6 w-6" /></div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center shrink-0 ml-2"><Wallet className="h-5 w-5 sm:h-6 sm:w-6" /></div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-primary-100 text-sm mb-1"><ArrowDown className="h-4 w-4" />Masuk</div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="bg-white/10 rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-primary-100 text-xs sm:text-sm mb-1"><ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />Masuk</div>
               {isLoadingStats ? (
-                <Skeleton className="h-6 w-28 bg-white/20" />
+                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28 bg-white/20" />
               ) : (
-                <p className="font-bold">{showBalance ? formatPrice(totalIncome) : "Rp ••••••••"}</p>
+                <p className="font-bold text-sm sm:text-base truncate">{showBalance ? formatPrice(totalIncome) : "Rp ••••••••"}</p>
               )}
             </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-primary-100 text-sm mb-1"><ArrowUp className="h-4 w-4" />Keluar</div>
+            <div className="bg-white/10 rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-primary-100 text-xs sm:text-sm mb-1"><ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />Keluar</div>
               {isLoadingStats ? (
-                <Skeleton className="h-6 w-28 bg-white/20" />
+                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28 bg-white/20" />
               ) : (
-                <p className="font-bold">{showBalance ? formatPrice(totalExpense) : "Rp ••••••••"}</p>
+                <p className="font-bold text-sm sm:text-base truncate">{showBalance ? formatPrice(totalExpense) : "Rp ••••••••"}</p>
               )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Button className="h-20 flex-col gap-2 bg-primary-600 hover:bg-primary-700" onClick={() => setShowTopUpDialog(true)}>
-          <Plus className="h-6 w-6" />Top Up
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <Button className="h-14 sm:h-20 flex-col gap-1.5 sm:gap-2 bg-primary-600 hover:bg-primary-700 text-sm sm:text-base" onClick={() => setShowTopUpDialog(true)}>
+          <Plus className="h-5 w-5 sm:h-6 sm:w-6" />Top Up
         </Button>
         <TooltipProvider>
           <Tooltip>
@@ -163,11 +163,11 @@ export default function UserDashboardWalletTab({
               <span className={isWithdrawDisabled ? "cursor-not-allowed" : ""}>
                 <Button 
                   variant="outline" 
-                  className="h-20 w-full flex-col gap-2" 
+                  className="h-14 sm:h-20 w-full flex-col gap-1.5 sm:gap-2 text-sm sm:text-base" 
                   onClick={() => setShowWithdrawDialog(true)} 
                   disabled={isWithdrawDisabled}
                 >
-                  <ArrowUpRight className="h-6 w-6" />Tarik Dana
+                  <ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6" />Tarik Dana
                 </Button>
               </span>
             </TooltipTrigger>
@@ -227,8 +227,8 @@ export default function UserDashboardWalletTab({
                 <CardDescription>{filteredTransactions.length} transaksi</CardDescription>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[200px] max-w-md">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -238,8 +238,9 @@ export default function UserDashboardWalletTab({
                   className="pl-9"
                 />
               </div>
+              <div className="flex items-center gap-2">
               <Select value={transactionTypeFilter} onValueChange={(v) => { setTransactionTypeFilter(v as typeof transactionTypeFilter); setTransactionPage(1) }}>
-                <SelectTrigger className="w-[140px]"><SelectValue placeholder="Tipe" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[140px]"><SelectValue placeholder="Tipe" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Tipe</SelectItem>
                   <SelectItem value="top_up">Top Up</SelectItem>
@@ -250,11 +251,12 @@ export default function UserDashboardWalletTab({
                   <SelectItem value="admin_fee">Biaya Admin</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={() => setShowTransactionFilters(!showTransactionFilters)} className="gap-1">
+              <Button variant="outline" size="sm" onClick={() => setShowTransactionFilters(!showTransactionFilters)} className="gap-1 shrink-0">
                 <Filter className="h-4 w-4" />
-                Filter
+                <span className="hidden sm:inline">Filter</span>
                 {showTransactionFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
+              </div>
               {(transactionTypeFilter !== "all" || transactionStatusFilter !== "all" || transactionSearchTerm) && (
                 <Button
                   variant="ghost"

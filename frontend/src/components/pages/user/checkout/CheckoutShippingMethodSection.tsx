@@ -46,14 +46,14 @@ export default function CheckoutShippingMethodSection({
                 htmlFor={option.id}
                 className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
                   shippingMethod === option.id
-                    ? "border-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                    ? isService ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20" : "border-primary-600 bg-primary-50 dark:bg-primary-900/20"
                     : "hover:border-slate-300"
                 }`}
               >
-                <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
+                <RadioGroupItem value={option.id} id={option.id} className={`mt-1 ${isService ? 'data-[state=checked]:text-purple-600 data-[state=checked]:border-purple-600' : ''}`} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    {option.icon ? <option.icon className="h-5 w-5 text-primary-600" /> : <Truck className="h-5 w-5 text-primary-600" />}
+                    {option.icon ? <option.icon className={`h-5 w-5 ${isService ? "text-purple-600" : "text-primary-600"}`} /> : <Truck className={`h-5 w-5 ${isService ? "text-purple-600" : "text-primary-600"}`} />}
                     <span className="font-medium">{option.label}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{option.description}</p>

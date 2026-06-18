@@ -34,9 +34,10 @@ import {
 } from "lucide-react";
 import { getCategories } from "@/lib/api/categories";
 import { getProducts } from "@/lib/api/products";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import ServicesFilterSidebar from "@/components/pages/guest/services/ServicesFilterSidebar";
 import ProductImage from "@/components/common/ProductImage";
+import { PartialStarRating } from "@/components/common/PartialStarRating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServicesPageSkeleton } from "@/components/skeleton";
 import EmptyState from "@/components/shared/EmptyState";
@@ -333,19 +334,21 @@ export default function ServicesPage({
                 {/* Mobile Filter */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden">
+                    <Button variant="outline" className="lg:hidden flex-1 justify-center rounded-full border-slate-300">
                       <SlidersHorizontal className="h-4 w-4 mr-2" />
-                      Filter
+                      Filter & Urutkan
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-80 overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Filter</SheetTitle>
-                      <SheetDescription>
-                        Filter jasa sesuai kebutuhanmu
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
+                  <SheetContent side="left" className="w-[85vw] sm:w-80 overflow-y-auto bg-background p-0">
+                    <div className="p-6 pb-0">
+                      <SheetHeader className="text-left">
+                        <SheetTitle className="text-xl">Filter Jasa</SheetTitle>
+                        <SheetDescription>
+                          Pilih filter sesuai kebutuhanmu
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
+                    <div className="p-6">
                       <ServicesFilterSidebar {...filterSidebarProps} />
                     </div>
                   </SheetContent>
@@ -457,43 +460,77 @@ export default function ServicesPage({
               <>
                 {/* Service Grid */}
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {paginatedServices.map((service) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                    {paginatedServices.map((service) => {
+                      const orderCount = (service as any).soldCount ?? service.orderCount ?? 0;
+                      const displayOrderCount = orderCount > 99 ? "99+" : orderCount;
+                      const rating = service.rating ?? 0;
+                      
+                      return (
                       <Card
                         key={service.id}
-                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group flex flex-col"
                         onClick={() => onNavigate("service", service.id)}
                       >
-                        <div className="relative bg-muted h-40 flex items-center justify-center overflow-hidden">
+                        <div className="relative bg-muted h-32 md:h-48 flex items-center justify-center overflow-hidden shrink-0">
                           <ProductImage
                             src={
                               service.images?.[0]?.url || service.images?.[0]
                             }
                             alt={service.title}
                             type="jasa"
-                            className="w-full h-full bg-muted flex items-center justify-center"
+                            className="w-full h-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center"
                             imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             fallbackImageUrl="https://placehold.net/default.svg"
                           />
-                        </div>
-                        <CardContent className="p-3 md:p-4">
-                          <Badge variant="outline" className="mb-2 text-[10px] md:text-xs px-1.5 py-0 md:px-2 md:py-0.5">
+                          {/* Desktop Badge */}
+                          <Badge className="absolute top-2 left-2 hidden md:inline-flex">
                             {service.category?.name || "Jasa"}
                           </Badge>
-                          <p className="font-medium text-sm md:text-base line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+                          {/* Mobile Badge */}
+                          <Badge className="absolute top-1.5 left-1.5 px-1.5 py-0 text-[9px] bg-slate-900/70 text-white border-0 backdrop-blur-sm md:hidden">
+                            {service.category?.name || "Jasa"}
+                          </Badge>
+                        </div>
+                        <CardContent className="p-2 md:p-4 flex flex-col flex-grow">
+                          <p className="font-medium text-xs md:text-base line-clamp-2 mb-1 md:mb-2 group-hover:text-primary-600 transition-colors leading-snug">
                             {service.title}
                           </p>
-                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
-                            {service.description}
-                          </p>
-                          <div className="flex items-center gap-1 mb-2 md:mb-3">
-                            <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs md:text-sm font-medium">
-                              {service.rating || 0}
-                            </span>
+                          
+                          {/* DESKTOP LAYOUT */}
+                          <div className="hidden md:flex flex-col flex-grow">
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                              {service.description}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-2">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <span className="font-medium text-foreground">{service.rating || 0}</span>
+                              </div>
+                              <span className="text-muted-foreground truncate">
+                                ({orderCount} pesanan)
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1 mt-auto pt-2 border-t">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[80px]">{service.location || "-"}</span>
+                              </div>
+                              <span className="text-lg font-bold text-primary-600 line-clamp-1">
+                                Rp{" "}
+                                {(
+                                  service.price ||
+                                  service.price_min ||
+                                  service.priceMin ||
+                                  0
+                                ).toLocaleString("id-ID")}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm md:text-lg font-bold text-primary-600 line-clamp-1">
+
+                          {/* MOBILE LAYOUT */}
+                          <div className="mt-auto flex flex-col gap-1 pt-1 md:hidden">
+                            <span className="text-sm font-bold text-primary-600 line-clamp-1">
                               Rp{" "}
                               {(
                                 service.price ||
@@ -502,29 +539,19 @@ export default function ServicesPage({
                                 0
                               ).toLocaleString("id-ID")}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-1 md:gap-2 mt-2 md:mt-3 pt-2 border-t">
-                            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden">
-                              <Avatar className="h-5 w-5 md:h-6 md:w-6 shrink-0">
-                                <AvatarFallback className="text-[8px] md:text-xs bg-primary-100 text-primary-700">
-                                  {service.seller?.name
-                                    ?.split(" ")
-                                    .map((n: string) => n[0])
-                                    .join("") || "U"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-[10px] md:text-xs text-muted-foreground truncate">
-                                {service.seller?.name?.split(" ")[0] || "Unknown"}
-                              </span>
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <PartialStarRating rating={rating} size={10} />
+                              <span>{rating.toFixed(1)}</span>
+                              <span className="text-[8px]">•</span>
+                              <span>{displayOrderCount} dipesan</span>
                             </div>
-                            <div className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs text-muted-foreground shrink-0 ml-auto">
-                              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              <span className="truncate max-w-[60px] md:max-w-none">{service.location?.split(",")[0] || "-"}</span>
-                            </div>
+                            <span className="text-[10px] text-muted-foreground truncate mt-0.5">
+                              {service.seller?.name || "Unknown"}
+                            </span>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   // List View
@@ -609,16 +636,19 @@ export default function ServicesPage({
                           variant={currentPage === page ? "default" : "outline"}
                           size="icon"
                           onClick={() => setCurrentPage(page)}
-                          className={
+                          className={`hidden sm:inline-flex ${
                             currentPage === page
                               ? "bg-primary-600 hover:bg-primary-700"
                               : ""
-                          }
+                          }`}
                         >
                           {page}
                         </Button>
                       ),
                     )}
+                    <span className="text-sm font-medium sm:hidden">
+                      {currentPage} / {totalPages}
+                    </span>
 
                     <Button
                       variant="outline"

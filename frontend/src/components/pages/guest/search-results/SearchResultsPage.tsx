@@ -184,7 +184,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
 
             <TabsContent value="products">
               {results.products.length > 0 ? (
-                <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+                <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4" : "space-y-4"}>
                   {results.products.map((product) => (
                     <SearchProductCard key={product.id} product={product} viewMode={viewMode} onNavigate={onNavigate} />
                   ))}
@@ -196,7 +196,7 @@ export default function SearchResultsPage({ onNavigate }: SearchResultsPageProps
 
             <TabsContent value="services">
               {results.services.length > 0 ? (
-                <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+                <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4" : "space-y-4"}>
                   {results.services.map((service) => (
                     <SearchProductCard key={service.id} product={service} viewMode={viewMode} onNavigate={onNavigate} />
                   ))}

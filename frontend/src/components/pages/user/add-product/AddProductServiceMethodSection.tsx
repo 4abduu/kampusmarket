@@ -30,14 +30,14 @@ export default function AddProductServiceMethodSection({
       <CardContent className="space-y-4">
         <div className={`p-4 rounded-lg border-2 transition-all ${
           shippingOptions.isOnline
-            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 shippingOptions.isOnline
-                  ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
+                  ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <DollarSign className="h-5 w-5" />
@@ -50,20 +50,21 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isOnline}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isOnline: checked })}
+              className="data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>
 
         <div className={`p-4 rounded-lg border-2 transition-all ${
           shippingOptions.isOnsite
-            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 shippingOptions.isOnsite
-                  ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
+                  ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <Home className="h-5 w-5" />
@@ -76,20 +77,21 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isOnsite}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isOnsite: checked })}
+              className="data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>
 
         <div className={`p-4 rounded-lg border-2 transition-all ${
           shippingOptions.isHomeService
-            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 shippingOptions.isHomeService
-                  ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
+                  ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <MapPin className="h-5 w-5" />
@@ -102,6 +104,7 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isHomeService}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isHomeService: checked })}
+              className="data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>

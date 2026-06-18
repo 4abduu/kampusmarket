@@ -44,21 +44,21 @@ export default function UserDashboardOverviewTab({
   return (
     <>
       <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onNavigate("wallet")}>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-primary-100 text-sm">Saldo Dompet</p>
-              <p className="text-3xl font-bold mt-1">{formatPrice(currentWalletBalance)}</p>
-              <p className="text-primary-200 text-sm mt-2">Klik untuk kelola dompet →</p>
+            <div className="min-w-0">
+              <p className="text-primary-100 text-xs sm:text-sm">Saldo Dompet</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1 truncate">{formatPrice(currentWalletBalance)}</p>
+              <p className="text-primary-200 text-xs sm:text-sm mt-1 sm:mt-2">Klik untuk kelola dompet →</p>
             </div>
-            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
-              <Wallet className="h-7 w-7" />
+            <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0 ml-3">
+              <Wallet className="h-5 w-5 sm:h-7 sm:w-7" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { title: "Total Penjualan", value: formatPrice(stats.totalSales), icon: DollarSign, color: "text-blue-600", bg: "bg-blue-100" },
           { title: "Produk Aktif", value: stats.activeProducts.toString(), icon: Package, color: "text-purple-600", bg: "bg-purple-100" },
@@ -66,33 +66,33 @@ export default function UserDashboardOverviewTab({
           { title: "Rating", value: stats.rating.toFixed(1), icon: Star, color: "text-yellow-600", bg: "bg-yellow-100" },
         ].map((stat, i) => (
           <Card key={i}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">{stat.title}</span>
-                <div className={`p-2 rounded-lg ${stat.bg}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                <span className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{stat.title}</span>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${stat.bg} shrink-0`}>
+                  <stat.icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`} />
                 </div>
               </div>
-              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-lg sm:text-2xl font-bold truncate">{stat.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <Card className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border-primary-200">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-primary-700 mb-2">
-                <DollarSign className="h-5 w-5" />
-                <span className="font-medium">Pendapatan Bersih</span>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-primary-700 mb-1 sm:mb-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="font-medium text-sm sm:text-base">Pendapatan Bersih</span>
               </div>
-              <p className="text-3xl font-bold text-primary-600">{formatPrice(stats.netIncome)}</p>
-              <p className="text-sm text-primary-600/70 mt-1">Setelah potongan biaya admin {adminFeePercentage * 100}%</p>
+              <p className="text-xl sm:text-3xl font-bold text-primary-600 truncate">{formatPrice(stats.netIncome)}</p>
+              <p className="text-xs sm:text-sm text-primary-600/70 mt-1">Setelah potongan biaya admin {adminFeePercentage * 100}%</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-slate-500">Biaya Admin</p>
-              <p className="text-lg font-semibold text-slate-600">-{formatPrice(stats.adminFeeDeducted)}</p>
+            <div className="text-left sm:text-right shrink-0">
+              <p className="text-xs sm:text-sm text-slate-500">Biaya Admin</p>
+              <p className="text-base sm:text-lg font-semibold text-slate-600">-{formatPrice(stats.adminFeeDeducted)}</p>
             </div>
           </div>
         </CardContent>
@@ -137,10 +137,10 @@ export default function UserDashboardOverviewTab({
               </Button>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-3 gap-4">
-              {userProducts.slice(0, 3).map((product) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {userProducts.slice(0, 4).map((product) => (
                 <div key={product.id} className="border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-colors" onClick={() => onNavigate(product.type === 'jasa' ? 'service' : 'product', product.id)}>
-                  <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-32 flex items-center justify-center relative overflow-hidden`}>
+                  <div className={`${product.type === "jasa" ? "bg-gradient-to-br from-secondary-100 to-primary-100 dark:from-secondary-900/30 dark:to-primary-900/30" : "bg-slate-100 dark:bg-slate-800"} h-24 sm:h-32 flex items-center justify-center relative overflow-hidden`}>
                     {product.images && product.images.length > 0 ? (
                       <img 
                         src={product.images[0]} 
@@ -148,17 +148,17 @@ export default function UserDashboardOverviewTab({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      product.type === "jasa" ? <Briefcase className="h-10 w-10 text-secondary-600/50" /> : <Package className="h-10 w-10 text-muted-foreground/30" />
+                      product.type === "jasa" ? <Briefcase className="h-8 w-8 sm:h-10 sm:w-10 text-secondary-600/50" /> : <Package className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                     )}
                   </div>
-                  <div className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={product.type === "jasa" ? "secondary" : "default"} className="text-xs text-white">
+                  <div className="p-2 sm:p-3">
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                      <Badge variant={product.type === "jasa" ? "secondary" : "default"} className="text-[10px] sm:text-xs text-white px-1.5 py-0">
                         {product.type === "jasa" ? "Jasa" : "Barang"}
                       </Badge>
                     </div>
-                    <p className="font-medium text-sm line-clamp-1">{product.title}</p>
-                    <p className="text-primary-600 font-bold text-sm">{formatPriceRange(product)}</p>
+                    <p className="font-medium text-xs sm:text-sm line-clamp-2 leading-tight mb-1">{product.title}</p>
+                    <p className="text-primary-600 font-bold text-xs sm:text-sm">{formatPriceRange(product)}</p>
                   </div>
                 </div>
               ))}

@@ -277,7 +277,7 @@ export default function ChatConversationPanel({
           )}
 
           {/* ── Input area ── */}
-          <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur relative">
+          <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 pb-safe sm:pb-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur relative">
             {/* ── Emoji picker ── */}
             {showEmojiPicker && (
               <div className="absolute bottom-[calc(100%+0.5rem)] left-2 sm:left-4 z-50 shadow-2xl rounded-lg">

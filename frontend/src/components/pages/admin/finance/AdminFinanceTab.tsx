@@ -513,97 +513,99 @@ export default function AdminFinanceTab(props: Props) {
                 <p>Tidak ada penarikan ditemukan dengan filter tersebut</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[20%]">User</TableHead>
-                    <TableHead className="w-[15%]">Jumlah</TableHead>
-                    <TableHead className="w-[10%]">Tipe</TableHead>
-                    <TableHead className="w-[15%]">Provider</TableHead>
-                    <TableHead className="w-[15%]">No. Akun</TableHead>
-                    <TableHead className="w-[10%]">Tanggal</TableHead>
-                    <TableHead className="w-[10%]">Status</TableHead>
-                    <TableHead className="w-[5%] text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedWithdrawals.map((withdrawal) => (
-                    <TableRow key={withdrawal.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            {withdrawal.user?.avatar && <AvatarImage src={withdrawal.user.avatar} alt={withdrawal.user.name} className="object-cover" />}
-                            <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(withdrawal.user?.name)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-sm">{withdrawal.user?.name || "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-bold text-primary-600">{formatPrice(withdrawal.amount)}</TableCell>
-                      <TableCell>
-                        <Badge variant={withdrawal.accountType === "e_wallet" ? "secondary" : "outline"} className={withdrawal.accountType === "e_wallet" ? "bg-purple-50 text-purple-700 border-purple-200" : ""}>
-                          {withdrawal.accountType === "e_wallet" ? "E-Wallet" : "Bank"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">{withdrawal.bankName}</TableCell>
-                      <TableCell className="text-sm">
-                        <div>
-                           <p className="font-mono">{withdrawal.accountNumber}</p>
-                           <p className="text-xs text-muted-foreground">a.n {withdrawal.accountName}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{formatAdminDate(withdrawal.createdAt)}</TableCell>
-                      <TableCell>{getWithdrawalStatusBadge(withdrawal.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 w-8 p-0 border-slate-200 hover:border-primary-200 hover:bg-primary-50/40 hover:text-primary-600 dark:hover:bg-primary-950/20 dark:hover:border-primary-900 transition-all duration-200 group/eye"
-                            onClick={() => handleViewWithdrawal(withdrawal)}
-                            title="Lihat Detail"
-                          >
-                            <Eye className="h-4 w-4 text-slate-500 group-hover/eye:text-primary-600 group-hover/eye:scale-110 transition-transform" />
-                          </Button>
-                          
-                          {withdrawal.status === "pending" && (
-                            <Button 
-                              size="sm" 
-                              className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
-                              onClick={() => handleApproveWithdrawal(withdrawal)}
-                            >
-                              Approve
-                            </Button>
-                          )}
-                          {(withdrawal.status === "approved" || withdrawal.status === "processing") && (
-                            <Button 
-                              size="sm" 
-                              className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
-                              onClick={() => handleCompleteWithdrawal(withdrawal)}
-                            >
-                              Selesai
-                            </Button>
-                          )}
-                          {withdrawal.status === "completed" && withdrawal.processedAt && (
-                            <span className="text-xs text-muted-foreground mr-1.5">
-                              Selesai
-                            </span>
-                          )}
-                          {withdrawal.status === "failed" && (
-                            <span className="text-xs text-red-500 font-medium mr-1.5">
-                              Gagal
-                            </span>
-                          )}
-                          {withdrawal.status === "rejected" && (
-                            <span className="text-xs text-slate-400 font-medium mr-1.5">
-                              Ditolak
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto border rounded-md">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[20%]">User</TableHead>
+                      <TableHead className="w-[15%]">Jumlah</TableHead>
+                      <TableHead className="w-[10%]">Tipe</TableHead>
+                      <TableHead className="w-[15%]">Provider</TableHead>
+                      <TableHead className="w-[15%]">No. Akun</TableHead>
+                      <TableHead className="w-[10%]">Tanggal</TableHead>
+                      <TableHead className="w-[10%]">Status</TableHead>
+                      <TableHead className="w-[5%] text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedWithdrawals.map((withdrawal) => (
+                      <TableRow key={withdrawal.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              {withdrawal.user?.avatar && <AvatarImage src={withdrawal.user.avatar} alt={withdrawal.user.name} className="object-cover" />}
+                              <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">{getInitials(withdrawal.user?.name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-sm">{withdrawal.user?.name || "-"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-bold text-primary-600">{formatPrice(withdrawal.amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant={withdrawal.accountType === "e_wallet" ? "secondary" : "outline"} className={withdrawal.accountType === "e_wallet" ? "bg-purple-50 text-purple-700 border-purple-200" : ""}>
+                            {withdrawal.accountType === "e_wallet" ? "E-Wallet" : "Bank"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{withdrawal.bankName}</TableCell>
+                        <TableCell className="text-sm">
+                          <div>
+                             <p className="font-mono">{withdrawal.accountNumber}</p>
+                             <p className="text-xs text-muted-foreground">a.n {withdrawal.accountName}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{formatAdminDate(withdrawal.createdAt)}</TableCell>
+                        <TableCell>{getWithdrawalStatusBadge(withdrawal.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 border-slate-200 hover:border-primary-200 hover:bg-primary-50/40 hover:text-primary-600 dark:hover:bg-primary-950/20 dark:hover:border-primary-900 transition-all duration-200 group/eye"
+                              onClick={() => handleViewWithdrawal(withdrawal)}
+                              title="Lihat Detail"
+                            >
+                              <Eye className="h-4 w-4 text-slate-500 group-hover/eye:text-primary-600 group-hover/eye:scale-110 transition-transform" />
+                            </Button>
+                            
+                            {withdrawal.status === "pending" && (
+                              <Button 
+                                size="sm" 
+                                className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
+                                onClick={() => handleApproveWithdrawal(withdrawal)}
+                              >
+                                Approve
+                              </Button>
+                            )}
+                            {(withdrawal.status === "approved" || withdrawal.status === "processing") && (
+                              <Button 
+                                size="sm" 
+                                className="h-8 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 text-xs" 
+                                onClick={() => handleCompleteWithdrawal(withdrawal)}
+                              >
+                                Selesai
+                              </Button>
+                            )}
+                            {withdrawal.status === "completed" && withdrawal.processedAt && (
+                              <span className="text-xs text-muted-foreground mr-1.5">
+                                Selesai
+                              </span>
+                            )}
+                            {withdrawal.status === "failed" && (
+                              <span className="text-xs text-red-500 font-medium mr-1.5">
+                                Gagal
+                              </span>
+                            )}
+                            {withdrawal.status === "rejected" && (
+                              <span className="text-xs text-slate-400 font-medium mr-1.5">
+                                Ditolak
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
             {paginatedWithdrawals.length > 0 && renderPagination(currentPage, getTotalPages(filteredWithdrawals.length), setWithdrawalPage)}
           </CardContent>
@@ -676,63 +678,65 @@ export default function AdminFinanceTab(props: Props) {
                 <p className="text-xs text-muted-foreground mt-1">Coba gunakan kata kunci atau filter status yang lain</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[20%]">User</TableHead>
-                    <TableHead className="w-[15%]">Nominal</TableHead>
-                    <TableHead className="w-[15%]">Metode</TableHead>
-                    <TableHead className="w-[20%]">Transaction ID / Ref</TableHead>
-                    <TableHead className="w-[15%]">Tanggal</TableHead>
-                    <TableHead className="w-[10%]">Status</TableHead>
-                    <TableHead className="w-[5%] text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topups.map((topup) => (
-                    <TableRow key={topup.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            {topup.user?.avatar && <AvatarImage src={topup.user.avatar} alt={topup.user.name} className="object-cover" />}
-                            <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
-                              {getInitials(topup.user?.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm line-clamp-1">{topup.user?.name || "-"}</span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">{topup.user?.email || "-"}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-bold text-emerald-600">{formatPrice(topup.gross_amount)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 text-xs dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
-                          {formatPaymentMethod(topup.payment_method)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs max-w-[180px] truncate text-muted-foreground" title={topup.transaction_id || topup.uuid}>
-                        {topup.transaction_id || topup.uuid}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatAdminDate(topup.created_at)}
-                      </TableCell>
-                      <TableCell>{getTopUpStatusBadge(topup)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleOpenDetail(topup)}
-                          title="Lihat Detail Transaksi"
-                        >
-                          <Eye className="h-4 w-4 text-muted-foreground hover:text-primary-600" />
-                        </Button>
-                      </TableCell>
+              <div className="overflow-x-auto border rounded-md">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[20%]">User</TableHead>
+                      <TableHead className="w-[15%]">Nominal</TableHead>
+                      <TableHead className="w-[15%]">Metode</TableHead>
+                      <TableHead className="w-[20%]">Transaction ID / Ref</TableHead>
+                      <TableHead className="w-[15%]">Tanggal</TableHead>
+                      <TableHead className="w-[10%]">Status</TableHead>
+                      <TableHead className="w-[5%] text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {topups.map((topup) => (
+                      <TableRow key={topup.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              {topup.user?.avatar && <AvatarImage src={topup.user.avatar} alt={topup.user.name} className="object-cover" />}
+                              <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
+                                {getInitials(topup.user?.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm line-clamp-1">{topup.user?.name || "-"}</span>
+                              <span className="text-xs text-muted-foreground line-clamp-1">{topup.user?.email || "-"}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-bold text-emerald-600">{formatPrice(topup.gross_amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 text-xs dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
+                            {formatPaymentMethod(topup.payment_method)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs max-w-[180px] truncate text-muted-foreground" title={topup.transaction_id || topup.uuid}>
+                          {topup.transaction_id || topup.uuid}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {formatAdminDate(topup.created_at)}
+                        </TableCell>
+                        <TableCell>{getTopUpStatusBadge(topup)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleOpenDetail(topup)}
+                            title="Lihat Detail Transaksi"
+                          >
+                            <Eye className="h-4 w-4 text-muted-foreground hover:text-primary-600" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
             {!topupLoading && !topupError && topups.length > 0 && renderPagination(topupPage, topupTotalPages, setTopupPage)}
           </CardContent>
@@ -884,50 +888,52 @@ export default function AdminFinanceTab(props: Props) {
                 <p className="font-medium text-slate-500">Tidak ada data tunggakan</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[20%]">User</TableHead>
-                    <TableHead className="w-[15%]">No Pesanan</TableHead>
-                    <TableHead className="w-[15%]">Nominal Utang</TableHead>
-                    <TableHead className="w-[15%]">Jatuh Tempo</TableHead>
-                    <TableHead className="w-[10%]">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {debts.map((debt) => (
-                    <TableRow key={debt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
-                              {getInitials(debt.user?.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm line-clamp-1">{debt.user?.name || "-"}</span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">{debt.user?.email || "-"}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{debt.order?.order_number}</TableCell>
-                      <TableCell className="font-bold text-red-600">{formatPrice(debt.amount)}</TableCell>
-                      <TableCell className="text-sm">
-                        {debt.due_date ? formatAdminDate(debt.due_date) : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {debt.status === 'paid' ? (
-                          <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Lunas</Badge>
-                        ) : new Date(debt.due_date) < new Date() ? (
-                          <Badge variant="destructive">Overdue</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-amber-600 border-amber-600">Belum Lunas</Badge>
-                        )}
-                      </TableCell>
+              <div className="overflow-x-auto border rounded-md">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[20%]">User</TableHead>
+                      <TableHead className="w-[15%]">No Pesanan</TableHead>
+                      <TableHead className="w-[15%]">Nominal Utang</TableHead>
+                      <TableHead className="w-[15%]">Jatuh Tempo</TableHead>
+                      <TableHead className="w-[10%]">Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {debts.map((debt) => (
+                      <TableRow key={debt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary-100 text-primary-700 text-xs">
+                                {getInitials(debt.user?.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm line-clamp-1">{debt.user?.name || "-"}</span>
+                              <span className="text-xs text-muted-foreground line-clamp-1">{debt.user?.email || "-"}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{debt.order?.order_number}</TableCell>
+                        <TableCell className="font-bold text-red-600">{formatPrice(debt.amount)}</TableCell>
+                        <TableCell className="text-sm">
+                          {debt.due_date ? formatAdminDate(debt.due_date) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {debt.status === 'paid' ? (
+                            <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Lunas</Badge>
+                          ) : new Date(debt.due_date) < new Date() ? (
+                            <Badge variant="destructive">Overdue</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-amber-600 border-amber-600">Belum Lunas</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
             {!debtsLoading && !debtsError && debts.length > 0 && setDebtPage && renderPagination(debtPage, debtTotalPages, setDebtPage)}
           </CardContent>

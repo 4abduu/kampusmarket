@@ -35,11 +35,9 @@ import { debtsApi } from "@/lib/api/debts";
 import SetPinDialog from "@/components/pages/user/dashboard/SetPinDialog";
 import VerifyPinDialog from "@/components/pages/user/dashboard/VerifyPinDialog";
 import {
-  UserDashboardOverviewSkeleton,
   UserDashboardOverviewTabSkeleton,
   UserDashboardProductsTabSkeleton,
   UserDashboardSettingsSkeleton,
-  UserDashboardWalletSkeleton,
 } from "@/components/skeleton";
 import { useDashboardProducts } from "@/components/pages/user/dashboard/useDashboardProducts";
 import { useDashboardWallet } from "@/components/pages/user/dashboard/useDashboardWallet";
@@ -263,22 +261,10 @@ export default function UserDashboardPage({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  if (activeTab === "overview" && isLoading) {
-    return <UserDashboardOverviewSkeleton />
-  }
-
-  if (activeTab === "settings" && isLoading) {
-    return <UserDashboardSettingsSkeleton />
-  }
-
-  if (activeTab === "wallet" && isLoading) {
-    return <UserDashboardWalletSkeleton />
-  }
-
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50 overflow-x-hidden">
+      <div className="container mx-auto px-4 py-4 lg:py-8">
+        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
           <UserDashboardSidebar
             currentUser={currentUser || { id: "", name: "", email: "", avatar: "", faculty: "", facultyName: "" } as any}
             rating={stats.rating}

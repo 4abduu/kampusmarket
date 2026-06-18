@@ -73,7 +73,7 @@ export default function LandingCategoriesSection({
             onClick={() => scrollCategories("left")}
             title="Scroll kategori ke kiri"
             aria-label="Scroll kategori ke kiri"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 hidden md:flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -82,7 +82,7 @@ export default function LandingCategoriesSection({
             onClick={() => scrollCategories("right")}
             title="Scroll kategori ke kanan"
             aria-label="Scroll kategori ke kanan"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 hidden md:flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -101,14 +101,14 @@ export default function LandingCategoriesSection({
                       { category: category.id },
                     )
                   }
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full shrink-0 transition-all group ${
+                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shrink-0 transition-all group ${
                     categoryType === "barang"
                       ? "bg-white border border-slate-200 hover:border-primary-400 hover:bg-transparent dark:bg-slate-800 dark:border-slate-700"
                       : "bg-white border border-slate-200 hover:border-primary-400 hover:bg-transparent dark:bg-slate-800 dark:border-slate-700"
                   }`}
                 >
                   <span
-                    className={`text-sm font-medium whitespace-nowrap ${
+                    className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
                       "group-hover:text-primary-700 dark:group-hover:text-primary-400"
                     }`}
                   >
@@ -120,7 +120,7 @@ export default function LandingCategoriesSection({
                 onClick={() =>
                   onNavigate(categoryType === "barang" ? "catalog" : "services")
                 }
-                className={`flex items-center gap-1 px-4 py-2 rounded-full shrink-0 text-sm font-medium transition-all ${
+                className={`flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shrink-0 text-xs sm:text-sm font-medium transition-all ${
                   categoryType === "barang"
                     ? "bg-primary-600 text-white hover:bg-primary-700"
                     : "bg-gradient-to-r from-secondary-600 to-primary-600 text-white hover:from-secondary-700 hover:to-primary-700"

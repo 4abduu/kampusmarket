@@ -33,11 +33,11 @@ export default function AddProductTypeSelector({ productType, setProductType }: 
             onClick={() => setProductType("jasa")}
             className={`p-4 rounded-xl border-2 text-left transition-all ${
               productType === "jasa"
-                ? "border-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
                 : "border-slate-200 hover:border-slate-300 dark:border-slate-700"
             }`}
           >
-            <DollarSign className="h-8 w-8 mb-2 text-primary-600" />
+            <DollarSign className="h-8 w-8 mb-2 text-purple-600" />
             <p className="font-medium">Jasa</p>
             <p className="text-sm text-muted-foreground">Tawarkan layanan atau jasa</p>
           </button>

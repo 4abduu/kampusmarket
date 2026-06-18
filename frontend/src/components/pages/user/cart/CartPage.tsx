@@ -130,7 +130,7 @@ export default function CartPage({ onNavigate }: CartPageProps) {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pb-32 lg:pb-8">
         <CartHeader itemCount={cartItems.length} onNavigate={onNavigate} />
 
         <div className="grid lg:grid-cols-3 gap-6">

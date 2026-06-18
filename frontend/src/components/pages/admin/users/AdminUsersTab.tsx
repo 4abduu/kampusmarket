@@ -105,32 +105,34 @@ export default function AdminUsersTab({
           <div className="text-center py-8 text-muted-foreground"><Users className="h-12 w-12 mx-auto mb-4 opacity-30" /><p>Tidak ada user ditemukan dengan filter tersebut</p></div>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30%]">User</TableHead>
-                  <TableHead className="w-[20%]">Email</TableHead>
-                  <TableHead className="w-[20%]">Fakultas</TableHead>
-                  <TableHead className="w-[15%]">Status</TableHead>
-                  <TableHead className="w-[10%]">Bergabung</TableHead>
-                  <TableHead className="w-[5%] text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2"><Avatar className="h-8 w-8">{user.avatar && <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />}<AvatarFallback className={`text-xs ${user.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>{getInitials(user.name)}</AvatarFallback></Avatar><div><p className="font-medium text-sm">{user.name}</p><p className="text-xs text-muted-foreground">{user.phone || "-"}</p></div></div>
-                    </TableCell>
-                    <TableCell className="text-sm">{user.email}</TableCell>
-                    <TableCell className="text-sm">{getFacultyName(user.faculty ?? null)}</TableCell>
-                    <TableCell>{user.isBanned ? <Badge variant="destructive">Diblokir</Badge> : user.isWarned ? <Badge variant="outline" className="border-amber-500 text-amber-600">Warning</Badge> : user.isVerified ? <Badge variant="default" className="bg-primary-500">Aktif</Badge> : <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">Belum Verif</Badge>}</TableCell>
-                    <TableCell className="text-sm">{user.joinedAt}</TableCell>
-                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewUser(user)}><Eye className="h-4 w-4" /></Button>{user.isBanned ? <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-600" onClick={() => handleUnbanUser(user)}><UserCheck className="h-4 w-4" /></Button> : <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleBanUser(user)}><Ban className="h-4 w-4" /></Button>}</div></TableCell>
+            <div className="overflow-x-auto border rounded-md">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[30%]">User</TableHead>
+                    <TableHead className="w-[20%]">Email</TableHead>
+                    <TableHead className="w-[20%]">Fakultas</TableHead>
+                    <TableHead className="w-[15%]">Status</TableHead>
+                    <TableHead className="w-[10%]">Bergabung</TableHead>
+                    <TableHead className="w-[5%] text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2"><Avatar className="h-8 w-8">{user.avatar && <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />}<AvatarFallback className={`text-xs ${user.isBanned ? "bg-red-100 text-red-700" : "bg-primary-100 text-primary-700"}`}>{getInitials(user.name)}</AvatarFallback></Avatar><div><p className="font-medium text-sm">{user.name}</p><p className="text-xs text-muted-foreground">{user.phone || "-"}</p></div></div>
+                      </TableCell>
+                      <TableCell className="text-sm">{user.email}</TableCell>
+                      <TableCell className="text-sm">{getFacultyName(user.faculty ?? null)}</TableCell>
+                      <TableCell>{user.isBanned ? <Badge variant="destructive">Diblokir</Badge> : user.isWarned ? <Badge variant="outline" className="border-amber-500 text-amber-600">Warning</Badge> : user.isVerified ? <Badge variant="default" className="bg-primary-500">Aktif</Badge> : <Badge variant="default" className="bg-secondary text-white hover:bg-secondary/90 border-transparent">Belum Verif</Badge>}</TableCell>
+                      <TableCell className="text-sm">{user.joinedAt}</TableCell>
+                      <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewUser(user)}><Eye className="h-4 w-4" /></Button>{user.isBanned ? <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-600" onClick={() => handleUnbanUser(user)}><UserCheck className="h-4 w-4" /></Button> : <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleBanUser(user)}><Ban className="h-4 w-4" /></Button>}</div></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {renderPagination(currentPage, totalPages, setUserPage)}
           </>
         )}

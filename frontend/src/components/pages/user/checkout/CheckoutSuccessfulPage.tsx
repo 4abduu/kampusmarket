@@ -36,7 +36,7 @@ export default function CheckoutSuccessfulPage({
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-primary-50 to-white dark:from-primary-950/30 dark:to-background">
+    <div className={`min-h-[calc(100vh-64px)] bg-gradient-to-b ${isServiceOrder ? "from-purple-50 dark:from-purple-950/30" : "from-primary-50 dark:from-primary-950/30"} to-white dark:to-background`}>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* ── Header ── */}
         <CheckoutSuccessHeader 
@@ -132,15 +132,15 @@ export default function CheckoutSuccessfulPage({
         <Card className="mb-6">
           <CardContent className="p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary-600" />
+              <Clock className={`h-5 w-5 ${isServiceOrder ? "text-purple-600" : "text-primary-600"}`} />
               Langkah Selanjutnya
             </h2>
 
             <div className="space-y-3">
               {getNextSteps().map((step, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-medium text-primary-600">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isServiceOrder ? "bg-purple-100 dark:bg-purple-900/50" : "bg-primary-100 dark:bg-primary-900/50"}`}>
+                    <span className={`text-sm font-medium ${isServiceOrder ? "text-purple-600" : "text-primary-600"}`}>
                       {index + 1}
                     </span>
                   </div>
@@ -154,14 +154,14 @@ export default function CheckoutSuccessfulPage({
 
         {/* ── Contact seller ── */}
         {!isMultiOrder && (
-          <Card className="mb-6 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
+          <Card className={`mb-6 ${firstOrderData?.isService ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" : "bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800"}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-primary-800 dark:text-primary-200">
+                  <p className={`font-medium ${firstOrderData?.isService ? "text-purple-800 dark:text-purple-200" : "text-primary-800 dark:text-primary-200"}`}>
                     Ada pertanyaan?
                   </p>
-                  <p className="text-sm text-primary-700 dark:text-primary-300">
+                  <p className={`text-sm ${firstOrderData?.isService ? "text-purple-700 dark:text-purple-300" : "text-primary-700 dark:text-primary-300"}`}>
                     Hubungi {firstOrderData?.isService ? "penyedia jasa" : "penjual"} untuk info lebih lanjut
                   </p>
                 </div>
@@ -169,7 +169,7 @@ export default function CheckoutSuccessfulPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-primary-300 dark:border-primary-700"
+                    className={firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}
                     onClick={() => onNavigate("chat", { productId: firstOrderData?.product?.id, chatAction: "chat" })}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
@@ -178,7 +178,7 @@ export default function CheckoutSuccessfulPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-primary-300 dark:border-primary-700"
+                    className={firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}
                     onClick={() => openWhatsApp(orders[0]?.seller?.phone, orders[0]?.seller?.name || "Penjual", orders[0]?.productTitle || orders[0]?.product?.title || "Pesanan", firstOrderData?.isService)}
                   >
                     <Phone className="h-4 w-4 mr-1" />
@@ -194,7 +194,7 @@ export default function CheckoutSuccessfulPage({
         <div className="space-y-3">
           {isMultiOrder ? (
             <Button
-              className="w-full bg-primary-600 hover:bg-primary-700"
+              className={`w-full ${isServiceOrder ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-primary-600 hover:bg-primary-700"}`}
               size="lg"
               onClick={() => onNavigate("orders")}
             >
@@ -203,7 +203,7 @@ export default function CheckoutSuccessfulPage({
             </Button>
           ) : (
             <Button
-              className="w-full bg-primary-600 hover:bg-primary-700"
+              className={`w-full ${firstOrderData?.isService ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-primary-600 hover:bg-primary-700"}`}
               size="lg"
               onClick={() =>
                 firstOrderData?.id
@@ -243,21 +243,21 @@ export default function CheckoutSuccessfulPage({
         <nav className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-8">
           <button
             onClick={() => onNavigate("landing")}
-            className="hover:text-primary-600"
+            className={`hover:${isServiceOrder ? "text-purple-600" : "text-primary-600"}`}
           >
             Beranda
           </button>
           <ChevronRight className="h-4 w-4" />
           <button
             onClick={() => onNavigate("cart")}
-            className="hover:text-primary-600"
+            className={`hover:${isServiceOrder ? "text-purple-600" : "text-primary-600"}`}
           >
             Keranjang
           </button>
           <ChevronRight className="h-4 w-4" />
           <button
             onClick={() => onNavigate("checkout")}
-            className="hover:text-primary-600"
+            className={`hover:${isServiceOrder ? "text-purple-600" : "text-primary-600"}`}
           >
             Checkout
           </button>

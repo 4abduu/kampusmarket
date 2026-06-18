@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Briefcase, CreditCard } from "lucide-react";
+import { Briefcase, CreditCard, Star } from "lucide-react";
 import type { ExtractedOrderData } from "../../hooks/useCheckoutSuccessful";
 import { formatPrice, getServiceMethodLabel } from "../../hooks/useCheckoutSuccessful";
 
@@ -18,8 +18,8 @@ export default function ServiceBookingCard({ orderData }: ServiceBookingCardProp
         </h2>
 
         <div className="flex gap-4">
-          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0">
-            <Briefcase className="h-8 w-8 text-muted-foreground/30" />
+          <div className="w-16 h-16 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center shrink-0">
+            <Briefcase className="h-8 w-8 text-purple-600/60" />
           </div>
           <div className="flex-1">
             <p className="font-medium">
@@ -33,9 +33,11 @@ export default function ServiceBookingCard({ orderData }: ServiceBookingCardProp
               Penyedia: {orderData.product.seller.name}
             </p>
             {orderData.product.seller.rating !== undefined && (
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Rating: {orderData.product.seller.rating.toFixed(1)} ⭐ • {orderData.product.seller.totalOrders} pesanan
-              </p>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                <span>Rating: {orderData.product.seller.rating.toFixed(1)}</span>
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                <span>• {orderData.product.seller.totalOrders} pesanan</span>
+              </div>
             )}
           </div>
         </div>
@@ -53,7 +55,7 @@ export default function ServiceBookingCard({ orderData }: ServiceBookingCardProp
 
         <div className="flex justify-between font-bold text-lg">
           <span>Total Pembayaran</span>
-          <span className="text-primary-600">
+          <span className="text-purple-600">
             {formatPrice(orderData.total || 0)}
           </span>
         </div>
@@ -62,15 +64,9 @@ export default function ServiceBookingCard({ orderData }: ServiceBookingCardProp
           <div className="flex items-center gap-2 mb-2">
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">
-              Metode Layanan: {orderData.shippingMethod}
+              Metode Layanan: {orderData.serviceMethod ? getServiceMethodLabel(orderData.serviceMethod).label : orderData.shippingMethod}
             </span>
           </div>
-
-          {orderData.serviceMethod && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {getServiceMethodLabel(orderData.serviceMethod).label}
-            </p>
-          )}
         </div>
       </CardContent>
     </Card>

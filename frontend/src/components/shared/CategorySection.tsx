@@ -10,15 +10,15 @@ export default function CategorySection({
   onSelect,
 }: CategorySectionProps) {
   return (
-    <div>
-      <h3 className="font-semibold mb-3">Kategori</h3>
-      <div className="space-y-2">
+    <div className="pb-2">
+      <h3 className="font-semibold text-sm tracking-tight mb-4 text-slate-900 dark:text-slate-100">Kategori</h3>
+      <div className="space-y-1">
         <button
           onClick={() => onSelect(null)}
-          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             selected === null
-              ? "border border-primary text-primary bg-transparent"
-              : "hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
           }`}
         >
           Semua Kategori
@@ -27,10 +27,10 @@ export default function CategorySection({
           <button
             key={category.id}
             onClick={() => onSelect(category.id)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
               selected === category.id
-                ? "border border-primary text-primary bg-transparent"
-                : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             {category.label}

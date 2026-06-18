@@ -13,10 +13,10 @@ export default function CheckoutSuccessHeader({
 }: CheckoutSuccessHeaderProps) {
   return (
     <div className="text-center mb-8">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/50 mb-4">
-        <CheckCircle2 className="h-12 w-12 text-primary-600" />
+      <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${!isMultiOrder && isServiceOrder ? "bg-purple-100 dark:bg-purple-900/50" : "bg-primary-100 dark:bg-primary-900/50"}`}>
+        <CheckCircle2 className={`h-12 w-12 ${!isMultiOrder && isServiceOrder ? "text-purple-600" : "text-primary-600"}`} />
       </div>
-      <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-2">
+      <h1 className={`text-2xl font-bold mb-2 ${!isMultiOrder && isServiceOrder ? "text-purple-700 dark:text-purple-400" : "text-primary-700 dark:text-primary-400"}`}>
         {isMultiOrder
           ? `${ordersCount} Pesanan Berhasil Dibuat!`
           : isServiceOrder
