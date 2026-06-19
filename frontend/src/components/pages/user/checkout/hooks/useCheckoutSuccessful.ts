@@ -48,6 +48,12 @@ export function extractOrderData(order: Order) {
     (order as any)?.productTitle ||
     (order as any)?.product_title ||
     "Produk";
+
+  const productImages = Array.isArray((order as any)?.product?.images)
+    ? (order as any).product.images
+        .map((image: any) => (typeof image === "string" ? image : image?.url))
+        .filter(Boolean)
+    : [];
   
   const sellerName =
     (order as any)?.seller?.name ||
@@ -72,6 +78,7 @@ export function extractOrderData(order: Order) {
     product: {
       id: order.product?.id || order.product?.uuid || "",
       title: productTitle,
+      images: productImages,
       price: Number(
         (order as any)?.finalPrice || (order as any)?.final_price || 0
       ),

@@ -19,6 +19,7 @@ export interface CheckoutProduct {
   durationMin?: number;
   durationMax?: number;
   durationUnit?: string;
+  images?: string[];
   seller?: CheckoutSeller;
 }
 
