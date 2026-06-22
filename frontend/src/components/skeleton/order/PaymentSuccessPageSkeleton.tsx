@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PaymentSuccessPageSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-primary-50 to-white dark:from-primary-950/30 dark:to-background">
+    <div className="min-h-[calc(100vh-64px)] bg-muted/40">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="text-center mb-8">
           <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />

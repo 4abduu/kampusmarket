@@ -80,7 +80,7 @@ export default function ProfileServicesTab({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" className="lg:hidden">
@@ -88,14 +88,20 @@ export default function ProfileServicesTab({
               Filter
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Filter Jasa</SheetTitle>
-              <SheetDescription>
-                Filter jasa sesuai kebutuhanmu
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6 space-y-6">
+          <SheetContent
+            side="bottom"
+            className="w-full sm:max-w-none rounded-t-2xl max-h-[85vh] flex flex-col p-0 gap-0"
+          >
+            <div className="px-5 pt-3 pb-2 shrink-0">
+              <div className="mx-auto h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700 mb-3" />
+              <SheetHeader className="text-left p-0">
+                <SheetTitle className="text-lg">Filter Jasa</SheetTitle>
+                <SheetDescription>
+                  Filter jasa sesuai kebutuhanmu
+                </SheetDescription>
+              </SheetHeader>
+            </div>
+            <div className="px-5 pb-5 overflow-y-auto flex-1 space-y-6">
               <div>
                 <h3 className="font-semibold mb-3">Kategori Jasa</h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -165,7 +171,7 @@ export default function ProfileServicesTab({
         </Sheet>
 
         <Select value={serviceSortBy} onValueChange={setServiceSortBy}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Urutkan" />
           </SelectTrigger>
           <SelectContent>

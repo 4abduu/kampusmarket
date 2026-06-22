@@ -105,7 +105,7 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950/50">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-950/50">
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <FavoritesHeader stats={stats} />
 

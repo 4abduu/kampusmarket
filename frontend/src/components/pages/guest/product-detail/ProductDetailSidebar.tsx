@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
+import StickyActionBar from "@/components/shared/StickyActionBar";
 import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
 import { Calendar, Clock, Eye, Flag, Heart, MapPin, MessageCircle, Phone, Share2, Shield, Star, Truck, User, ShoppingCart, Loader2 } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -345,8 +346,8 @@ export default function ProductDetailSidebar({
                 )}
               </div>
 
-              {/* Mobile Sticky CTA */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-background border-t z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+              {/* Mobile Sticky CTA — duduk di atas bottom nav, lihat StickyActionBar */}
+              <StickyActionBar hideFrom="md">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -377,7 +378,7 @@ export default function ProductDetailSidebar({
                     ) : product.stock === 0 ? "STOK HABIS" : "Beli Sekarang"}
                   </Button>
                 </div>
-              </div>
+              </StickyActionBar>
 
               <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes shake {

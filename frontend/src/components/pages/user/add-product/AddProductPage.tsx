@@ -234,19 +234,19 @@ export default function AddProductPage({ onNavigate }: AddProductPageProps) {
   const currentCategories = productType === "barang" ? barangCategories : jasaCategories;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8 max-w-4xl">
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Tambah Produk Baru</h1>
-            <p className="text-muted-foreground">Jual barang atau tawarkan jasa kamu</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold">Tambah Produk Baru</h1>
+            <p className="text-xs sm:text-base text-muted-foreground">Jual barang atau tawarkan jasa kamu</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <AddProductTypeSelector productType={productType} setProductType={setProductType} />
 
           <AddProductBasicInfoSection

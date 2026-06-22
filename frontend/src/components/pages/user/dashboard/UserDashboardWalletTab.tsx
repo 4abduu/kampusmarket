@@ -121,7 +121,7 @@ export default function UserDashboardWalletTab({
               <p className="text-primary-100 text-xs sm:text-sm">Saldo Tersedia</p>
               <div className="flex items-center gap-2 mt-1">
                 {isLoadingStats ? (
-                  <Skeleton className="h-7 sm:h-9 w-40 sm:w-52 bg-white/20" />
+                  <Skeleton className="h-7 sm:h-9 w-40 sm:w-52" />
                 ) : (
                   <h2 className="text-xl sm:text-3xl font-bold truncate">{showBalance ? formatPrice(currentWalletBalance) : "Rp ••••••••"}</h2>
                 )}
@@ -136,7 +136,7 @@ export default function UserDashboardWalletTab({
             <div className="bg-white/10 rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2 text-primary-100 text-xs sm:text-sm mb-1"><ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />Masuk</div>
               {isLoadingStats ? (
-                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28 bg-white/20" />
+                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28" />
               ) : (
                 <p className="font-bold text-sm sm:text-base truncate">{showBalance ? formatPrice(totalIncome) : "Rp ••••••••"}</p>
               )}
@@ -144,7 +144,7 @@ export default function UserDashboardWalletTab({
             <div className="bg-white/10 rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2 text-primary-100 text-xs sm:text-sm mb-1"><ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />Keluar</div>
               {isLoadingStats ? (
-                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28 bg-white/20" />
+                <Skeleton className="h-5 sm:h-6 w-24 sm:w-28" />
               ) : (
                 <p className="font-bold text-sm sm:text-base truncate">{showBalance ? formatPrice(totalExpense) : "Rp ••••••••"}</p>
               )}

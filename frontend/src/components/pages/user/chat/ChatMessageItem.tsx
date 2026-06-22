@@ -117,7 +117,7 @@ export default function ChatMessageItem({
   return (
     <div className={`flex group ${isMe ? 'justify-end' : 'justify-start'} items-center gap-2`}>
       {!isMe && (
-        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 shrink-0 transition-opacity" onClick={() => onReportMessage(message)} title="Laporkan Pesan">
+        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-40 sm:opacity-0 sm:group-hover:opacity-100 text-red-500 shrink-0 transition-opacity" onClick={() => onReportMessage(message)} title="Laporkan Pesan">
           <AlertTriangle className="h-3 w-3" />
         </Button>
       )}

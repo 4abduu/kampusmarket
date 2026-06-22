@@ -41,7 +41,7 @@ export default function UserDashboardOrdersTabSkeleton({ itemCount = 3 }: Orders
                     </div>
                     <Skeleton className="h-6 w-24" />
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg mb-3">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg mb-3">
                     <div className="grid grid-cols-2 gap-2">
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-4 w-32" />
@@ -75,7 +75,7 @@ export default function UserDashboardOrdersTabSkeleton({ itemCount = 3 }: Orders
                     </div>
                     <Skeleton className="h-6 w-24" />
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg mb-3">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg mb-3">
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-full" />

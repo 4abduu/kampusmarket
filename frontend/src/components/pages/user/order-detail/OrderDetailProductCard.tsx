@@ -129,27 +129,26 @@ export default function OrderDetailProductCard({
 
         <Separator />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div 
-            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 -ml-2 rounded-lg transition-colors"
+            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 -ml-2 rounded-lg transition-colors min-w-0 flex-1"
             onClick={() => {
               const targetId = isSellerView ? order.buyer?.id || order.buyer?.uuid : order.seller?.id || order.seller?.uuid;
               if (targetId) onNavigate("profile", { id: targetId });
             }}
           >
-            <Avatar>
+            <Avatar className="shrink-0">
               <AvatarImage src={isSellerView ? order.buyer?.avatar : order.seller?.avatar} alt={isSellerView ? order.buyer?.name : order.seller?.name} />
               <AvatarFallback className={isService ? "bg-purple-100 text-purple-700" : "bg-primary-100 text-primary-700"}>
                 {((isSellerView ? order.buyer?.name : order.seller?.name) || "U").split(" ").map((name: string) => name[0]).join("")}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <p className="font-medium hover:text-primary-600 transition-colors">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
-              <p className="text-sm text-muted-foreground">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium hover:text-primary-600 transition-colors truncate">{isSellerView ? order.buyer?.name || "Pembeli" : order.seller?.name || "Penjual"}</p>
+              <p className="text-sm text-muted-foreground truncate">{isSellerView ? (order.buyer?.phone || order.buyer?.email) : (order.seller?.phone || order.seller?.email) || ""}</p>
             </div>
           </div>
-          <div className="flex-1"></div>
-          <Button variant="outline" size="sm" onClick={() => {
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => {
             const chatPayload: any = { 
               productId: order.product?.id || order.product?.uuid,
               chatAction: "chat"
@@ -162,8 +161,8 @@ export default function OrderDetailProductCard({
             }
             onNavigate("chat", chatPayload);
           }}>
-            <MessageCircle className="h-4 w-4 mr-1" />
-            Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
+            <MessageCircle className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}</span>
           </Button>
         </div>
       </CardContent>

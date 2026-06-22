@@ -284,12 +284,12 @@ export default function ServicesPage({
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Katalog Jasa</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Katalog Jasa</h1>
+          <p className="text-xs sm:text-base text-muted-foreground">
             Temukan jasa profesional dari mahasiswa terdekat
           </p>
         </div>
@@ -331,7 +331,7 @@ export default function ServicesPage({
               </div>
 
               <div className="flex gap-2">
-                {/* Mobile Filter */}
+                {/* Mobile Filter — bottom sheet, lebih natural di mobile daripada slide-in samping */}
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" className="lg:hidden flex-1 justify-center rounded-full border-slate-300">
@@ -339,16 +339,20 @@ export default function ServicesPage({
                       Filter & Urutkan
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[85vw] sm:w-80 overflow-y-auto bg-background p-0">
-                    <div className="p-6 pb-0">
-                      <SheetHeader className="text-left">
-                        <SheetTitle className="text-xl">Filter Jasa</SheetTitle>
+                  <SheetContent
+                    side="bottom"
+                    className="w-full sm:max-w-none rounded-t-2xl max-h-[85vh] flex flex-col p-0 gap-0"
+                  >
+                    <div className="px-5 pt-3 pb-2 shrink-0">
+                      <div className="mx-auto h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700 mb-3" />
+                      <SheetHeader className="text-left p-0">
+                        <SheetTitle className="text-lg">Filter Jasa</SheetTitle>
                         <SheetDescription>
                           Pilih filter sesuai kebutuhanmu
                         </SheetDescription>
                       </SheetHeader>
                     </div>
-                    <div className="p-6">
+                    <div className="px-5 pb-5 overflow-y-auto flex-1">
                       <ServicesFilterSidebar {...filterSidebarProps} />
                     </div>
                   </SheetContent>
@@ -483,14 +487,6 @@ export default function ServicesPage({
                             imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             fallbackImageUrl="https://placehold.net/default.svg"
                           />
-                          {/* Desktop Badge */}
-                          <Badge className="absolute top-2 left-2 hidden md:inline-flex">
-                            {service.category?.name || "Jasa"}
-                          </Badge>
-                          {/* Mobile Badge */}
-                          <Badge className="absolute top-1.5 left-1.5 px-1.5 py-0 text-[9px] bg-slate-900/70 text-white border-0 backdrop-blur-sm md:hidden">
-                            {service.category?.name || "Jasa"}
-                          </Badge>
                         </div>
                         <CardContent className="p-2 md:p-4 flex flex-col flex-grow">
                           <p className="font-medium text-xs md:text-base line-clamp-2 mb-1 md:mb-2 group-hover:text-primary-600 transition-colors leading-snug">
@@ -578,9 +574,7 @@ export default function ServicesPage({
                           <CardContent className="flex-1 p-4">
                             <div className="flex justify-between">
                               <div>
-                                <Badge variant="outline" className="mb-1">
-                                  {service.category?.name || "Jasa"}
-                                </Badge>
+                                
                                 <p className="font-medium mb-1 group-hover:text-primary-600 transition-colors">
                                   {service.title}
                                 </p>

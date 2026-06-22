@@ -43,7 +43,7 @@ export default function FavoritesFilterBar({
       </div>
       <div className="flex items-center gap-2">
         <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}>
-          <SelectTrigger className="h-9 w-full text-sm sm:w-[130px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-9 flex-1 min-w-0 text-sm sm:w-[130px] sm:flex-none"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua</SelectItem>
             <SelectItem value="barang">Barang</SelectItem>
@@ -51,7 +51,7 @@ export default function FavoritesFilterBar({
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-          <SelectTrigger className="h-9 w-full text-sm sm:w-[165px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-9 flex-1 min-w-0 text-sm sm:w-[165px] sm:flex-none"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="terbaru">Terbaru</SelectItem>
             <SelectItem value="rating">Rating tertinggi</SelectItem>

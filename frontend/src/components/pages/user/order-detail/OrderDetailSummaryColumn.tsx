@@ -77,7 +77,7 @@ export default function OrderDetailSummaryColumn({
   shippingNotesStr,
 }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{isService ? "Info Layanan" : "Info Pengiriman"}</CardTitle>
@@ -111,19 +111,19 @@ export default function OrderDetailSummaryColumn({
             </div>
           )}
 
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => {
+          <div className="flex gap-2 sm:gap-3">
+            <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm h-9 sm:h-10" onClick={() => {
               if (!isSellerView && productId) {
                 onNavigate("chat", { productId, sellerId, chatAction: "chat" });
               } else if (isSellerView && productId) {
                 onNavigate("chat", { productId, buyerId, sellerId, chatAction: "chat" });
               }
             }}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}
+              <MessageCircle className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+              <span className="truncate">Chat {isSellerView ? (isService ? "Pemesan" : "Pembeli") : (isService ? "Penyedia" : "Penjual")}</span>
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => openWhatsApp(partnerPhone, partnerName || (isSellerView ? 'Pembeli' : 'Penjual'), productTitle || 'Pesanan', isService)}>
-              <Phone className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm h-9 sm:h-10" onClick={() => openWhatsApp(partnerPhone, partnerName || (isSellerView ? 'Pembeli' : 'Penjual'), productTitle || 'Pesanan', isService)}>
+              <Phone className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
               WhatsApp
             </Button>
           </div>
@@ -252,15 +252,15 @@ export default function OrderDetailSummaryColumn({
       </div>
 
       <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">No. {isService ? "Booking" : "Pesanan"}</p>
-              <p className="font-medium font-mono">{orderNumber}</p>
+        <CardContent className="p-3 sm:p-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
+            <div className="min-w-0">
+              <p className="text-muted-foreground text-xs sm:text-sm">No. {isService ? "Booking" : "Pesanan"}</p>
+              <p className="font-medium font-mono text-xs sm:text-sm break-all">{orderNumber}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground">Tanggal</p>
-              <p className="font-medium">{createdAt}</p>
+            <div className="min-w-0">
+              <p className="text-muted-foreground text-xs sm:text-sm">Tanggal</p>
+              <p className="font-medium text-xs sm:text-sm">{createdAt}</p>
             </div>
           </div>
         </CardContent>

@@ -907,7 +907,7 @@ export default function ChatPage({ onNavigate, initialContextId, initialSellerId
     <>
       {chatLoading && !chatDetail && <PageLoadingOverlay message="Membuka chat..." />}
       <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100dvh-112px-var(--bottom-nav-h))] lg:h-[calc(100dvh-112px)]">
           <ChatListPanel
             chats={chats}
           selectedChatId={activeChatId}

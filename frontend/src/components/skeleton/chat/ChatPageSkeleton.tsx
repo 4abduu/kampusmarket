@@ -4,10 +4,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ChatPageSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto h-[calc(100vh-64px)] flex">
         {/* Chat List */}
-        <div className="w-80 border-r bg-white dark:bg-slate-800">
+        <div className="w-80 border-r bg-white dark:bg-gray-800">
           {/* Search */}
           <div className="p-4 border-b space-y-3">
             <Skeleton className="h-6 w-24" />
@@ -17,7 +17,7 @@ export default function ChatPageSkeleton() {
           {/* Chat Rooms */}
           <div className="divide-y">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer space-y-3">
+              <div key={i} className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer space-y-3">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-12 w-12 rounded-full shrink-0" />
                   <div className="flex-1 space-y-2">
@@ -31,7 +31,7 @@ export default function ChatPageSkeleton() {
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-slate-800">
+        <div className="flex-1 flex flex-col bg-white dark:bg-gray-800">
           {/* Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">

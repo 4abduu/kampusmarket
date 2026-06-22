@@ -122,19 +122,19 @@ export default function CartPage({ onNavigate }: CartPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+      <div className="min-h-[calc(100dvh-64px)] flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8 pb-32 lg:pb-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8 pb-[calc(var(--bottom-nav-h)+4.5rem)] lg:pb-8">
         <CartHeader itemCount={cartItems.length} onNavigate={onNavigate} />
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 min-w-0">
             {cartItems.length > 0 ? (
               <>
                 <CartSelectAllCard

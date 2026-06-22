@@ -59,29 +59,31 @@ export default function AddressSection({
                   <label
                     key={address.id}
                     htmlFor={address.id}
-                    className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
+                    className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border cursor-pointer transition-all ${
                       selectedAddressId === address.id
                         ? "border-primary-600 bg-primary-50 dark:bg-primary-900/20"
                         : "hover:border-slate-300"
                     }`}
                   >
-                    <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <AddressIcon className="h-4 w-4 text-primary-600" />
-                        <span className="font-medium">{address.label}</span>
-                        {address.isPrimary && (
-                          <Badge variant="outline" className="text-xs border-primary-500 text-primary-600">
-                            Utama
-                          </Badge>
-                        )}
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <RadioGroupItem value={address.id} id={address.id} className="mt-1 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <AddressIcon className="h-4 w-4 text-primary-600 shrink-0" />
+                          <span className="font-medium text-sm sm:text-base">{address.label}</span>
+                          {address.isPrimary && (
+                            <Badge variant="outline" className="text-xs border-primary-500 text-primary-600">
+                              Utama
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-medium text-sm sm:text-base mt-1">{address.recipient}</p>
+                        {address.phone && <p className="text-xs sm:text-sm text-muted-foreground">{address.phone}</p>}
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{address.address}</p>
+                        {address.notes && <p className="text-xs text-muted-foreground mt-1 italic">{address.notes}</p>}
                       </div>
-                      <p className="font-medium mt-1">{address.recipient}</p>
-                      {address.phone && <p className="text-sm text-muted-foreground">{address.phone}</p>}
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{address.address}</p>
-                      {address.notes && <p className="text-xs text-muted-foreground mt-1 italic">{address.notes}</p>}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1 self-end sm:self-start shrink-0">
                       {!address.isPrimary && (
                         <Button
                           variant="ghost"

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/components/pages/user/cart/cart.utils";
+import StickyActionBar from "@/components/shared/StickyActionBar";
 
 const MAX_CHECKOUT_ITEMS = 5;
 
@@ -24,7 +25,7 @@ export default function CartSummaryCard({
   return (
     <>
       {/* Desktop Card */}
-      <Card className="hidden lg:block sticky top-20">
+      <Card className="hidden lg:block sticky top-20 min-w-0">
         <CardHeader>
           <CardTitle className="text-lg">Ringkasan Belanja</CardTitle>
         </CardHeader>
@@ -71,8 +72,8 @@ export default function CartSummaryCard({
         </CardContent>
       </Card>
 
-      {/* Mobile Sticky Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 pb-safe">
+      {/* Mobile Sticky Bar — duduk di atas bottom nav, lihat StickyActionBar */}
+      <StickyActionBar className="!p-0">
         {isOverLimit && (
           <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 flex items-center gap-2 border-b border-amber-200 dark:border-amber-800">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
@@ -94,7 +95,7 @@ export default function CartSummaryCard({
             Checkout ({selectedCount})
           </Button>
         </div>
-      </div>
+      </StickyActionBar>
     </>
   );
 }

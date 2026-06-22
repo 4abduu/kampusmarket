@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function ProductDetailPageSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex gap-2 mb-6">

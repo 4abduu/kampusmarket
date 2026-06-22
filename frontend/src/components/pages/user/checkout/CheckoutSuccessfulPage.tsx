@@ -36,8 +36,8 @@ export default function CheckoutSuccessfulPage({
   }
 
   return (
-    <div className={`min-h-[calc(100vh-64px)] bg-gradient-to-b ${isServiceOrder ? "from-purple-50 dark:from-purple-950/30" : "from-primary-50 dark:from-primary-950/30"} to-white dark:to-background`}>
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className={`min-h-[calc(100dvh-64px)] bg-gradient-to-b ${isServiceOrder ? "from-purple-50 dark:from-purple-950/30" : "from-primary-50 dark:from-primary-950/30"} to-white dark:to-background`}>
+      <div className="container mx-auto px-4 py-5 sm:py-8 max-w-2xl">
         {/* ── Header ── */}
         <CheckoutSuccessHeader 
           isMultiOrder={isMultiOrder} 
@@ -54,17 +54,17 @@ export default function CheckoutSuccessfulPage({
                 className="border-primary-100 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => onNavigate("order-detail", orderData.id)}
               >
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex-1">
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       {orderData.isService ? (
                         <>
-                          <Briefcase className="h-4 w-4 text-purple-600" />
+                          <Briefcase className="h-4 w-4 text-purple-600 shrink-0" />
                           <span className="font-medium text-sm">Booking Jasa</span>
                         </>
                       ) : (
                         <>
-                          <Package className="h-4 w-4 text-primary-600" />
+                          <Package className="h-4 w-4 text-primary-600 shrink-0" />
                           <span className="font-medium text-sm">Pesanan Barang</span>
                         </>
                       )}
@@ -79,35 +79,38 @@ export default function CheckoutSuccessfulPage({
                     )}
                     <p className="text-xs text-muted-foreground">#{orderData.orderId}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                    <div className="text-left sm:text-right">
                       <p className="font-semibold text-primary-600">{formatPrice(orderData.total)}</p>
                       <p className="text-xs text-muted-foreground">Status: Menunggu Konfirmasi</p>
                     </div>
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate("chat", { productId: orderData.product.id, chatAction: "chat" });
-                      }}
-                      className="shrink-0 border-primary-300 dark:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-950/20"
-                    >
-                      <MessageCircle className="h-3 w-3 mr-1" />
-                      Chat
-                    </Button>
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate("order-detail", orderData.id);
-                      }}
-                      className="shrink-0"
-                    >
-                      Lihat Detail
-                      <ChevronRight className="h-3 w-3 ml-1" />
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate("chat", { productId: orderData.product.id, chatAction: "chat" });
+                        }}
+                        className="shrink-0 border-primary-300 dark:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-950/20"
+                      >
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        Chat
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate("order-detail", orderData.id);
+                        }}
+                        className="shrink-0"
+                      >
+                        <span className="hidden sm:inline">Lihat Detail</span>
+                        <span className="sm:hidden">Detail</span>
+                        <ChevronRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -129,8 +132,8 @@ export default function CheckoutSuccessfulPage({
         )}
 
         {/* ── Next Steps ── */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-4 sm:p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2">
               <Clock className={`h-5 w-5 ${isServiceOrder ? "text-purple-600" : "text-primary-600"}`} />
               Langkah Selanjutnya
@@ -156,7 +159,7 @@ export default function CheckoutSuccessfulPage({
         {!isMultiOrder && (
           <Card className={`mb-6 ${firstOrderData?.isService ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" : "bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800"}`}>
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className={`font-medium ${firstOrderData?.isService ? "text-purple-800 dark:text-purple-200" : "text-primary-800 dark:text-primary-200"}`}>
                     Ada pertanyaan?
@@ -169,7 +172,7 @@ export default function CheckoutSuccessfulPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    className={firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}
+                    className={`flex-1 sm:flex-none ${firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}`}
                     onClick={() => onNavigate("chat", { productId: firstOrderData?.product?.id, chatAction: "chat" })}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
@@ -178,7 +181,7 @@ export default function CheckoutSuccessfulPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    className={firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}
+                    className={`flex-1 sm:flex-none ${firstOrderData?.isService ? "border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-700 dark:text-purple-300" : "border-primary-300 dark:border-primary-700"}`}
                     onClick={() => openWhatsApp(orders[0]?.seller?.phone, orders[0]?.seller?.name || "Penjual", orders[0]?.productTitle || orders[0]?.product?.title || "Pesanan", firstOrderData?.isService)}
                   >
                     <Phone className="h-4 w-4 mr-1" />
@@ -240,7 +243,7 @@ export default function CheckoutSuccessfulPage({
         </div>
 
         {/* ── Breadcrumb ── */}
-        <nav className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-8">
+        <nav className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [ms-overflow-style:none]">
           <button
             onClick={() => onNavigate("landing")}
             className={`hover:${isServiceOrder ? "text-purple-600" : "text-primary-600"}`}

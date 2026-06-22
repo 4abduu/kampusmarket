@@ -191,17 +191,17 @@ export default function OrderHistoryTimeline({
                   className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg p-2 -ml-1 transition-colors"
                   onClick={() => toggleHistoryExpand(id)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {dateStr ? formatShortDate(dateStr) : ""}
                       </span>
                     </div>
                     {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
                   </div>
 

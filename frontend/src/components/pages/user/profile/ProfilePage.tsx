@@ -19,7 +19,7 @@ import ProductDetailReportDialog from "@/components/pages/guest/product-detail/P
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import { useAppToast } from "@/hooks/use-app-toast";
 import apiClient from "@/lib/api/client";
-import { ProfilePageSkeleton } from "@/components/skeleton";
+import { ProfilePageSkeleton, ProfileListSkeleton } from "@/components/skeleton";
 
 type ActiveTab = "products" | "services" | "reviews";
 type ProductSortBy = "terbaru" | "terpopuler" | "termurah" | "termahal";
@@ -399,20 +399,20 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 pb-20">
-      <div className="container mx-auto px-4 py-8">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+    <div className="min-h-dvh bg-slate-50 dark:bg-slate-900/50 pb-20">
+      <div className="container mx-auto px-4 py-5 sm:py-8">
+        <nav className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [ms-overflow-style:none]">
           <button
             onClick={() => onNavigate("landing")}
-            className="hover:text-primary-600"
+            className="hover:text-primary-600 shrink-0"
           >
             Beranda
           </button>
-          <span>/</span>
-          <span className="text-foreground">Profil {user.name}</span>
+          <span className="shrink-0">/</span>
+          <span className="text-foreground truncate">Profil {user.name}</span>
         </nav>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           <ProfileSidebar
             user={user}
             isOwnProfile={isOwnProfile}
@@ -444,18 +444,18 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
             }}
           />
 
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 min-w-0">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full">
-                <TabsTrigger value="products" className="flex-1">
+              <TabsList className="w-full sm:w-full h-auto sm:h-9 flex sm:inline-flex overflow-x-auto sm:overflow-visible justify-start sm:justify-center [scrollbar-width:none] [ms-overflow-style:none] gap-1 p-1">
+                <TabsTrigger value="products" className="flex-none sm:flex-1 whitespace-nowrap px-3">
                   <Package className="h-4 w-4 mr-1" />
                   Produk ({barangProducts.length})
                 </TabsTrigger>
-                <TabsTrigger value="services" className="flex-1">
+                <TabsTrigger value="services" className="flex-none sm:flex-1 whitespace-nowrap px-3">
                   <Briefcase className="h-4 w-4 mr-1" />
                   Jasa ({jasaProducts.length})
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="flex-1">
+                <TabsTrigger value="reviews" className="flex-none sm:flex-1 whitespace-nowrap px-3">
                   <Briefcase className="h-4 w-4 mr-1" />
                   Ulasan ({totalReviews})
                 </TabsTrigger>
@@ -463,11 +463,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
 
               <TabsContent value="products" className="mt-4">
                 {loading && !barangProducts.length ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-                    ))}
-                  </div>
+                  <ProfileListSkeleton count={4} />
                 ) : (
                   <ProfileProductsTab
                     categories={categories}
@@ -487,11 +483,7 @@ export default function ProfilePage({ onNavigate, userId, isLoggedIn, currentUse
 
               <TabsContent value="services" className="mt-4">
                 {loading && !jasaProducts.length ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-                    ))}
-                  </div>
+                  <ProfileListSkeleton count={4} />
                 ) : (
                   <ProfileServicesTab
                     serviceCategories={serviceCategories}

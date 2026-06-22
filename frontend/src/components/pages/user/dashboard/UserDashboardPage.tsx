@@ -262,7 +262,7 @@ export default function UserDashboardPage({
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50 overflow-x-hidden">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50 overflow-x-hidden">
       <div className="container mx-auto px-4 py-4 lg:py-8">
         <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
           <UserDashboardSidebar

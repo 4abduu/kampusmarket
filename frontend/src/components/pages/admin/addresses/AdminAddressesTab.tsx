@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { MapPin, Home, Building, MapPinned, Search, X, RefreshCw, AlertCircle } from "lucide-react";
 import type { AdminAddressUser } from "@/lib/api/admin";
+import { AdminAddressesTabSkeleton } from "@/components/skeleton";
 
 interface Props {
   filteredAddresses: AdminAddressUser[];
@@ -33,56 +34,7 @@ export default function AdminAddressesTab({
 
   // 1. Status Loading (Skeleton loading presisi anti-shift)
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-2">
-                <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                <div className="h-4 w-72 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-              </div>
-              <div className="h-5 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-            </div>
-            <div className="h-10 w-full max-w-md bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 bg-background shadow-sm space-y-2.5">
-              {/* User Section Header Skeleton */}
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800/50">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
-                  <div className="space-y-1.5 flex-1">
-                    <div className="h-3 w-28 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                    <div className="h-2.5 w-40 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                  </div>
-                </div>
-                <div className="h-4.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
-              </div>
-              
-              {/* Card List Row Skeleton */}
-              <div className="flex gap-3 overflow-hidden pb-1 flex-nowrap">
-                {Array.from({ length: 2 }).map((_, j) => (
-                  <div key={j} className="w-[calc(50%-6px)] flex-1 min-w-[520px] max-w-full flex-shrink-0 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 space-y-2 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-6.5 w-6.5 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                      <div className="h-3.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                    </div>
-                    <div className="space-y-1 mt-1">
-                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                      <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                    </div>
-                    <div className="h-2.5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded mt-1" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    );
+    return <AdminAddressesTabSkeleton />;
   }
 
   // 2. Status Galat (Error State Card dengan Retry)

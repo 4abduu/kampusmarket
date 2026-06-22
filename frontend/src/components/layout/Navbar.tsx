@@ -170,7 +170,7 @@ export default function Navbar({
             </Button>
 
             {/* Admin Menu */}
-            <DropdownMenu>
+              <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-800">
                   <Avatar className="h-8 w-8 border-2 border-amber-500/50">
@@ -375,7 +375,7 @@ export default function Navbar({
               </Button>
 
               {/* User Menu */}
-              <DropdownMenu>
+            <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full ml-1">
                     <Avatar className="h-8 w-8">
@@ -630,7 +630,7 @@ export default function Navbar({
     </header>
 
     {/* Bottom Navigation (Mobile Only) */}
-    <div className="fixed bottom-0 left-0 z-40 w-full h-[68px] bg-background/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 flex justify-around items-center pb-safe md:hidden shadow-[0_-8px_16px_rgba(0,0,0,0.03)]">
+    <div className="fixed bottom-0 left-0 z-40 w-full h-[var(--bottom-nav-h)] bg-background/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 flex justify-around items-center pb-safe md:hidden shadow-[0_-8px_16px_rgba(0,0,0,0.03)]">
       <button onClick={() => onNavigate("landing")} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive("landing") ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}`}>
         <Home className={`h-6 w-6 ${isActive("landing") ? "fill-primary-100 text-primary-600" : ""}`} strokeWidth={isActive("landing") ? 2 : 1.5} />
         <span className="text-[10px] font-semibold tracking-wide">Beranda</span>

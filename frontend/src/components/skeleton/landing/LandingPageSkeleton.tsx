@@ -7,7 +7,7 @@ export default function LandingPageSkeleton() {
   return (
     <div className="flex flex-col">
       {/* Hero Section Skeleton */}
-      <section className="min-h-[500px] bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+      <section className="min-h-[500px] bg-muted/40 flex items-center justify-center p-4">
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div className="space-y-6">
@@ -44,7 +44,7 @@ export default function LandingPageSkeleton() {
       </section>
 
       {/* Categories Section Skeleton */}
-      <section className="py-16 px-4 bg-slate-50 dark:bg-slate-900/50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="container mx-auto">
           <Skeleton className="h-10 w-1/3 mx-auto mb-12" />
           <div className="flex gap-2 mb-8 overflow-hidden">
@@ -84,7 +84,7 @@ export default function LandingPageSkeleton() {
       </section>
 
       {/* Services Section Skeleton */}
-      <section className="py-16 px-4 bg-slate-50 dark:bg-slate-900/50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="container mx-auto">
           <Skeleton className="h-10 w-1/3 mx-auto mb-12" />
           <div className="grid md:grid-cols-3 gap-6">
@@ -125,7 +125,7 @@ export default function LandingPageSkeleton() {
       </section>
 
       {/* CTA Section Skeleton */}
-      <section className="py-16 px-4 bg-gradient-to-r from-primary/10 to-secondary/10">
+      <section className="py-16 px-4 bg-muted/40">
         <div className="container mx-auto text-center space-y-6">
           <Skeleton className="h-10 w-1/2 mx-auto" />
           <Skeleton className="h-6 w-2/3 mx-auto" />

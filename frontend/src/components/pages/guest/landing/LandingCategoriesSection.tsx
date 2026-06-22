@@ -38,7 +38,7 @@ export default function LandingCategoriesSection({
   };
 
   return (
-    <section className="py-8" id="categories-section">
+    <section className="py-8 overflow-hidden" id="categories-section">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Kategori</h2>

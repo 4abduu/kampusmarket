@@ -22,7 +22,7 @@ export default function AdminReportsTabSkeleton() {
       <CardContent>
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="border border-slate-100 dark:border-slate-800/80 rounded-xl p-5 bg-white dark:bg-slate-900/10">
+            <div key={i} className="border border-gray-100 dark:border-gray-800/80 rounded-xl p-5 bg-white dark:bg-gray-900/10">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1">
                   <Skeleton className="w-10 h-10 rounded-full shrink-0" />

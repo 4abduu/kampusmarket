@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DetailShareDialog from "@/components/pages/guest/shared/DetailShareDialog";
+import StickyActionBar from "@/components/shared/StickyActionBar";
 import { addFavorite, removeFavorite, checkFavorite } from "@/lib/api/products";
 import {
   AlertCircle,
@@ -304,8 +305,8 @@ export default function ServiceDetailSidebar({
                 </Button>
               </div>
 
-              {/* Mobile Sticky CTA */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-background border-t z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+              {/* Mobile Sticky CTA — duduk di atas bottom nav, lihat StickyActionBar */}
+              <StickyActionBar hideFrom="md">
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" disabled={isNavigatingToChat} onClick={() => onAction(() => { setIsNavigatingToChat(true); onNavigate("chat", { productId: service.id, chatAction: "chat" }); })}>
                     {isNavigatingToChat ? (
@@ -330,7 +331,7 @@ export default function ServiceDetailSidebar({
                     {isNavigatingToCheckout ? "Memproses..." : service.availabilityStatus === "full" ? "Slot Penuh" : "Pesan Jasa"}
                   </Button>
                 </div>
-              </div>
+              </StickyActionBar>
             </>
           )}
 

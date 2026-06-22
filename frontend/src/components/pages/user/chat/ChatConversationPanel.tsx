@@ -3,6 +3,8 @@ import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import ChatConversationPanelSkeleton from '@/components/skeleton/chat/ChatConversationPanelSkeleton';
+import ChatMessagesSkeleton from '@/components/skeleton/chat/ChatMessagesSkeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,25 +120,7 @@ export default function ChatConversationPanel({
       `}
     >
       {isLoading && !chatDetail ? (
-        <div className="flex-1 flex flex-col animate-pulse">
-           <div className="p-4 border-b flex items-center gap-3">
-             <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-full" />
-             <div className="space-y-2">
-               <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
-               <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
-             </div>
-           </div>
-           <div className="flex-1 p-4 space-y-4">
-             <div className="flex justify-start"><div className="h-12 w-48 bg-slate-100 dark:bg-slate-800 rounded-2xl" /></div>
-             <div className="flex justify-end"><div className="h-12 w-32 bg-primary-100 dark:bg-primary-900/20 rounded-2xl" /></div>
-             <div className="flex justify-start"><div className="h-20 w-64 bg-slate-100 dark:bg-slate-800 rounded-2xl" /></div>
-           </div>
-           <div className="p-4 border-t flex gap-2">
-             <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-             <div className="h-10 flex-1 bg-slate-100 dark:bg-slate-800 rounded-lg" />
-             <div className="h-10 w-10 bg-primary-200 dark:bg-primary-900/40 rounded-lg" />
-           </div>
-        </div>
+        <ChatConversationPanelSkeleton />
       ) : chatDetail ? (
         <>
           {/* ── Header ── */}
@@ -229,13 +213,7 @@ export default function ChatConversationPanel({
           {/* ── Messages area ── */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.10),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(51,65,85,0.35),_transparent_55%)]">
             {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'} animate-pulse`}>
-                    <div className={`h-8 rounded-2xl ${i % 2 === 0 ? 'bg-primary-100 dark:bg-primary-900/30 w-40' : 'bg-slate-100 dark:bg-slate-800 w-52'}`} />
-                  </div>
-                ))}
-              </div>
+              <ChatMessagesSkeleton count={4} />
             ) : (
               <div className="space-y-3 sm:space-y-4">
                 {messages.length === 0 && (
@@ -280,12 +258,14 @@ export default function ChatConversationPanel({
           <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 pb-safe sm:pb-4 bg-white/80 dark:bg-slate-900/70 backdrop-blur relative">
             {/* ── Emoji picker ── */}
             {showEmojiPicker && (
-              <div className="absolute bottom-[calc(100%+0.5rem)] left-2 sm:left-4 z-50 shadow-2xl rounded-lg">
+              <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 sm:left-4 sm:right-auto z-50 shadow-2xl rounded-lg">
                 <EmojiPicker
                   onEmojiClick={(emojiObject: any) => onEmojiSelect(emojiObject.emoji)}
                   theme={Theme.AUTO}
                   lazyLoadEmojis={true}
                   searchPlaceHolder="Cari emoji..."
+                  width="100%"
+                  style={{ maxWidth: 320 }}
                 />
               </div>
             )}

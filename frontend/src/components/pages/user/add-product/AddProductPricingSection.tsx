@@ -247,7 +247,7 @@ export default function AddProductPricingSection({
                 <Clock className="h-4 w-4" />
                 Status Ketersediaan <span className="text-red-500">*</span>
               </Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { id: "available", label: "Tersedia", desc: "Siap menerima order", color: "border-purple-500 bg-purple-50 dark:bg-purple-900/20" },
                   { id: "busy", label: "Sibuk", desc: "Tampil info tapi bisa chat", color: "border-amber-500 bg-amber-50 dark:bg-amber-900/20" },

@@ -33,16 +33,16 @@ export default function AddProductServiceMethodSection({
             ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isOnline
                   ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <DollarSign className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">Online</Label>
                 <p className="text-sm text-muted-foreground">Layanan via Zoom, Meet, atau platform online lain</p>
               </div>
@@ -50,7 +50,7 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isOnline}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isOnline: checked })}
-              className="data-[state=checked]:bg-purple-600"
+              className="shrink-0 data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>
@@ -60,16 +60,16 @@ export default function AddProductServiceMethodSection({
             ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isOnsite
                   ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <Home className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">Ke Lokasi Penyedia Jasa</Label>
                 <p className="text-sm text-muted-foreground">Pelanggan datang ke lokasi Anda</p>
               </div>
@@ -77,7 +77,7 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isOnsite}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isOnsite: checked })}
-              className="data-[state=checked]:bg-purple-600"
+              className="shrink-0 data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>
@@ -87,16 +87,16 @@ export default function AddProductServiceMethodSection({
             ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isHomeService
                   ? "bg-purple-100 text-purple-600 dark:bg-purple-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <MapPin className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">Home Service</Label>
                 <p className="text-sm text-muted-foreground">Anda mendatangi lokasi customer</p>
               </div>
@@ -104,7 +104,7 @@ export default function AddProductServiceMethodSection({
             <Switch
               checked={shippingOptions.isHomeService}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isHomeService: checked })}
-              className="data-[state=checked]:bg-purple-600"
+              className="shrink-0 data-[state=checked]:bg-purple-600"
             />
           </div>
         </div>

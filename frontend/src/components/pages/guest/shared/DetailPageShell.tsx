@@ -23,11 +23,11 @@ export default function DetailPageShell({
   const lastIndex = breadcrumbs.length - 1;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
       {topContent}
 
-      <div className="container mx-auto px-4 py-8">
-        <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="container mx-auto px-4 py-5 sm:py-8">
+        <nav className="mb-4 sm:mb-6 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto whitespace-nowrap [scrollbar-width:none] [ms-overflow-style:none]">
           {breadcrumbs.map((item, index) => {
             const isLast = index === lastIndex;
 
@@ -47,9 +47,13 @@ export default function DetailPageShell({
           })}
         </nav>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2 pb-24 lg:pb-0">{mainContent}</div>
-          <div className="pb-24 lg:pb-0">{sidebarContent}</div>
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            {mainContent}
+          </div>
+          <div className="pb-[calc(var(--bottom-nav-h)+4.5rem)] lg:pb-0">
+            {sidebarContent}
+          </div>
         </div>
 
         {bottomContent}

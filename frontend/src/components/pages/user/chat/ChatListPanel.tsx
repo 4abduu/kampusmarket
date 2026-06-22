@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle } from 'lucide-react';
+import ChatListPanelSkeleton from '@/components/skeleton/chat/ChatListPanelSkeleton';
 import type { ApiChat } from '@/components/pages/user/chat/chat.types';
 
 interface Props {
@@ -38,17 +39,7 @@ export default function ChatListPanel({ chats, selectedChatId, showChatList, isL
 
       <ScrollArea className="h-[calc(100%-70px)]">
         {isLoading ? (
-          <div className="p-4 space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-11 h-11 bg-slate-200 dark:bg-slate-700 rounded-full shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
-                  <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ChatListPanelSkeleton count={3} />
         ) : chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <MessageCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />

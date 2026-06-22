@@ -47,7 +47,7 @@ export default function LandingHeroSection({
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
       <div className="container mx-auto px-4 py-10 lg:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             <Badge className="bg-primary-100 text-primary-700 hover:bg-primary-100">
               Khusus Ekosistem Kampus
             </Badge>
@@ -102,7 +102,7 @@ export default function LandingHeroSection({
           </div>
 
           {/* Hero Image/Illustration */}
-          <div className="relative mt-8 lg:mt-0">
+          <div className="relative mt-8 lg:mt-0 min-w-0">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-3xl blur-3xl pointer-events-none" />
             
             {/* Desktop Grid View */}

@@ -404,12 +404,12 @@ export default function CatalogPage({
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-[calc(100dvh-64px)] lg:min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Katalog Barang</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Katalog Barang</h1>
+          <p className="text-xs sm:text-base text-muted-foreground">
             Temukan barang bekas berkualitas dari mahasiswa terdekat
           </p>
         </div>
@@ -451,7 +451,7 @@ export default function CatalogPage({
               </div>
 
               <div className="flex gap-2">
-                {/* Mobile Filter */}
+                {/* Mobile Filter — bottom sheet, lebih natural di mobile daripada slide-in samping */}
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" className="lg:hidden flex-1 justify-center rounded-full border-slate-300">
@@ -459,16 +459,21 @@ export default function CatalogPage({
                       Filter & Urutkan
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[85vw] sm:w-80 overflow-y-auto bg-background p-0">
-                    <div className="p-6 pb-0">
-                      <SheetHeader className="text-left">
-                        <SheetTitle className="text-xl">Filter Produk</SheetTitle>
+                  <SheetContent
+                    side="bottom"
+                    className="w-full sm:max-w-none rounded-t-2xl max-h-[85vh] flex flex-col p-0 gap-0"
+                  >
+                    <div className="px-5 pt-3 pb-2 shrink-0">
+                      {/* Drag handle visual — menandakan ini bisa di-swipe-down */}
+                      <div className="mx-auto h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700 mb-3" />
+                      <SheetHeader className="text-left p-0">
+                        <SheetTitle className="text-lg">Filter Produk</SheetTitle>
                         <SheetDescription>
                           Pilih filter sesuai kebutuhanmu
                         </SheetDescription>
                       </SheetHeader>
                     </div>
-                    <div className="p-6">
+                    <div className="px-5 pb-5 overflow-y-auto flex-1">
                       <CatalogFilterSidebar {...filterSidebarProps} />
                     </div>
                   </SheetContent>

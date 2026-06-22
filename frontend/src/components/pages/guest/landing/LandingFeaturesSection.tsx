@@ -3,7 +3,7 @@ import { landingFeatures } from "@/components/pages/guest/landing/landing.consta
 
 export default function LandingFeaturesSection() {
   return (
-    <section className="py-16 bg-slate-50 dark:bg-slate-800/50">
+    <section className="py-10 sm:py-16 bg-slate-50 dark:bg-slate-800/50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 md:mb-4">Kenapa Pilih KampusMarket?</h2>

@@ -10,8 +10,8 @@ interface ProductShippingCardProps {
 
 export default function ProductShippingCard({ orderData }: ProductShippingCardProps) {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
+    <Card className="mb-4 sm:mb-6">
+      <CardContent className="p-4 sm:p-6">
         <h2 className="font-semibold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary-600" />
           Detail Pesanan

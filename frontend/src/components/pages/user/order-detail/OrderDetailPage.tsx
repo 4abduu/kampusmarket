@@ -778,35 +778,36 @@ export default function OrderDetailPage({
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
           <Button
             variant="ghost"
             size="icon"
+            className="shrink-0"
             onClick={() => onNavigate("orders")}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold truncate">
               Detail {isService ? "Booking" : "Pesanan"}
             </h1>
-            <p className="text-muted-foreground font-mono text-sm">
+            <p className="text-muted-foreground font-mono text-xs sm:text-sm truncate">
               {order.orderNumber}
             </p>
           </div>
           <div
-            className={`px-3 py-1.5 rounded-full ${statusConfig.bgColor} border ${statusConfig.borderColor}`}
+            className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shrink-0 ${statusConfig.bgColor} border ${statusConfig.borderColor}`}
           >
             <span
-              className={`font-medium ${statusConfig.color} flex items-center gap-1`}
+              className={`text-xs sm:text-sm font-medium ${statusConfig.color} flex items-center gap-1`}
             >
               <statusConfig.icon
-                className={`h-4 w-4 ${orderStatus === "processing" ? "animate-spin" : ""}`}
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${orderStatus === "processing" ? "animate-spin" : ""}`}
               />
-              {statusConfig.label}
+              <span className="whitespace-nowrap">{statusConfig.label}</span>
             </span>
           </div>
         </div>
@@ -848,8 +849,8 @@ export default function OrderDetailPage({
           cancelledBy={cancelledBy}
         />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-4 sm:space-y-6 min-w-0">
             <OrderHistoryTimeline
               isService={isService}
               orderHistory={order.history || []}

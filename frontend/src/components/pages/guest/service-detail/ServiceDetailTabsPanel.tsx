@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, MapPin, Smartphone, Home, MessageSquare } from "lucide-react";
 import { getProductReviews, type Review, type ReviewsMeta } from "@/lib/api/reviews";
 import ImageLightbox from "@/components/common/ImageLightbox";
+import ReviewsListSkeleton from "@/components/skeleton/shared/ReviewsListSkeleton";
 import { getEcho } from "@/lib/echo";
 
 interface ServiceDetailTabsPanelProps {
@@ -135,16 +136,16 @@ export default function ServiceDetailTabsPanel({ description, service, productId
   return (
     <Card>
       <Tabs id="service-tabs" value={activeTab} onValueChange={setActiveTab}>
-        <CardHeader className="pb-0">
-          <TabsList className="w-full">
-            <TabsTrigger value="description" className="flex-1">Deskripsi</TabsTrigger>
-            <TabsTrigger value="methods" className="flex-1">Metode Layanan</TabsTrigger>
-            <TabsTrigger value="reviews" className="flex-1">
+        <CardHeader className="pb-0 px-3 sm:px-6">
+          <TabsList className="w-full sm:w-full h-auto sm:h-9 flex sm:inline-flex overflow-x-auto sm:overflow-visible justify-start sm:justify-center [scrollbar-width:none] [ms-overflow-style:none] gap-1 p-1">
+            <TabsTrigger value="description" className="flex-none sm:flex-1 whitespace-nowrap px-3">Deskripsi</TabsTrigger>
+            <TabsTrigger value="methods" className="flex-none sm:flex-1 whitespace-nowrap px-3">Metode Layanan</TabsTrigger>
+            <TabsTrigger value="reviews" className="flex-none sm:flex-1 whitespace-nowrap px-3">
               Ulasan{meta ? ` (${meta.total})` : ""}
             </TabsTrigger>
           </TabsList>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 px-3 sm:px-6">
           <TabsContent value="description" className="mt-0">
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <p className="whitespace-pre-line">{description}</p>
@@ -186,20 +187,7 @@ export default function ServiceDetailTabsPanel({ description, service, productId
 
           <TabsContent value="reviews" className="mt-0">
             {loadingReviews ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="border-b pb-4 last:border-0 animate-pulse">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700" />
-                      <div className="space-y-1">
-                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
-                        <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
-                      </div>
-                    </div>
-                    <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-                  </div>
-                ))}
-              </div>
+              <ReviewsListSkeleton count={3} variant="inline" />
             ) : reviewsError ? (
               <div className="text-center py-8">
                 <p className="text-sm text-muted-foreground">Gagal memuat ulasan. Silakan coba lagi.</p>

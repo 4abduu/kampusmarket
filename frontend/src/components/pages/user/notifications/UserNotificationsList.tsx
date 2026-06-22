@@ -54,7 +54,7 @@ export default function UserNotificationsList({
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-280px)]">
+    <ScrollArea className="h-[calc(100dvh-260px)] sm:h-[calc(100dvh-280px)]">
       <div className="space-y-3">
         {notifications.length === 0 ? (
           <Card>
@@ -85,11 +85,11 @@ export default function UserNotificationsList({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <p
-                          className={`font-medium ${!notification.read ? "text-foreground" : "text-muted-foreground"}`}
+                          className={`font-medium truncate ${!notification.read ? "text-foreground" : "text-muted-foreground"}`}
                         >
                           {notification.title}
                         </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           {!notification.read && (
                             <Badge
                               variant="secondary"
@@ -101,7 +101,7 @@ export default function UserNotificationsList({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-6 w-6 opacity-40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                             onClick={(event) =>
                               onDeleteNotification(event, notification.id)
                             }

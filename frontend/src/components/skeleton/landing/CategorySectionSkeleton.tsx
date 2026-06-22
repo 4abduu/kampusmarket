@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CategorySectionSkeleton() {
   return (
-    <section className="py-8 bg-white dark:bg-slate-900">
+    <section className="py-8 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -18,8 +18,8 @@ export default function CategorySectionSkeleton() {
         {/* Categories with scroll buttons */}
         <div className="relative">
           {/* Scroll buttons */}
-          <Skeleton className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full" />
-          <Skeleton className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full" />
+          <Skeleton className="absolute left-0 top-1/2 -trangray-y-1/2 z-20 h-8 w-8 rounded-full" />
+          <Skeleton className="absolute right-0 top-1/2 -trangray-y-1/2 z-20 h-8 w-8 rounded-full" />
 
           {/* Category pills */}
           <div className="px-10 flex gap-2 overflow-hidden">

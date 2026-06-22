@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, MessageSquare } from "lucide-react";
 import { getUserReviews, type Review, type ReviewsMeta } from "@/lib/api/reviews";
 import ImageLightbox from "@/components/common/ImageLightbox";
+import ReviewsListSkeleton from "@/components/skeleton/shared/ReviewsListSkeleton";
 
 interface ProfileReviewsTabProps {
   avgRating: number;
@@ -102,15 +103,15 @@ export default function ProfileReviewsTab({ avgRating, totalReviews, userId, onN
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         {/* Rating summary */}
-        <div className="flex items-center gap-6 mb-6 pb-6 border-b">
-          <div className="text-center">
+        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 mb-6 pb-6 border-b">
+          <div className="text-center shrink-0">
             <p className="text-4xl font-bold">{avgRating.toFixed(1)}</p>
             {renderStars(avgRating)}
             <p className="text-sm text-muted-foreground mt-1">{totalReviews} ulasan</p>
           </div>
-          <div className="flex-1 space-y-1">
+          <div className="flex-1 space-y-1 w-full">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = distribution[star] || 0;
               const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
@@ -133,20 +134,7 @@ export default function ProfileReviewsTab({ avgRating, totalReviews, userId, onN
 
         {/* Loading state */}
         {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border-b pb-4 last:border-0 animate-pulse">
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
-                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
-                    <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ReviewsListSkeleton count={3} variant="stacked" />
         ) : error ? (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">Gagal memuat ulasan. Silakan coba lagi.</p>
@@ -168,14 +156,14 @@ export default function ProfileReviewsTab({ avgRating, totalReviews, userId, onN
               return (
                 <div key={review.id} className="border-b pb-4 last:border-0">
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-10 w-10 shrink-0">
                       {reviewerAvatar && <AvatarImage src={reviewerAvatar} alt={reviewerName} />}
                       <AvatarFallback className="bg-slate-100 text-slate-600">{initials}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium text-sm">{reviewerName}</p>
-                        <div className="flex">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-medium text-sm truncate">{reviewerName}</p>
+                        <div className="flex shrink-0">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star
                               key={star}

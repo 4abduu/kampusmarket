@@ -6,13 +6,13 @@ import type { CartHeaderProps } from "@/components/pages/user/cart/cart.types";
 export default function CartHeader({ itemCount }: CartHeaderProps) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-4 mb-6">
+    <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
       <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
         <ArrowLeft className="h-5 w-5" />
       </Button>
       <div>
-        <h1 className="text-2xl font-bold">Keranjang Belanja</h1>
-        <p className="text-muted-foreground">{itemCount} barang dalam keranjang</p>
+        <h1 className="text-xl sm:text-2xl font-bold">Keranjang Belanja</h1>
+        <p className="text-xs sm:text-base text-muted-foreground">{itemCount} barang dalam keranjang</p>
       </div>
     </div>
   );

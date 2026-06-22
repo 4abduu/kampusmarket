@@ -1,5 +1,4 @@
 import { PartialStarRating } from "@/components/common/PartialStarRating";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
@@ -22,19 +21,21 @@ export default function LandingServicesSection({
   }
 
   return (
-    <section className="py-16">
+    <section className="py-10 sm:py-16">
       <div className="container mx-auto px-4">
         
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5 sm:mb-8">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Layanan Jasa</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Layanan Jasa</h2>
+            <p className="text-xs sm:text-base text-muted-foreground">
               Jasa dari mahasiswa untuk mahasiswa
             </p>
           </div>
 
           <Button
             variant="outline"
+            size="sm"
+            className="self-start sm:self-auto"
             onClick={() => onNavigate("services")}
           >
             Lihat Semua
@@ -61,9 +62,6 @@ export default function LandingServicesSection({
                   className="w-full h-full bg-emerald-50 dark:bg-emerald-900/20"
                   imageClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <Badge className="absolute top-1.5 left-1.5 md:top-2 md:left-2 px-1.5 py-0 md:px-2 md:py-0.5 text-[9px] md:text-xs bg-slate-900/70 text-white border-0 backdrop-blur-sm">
-                  {service.category}
-                </Badge>
               </div>
 
               <CardContent className="p-2 md:p-4 flex flex-col flex-grow">

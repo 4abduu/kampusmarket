@@ -28,14 +28,14 @@ export default function LandingProductsSection({ products, onNavigate }: Landing
   });
 
   return (
-    <section className="py-16 bg-slate-50 dark:bg-slate-800/50">
+    <section className="py-10 sm:py-16 bg-slate-50 dark:bg-slate-800/50">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5 sm:mb-8">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Katalog Barang</h2>
-            <p className="text-muted-foreground">Temukan barang berkualitas dari mahasiswa</p>
+            <h2 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Katalog Barang</h2>
+            <p className="text-xs sm:text-base text-muted-foreground">Temukan barang berkualitas dari mahasiswa</p>
           </div>
-          <Button variant="outline" onClick={() => onNavigate("catalog")}>Lihat Semua</Button>
+          <Button variant="outline" size="sm" className="self-start sm:self-auto" onClick={() => onNavigate("catalog")}>Lihat Semua</Button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Briefcase, CalendarIcon, Clock, Handshake, Package, Shield, Loader2 } from "lucide-react"
 import type { Address, CheckoutProduct } from "@/components/pages/user/checkout/checkout.types"
+import StickyActionBar from "@/components/shared/StickyActionBar"
 
 interface Props {
   product: CheckoutProduct
@@ -58,7 +59,7 @@ export default function CheckoutOrderSummaryColumn({
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0">
         <Card className="hidden lg:block sticky top-24 self-start">
         <CardHeader>
           <CardTitle className="text-lg">Ringkasan Pesanan</CardTitle>
@@ -288,8 +289,8 @@ export default function CheckoutOrderSummaryColumn({
       </Card>
       </div>
       
-      {/* Mobile Sticky Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 pb-safe">
+      {/* Mobile Sticky Bar — duduk di atas bottom nav, lihat StickyActionBar */}
+      <StickyActionBar className="!p-0">
         {((isService && !bookingDate) || (!isService && shippingMethod === "delivery" && !selectedAddressId && addresses.length === 0)) && (
           <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 border-b border-amber-200 dark:border-amber-800">
             <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
@@ -320,7 +321,7 @@ export default function CheckoutOrderSummaryColumn({
             )}
           </Button>
         </div>
-      </div>
+      </StickyActionBar>
     </>
   )
 }

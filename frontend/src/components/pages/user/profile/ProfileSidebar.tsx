@@ -44,23 +44,23 @@ export default function ProfileSidebar({
   const checkIsOwnProfile = isOwnProfile || (currentUserId && String(user.id) === String(currentUserId));
 
   return (
-    <div className="lg:col-span-1 space-y-4">
+    <div className="lg:col-span-1 space-y-4 min-w-0">
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center mb-6">
-            <Avatar className="h-24 w-24 mx-auto mb-4">
+        <CardContent className="p-4 sm:p-6">
+          <div className="text-center mb-4 sm:mb-6">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 mx-auto mb-3 sm:mb-4">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="bg-primary-100 text-primary-700 text-2xl">
+              <AvatarFallback className="bg-primary-100 text-primary-700 text-xl sm:text-2xl">
                 {user.name
                   .split(" ")
                   .map((n) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <h1 className="text-xl font-bold">{user.name}</h1>
+            <div className="flex items-center justify-center gap-2 mb-1 flex-wrap">
+              <h1 className="text-lg sm:text-xl font-bold">{user.name}</h1>
               {user.isVerified && (
-                <Badge variant="outline" className="text-primary-600 border-primary-600">
+                <Badge variant="outline" className="text-primary-600 border-primary-600 text-xs">
                   <Shield className="h-3 w-3 mr-1" />
                   Terverifikasi
                 </Badge>
@@ -68,12 +68,12 @@ export default function ProfileSidebar({
             </div>
             <p className="text-muted-foreground text-sm">{user.facultyName || user.faculty || "Tidak ada fakultas"}</p>
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mt-1">
-              <MapPin className="h-3 w-3" />
-              {user.location || "Universitas Indonesia"}
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{user.location || "Universitas Indonesia"}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 text-center mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center mb-4 sm:mb-6">
             <div>
               <p className="font-bold text-lg text-primary-600">{totalSold}</p>
               <p className="text-xs text-muted-foreground">Terjual</p>
@@ -120,20 +120,20 @@ export default function ProfileSidebar({
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 px-4 sm:px-6">
           <CardTitle className="text-base">Informasi Penjual</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
+            <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Bergabung sejak</p>
-              <p className="font-medium">{memberSince}</p>
+              <p className="font-medium truncate">{memberSince}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Star className="h-4 w-4 text-muted-foreground" />
-            <div>
+            <Star className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Rating</p>
               <p className="font-medium">
                 {avgRating} ({totalReviews} ulasan)
@@ -141,8 +141,8 @@ export default function ProfileSidebar({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Package className="h-4 w-4 text-muted-foreground" />
-            <div>
+            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Produk Terjual</p>
               <p className="font-medium">{totalSold} produk</p>
             </div>
@@ -160,10 +160,10 @@ export default function ProfileSidebar({
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 px-4 sm:px-6">
           <CardTitle className="text-base">Badge Penjual</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="flex flex-wrap gap-2">
             {user.isVerified && (
               <Badge variant="secondary" className="bg-primary-100 text-primary-700">

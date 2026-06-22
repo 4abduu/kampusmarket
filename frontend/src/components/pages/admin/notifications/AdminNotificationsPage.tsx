@@ -150,7 +150,7 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                 </div>
                 <div>
                   {isLoadingCounts ? (
-                    <Skeleton className="h-8 w-12 mb-1 bg-red-200/50 dark:bg-red-800/50" />
+                    <Skeleton className="h-8 w-12 mb-1" />
                   ) : (
                     <p className="text-2xl font-bold">{disputeCount}</p>
                   )}
@@ -167,7 +167,7 @@ export default function AdminNotificationsPage({ onNavigate }: AdminNotification
                 </div>
                 <div>
                   {isLoadingCounts ? (
-                    <Skeleton className="h-8 w-12 mb-1 bg-primary-200/50 dark:bg-primary-800/50" />
+                    <Skeleton className="h-8 w-12 mb-1" />
                   ) : (
                     <p className="text-2xl font-bold">{withdrawalCount}</p>
                   )}

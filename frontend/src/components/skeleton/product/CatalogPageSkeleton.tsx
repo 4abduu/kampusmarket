@@ -10,7 +10,7 @@ interface CatalogPageSkeletonProps {
 
 export default function CatalogPageSkeleton({ itemCount = 8, hideSidebar = false }: CatalogPageSkeletonProps) {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4 py-8">
 
         <div className="flex flex-col lg:flex-row gap-6">

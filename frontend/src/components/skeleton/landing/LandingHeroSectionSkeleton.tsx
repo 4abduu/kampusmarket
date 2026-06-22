@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card";
 
 export default function LandingHeroSectionSkeleton() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-      <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+    <section className="relative overflow-hidden bg-background">
       <div className="container mx-auto px-4 py-16 lg:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
@@ -37,7 +36,6 @@ export default function LandingHeroSectionSkeleton() {
 
           {/* Right Featured Products */}
           <div className="relative hidden lg:block">
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-3xl blur-3xl" />
             <div className="relative grid grid-cols-2 gap-4">
               {/* First card - col-span-2 */}
               <Card className="overflow-hidden col-span-2">

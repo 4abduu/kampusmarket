@@ -33,16 +33,16 @@ export default function AddProductShippingSection({
             ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isCod
                   ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <Wallet className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">COD / Ketemuan</Label>
                 <p className="text-sm text-muted-foreground">Bayar di tempat, ketemuan di kampus</p>
               </div>
@@ -50,6 +50,7 @@ export default function AddProductShippingSection({
             <Switch
               checked={shippingOptions.isCod}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isCod: checked })}
+              className="shrink-0"
             />
           </div>
         </div>
@@ -59,16 +60,16 @@ export default function AddProductShippingSection({
             ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isPickup
                   ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <Home className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">Ambil Sendiri</Label>
                 <p className="text-sm text-muted-foreground">Pembeli datang ke lokasi Anda</p>
               </div>
@@ -76,6 +77,7 @@ export default function AddProductShippingSection({
             <Switch
               checked={shippingOptions.isPickup}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isPickup: checked })}
+              className="shrink-0"
             />
           </div>
         </div>
@@ -85,16 +87,16 @@ export default function AddProductShippingSection({
             ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
             : "border-slate-200 dark:border-slate-700"
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                 shippingOptions.isDelivery
                   ? "bg-primary-100 text-primary-600 dark:bg-primary-800"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800"
               }`}>
                 <Truck className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="font-medium cursor-pointer">Antar Manual</Label>
                 <p className="text-sm text-muted-foreground">Anda mengantar ke alamat pembeli</p>
               </div>
@@ -102,6 +104,7 @@ export default function AddProductShippingSection({
             <Switch
               checked={shippingOptions.isDelivery}
               onCheckedChange={(checked) => setShippingOptions({ ...shippingOptions, isDelivery: checked })}
+              className="shrink-0"
             />
           </div>
 

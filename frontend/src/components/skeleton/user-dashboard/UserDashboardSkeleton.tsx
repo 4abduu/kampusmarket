@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function UserDashboardSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -66,7 +66,7 @@ export default function UserDashboardSkeleton() {
             {/* List Content */}
             <Card>
               <CardHeader>
-                <CardTitle className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+                <CardTitle className="h-6 w-40 skeleton-shimmer rounded" />
               </CardHeader>
               <CardContent className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (

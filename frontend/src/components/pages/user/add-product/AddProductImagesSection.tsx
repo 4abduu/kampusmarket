@@ -110,17 +110,17 @@ export default function AddProductImagesSection({
                 draggable={false}
               />
 
-              {/* Overlay aksi — muncul saat hover */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+              {/* Overlay aksi — selalu terlihat di mobile (tidak ada hover di touch device), hover-to-reveal di desktop */}
+              <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
                 {/* Jadikan utama */}
                 {index !== 0 && (
                   <button
                     type="button"
                     title="Jadikan foto utama"
                     onClick={() => handleSetPrimary(index)}
-                    className="w-7 h-7 rounded-full bg-yellow-400 hover:bg-yellow-300 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-yellow-400 hover:bg-yellow-300 flex items-center justify-center transition-colors"
                   >
-                    <Star className="h-3.5 w-3.5 text-yellow-900" />
+                    <Star className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-yellow-900" />
                   </button>
                 )}
                 {/* Hapus */}
@@ -128,9 +128,9 @@ export default function AddProductImagesSection({
                   type="button"
                   title="Hapus foto"
                   onClick={() => handleRemove(index)}
-                  className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center transition-colors"
                 >
-                  <X className="h-3.5 w-3.5 text-white" />
+                  <X className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-white" />
                 </button>
               </div>
 
@@ -229,8 +229,9 @@ export default function AddProductImagesSection({
         {/* Info cara mengatur urutan */}
         {images.length > 1 && (
           <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <GripVertical className="h-3 w-3" />
-            Hover foto lalu klik ⭐ untuk jadikan foto utama
+            <GripVertical className="h-3 w-3 shrink-0" />
+            <span className="sm:hidden">Klik ⭐ pada foto untuk jadikan foto utama</span>
+            <span className="hidden sm:inline">Hover foto lalu klik ⭐ untuk jadikan foto utama</span>
           </p>
         )}
       </CardContent>

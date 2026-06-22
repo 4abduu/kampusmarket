@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminOrdersTabSkeleton() {
   return (
-    <Card className="border-slate-100 shadow-sm">
+    <Card className="border-gray-100 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

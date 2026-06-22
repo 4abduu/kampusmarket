@@ -412,9 +412,9 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-      <div className="container mx-auto px-4 py-8 pb-32 lg:pb-8">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+    <div className="min-h-[calc(100dvh-64px)] bg-slate-50 dark:bg-slate-900/50">
+      <div className="container mx-auto px-4 py-5 sm:py-8 pb-[calc(var(--bottom-nav-h)+4.5rem)] lg:pb-8">
+        <nav className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [ms-overflow-style:none]">
           <button onClick={() => onNavigate("landing")} className="hover:text-primary-600">
             Beranda
           </button>
@@ -464,8 +464,8 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         )}
 
         {!loading && !error && product && (
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid lg:grid-cols-3 gap-5 sm:gap-8">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
               {/* Multiple Items Warning / Error */}
               {isMultipleItems && !hasShippingIntersection && (
                 <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">

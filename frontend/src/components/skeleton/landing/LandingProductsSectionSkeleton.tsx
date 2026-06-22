@@ -9,7 +9,7 @@ interface LandingProductsSectionSkeletonProps {
 
 export default function LandingProductsSectionSkeleton({ itemCount = 8 }: LandingProductsSectionSkeletonProps) {
   return (
-    <section className="py-16 bg-slate-50 dark:bg-slate-800/50">
+    <section className="py-16 bg-gray-50 dark:bg-gray-800/50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <div>

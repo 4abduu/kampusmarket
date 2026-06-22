@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function CheckoutPageSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm mb-6">
@@ -22,7 +22,7 @@ export default function CheckoutPageSkeleton() {
             {/* Service Booking Section (if service) */}
             <Card>
               <CardHeader>
-                <CardTitle className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+                <CardTitle className="h-6 w-40 skeleton-shimmer rounded" />
               </CardHeader>
               <CardContent className="space-y-4">
                 <Skeleton className="h-10 w-full" />
@@ -34,7 +34,7 @@ export default function CheckoutPageSkeleton() {
             {/* Address Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+                <CardTitle className="h-6 w-40 skeleton-shimmer rounded" />
               </CardHeader>
               <CardContent className="space-y-3">
                 <Skeleton className="h-12 w-full" />
@@ -45,7 +45,7 @@ export default function CheckoutPageSkeleton() {
             {/* Shipping Method Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded" />
+                <CardTitle className="h-6 w-48 skeleton-shimmer rounded" />
               </CardHeader>
               <CardContent className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -73,7 +73,7 @@ export default function CheckoutPageSkeleton() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="h-6 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+                <CardTitle className="h-6 w-32 skeleton-shimmer rounded" />
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Product Info */}
@@ -127,7 +127,7 @@ export default function CheckoutPageSkeleton() {
             </Card>
 
             {/* Security Card */}
-            <Card className="bg-slate-100 dark:bg-slate-800">
+            <Card className="bg-gray-100 dark:bg-gray-800">
               <CardContent className="p-4">
                 <div className="flex gap-3">
                   <Skeleton className="h-8 w-8 rounded shrink-0" />

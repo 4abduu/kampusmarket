@@ -94,7 +94,7 @@ export default function ImageGallery({
         <Card className="overflow-hidden group relative">
           <div
             className={cn(
-              "relative bg-slate-100 dark:bg-slate-800 h-96 flex items-center justify-center overflow-hidden",
+              "relative bg-slate-100 dark:bg-slate-800 aspect-square sm:aspect-auto sm:h-96 flex items-center justify-center overflow-hidden",
               isClickable ? "cursor-pointer" : "cursor-default"
             )}
             onClick={isClickable ? (disableInternalLightbox ? onImageClick : openLightbox) : undefined}
