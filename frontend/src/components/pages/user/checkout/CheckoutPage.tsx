@@ -30,6 +30,7 @@ import type {
   CartItem,
 } from "@/components/pages/user/checkout/checkout.types";
 import { Card, CardContent } from "@/components/ui/card";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProps) {
   const [searchParams] = useSearchParams();
@@ -431,17 +432,15 @@ export default function CheckoutPage({ onNavigate, productId }: CheckoutPageProp
         )}
 
         {error && (
-          <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
-            <CardContent className="py-6">
-              <p className="text-red-600 dark:text-red-400">{error}</p>
-              <button
-                onClick={() => onNavigate("landing")}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Kembali ke Beranda
-              </button>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <FetchErrorCard
+              message="Checkout Bermasalah"
+              detail={error || "Gagal memuat halaman checkout."}
+              onGoHome={() => onNavigate("landing")}
+              onRetry={() => onNavigate("cart")}
+              retryLabel="Kembali ke Keranjang"
+            />
+          </div>
         )}
 
         {validationError && !loading && (

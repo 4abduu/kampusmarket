@@ -23,7 +23,6 @@ import {
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
@@ -35,9 +34,9 @@ import {
   MapPin,
   Star,
   X,
-  AlertCircle,
 } from "lucide-react";
 import { CatalogPageSkeleton } from "@/components/skeleton";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 import CatalogFilterSidebar from "@/components/pages/guest/catalog/CatalogFilterSidebar";
 import ProductImage from "@/components/common/ProductImage";
 import { PartialStarRating } from "@/components/common/PartialStarRating";
@@ -581,17 +580,10 @@ export default function CatalogPage({
                 hideSidebar={true}
               />
             ) : error ? (
-              <div className="space-y-4">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-                <div>
-                  <Button onClick={() => window.location.reload()}>
-                    Coba Lagi
-                  </Button>
-                </div>
-              </div>
+              <FetchErrorCard
+                message="Gagal memuat barang"
+                detail={error || "Silakan coba muat ulang halaman."}
+              />
             ) : paginatedProducts.length === 0 ? (
               <EmptyState
                 icon="search"

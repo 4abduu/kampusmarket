@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
 
 import ServiceDetailSidebar from "@/components/pages/guest/service-detail/ServiceDetailSidebar";
@@ -15,6 +14,7 @@ import ProductDetailReportDialog from "@/components/pages/guest/product-detail/P
 import ImageGallery from "@/components/common/ImageGallery";
 import apiClient from "@/lib/api/client";
 import { useAppToast } from "@/hooks/use-app-toast";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface ServiceDetailPageProps {
   onNavigate: (
@@ -139,17 +139,12 @@ export default function ServiceDetailPage({
 
   if (error || !service) {
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-red-500">
-                {error || "Layanan tidak ditemukan"}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <FetchErrorCard
+        variant="page"
+        message="Layanan Tidak Ditemukan"
+        detail={error || "Gagal memuat detail layanan. Silakan coba lagi."}
+        onGoHome={() => onNavigate("landing")}
+      />
     );
   }
 

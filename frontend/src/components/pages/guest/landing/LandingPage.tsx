@@ -13,8 +13,7 @@ import LandingProductsSection from "@/components/pages/guest/landing/LandingProd
 import LandingSellerBanner from "@/components/pages/guest/landing/LandingSellerBanner";
 import LandingServicesSection from "@/components/pages/guest/landing/LandingServicesSection";
 import { CategorySectionSkeleton } from "@/components/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import type {
   LandingCategoryType,
@@ -136,13 +135,12 @@ export default function LandingPage({
       />
       <div className="flex flex-col">
         {fetchError && (
-          <Alert
-            variant="destructive"
-            className="m-4 mb-0 border-amber-200 bg-amber-50 text-amber-800"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{fetchError}</AlertDescription>
-          </Alert>
+          <div className="px-4 pt-4">
+            <FetchErrorCard
+              message="Gagal memuat beberapa data"
+              detail="Server sedang tidak tersedia. Silakan coba muat ulang halaman."
+            />
+          </div>
         )}
 
         <LandingSellerBanner

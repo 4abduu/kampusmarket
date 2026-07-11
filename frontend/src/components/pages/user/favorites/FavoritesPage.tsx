@@ -12,6 +12,7 @@ import { getSavings } from "@/components/pages/user/favorites/favorites.helpers"
 import type { Product } from "@/components/pages/user/favorites/favorites.types";
 import { getFavorites, removeFavorite } from "@/lib/api/products";
 import { useFavoritesStore } from "@/lib/favorites-store";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface FavoritesPageProps {
   onNavigate: (page: string, data?: string | NavigationData) => void;
@@ -127,17 +128,13 @@ export default function FavoritesPage({ onNavigate }: FavoritesPageProps) {
             </CardContent>
           </Card>
         ) : error ? (
-          <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
-            <CardContent className="px-6 py-16 text-center">
-              <p className="text-sm font-semibold text-red-700 dark:text-red-300">Gagal memuat favorit</p>
-              <p className="mt-2 text-sm text-red-600 dark:text-red-200">{error}</p>
-              <div className="mt-5 flex justify-center">
-                <Button size="sm" className="bg-primary-600 hover:bg-primary-700" onClick={() => void getFavorites().then(setFavorites).catch((err) => setError(err?.message || "Gagal memuat favorit")).finally(() => setLoading(false))}>
-                  Coba lagi
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="my-6">
+            <FetchErrorCard
+              message="Gagal memuat favorit"
+              detail={error || "Koneksi ke server terganggu"}
+              onRetry={() => void getFavorites().then(setFavorites).catch((err) => setError(err?.message || "Gagal memuat favorit")).finally(() => setLoading(false))}
+            />
+          </div>
         ) : filtered.length > 0 ? (
           <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-4" : "space-y-4"}>
             {filtered.map((product, index) => (

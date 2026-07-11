@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { getProductDetail } from "@/lib/api/products";
 import apiClient from "@/lib/api/client";
 import ImageGallery from "@/components/common/ImageGallery";
@@ -13,6 +12,7 @@ import ProductDetailTabsPanel from "@/components/pages/guest/product-detail/Prod
 import DetailPageShell from "@/components/pages/guest/shared/DetailPageShell";
 import { ProductDetailPageSkeleton } from "@/components/skeleton";
 import { useAppToast } from "@/hooks/use-app-toast";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface ProductDetailPageProps {
   onNavigate: (
@@ -147,17 +147,12 @@ export default function ProductDetailPage({
   // Error or not found
   if (error || !product) {
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900/50">
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-red-500">
-                {error || "Produk tidak ditemukan"}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <FetchErrorCard
+        variant="page"
+        message="Produk Tidak Ditemukan"
+        detail={error || "Gagal memuat detail produk. Silakan coba lagi."}
+        onGoHome={() => onNavigate("landing")}
+      />
     );
   }
 

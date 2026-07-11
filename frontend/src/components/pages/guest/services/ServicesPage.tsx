@@ -29,7 +29,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  AlertCircle,
   MapPin,
 } from "lucide-react";
 import { getCategories } from "@/lib/api/categories";
@@ -41,7 +40,7 @@ import { PartialStarRating } from "@/components/common/PartialStarRating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServicesPageSkeleton } from "@/components/skeleton";
 import EmptyState from "@/components/shared/EmptyState";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -440,20 +439,10 @@ export default function ServicesPage({
                 hideSidebar={true}
               />
             ) : error ? (
-              <div className="space-y-3">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  Coba Lagi
-                </Button>
-              </div>
+              <FetchErrorCard
+                message="Gagal memuat jasa"
+                detail={error || "Silakan coba muat ulang halaman."}
+              />
             ) : services.length === 0 ? (
               <EmptyState
                 icon="package"
