@@ -11,3 +11,4 @@ export { default as FacultySelectionPage } from "@/components/pages/guest/facult
 export { default as EmailVerificationPage } from "@/components/pages/guest/email-verification/EmailVerificationPage";
 export { default as UnauthorizedPage } from "@/components/pages/guest/errors/UnauthorizedPage";
 export { default as NotFoundPage } from "@/components/pages/guest/errors/NotFoundPage";
+export { default as MaintenancePage } from "@/components/pages/guest/errors/MaintenancePage";

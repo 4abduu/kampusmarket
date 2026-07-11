@@ -19,6 +19,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import SellerWelcomeModal from "@/components/layout/SellerWelcomeModal";
 import RestrictedAccessOverlay from "@/components/shared/RestrictedAccessOverlay";
+import MaintenancePage from "@/components/pages/guest/errors/MaintenancePage";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -29,6 +30,10 @@ function AppContent() {
   const [userRole, setUserRole] = useState<"user" | "admin" | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  // Maintenance mode: aktif via env var VITE_MAINTENANCE_MODE=true atau auto-detect backend down
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(
+    import.meta.env.VITE_MAINTENANCE_MODE === "true"
+  );
   // REVISI: Flag untuk mencegah ProtectedRoute redirect ke /unauthorized saat logout berlangsung
   const isLoggingOutRef = useRef(false);
   // FIX: Flag untuk mencegah syncAuthUser override state saat user baru saja login
@@ -80,6 +85,10 @@ function AppContent() {
         return false;
       }
     } catch (err) {
+      // Auto-detect: jika error adalah network error (backend unreachable), aktifkan maintenance
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setIsMaintenanceMode(true);
+      }
       setAuthUser(null);
       setIsLoggedIn(false);
       setUserRole(null);
@@ -513,6 +522,11 @@ function AppContent() {
     location.pathname === "/" ||
     knownPagePrefixes.some((p) => location.pathname.startsWith(`/${p}`));
   const isNotFoundPage = !isKnownRoute;
+
+  // Maintenance mode: tampilkan halaman maintenance jika backend down
+  if (isMaintenanceMode) {
+    return <MaintenancePage />;
+  }
 
   if (!authReady) {
     return (
