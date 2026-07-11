@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductImage from "@/components/common/ProductImage";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 type Product = {
   id: string;
@@ -17,6 +18,7 @@ interface LandingHeroSectionProps {
   featuredProducts: Product[];
   onNavigate: (page: string, data?: string) => void;
   isLoading?: boolean;
+  hasError?: boolean;
   onAction?: (action: () => void) => void;
 }
 
@@ -24,6 +26,7 @@ export default function LandingHeroSection({
   featuredProducts,
   onNavigate,
   isLoading = false,
+  hasError = false,
   onAction = (action: () => void) => action(),
 }: LandingHeroSectionProps) {
   const handleMulaiBelanja = () => {
@@ -107,7 +110,11 @@ export default function LandingHeroSection({
             
             {/* Desktop Grid View */}
             <div className="relative hidden lg:grid lg:grid-cols-2 gap-4">
-              {isLoading ? (
+              {hasError && featuredProducts.length === 0 ? (
+                <div className="col-span-2 h-full flex flex-col justify-center">
+                  <FetchErrorCard variant="inline" message="Gagal memuat sorotan" />
+                </div>
+              ) : isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <Card key={i} className={`${i === 0 ? "col-span-2" : ""}`}>
                     <Skeleton className={`${i === 0 ? "h-48" : "h-32"} w-full rounded-b-none`} />
@@ -148,7 +155,11 @@ export default function LandingHeroSection({
 
             {/* Mobile Horizontal Scroll View */}
             <div className="relative flex lg:hidden overflow-x-auto gap-4 pb-4 -mx-4 px-4 snap-x hide-scrollbar">
-              {isLoading ? (
+              {hasError && featuredProducts.length === 0 ? (
+                <div className="w-full flex justify-center py-8">
+                  <FetchErrorCard variant="inline" message="Gagal memuat sorotan" />
+                </div>
+              ) : isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <Card key={i} className="min-w-[160px] snap-center shrink-0">
                     <Skeleton className="h-32 w-full rounded-b-none" />

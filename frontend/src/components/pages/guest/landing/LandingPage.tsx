@@ -13,7 +13,7 @@ import LandingProductsSection from "@/components/pages/guest/landing/LandingProd
 import LandingSellerBanner from "@/components/pages/guest/landing/LandingSellerBanner";
 import LandingServicesSection from "@/components/pages/guest/landing/LandingServicesSection";
 import { CategorySectionSkeleton } from "@/components/skeleton";
-import FetchErrorCard from "@/components/shared/FetchErrorCard";
+import GlobalErrorOverlay from "@/components/shared/GlobalErrorOverlay";
 import ProductDetailLoginDialog from "@/components/pages/guest/product-detail/ProductDetailLoginDialog";
 import type {
   LandingCategoryType,
@@ -134,14 +134,10 @@ export default function LandingPage({
         onNavigate={onNavigate}
       />
       <div className="flex flex-col">
-        {fetchError && (
-          <div className="px-4 pt-4">
-            <FetchErrorCard
-              message="Gagal memuat beberapa data"
-              detail="Server sedang tidak tersedia. Silakan coba muat ulang halaman."
-            />
-          </div>
-        )}
+        <GlobalErrorOverlay 
+          error={fetchError} 
+          onRetry={() => window.location.reload()} 
+        />
 
         <LandingSellerBanner
           open={showSellerBanner}
@@ -156,6 +152,7 @@ export default function LandingPage({
           onNavigate={onNavigate}
           isLoading={heroLoading}
           onAction={handleAction}
+          hasError={!!fetchError}
         />
         <LandingFeaturesSection />
 
@@ -167,16 +164,19 @@ export default function LandingPage({
             onCategoryTypeChange={setCategoryType}
             currentCategories={currentCategories}
             onNavigate={onNavigate}
+            hasError={!!fetchError}
           />
         )}
 
         <LandingProductsSection
           products={barangProducts as any}
           onNavigate={onNavigate}
+          hasError={!!fetchError}
         />
         <LandingServicesSection
           services={jasaProducts as any}
           onNavigate={onNavigate}
+          hasError={!!fetchError}
         />
         <LandingHowItWorksSection />
         <LandingCtaSection isLoggedIn={isLoggedIn} onNavigate={onNavigate} />

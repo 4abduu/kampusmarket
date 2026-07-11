@@ -7,6 +7,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { LandingCategoryType } from "@/components/pages/guest/landing/landing.types";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface LandingCategoryPill {
   id: string;
@@ -18,6 +19,7 @@ interface LandingCategoriesSectionProps {
   onCategoryTypeChange: (value: LandingCategoryType) => void;
   currentCategories: LandingCategoryPill[];
   onNavigate: (page: string, params?: { category?: string }) => void;
+  hasError?: boolean;
 }
 
 export default function LandingCategoriesSection({
@@ -25,6 +27,7 @@ export default function LandingCategoriesSection({
   onCategoryTypeChange,
   currentCategories,
   onNavigate,
+  hasError = false,
 }: LandingCategoriesSectionProps) {
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
@@ -91,8 +94,13 @@ export default function LandingCategoriesSection({
             ref={categoriesScrollRef}
             className="overflow-x-auto py-2 px-10 [scrollbar-width:none] [ms-overflow-style:none]"
           >
-            <div className="flex gap-2">
-              {currentCategories.map((category) => (
+            {hasError && currentCategories.length === 0 ? (
+              <div className="flex justify-center w-full">
+                <FetchErrorCard variant="inline" message="Gagal memuat kategori" />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {currentCategories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() =>
@@ -130,6 +138,7 @@ export default function LandingCategoriesSection({
                 <ArrowRight className="h-3 w-3" />
               </button>
             </div>
+            )}
           </div>
         </div>
       </div>

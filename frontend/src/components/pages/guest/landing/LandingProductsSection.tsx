@@ -7,14 +7,16 @@ import type { Product } from "@/lib/mock-data";
 import { LandingProductsSectionSkeleton } from "@/components/skeleton";
 import { MapPin, Star } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface LandingProductsSectionProps {
   products: Product[];
   onNavigate: (page: string, data?: string) => void;
+  hasError?: boolean;
 }
 
-export default function LandingProductsSection({ products, onNavigate }: LandingProductsSectionProps) {
-  if (!products || products.length === 0) {
+export default function LandingProductsSection({ products, onNavigate, hasError = false }: LandingProductsSectionProps) {
+  if (!products || (products.length === 0 && !hasError)) {
     return <LandingProductsSectionSkeleton />;
   }
 
@@ -39,7 +41,12 @@ export default function LandingProductsSection({ products, onNavigate }: Landing
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          {availableProducts.slice(0, 8).map((product) => {
+          {hasError && availableProducts.length === 0 ? (
+            <div className="col-span-full">
+              <FetchErrorCard variant="inline" message="Gagal memuat barang" />
+            </div>
+          ) : (
+            availableProducts.slice(0, 8).map((product) => {
             const soldCount = (product as any).soldCount ?? 0;
             const displaySoldCount = soldCount > 99 ? "99+" : soldCount;
             const rating = product.rating ?? 0;
@@ -142,7 +149,7 @@ export default function LandingProductsSection({ products, onNavigate }: Landing
                 </div>
               </CardContent>
             </Card>
-          )})}
+          )}))}
         </div>
       </div>
     </section>

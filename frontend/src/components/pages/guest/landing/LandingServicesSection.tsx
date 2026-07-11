@@ -6,17 +6,20 @@ import { Star } from "lucide-react";
 import type { Service } from "@/lib/mock-data";
 import { LandingServicesSectionSkeleton } from "@/components/skeleton";
 import ProductImage from "@/components/common/ProductImage";
+import FetchErrorCard from "@/components/shared/FetchErrorCard";
 
 interface LandingServicesSectionProps {
   services: Service[];
   onNavigate: (page: string, data?: string) => void;
+  hasError?: boolean;
 }
 
 export default function LandingServicesSection({
   services,
   onNavigate,
+  hasError = false,
 }: LandingServicesSectionProps) {
-  if (!services || services.length === 0) {
+  if (!services || (services.length === 0 && !hasError)) {
     return <LandingServicesSectionSkeleton />;
   }
 
@@ -43,7 +46,12 @@ export default function LandingServicesSection({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 md:gap-6">
-          {services.slice(0, 6).map((service) => {
+          {hasError && services.length === 0 ? (
+            <div className="col-span-full">
+              <FetchErrorCard variant="inline" message="Gagal memuat layanan jasa" />
+            </div>
+          ) : (
+            services.slice(0, 6).map((service) => {
             const orderCount = (service as any).soldCount ?? service.orderCount ?? 0;
             const displayOrderCount = orderCount > 99 ? "99+" : orderCount;
             const rating = service.rating ?? 0;
@@ -137,7 +145,7 @@ export default function LandingServicesSection({
                 </div>
               </CardContent>
             </Card>
-          )})}
+          )}))}
         </div>
 
       </div>
